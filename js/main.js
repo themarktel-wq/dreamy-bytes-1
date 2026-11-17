@@ -14,6 +14,14 @@ const Shell = {
   render() {
     const u = API.user, admin = API.isAdmin;
     const act = (href, ic, label, sub, badgeCls) => `<a class="act" href="${href}"><span class="icon-btn">${icon(ic)}${badgeCls ? `<i class="badge-dot ${badgeCls}"></i>` : ''}</span><span class="act-label">${sub}<b>${label}</b></span></a>`;
+    if (u && u.role === 'rider') {
+      $('#actions').innerHTML = `<a class="act" href="#/rider"><span class="icon-btn">${icon('truck')}<i class="badge-dot rider-count"></i></span><span class="act-label">Deliveries<b>${esc(u.name.split(' ')[0])}</b></span></a><a class="act" href="#/account"><span class="icon-btn">${icon('user')}</span></a>`;
+      $('#catnav').innerHTML = `<a href="#/rider">My deliveries</a>`;
+      $('#tabbar').innerHTML = `<a href="#/rider" data-r="rider">${icon('truck')}Deliveries<i class="badge-dot rider-count"></i></a><a href="#/account" data-r="account">${icon('user')}Account</a>`;
+      $('#tabbar').style.gridTemplateColumns = 'repeat(2,1fr)';
+      $('#demoBar').classList.toggle('hidden', API.mode !== 'demo'); this.badges(); return;
+    }
+    $('#tabbar').style.gridTemplateColumns = '';
     $('#actions').innerHTML = !u
       ? `<a class="btn btn-ghost btn-sm" href="#/login">Sign in</a><a class="btn btn-primary btn-sm" href="#/register">Register shop</a>`
       : admin
@@ -36,6 +44,7 @@ const Shell = {
     $$('.cart-count').forEach((b) => (b.textContent = Cart.count() || ''));
     $$('.msg-count').forEach((b) => (b.textContent = me.unread || ''));
     $$('.adm-count').forEach((b) => (b.textContent = me.pendingOrders || ''));
+    $$('.rider-count').forEach((b) => (b.textContent = me.deliveries || ''));
   },
   update(r) {
     const key = r.name === 'admin' ? 'admin/' + (r.sub || 'dash') : r.name;
@@ -58,15 +67,14 @@ API.on(async (ev) => {
     Shell.badges();
     const r = parseHash(), key = r.name === 'admin' ? 'admin/' + (r.sub || 'dash') : r.name;
     const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.closest('.chat-input');
-    const refresh = { messages: ['messages', 'admin/messages', 'admin/chat', 'admin/dash'], orders: ['orders', 'order', 'admin/orders', 'admin/order', 'admin/dash', 'home'], shops: ['admin/shops', 'admin/dash'], claims: ['orders', 'admin/claims', 'admin/dash'], requests: ['admin/claims', 'admin/dash'], ledger: ['khata', 'home'], feed: ['home'], account: ['home', 'account'] }[ev.type] || [];
+    const refresh = { messages: ['messages', 'admin/messages', 'admin/chat', 'admin/dash'], orders: ['orders', 'order', 'admin/orders', 'admin/order', 'admin/dash', 'home', 'rider', 'admin/riders'], shops: ['admin/shops', 'admin/dash'], claims: ['orders', 'admin/claims', 'admin/dash'], requests: ['admin/claims', 'admin/dash'], ledger: ['khata', 'home'], feed: ['home'], account: ['home', 'account'] }[ev.type] || [];
     if (API.mode === 'server' && refresh.includes(key) && !typing && !document.querySelector('.modal.on')) {
       const draft = $('#chatIn') ? $('#chatIn').value : '';
       await render({ quiet: true });
       if (draft && $('#chatIn')) $('#chatIn').value = draft;
     }
     if (API.mode === 'server') {
-      if (ev.type === 'orders' && API.isAdmin && key !== 'admin/orders') toast('Order update — check Orders', 'truck');
-      if (ev.type === 'messages' && !['messages', 'admin/chat'].includes(key)) toast('New message', 'chat');
+      if (ev.title && !(ev.type === 'messages' && ['messages', 'admin/chat'].includes(key))) toast(esc(ev.title), 'bell');
       if (ev.type === 'account') { toast('Your account was updated by the store', 'info'); Shell.render(); }
     }
   }, 120);

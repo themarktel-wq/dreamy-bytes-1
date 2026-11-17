@@ -50,6 +50,30 @@ async function api(method, url, body, cookie) {
     const up = await api('POST', '/api/admin/upload', { dataUrl: png }, login.cookie);
     assert.equal(up.status, 200); assert.equal((await fetch(base + up.body.url)).headers.get('content-type'), 'image/png');
 
+    // web push: a fake push service on localhost receives and decrypts the notification
+    const crypto = require('node:crypto'); const http = require('node:http');
+    const ua = crypto.createECDH('prime256v1'); ua.generateKeys(); const authSecret = crypto.randomBytes(16);
+    const got2 = new Promise((resolve) => {
+      const ps = http.createServer((req, res) => { const ch = []; req.on('data', (c) => ch.push(c)); req.on('end', () => { res.writeHead(201); res.end(); ps.close(); resolve({ headers: req.headers, body: Buffer.concat(ch) }); }); }).listen(PORT + 1);
+    });
+    const key = await (await fetch(base + '/api/push/key')).json();
+    assert.equal(Buffer.from(key.key, 'base64url').length, 65);
+    const sub = await api('POST', '/api/push/subscribe', { subscription: { endpoint: `http://localhost:${PORT + 1}/push/abc`, keys: { p256dh: ua.getPublicKey().toString('base64url'), auth: authSecret.toString('base64url') } } }, shop.cookie);
+    assert.equal(sub.status, 200);
+    const shopId = (await api('GET', '/api/me', null, shop.cookie)).body.user.id;
+    await api('POST', `/api/admin/messages/${shopId}`, { text: 'Your panels are packed' }, login.cookie);
+    const delivered = await Promise.race([got2, new Promise((_, rej) => setTimeout(() => rej(new Error('no push delivered')), 4000))]);
+    assert.equal(delivered.headers['content-encoding'], 'aes128gcm'); assert.match(delivered.headers.authorization, /^vapid t=.+, k=/);
+    const b = delivered.body, salt = b.subarray(0, 16), idlen = b[20], asPub = b.subarray(21, 21 + idlen), ct = b.subarray(21 + idlen);
+    const shared = ua.computeSecret(asPub);
+    const ikm = Buffer.from(crypto.hkdfSync('sha256', shared, authSecret, Buffer.concat([Buffer.from('WebPush: info\0'), ua.getPublicKey(), asPub]), 32));
+    const cek = Buffer.from(crypto.hkdfSync('sha256', ikm, salt, Buffer.from('Content-Encoding: aes128gcm\0'), 16));
+    const nonce = Buffer.from(crypto.hkdfSync('sha256', ikm, salt, Buffer.from('Content-Encoding: nonce\0'), 12));
+    const dc = crypto.createDecipheriv('aes-128-gcm', cek, nonce); dc.setAuthTag(ct.subarray(ct.length - 16));
+    const plain = Buffer.concat([dc.update(ct.subarray(0, ct.length - 16)), dc.final()]);
+    const msg = JSON.parse(plain.subarray(0, plain.length - 1).toString());
+    assert.match(msg.title, /Message from/); assert.equal(msg.body, 'Your panels are packed');
+
     await stop(srv); srv = await start();
     const again = await api('GET', `/api/orders/${order.body.id}`, null, shop.cookie);
     assert.equal(again.status, 200, 'session and order survive restart');

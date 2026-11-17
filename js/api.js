@@ -45,9 +45,10 @@ const API = {
     return this.me;
   },
   get user() { return this.me && this.me.user; },
-  get isAdmin() { return !!(this.user && this.user.role !== 'shop'); },
+  get isAdmin() { return !!(this.user && (this.user.role === 'admin' || this.user.role === 'staff')); },
   get isOwner() { return !!(this.user && this.user.role === 'admin'); },
   get isShop() { return !!(this.user && this.user.role === 'shop'); },
+  get isRider() { return !!(this.user && this.user.role === 'rider'); },
   get isActiveShop() { return this.isShop && this.user.status === 'active'; },
 
   async login(phone, password) { const r = await this.post('/api/auth/login', { phone, password }); if (r.token && this.mode === 'demo') Demo.setToken(r.token); await this.refreshMe(); this.emit({ type: 'auth' }); return r; },

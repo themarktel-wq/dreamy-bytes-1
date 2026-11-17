@@ -1,5 +1,5 @@
 /* Lahore Mobile service worker: offline app shell + runtime cache. Bump VERSION on every deploy. */
-const VERSION = 'lm-v3';
+const VERSION = 'lm-v4';
 const SHELL = ['./', 'index.html', 'css/style.css', 'core/memstore.js', 'core/core.js', 'core/seed-images.js', 'js/ui.js', 'js/api.js', 'js/router.js', 'js/shop.js', 'js/admin.js', 'js/main.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
 
@@ -27,4 +27,11 @@ self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   const url = './' + ((e.notification.data && e.notification.data.url) || '');
   e.waitUntil(self.clients.matchAll({ type: 'window' }).then((cs) => (cs[0] ? cs[0].focus().then((c) => c.navigate(url)) : self.clients.openWindow(url))));
+});
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { title: 'Lahore Mobile', body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Lahore Mobile', {
+    body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: d.url || undefined, renotify: true, data: { url: d.url || '#/' },
+  }));
 });

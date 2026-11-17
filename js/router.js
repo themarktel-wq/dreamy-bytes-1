@@ -102,5 +102,5 @@ function snapQty(p, v) {
 
 /* ---------- Guards ---------- */
 function needLogin(msg) { if (!API.user) { const e = new Error(msg || 'Please sign in'); e.status = 401; throw e; } }
-function needAdmin() { needLogin(); if (!API.isAdmin) throw new Error('This page is for the store team only.'); }
+function needAdmin() { needLogin(); if (!API.isAdmin) throw new Error(API.isRider ? 'Riders can open My deliveries only.' : 'This page is for the store team only.'); }
 function needShop() { needLogin(); if (!API.isShop) throw new Error('This page is for shop accounts. Open the admin panel instead.'); }

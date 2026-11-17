@@ -22,6 +22,7 @@ function loginView(note) {
           <button onclick="demoLogin('03000000000','admin123')">${icon('lock')}<span><b>Owner / admin</b><small>Dashboard, orders, inventory, khata, reports</small></span></button>
           <button onclick="demoLogin('03011111111','shop123')">${icon('store')}<span><b>Raza Mobiles (shop)</b><small>Gold tier · Hall Road</small></span></button>
           <button onclick="demoLogin('03033333333','shop123')">${icon('store')}<span><b>Tariq Mobile Zone (shop)</b><small>Standard tier · Johar Town</small></span></button>
+          <button onclick="demoLogin('03066666666','rider123')">${icon('truck')}<span><b>Imran (rider)</b><small>Deliveries and cash collection</small></span></button>
         </div></div>` : ''}
     </div></div></div>`;
 }
@@ -31,9 +32,9 @@ async function doLogin(e) {
   const f = formData(e.target);
   await busy(e.target.querySelector('button'), async () => { await API.login(f.phone, f.password); });
   toast(`Welcome, ${esc(API.user.name)}`);
-  go(API.isAdmin ? '#/admin' : '#/');
+  go(API.isAdmin ? '#/admin' : API.isRider ? '#/rider' : '#/');
 }
-async function demoLogin(phone, pw) { await API.login(phone, pw).catch(errBox); go(API.isAdmin ? '#/admin' : '#/'); }
+async function demoLogin(phone, pw) { await API.login(phone, pw).catch(errBox); go(API.isAdmin ? '#/admin' : API.isRider ? '#/rider' : '#/'); }
 
 route('register', () => {
   const markets = (API.info.markets || []).map((m) => `<option>${esc(m)}</option>`).join('');
@@ -64,7 +65,8 @@ async function doRegister(e) {
 /* ================= HOME ================= */
 route('home', async () => {
   if (API.isAdmin) { setTimeout(() => go('#/admin')); return ''; }
-  const [products, feed] = await Promise.all([loadProducts(true), API.get('/api/feed')]);
+  if (API.isRider) { setTimeout(() => go('#/rider')); return ''; }
+  const [products, feed, deals] = await Promise.all([loadProducts(true), API.get('/api/feed'), API.get('/api/deals')]);
   const b = API.info.business, cats = API.info.categories;
   const featured = products.filter((p) => p.featured).slice(0, 8);
   const fresh = products.filter((p) => p.isNew).concat(products.filter((p) => !p.isNew)).slice(0, 8);
@@ -110,6 +112,7 @@ route('home', async () => {
     </div>
     ${last ? `<div class="box" style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:200px"><b style="color:var(--ink)">Reorder ${esc(last.no)}</b><div class="muted" style="font-size:13.5px">${last.items.length} items · ${rs(last.total)} · ${fmtDate(last.createdAt)}</div></div><button class="btn btn-ghost" onclick="reorder('${last.id}')">${icon('repeat')} Add all to cart</button></div>` : ''}`}
 
+    ${deals.length ? `<section class="section" style="margin-top:32px">${secHead('Flash deals', '⚡ Live deals', 'Prices end when the timer runs out.')}<div class="rail">${deals.map((d) => pcard(d.product)).join('')}</div></section>` : ''}
     ${feed.length ? `<section class="section" style="margin-top:32px">${secHead('Updates', 'From the store')}<div style="display:grid;gap:10px">${feed.slice(0, 4).map((a) => `<${a.pid ? `a href="#/p/${a.pid}"` : 'div'} class="feed-item"><b>${esc(a.title)}</b>${a.body ? `<p>${esc(a.body)}</p>` : ''}<small>${ago(a.at)}</small></${a.pid ? 'a' : 'div'}>`).join('')}</div></section>` : ''}
     <section class="section">${secHead('Categories', 'Shop by category', '', arrowLink('#/catalog', 'Full catalogue'))}<div class="cats">${catTiles}</div></section>
     <section class="section">${secHead('Just in', 'New and featured stock')}<div class="grid">${fresh.map(pcard).join('')}</div></section>
@@ -131,12 +134,12 @@ function pcard(p) {
   const margin = p.price && p.retail ? Math.round((1 - p.price / p.retail) * 100) : 0;
   return `<article class="card">
     <a href="#/p/${p.id}" class="media">${productArt(p)}</a>
-    <div class="chips">${p.isNew ? '<span class="chip new">New</span>' : ''}${p.grade ? `<span class="chip">${esc(p.grade)}</span>` : ''}</div>
+    <div class="chips">${p.priceKind === 'deal' ? `<span class="chip sale">⚡ ${countdown(p.dealEndsAt)}</span>` : ''}${p.priceKind === 'special' ? '<span class="chip new">Your special rate</span>' : ''}${p.isNew ? '<span class="chip new">New</span>' : ''}${p.grade ? `<span class="chip">${esc(p.grade)}</span>` : ''}</div>
     ${API.isShop ? `<button class="fav-btn ${fav ? 'on' : ''}" onclick="toggleFav('${p.id}',this)" aria-label="Save">${icon('heart')}</button>` : ''}
     <div class="body">
       <span class="brandname">${esc(p.brand || catName(p.cat))} · ${esc(p.sku)}</span>
       <a href="#/p/${p.id}"><h4>${esc(p.name)}</h4></a>
-      ${p.price != null ? `<div class="price"><b>${rs(p.price)}</b><span class="muted" style="font-size:12.5px">/ pc</span></div>
+      ${p.price != null ? `<div class="price"><b>${rs(p.price)}</b><span class="muted" style="font-size:12.5px">/ pc</span>${p.regularPrice && p.regularPrice > p.price ? `<s>${rs(p.regularPrice)}</s>` : ''}</div>${p.priceKind === 'deal' && p.dealMax ? `<div class="emi">Deal limit ${p.dealMax} per shop${p.dealBought ? ` · you bought ${p.dealBought}` : ''}</div>` : ''}
         <div style="display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap">${stockTag(p)}${margin > 0 ? `<span class="margin">${margin}% margin</span>` : ''}</div>
         <div class="meta-row">${p.packSize > 1 ? `<span>Pack of ${p.packSize}</span>` : ''}${p.moq > 1 ? `<span>Min ${p.moq}</span>` : ''}</div>
         ${API.isActiveShop ? `<div class="buy">${p.inStock ? (inCart ? `<a class="add-btn" href="#/cart" style="background:var(--ok)">${icon('check')}<span>${inCart} in cart</span></a>` : `<button class="add-btn" onclick="quickAdd('${p.id}',this)">${icon('cart')}<span>Add ${p.moq > 1 ? p.moq : ''}</span></button>`) : `<button class="add-btn" style="background:#fff;color:var(--navy);border:1px solid var(--line-2)" onclick="notifyMe('${p.id}')">${icon('bell')}<span>Notify me</span></button>`}</div>` : ''}`
@@ -225,7 +228,8 @@ route('p', async (r) => {
         <h1>${esc(p.name)}</h1>
         <div class="muted" style="font-size:14px">SKU ${esc(p.sku)} · ${stockTag(p)}</div>
         ${p.price != null ? `
-          <div class="price" style="margin:18px 0 2px"><b>${rs(p.price)}</b><span class="muted">per piece</span>${p.basePrice > p.price ? `<s>${rs(p.basePrice)}</s><span class="off" style="color:var(--ok)">${esc(API.user.tierName)} price</span>` : ''}</div>
+          <div class="price" style="margin:18px 0 2px"><b>${rs(p.price)}</b><span class="muted">per piece</span>${p.basePrice > p.price ? `<s>${rs(p.basePrice)}</s><span class="off" style="color:var(--ok)">${p.priceKind === 'deal' ? 'Flash deal' : p.priceKind === 'special' ? 'Your special rate' : esc(API.user.tierName) + ' price'}</span>` : ''}</div>
+          ${p.priceKind === 'deal' ? `<div class="banner-note" style="margin-top:12px">${icon('bolt')}<div><b>Flash deal ends in ${countdown(p.dealEndsAt)}</b><br>Regular price ${rs(p.regularPrice)}${p.dealMax ? ` · limit ${p.dealMax} per shop${p.dealBought ? ` (you've bought ${p.dealBought})` : ''}` : ''}</div></div>` : ''}
           ${p.retail ? `<div class="emi">Suggested retail ${rs(p.retail)} · <span class="margin">${margin}% margin for you</span></div>` : ''}
           <div class="meta-row" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;font-size:13px">${p.packSize > 1 ? `<span class="badge plain">Sold in packs of ${p.packSize}</span>` : ''}<span class="badge plain">Minimum order ${p.moq}</span></div>
           ${API.isActiveShop ? (p.inStock ? `<div style="display:flex;gap:10px;align-items:center;margin-top:22px;flex-wrap:wrap">
@@ -348,12 +352,13 @@ route('order', async (r) => {
           ${o.status !== 'cancelled' ? `<button class="btn btn-ghost" onclick="reorder('${o.id}')">${icon('repeat')} Order again</button>` : ''}
           ${['confirmed', 'packed', 'dispatched', 'delivered'].includes(o.status) ? `<button class="btn btn-ghost" onclick="openClaim('${o.id}')">${icon('alert')} Report a faulty item</button>` : ''}
           <button class="btn btn-ghost" onclick="copyText(${esc(JSON.stringify(invoiceText))}, 'Invoice copied — paste it in WhatsApp')">${icon('receipt')} Copy invoice</button>
+          <a class="btn btn-ghost" href="#/print/invoice/${o.id}">${icon('receipt')} Print / PDF</a>
         </div>
       </div>
       <div class="box" style="padding:22px"><h3 style="margin:0 0 16px;font-size:17px">Progress</h3>
         ${o.status === 'cancelled' ? '' : `<div style="display:flex;gap:4px;margin-bottom:18px">${steps.map((s) => `<i style="flex:1;height:5px;border-radius:4px;background:${steps.indexOf(s) <= steps.indexOf(o.status) ? 'var(--navy)' : 'var(--line)'}"></i>`).join('')}</div>`}
         <ul class="timeline">${o.history.slice().reverse().map((h) => `<li><b style="color:var(--ink)">${esc(STATUS_LABEL[h.status] || h.status)}</b>${h.note ? ` · ${esc(h.note)}` : ''}<small>${fmtDateTime(h.at)} · ${esc(h.by)}</small></li>`).join('')}</ul>
-        <div class="muted" style="font-size:13.5px;margin-top:8px">Payment: ${o.payment === 'credit' ? 'Khata (credit)' : o.payment === 'bank' ? 'Bank / mobile wallet' : 'Cash'}</div>
+        <div class="muted" style="font-size:13.5px;margin-top:8px">Payment: ${o.payment === 'credit' ? 'Khata (credit)' : o.payment === 'bank' ? 'Bank / mobile wallet' : 'Cash'}${o.riderName ? `<br>Rider: ${esc(o.riderName)} · <span style="user-select:all">${esc(o.riderPhone)}</span>` : ''}</div>
       </div>
     </div></div>`;
 });
@@ -389,6 +394,8 @@ route('khata', async () => {
     <div class="summary-cards">
       <div class="sc dark"><span>Balance due</span><b>${rs(k.balance)}</b><small>${k.balance > 0 ? 'Payable to the store' : k.balance < 0 ? 'In your favour' : 'All settled'}</small></div>
       <div class="sc"><span>Credit limit</span><b>${rs(k.creditLimit)}</b><small>Available ${rs(Math.max(0, k.creditLimit - k.balance))}</small></div>
+      <div class="sc ${k.aging.overdue ? 'alert' : ''}"><span>Older than 30 days</span><b>${rs(k.aging.overdue)}</b><small>${k.aging.d90 ? `${rs(k.aging.d90)} over 90 days` : 'Please clear old dues first'}</small></div>
+      <a class="sc" href="#/print/statement/me"><span>${icon('receipt')} Statement</span><b style="font-size:18px">Print / PDF</b><small>Full khata history</small></a>
     </div>
     ${API.info.business.bank ? `<div class="notice">${icon('cash', 'width="16" height="16" style="vertical-align:-3px"')} Pay by bank or wallet: ${esc(API.info.business.bank)}</div>` : ''}
     <section class="section" style="margin-top:28px">${secHead('', 'Statement')}
@@ -434,19 +441,20 @@ route('saved', async () => {
 route('account', async () => {
   needLogin();
   const u = API.user;
-  return `<div class="wrap" style="max-width:720px"><div class="page-head"><h1>Account</h1><p>${esc(u.phone)} · ${u.role === 'shop' ? 'Shop account' : u.role === 'admin' ? 'Owner' : 'Staff'} ${badge(u.status)}</p></div>
+  return `<div class="wrap" style="max-width:720px"><div class="page-head"><h1>Account</h1><p>${esc(u.phone)} · ${{ shop: 'Shop account', admin: 'Owner', staff: 'Staff', rider: 'Rider' }[u.role]} ${badge(u.status)}</p></div>
     ${u.role === 'shop' ? `<form class="box" style="padding:22px" onsubmit="saveProfile(event)"><h3 style="margin:0;font-size:18px">Shop details</h3><div class="form-grid">
       <div><label class="f" for="acShop">Shop name</label><input class="input" id="acShop" name="shopName" value="${esc(u.shop.shopName)}" required></div>
       <div><label class="f" for="acName">Your name</label><input class="input" id="acName" name="name" value="${esc(u.name)}" required></div>
       <div><label class="f" for="acMarket">Market / area</label><select class="select" id="acMarket" name="market">${API.info.markets.map((m) => `<option ${m === u.shop.market ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
       <div><label class="f" for="acAddr">Address</label><input class="input" id="acAddr" name="address" value="${esc(u.shop.address || '')}"></div></div>
       <button class="btn btn-primary" style="margin-top:16px">Save details</button></form>` : ''}
+    ${await Push.box()}
     <form class="box" style="padding:22px;margin-top:16px" onsubmit="changePassword(event)"><h3 style="margin:0;font-size:18px">Change password</h3><div class="form-grid">
       <div><label class="f" for="pwCur">Current password</label><input class="input" id="pwCur" name="current" type="password" required autocomplete="current-password"></div>
       <div><label class="f" for="pwNew">New password</label><input class="input" id="pwNew" name="password" type="password" minlength="6" required autocomplete="new-password"></div></div>
       <button class="btn btn-primary" style="margin-top:16px">Update password</button></form>
     <div class="box" style="padding:0 18px;margin-top:16px">
-      ${u.role === 'shop' ? `<a href="#/saved" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('heart', 'width="20" height="20"')}<span style="flex:1">Saved items</span>${icon('chevron', 'width="18" height="18"')}</a>
+      ${u.role === 'rider' ? `<a href="#/rider" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('truck', 'width="20" height="20"')}<span style="flex:1">My deliveries</span>${icon('chevron', 'width="18" height="18"')}</a>` : u.role === 'shop' ? `<a href="#/saved" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('heart', 'width="20" height="20"')}<span style="flex:1">Saved items</span>${icon('chevron', 'width="18" height="18"')}</a>
       <a href="#/khata" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('receipt', 'width="20" height="20"')}<span style="flex:1">Khata statement</span>${icon('chevron', 'width="18" height="18"')}</a>` : `<a href="#/admin" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('dash', 'width="20" height="20"')}<span style="flex:1">Admin panel</span>${icon('chevron', 'width="18" height="18"')}</a>`}
       <button onclick="installApp()" style="display:flex;gap:12px;align-items:center;padding:16px 0;width:100%;text-align:left;border-bottom:1px solid var(--line)">${icon('install', 'width="20" height="20"')}<span style="flex:1">Install the app</span>${icon('chevron', 'width="18" height="18"')}</button>
       <button onclick="signOut()" style="display:flex;gap:12px;align-items:center;padding:16px 0;width:100%;text-align:left;color:var(--danger)">${icon('logout', 'width="20" height="20"')}<span style="flex:1">Sign out</span></button>

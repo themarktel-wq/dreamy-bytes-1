@@ -2,8 +2,8 @@
 
 const ADMIN_NAV = [
   ['dash', 'dash', 'Dashboard'], ['orders', 'truck', 'Orders', 'pendingOrders'], ['pos', 'cash', 'Counter sale'], ['messages', 'chat', 'Messages', 'unread'],
-  ['shops', 'store', 'Shops', 'pendingShops'], ['khata', 'receipt', 'Khata'], ['products', 'box', 'Inventory'], ['purchases', 'download', 'Purchases', null, true],
-  ['claims', 'alert', 'Claims & requests'], ['feed', 'bell', 'Announcements'], ['reports', 'report', 'Reports', null, true], ['settings', 'settings', 'Settings', null, true],
+  ['shops', 'store', 'Shops', 'pendingShops'], ['khata', 'receipt', 'Khata'], ['products', 'box', 'Inventory'], ['purchases', 'download', 'Purchases', null, true], ['suppliers', 'users', 'Suppliers', null, true],
+  ['deals', 'bolt', 'Flash deals'], ['riders', 'truck2', 'Riders'], ['claims', 'alert', 'Claims & requests'], ['feed', 'bell', 'Announcements'], ['reports', 'report', 'Reports', null, true], ['settings', 'settings', 'Settings', null, true],
 ];
 function adminLayout(active, body) {
   const me = API.me || {};
@@ -74,7 +74,7 @@ route('admin/orders', async (r) => {
 });
 route('admin/order', async (r) => {
   needAdmin();
-  const o = await API.get('/api/orders/' + r.arg);
+  const [o, riders] = await Promise.all([API.get('/api/orders/' + r.arg), API.get('/api/admin/riders')]);
   const next = { pending: ['confirmed', 'cancelled'], confirmed: ['packed', 'dispatched', 'delivered', 'cancelled'], packed: ['dispatched', 'delivered', 'cancelled'], dispatched: ['delivered'] }[o.status] || [];
   const ACT = { confirmed: ['Confirm order', 'btn-primary'], packed: ['Mark packed', 'btn-ghost'], dispatched: ['Mark dispatched', 'btn-ghost'], delivered: ['Mark delivered', 'btn-ghost'], cancelled: ['Cancel order', 'btn-danger'] };
   const b = API.info.business, showMargin = API.isOwner && o.profit !== undefined;
@@ -91,11 +91,12 @@ route('admin/order', async (r) => {
         ${o.status === 'pending' ? `<div class="inline-form" style="margin-top:12px"><div><label class="f" for="odDisc">Discount (Rs)</label><input class="input" id="odDisc" inputmode="numeric" value="${o.discount || 0}"></div><button class="btn btn-ghost" onclick="saveOrderItems('${o.id}')">Save changes</button></div><p class="muted" style="font-size:13px">Set a quantity to 0 to remove a line. Stock is taken only when you confirm.</p>` : ''}
         ${o.note ? `<div class="notice">Shop note: ${esc(o.note)}</div>` : ''}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
-          <button class="btn btn-ghost" onclick="copyText(${esc(JSON.stringify(invoiceText))}, 'Invoice copied')">${icon('receipt')} Copy invoice</button>
+          <a class="btn btn-ghost" href="#/print/invoice/${o.id}">${icon('receipt')} Print / PDF</a><a class="btn btn-ghost" href="#/print/invoice/${o.id}?f=thermal">Thermal slip</a>
+          <button class="btn btn-ghost" onclick="copyText(${esc(JSON.stringify(invoiceText))}, 'Invoice copied')">Copy invoice</button>
           ${o.shopPhone ? `<a class="btn btn-wa" href="${waLink(o.shopPhone, invoiceText)}" target="_blank" rel="noopener">${icon('wa')} Send on WhatsApp</a><a class="btn btn-ghost" href="#/admin/chat/${o.shopId}">${icon('chat')} Message shop</a>` : ''}
         </div>
       </div>
-      <div class="box" style="padding:22px"><h3 style="margin:0 0 14px;font-size:17px">History</h3>
+      <div class="box" style="padding:22px">${o.shopId && ['confirmed', 'packed', 'dispatched'].includes(o.status) ? `<label class="f" style="margin-top:0" for="odRider">Delivery rider</label><select class="select" id="odRider" onchange="assignRider('${o.id}',this.value)"><option value="">Not assigned</option>${riders.filter((x) => x.status === 'active').map((x) => `<option value="${x.id}" ${x.id === o.riderId ? 'selected' : ''}>${esc(x.name)} · ${x.active} active</option>`).join('')}</select>${riders.length ? '' : '<p class="muted" style="font-size:13px">Add riders from the Riders page.</p>'}<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">` : o.riderName ? `<p class="muted" style="font-size:13.5px;margin:0 0 12px">Delivered by ${esc(o.riderName)}${o.collected ? ` · collected ${rs(o.collected)}` : ''}</p>` : ''}<h3 style="margin:0 0 14px;font-size:17px">History</h3>
         <ul class="timeline">${o.history.slice().reverse().map((h) => `<li><b style="color:var(--ink)">${esc(STATUS_LABEL[h.status] || h.status)}</b>${h.note ? ` · ${esc(h.note)}` : ''}<small>${fmtDateTime(h.at)} · ${esc(h.by)}</small></li>`).join('')}</ul>
         ${o.paid !== undefined ? `<div class="muted" style="font-size:13.5px">Paid at counter: ${rs(o.paid)}</div>` : ''}</div>
     </div>`);
@@ -130,7 +131,7 @@ route('admin/pos', async () => {
   return adminLayout('pos', `
     <div class="head-row"><div><h1>Counter sale</h1><p>Sell to a walk-in customer or a registered shop. Stock and khata update instantly.</p></div></div>
     <div class="pos">
-      <div><input class="input" id="posQ" placeholder="Search product, SKU or model" style="margin-bottom:10px" aria-label="Search products"><div class="pos-grid" id="posGrid"></div></div>
+      <div><div style="display:flex;gap:8px;margin-bottom:8px"><input class="input" id="posScan" placeholder="Scan barcode / QR or type SKU, then Enter" autocomplete="off" aria-label="Scan"><button class="btn btn-ghost" id="posCam" aria-label="Scan with camera">${icon('search')} Camera</button></div><input class="input" id="posQ" placeholder="Search product, SKU or model" style="margin-bottom:10px" aria-label="Search products"><div class="pos-grid" id="posGrid"></div></div>
       <div class="box" style="padding:18px;align-self:start;position:sticky;top:100px">
         <label class="f" style="margin-top:0" for="posShop">Customer</label>
         <select class="select" id="posShop"><option value="">Walk-in customer (paid now)</option>${POS.shops.map((s) => `<option value="${s.id}">${esc(s.shop.shopName)} · ${esc(s.tierName)} · bal ${rs(s.balance)}</option>`).join('')}</select>
@@ -153,12 +154,17 @@ after('admin/pos', () => {
     $('#posGrid').innerHTML = list.map((p) => `<button class="pos-item" onclick="posAdd('${p.id}')" ${p.stock <= 0 ? 'disabled style="opacity:.45"' : ''}><span class="li-thumb">${productArt(p)}</span><span class="li-main"><b style="font-size:13.5px">${esc(p.name)}</b><small>${esc(p.sku)} · ${rs(p.price)} · ${p.stock} in stock</small></span></button>`).join('') || '<p class="muted">No products found.</p>';
   };
   $('#posQ').addEventListener('input', grid);
-  $('#posShop').addEventListener('change', (e) => { POS.shopId = e.target.value; posDraw(); });
+  POS.prices = null;
+  $('#posShop').addEventListener('change', async (e) => { POS.shopId = e.target.value; POS.prices = POS.shopId ? await API.get('/api/admin/prices/' + POS.shopId).catch(() => null) : null; posDraw(); });
+  const scanAdd = (code) => { const p = findByCode(POS.products, code); if (!p) return toast(`No product with code ${esc(code)}`, 'info'); if (p.stock <= 0) return toast(`${esc(p.name)} is out of stock`, 'info'); posAdd(p.id); toast(`Added ${esc(p.name)}`, 'cart'); };
+  $('#posScan').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); scanAdd(e.target.value); e.target.value = ''; } });
+  $('#posCam').addEventListener('click', async () => { const c = await scanBarcode(); if (c) scanAdd(c); });
+  setTimeout(() => $('#posScan').focus(), 50);
   ['#posDisc', '#posPaid'].forEach((s) => $(s).addEventListener('input', posDraw));
   $('#posGo').addEventListener('click', posComplete);
   grid(); posDraw();
 });
-function posPrice(p) { const s = POS.shops.find((x) => x.id === POS.shopId); return s ? Math.round(p.price * (1 - (s.tierDisc || 0) / 100)) : p.price; }
+function posPrice(p) { if (POS.prices && POS.prices[p.id]) return POS.prices[p.id].price; const s = POS.shops.find((x) => x.id === POS.shopId); return s ? Math.round(p.price * (1 - (s.tierDisc || 0) / 100)) : p.price; }
 function posAdd(pid) { const l = POS.lines.find((x) => x.pid === pid); const p = POS.products.find((x) => x.id === pid); if (l) l.qty = Math.min(p.stock, l.qty + 1); else POS.lines.push({ pid, qty: 1 }); posDraw(); }
 function posQty(pid, v) { const p = POS.products.find((x) => x.id === pid); const l = POS.lines.find((x) => x.pid === pid); l.qty = Math.max(0, Math.min(p.stock, parseInt(v) || 0)); POS.lines = POS.lines.filter((x) => x.qty > 0); posDraw(); }
 function posDraw() {
@@ -185,7 +191,7 @@ route('admin/products', async (r) => {
   INV.list = list;
   return adminLayout('products', `
     <div class="head-row"><div><h1>Inventory</h1><p>${list.filter((p) => p.active !== false).length} active products · ${list.filter((p) => p.active !== false && p.stock <= p.reorderLevel).length} at or below reorder level</p></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">${API.isOwner ? `<a class="btn btn-ghost" href="#/admin/purchases/new">${icon('download')} Receive stock</a><a class="btn btn-primary" href="#/admin/product/new">${icon('plus')} Add product</a>` : ''}</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost" href="#/admin/count">${icon('search')} Stock count</a><a class="btn btn-ghost" href="#/admin/labels">${icon('receipt')} QR labels</a>${API.isOwner ? `<a class="btn btn-ghost" href="#/admin/purchases/new">${icon('download')} Receive stock</a><a class="btn btn-primary" href="#/admin/product/new">${icon('plus')} Add product</a>` : ''}</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><input class="input" id="invQ" placeholder="Search name, SKU, brand or model" style="flex:1;min-width:220px" aria-label="Search">
       <select class="select" id="invCat" style="width:auto" aria-label="Category"><option value="">All categories</option>${API.info.categories.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
       <div class="seg" id="invF"><button data-f="" class="${f === '' ? 'on' : ''}">All</button><button data-f="low" class="${f === 'low' ? 'on' : ''}">Low</button><button data-f="out" class="${f === 'out' ? 'on' : ''}">Out</button><button data-f="archived" class="${f === 'archived' ? 'on' : ''}">Archived</button></div></div>
@@ -240,6 +246,7 @@ route('admin/product', async (r) => {
         <div><label class="f" for="pfGrade">Grade / quality</label><input class="input" id="pfGrade" name="grade" list="grades" value="${esc(p.grade || '')}" ${ro}><datalist id="grades">${API.info.grades.map((g) => `<option>${esc(g)}</option>`).join('')}</datalist></div>
         <div><label class="f" for="pfBrand">Brand</label><input class="input" id="pfBrand" name="brand" value="${esc(p.brand || '')}" ${ro}></div>
         <div><label class="f" for="pfSku">SKU / code</label><input class="input" id="pfSku" name="sku" value="${esc(p.sku || '')}" placeholder="Automatic if empty" ${ro}></div>
+        <div class="full"><label class="f" for="pfBarcode">Barcode (optional)</label><div style="display:flex;gap:8px"><input class="input" id="pfBarcode" name="barcode" value="${esc(p.barcode || '')}" placeholder="Scan the box barcode, or leave empty to use the SKU" ${ro}>${API.isOwner ? `<button type="button" class="btn btn-ghost" onclick="scanBarcode().then((c)=>{if(c)$('#pfBarcode').value=c})" aria-label="Scan">${icon('search')}</button>` : ''}</div></div>
         <div class="full"><label class="f" for="pfModels">Compatible models (comma separated)</label><input class="input" id="pfModels" name="models" value="${esc((p.models || []).join(', '))}" placeholder="e.g. iPhone 11, iPhone XR" ${ro}></div>
         <div><label class="f" for="pfPrice">Wholesale list price (Rs)</label><input class="input" id="pfPrice" name="price" inputmode="numeric" value="${p.price}" required ${ro}></div>
         <div><label class="f" for="pfRetail">Suggested retail (Rs)</label><input class="input" id="pfRetail" name="retail" inputmode="numeric" value="${p.retail || ''}" ${ro}></div>
@@ -340,7 +347,7 @@ async function addShop() {
 }
 route('admin/shop', async (r) => {
   needAdmin();
-  const [shops, led, orders] = await Promise.all([API.get('/api/admin/shops'), API.get('/api/admin/ledger/' + r.arg), API.get('/api/admin/orders?shopId=' + r.arg)]);
+  const [shops, led, orders, special, products] = await Promise.all([API.get('/api/admin/shops'), API.get('/api/admin/ledger/' + r.arg), API.get('/api/admin/orders?shopId=' + r.arg), API.get(`/api/admin/shops/${r.arg}/special`), API.get('/api/admin/products')]);
   const s = shops.find((x) => x.id === r.arg); if (!s) throw new Error('Shop not found');
   const TYPE = { invoice: 'Order', payment: 'Payment', adjust: 'Adjustment', return: 'Claim credit' };
   return adminLayout('shops', `${crumb(['Shops', '#/admin/shops'], s.shop.shopName)}
@@ -354,8 +361,11 @@ route('admin/shop', async (r) => {
     </div>
     <div class="two-col" style="margin-top:20px">
       <div>
-        <div class="head-row" style="margin-bottom:10px"><h3 style="margin:0;font-size:18px">Khata</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="recordPayment('${s.id}')">${icon('cash')} Record payment</button>${API.isOwner ? `<button class="btn btn-ghost btn-sm" onclick="khataAdjust('${s.id}')">Adjustment</button>` : ''}<a class="btn btn-ghost btn-sm" href="${waLink(s.phone, `Assalam o Alaikum ${s.name}, ${API.info.business.name} ka khata balance ${rs(led.balance)} hai. Shukriya.`)}" target="_blank" rel="noopener">${icon('wa')} Send balance</a></div></div>
+        <div class="head-row" style="margin-bottom:10px"><h3 style="margin:0;font-size:18px">Khata</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="recordPayment('${s.id}')">${icon('cash')} Record payment</button>${API.isOwner ? `<button class="btn btn-ghost btn-sm" onclick="khataAdjust('${s.id}')">Adjustment</button>` : ''}<a class="btn btn-ghost btn-sm" href="${waLink(s.phone, `Assalam o Alaikum ${s.name}, ${API.info.business.name} ka khata balance ${rs(led.balance)} hai. Shukriya.`)}" target="_blank" rel="noopener">${icon('wa')} Send balance</a><a class="btn btn-ghost btn-sm" href="#/print/statement/${s.id}">${icon('receipt')} Statement</a></div></div>
         ${led.entries.length ? `<div class="tbl-wrap"><table class="tbl" style="min-width:480px"><thead><tr><th>Date</th><th>Entry</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead><tbody>${led.entries.slice(0, 60).map((e) => `<tr><td>${fmtDate(e.at)}</td><td>${TYPE[e.type] || esc(e.type)} <span class="muted">${esc(e.ref || '')}</span><br><small class="muted">${esc(e.note || '')}${e.method ? ' · ' + esc(e.method) : ''} · ${esc(e.by || '')}</small></td><td class="num">${e.dir > 0 ? rs(e.amount) : ''}</td><td class="num">${e.dir < 0 ? rs(e.amount) : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No khata entries yet.</p>'}
+        <div class="head-row" style="margin:28px 0 10px"><h3 style="margin:0;font-size:18px">Special prices</h3>${API.isOwner ? `<button class="btn btn-ghost btn-sm" onclick="addSpecial('${s.id}')">${icon('plus')} Add special price</button>` : ''}</div>
+        <p class="muted" style="font-size:13.5px;margin:-4px 0 10px">Fixed rates for this shop only. They replace the tier price; a flash deal still applies if it is lower.</p>
+        ${special.length ? `<div class="tbl-wrap"><table class="tbl" style="min-width:460px"><thead><tr><th>Product</th><th class="num">List</th><th class="num">Tier</th><th class="num">Special</th>${API.isOwner ? '<th class="num">Margin</th><th></th>' : ''}</tr></thead><tbody>${special.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${rs(x.listPrice)}</td><td class="num">${rs(x.tierPrice)}</td><td class="num"><b>${rs(x.price)}</b></td>${API.isOwner ? `<td class="num" style="color:${x.price < x.cost ? 'var(--danger)' : 'inherit'}">${rs(x.price - x.cost)}</td><td class="num"><button class="btn btn-ghost btn-sm" onclick="removeSpecial('${s.id}','${x.pid}')" aria-label="Remove">${icon('close')}</button></td>` : ''}</tr>`).join('')}</tbody></table></div>` : '<p class="muted">No special prices.</p>'}
         <h3 style="margin:28px 0 10px;font-size:18px">Orders</h3>
         ${orders.length ? `<div class="list">${orders.slice(0, 30).map((o) => `<a href="#/admin/order/${o.id}"><div class="li-main"><b>${esc(o.no)}</b><small>${fmtDateTime(o.createdAt)} · ${o.items.length} items</small></div><div class="li-end"><b>${rs(o.total)}</b>${badge(o.status)}</div></a>`).join('')}</div>` : '<p class="muted">No orders yet.</p>'}
       </div>
@@ -389,10 +399,15 @@ route('admin/khata', async () => {
   needAdmin();
   const list = await API.get('/api/admin/receivables');
   const total = list.reduce((a, r) => a + Math.max(0, r.balance), 0);
-  return adminLayout('khata', `<div class="head-row"><div><h1>Khata</h1><p>Total owed by shops: <b style="color:var(--ink)">${rs(total)}</b></p></div></div>
-    ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Shop</th><th>Market</th><th class="num">Balance</th><th class="num">Limit</th><th>Last payment</th><th></th></tr></thead><tbody>
-      ${list.map((r) => `<tr class="click" onclick="go('#/admin/shop/${r.id}')"><td><b style="color:var(--ink);font-weight:500">${esc(r.shopName)}</b><br><small class="muted">${esc(r.name)} · ${esc(r.phone)}</small></td><td>${esc(r.market || '')}</td><td class="num"><b style="color:${r.balance > r.creditLimit ? 'var(--danger)' : 'var(--ink)'}">${rs(r.balance)}</b></td><td class="num">${rs(r.creditLimit)}</td><td>${r.lastPaymentAt ? ago(r.lastPaymentAt) : '<span style="color:var(--warn)">Never</span>'}</td>
-        <td class="num" onclick="event.stopPropagation()"><a class="btn btn-ghost btn-sm" href="${waLink(r.phone, `Assalam o Alaikum ${r.name}, ${API.info.business.name} ka khata balance ${rs(r.balance)} hai. Shukriya.`)}" target="_blank" rel="noopener">${icon('wa')} Remind</a></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${icon('receipt')}<p>All khata accounts are settled.</p></div>`}`);
+  const sum = (k) => list.reduce((a, r) => a + (r.aging[k] || 0), 0);
+  return adminLayout('khata', `<div class="head-row"><div><h1>Khata</h1><p>Total owed by shops: <b style="color:var(--ink)">${rs(total)}</b></p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="runReminders(this)">${icon('bell')} Send due reminders</button></div></div>
+    <div class="summary-cards" style="margin-bottom:16px"><div class="sc"><span>0–30 days</span><b>${rs(sum('d0'))}</b><small>Current</small></div><div class="sc ${sum('d30') ? 'alert' : ''}"><span>31–60 days</span><b>${rs(sum('d30'))}</b><small>Overdue</small></div><div class="sc ${sum('d60') ? 'alert' : ''}"><span>61–90 days</span><b>${rs(sum('d60'))}</b><small>Follow up</small></div><div class="sc ${sum('d90') ? 'alert' : ''}"><span>Over 90 days</span><b>${rs(sum('d90'))}</b><small>At risk</small></div></div>
+    <p class="muted" style="font-size:13.5px;margin:0 0 12px">Payments settle the oldest orders first. "Send due reminders" posts a reminder in each overdue shop's app chat and sends a phone notification${(API.info && API.info.remindersAuto) ? '' : ''}; automatic reminders are set in Settings. WhatsApp reminders open WhatsApp with the message ready to send.</p>
+    ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Shop</th><th class="num">Balance</th><th class="num">0–30</th><th class="num">31–60</th><th class="num">61–90</th><th class="num">90+</th><th>Last payment</th><th></th></tr></thead><tbody>
+      ${list.map((r) => `<tr class="click" onclick="go('#/admin/shop/${r.id}')"><td><b style="color:var(--ink);font-weight:500">${esc(r.shopName)}</b><br><small class="muted">${esc(r.market || '')} · <span style="user-select:all">${esc(r.phone)}</span>${r.lastReminderAt ? ` · reminded ${ago(r.lastReminderAt)}` : ''}</small></td><td class="num"><b style="color:${r.balance > r.creditLimit ? 'var(--danger)' : 'var(--ink)'}">${rs(r.balance)}</b><br><small class="muted">limit ${rs(r.creditLimit)}</small></td>
+        <td class="num">${r.aging.d0 ? rs(r.aging.d0) : '—'}</td><td class="num" style="color:var(--warn)">${r.aging.d30 ? rs(r.aging.d30) : '—'}</td><td class="num" style="color:var(--warn)">${r.aging.d60 ? rs(r.aging.d60) : '—'}</td><td class="num" style="color:var(--danger)">${r.aging.d90 ? rs(r.aging.d90) : '—'}</td>
+        <td>${r.lastPaymentAt ? ago(r.lastPaymentAt) : '<span style="color:var(--warn)">Never</span>'}</td>
+        <td class="num" onclick="event.stopPropagation()"><a class="btn btn-ghost btn-sm" href="${waLink(r.phone, agingText(r))}" target="_blank" rel="noopener">${icon('wa')} Remind</a></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${icon('receipt')}<p>All khata accounts are settled.</p></div>`}`);
 });
 
 /* ================= MESSAGES ================= */
@@ -460,7 +475,7 @@ route('admin/reports', async (r) => {
   needAdmin(); if (!API.isOwner) throw new Error('Reports are available to the owner.');
   const days = parseInt(r.q.get('d')) || 30;
   const to = Date.now() + 1, from = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime() - (days - 1) * 864e5; })();
-  const [s, st] = await Promise.all([API.get(`/api/admin/reports/sales?from=${from}&to=${to}`), API.get('/api/admin/reports/stock')]);
+  const [s, st, fr] = await Promise.all([API.get(`/api/admin/reports/sales?from=${from}&to=${to}`), API.get('/api/admin/reports/stock'), API.get('/api/admin/reports/faulty')]);
   const max = Math.max(1, ...s.byDay.map((d) => d.total));
   return adminLayout('reports', `<div class="head-row"><div><h1>Reports</h1><p>${fmtDate(from)} – ${fmtDate(Date.now())}</p></div>
       <div class="seg">${[[1, 'Today'], [7, '7 days'], [30, '30 days'], [90, '90 days'], [365, '1 year']].map(([d, l]) => `<a href="#/admin/reports?d=${d}" class="${days === d ? 'on' : ''}">${l}</a>`).join('')}</div></div>
@@ -477,6 +492,8 @@ route('admin/reports', async (r) => {
     </div>
     <h3 style="font-size:18px;margin:32px 0 10px">Products</h3>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Product</th><th class="num">Qty sold</th><th class="num">Sales</th><th class="num">Profit</th><th class="num">Margin</th></tr></thead><tbody>${s.byProduct.map((p) => `<tr><td>${esc(p.name)}</td><td class="num">${p.qty.toLocaleString()}</td><td class="num">${rs(p.total)}</td><td class="num">${rs(p.profit)}</td><td class="num">${pct(p.profit, p.total)}%</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No sales in this period.</td></tr>'}</tbody></table></div>
+    <h3 style="font-size:18px;margin:32px 0 10px">Faulty rate by supplier</h3>
+    ${fr.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Supplier</th><th class="num">Units bought</th><th class="num">Faulty (claims)</th><th class="num">Rate</th><th>Worst product</th></tr></thead><tbody>${fr.map((x) => `<tr class="click" onclick="go('#/admin/supplier/${x.id}')"><td>${esc(x.name)}</td><td class="num">${x.units.toLocaleString()}</td><td class="num">${x.faultyUnits}</td><td class="num" style="color:${x.faultyRate >= 5 ? 'var(--danger)' : x.faultyRate >= 2 ? 'var(--warn)' : 'inherit'}"><b>${x.faultyRate}%</b></td><td>${x.byProduct[0] && x.byProduct[0].faulty ? `${esc(x.byProduct[0].name)} (${x.byProduct[0].rate}%)` : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Record purchases with a supplier to see faulty rates.</p>'}
     <h3 style="font-size:18px;margin:32px 0 10px">Stock</h3>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Sold (30 d)</th><th class="num">Days left</th><th class="num">Value (cost)</th></tr></thead><tbody>${st.rows.map((p) => `<tr class="click" onclick="go('#/admin/product/${p.id}')"><td>${esc(p.name)}<br><small class="muted">${esc(p.sku)}${p.faulty ? ` · ${p.faulty} faulty` : ''}</small></td><td class="num" style="color:${p.stock <= p.reorderLevel ? 'var(--warn)' : 'inherit'}">${p.stock}</td><td class="num">${p.sold30}</td><td class="num">${p.daysLeft == null ? (p.stock > 0 ? '<span style="color:var(--warn)">No sales</span>' : '—') : p.daysLeft}</td><td class="num">${rs(p.costValue)}</td></tr>`).join('')}</tbody></table></div>`);
 });
@@ -497,12 +514,17 @@ route('admin/settings', async () => {
       <div><label class="f" for="stBank">Bank / wallet details for payments</label><input class="input" id="stBank" name="bank" value="${esc(b.bank)}" placeholder="e.g. Meezan 0123… · JazzCash 0300…"></div></div>
       <h3 style="margin:24px 0 0;font-size:18px">Price tiers</h3><p class="muted" style="font-size:13.5px;margin:4px 0 0">Discount off the list price for each tier. Assign tiers on each shop's page.</p>
       <div class="form-grid">${s.tiers.map((t, i) => `<div><label class="f" for="tn${i}">Tier ${i + 1} name</label><input class="input" id="tn${i}" name="tn${i}" value="${esc(t.name)}"><input type="hidden" name="ti${i}" value="${esc(t.id)}"></div><div><label class="f" for="td${i}">Discount %</label><input class="input" id="td${i}" name="td${i}" inputmode="numeric" value="${t.disc}"></div>`).join('')}</div>
+      <h3 style="margin:24px 0 0;font-size:18px">Automatic payment reminders</h3><p class="muted" style="font-size:13.5px;margin:4px 0 0">The server checks every hour and reminds shops with old dues in their app chat plus a phone notification.</p>
+      <div class="form-grid"><label class="switch full">Send automatic reminders <input type="checkbox" name="remOn" ${s.reminders && s.reminders.enabled ? 'checked' : ''}></label>
+        <div><label class="f" for="remMin">Remind when dues are older than (days)</label><input class="input" id="remMin" name="remMin" inputmode="numeric" value="${(s.reminders && s.reminders.minDays) || 30}"></div>
+        <div><label class="f" for="remEvery">Repeat every (days)</label><input class="input" id="remEvery" name="remEvery" inputmode="numeric" value="${(s.reminders && s.reminders.everyDays) || 7}"></div></div>
       <h3 style="margin:24px 0 0;font-size:18px">Markets</h3><label class="f" for="stMk">Markets offered at registration (comma separated)</label><input class="input" id="stMk" name="markets" value="${esc(s.markets.join(', '))}">
       <button class="btn btn-primary" style="margin-top:18px">Save settings</button></form>
 
-    <div class="box" style="padding:22px;margin-top:16px"><div class="head-row" style="margin-bottom:8px"><h3 style="margin:0;font-size:18px">Staff</h3><button class="btn btn-ghost btn-sm" onclick="addStaff()">${icon('plus')} Add staff</button></div>
+    ${await Push.box()}
+    <div class="box" style="padding:22px;margin-top:16px"><div class="head-row" style="margin-bottom:8px"><h3 style="margin:0;font-size:18px">Staff & riders</h3><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="addStaff('staff')">${icon('plus')} Add staff</button><button class="btn btn-ghost btn-sm" onclick="addStaff('rider')">${icon('plus')} Add rider</button></div></div>
       <p class="muted" style="font-size:13.5px;margin:0 0 10px">Staff can handle orders, counter sales, messages, payments and stock counts. They can't see cost, profit or reports, edit products, or change credit limits.</p>
-      <div class="list">${staff.map((u) => `<div class="li"><div class="li-main"><b>${esc(u.name)}</b><small>${esc(u.phone)} · ${u.role === 'admin' ? 'Owner' : 'Staff'}</small></div><div class="li-end">${u.role === 'staff' ? `${u.status === 'blocked' ? badge('blocked', 'Disabled') : ''} <button class="btn btn-ghost btn-sm" onclick="staffToggle('${u.id}','${u.status === 'blocked' ? 'active' : 'blocked'}')">${u.status === 'blocked' ? 'Enable' : 'Disable'}</button>` : badge('active', 'Owner')}</div></div>`).join('')}</div></div>
+      <div class="list">${staff.map((u) => `<div class="li"><div class="li-main"><b>${esc(u.name)}</b><small>${esc(u.phone)} · ${{ admin: 'Owner', staff: 'Staff', rider: 'Rider' }[u.role]}</small></div><div class="li-end">${u.role !== 'admin' ? `${u.status === 'blocked' ? badge('blocked', 'Disabled') : ''} <button class="btn btn-ghost btn-sm" onclick="staffToggle('${u.id}','${u.status === 'blocked' ? 'active' : 'blocked'}')">${u.status === 'blocked' ? 'Enable' : 'Disable'}</button>` : badge('active', 'Owner')}</div></div>`).join('')}</div></div>
 
     <div class="box" style="padding:22px;margin-top:16px"><h3 style="margin:0;font-size:18px">Backup</h3><p class="muted" style="font-size:13.5px">A full copy of every product, shop, order and khata entry. Keep a copy somewhere safe each week.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="backupCopy()">${icon('download')} Save backup</button><button class="btn btn-ghost" onclick="backupRestore()">${icon('upload')} Restore from backup</button></div></div>`);
@@ -510,14 +532,26 @@ route('admin/settings', async () => {
 async function saveSettings(e) {
   e.preventDefault(); const d = formData(e.target);
   const tiers = [0, 1, 2, 3, 4, 5].filter((i) => d['tn' + i] !== undefined).map((i) => ({ id: d['ti' + i], name: d['tn' + i], disc: parseInt(d['td' + i]) || 0 }));
-  await busy(e.submitter, () => API.put('/api/admin/settings', { business: { name: d.name, tagline: d.tagline, phone: d.phone, whatsapp: d.whatsapp, address: d.address, hours: d.hours, bank: d.bank }, tiers, markets: d.markets.split(',') }));
+  await busy(e.submitter, () => API.put('/api/admin/settings', { business: { name: d.name, tagline: d.tagline, phone: d.phone, whatsapp: d.whatsapp, address: d.address, hours: d.hours, bank: d.bank }, tiers, markets: d.markets.split(','), reminders: { enabled: !!e.target.remOn.checked, minDays: parseInt(d.remMin) || 30, everyDays: parseInt(d.remEvery) || 7 } }));
   API.info = await API.get('/api/info'); Shell.brand(); toast('Settings saved');
 }
-async function addStaff() {
-  const v = await uiDialog({ title: 'Add staff member', ok: 'Add staff', fields: [{ label: 'Name' }, { label: 'Mobile number', inputmode: 'tel' }, { label: 'Password', value: Math.random().toString(36).slice(2, 9) }] });
+async function addStaff(role = 'staff') {
+  const v = await uiDialog({ title: role === 'rider' ? 'Add rider' : 'Add staff member', text: role === 'rider' ? 'Riders only see the deliveries you assign to them.' : '', ok: role === 'rider' ? 'Add rider' : 'Add staff', fields: [{ label: 'Name' }, { label: 'Mobile number', inputmode: 'tel' }, { label: 'Password', value: Math.random().toString(36).slice(2, 9) }] });
   if (!v) return;
-  try { await API.post('/api/admin/staff', { name: v[0], phone: v[1], password: v[2] }); toast('Staff added — share the number and password with them'); render({ quiet: true }); } catch (e) { errBox(e); }
+  try { await API.post('/api/admin/staff', { name: v[0], phone: v[1], password: v[2], role }); toast(`${role === 'rider' ? 'Rider' : 'Staff'} added — share the number and password with them`); render({ quiet: true }); } catch (e) { errBox(e); }
 }
+async function addSpecial(shopId) {
+  const products = (await API.get('/api/admin/products')).filter((p) => p.active !== false);
+  modalForm(`<h3>Special price</h3><p class="muted" style="margin:4px 0 0">A fixed rate for this shop only.</p>
+    <label class="f" for="spP">Product</label><select class="select" id="spP">${products.map((p) => `<option value="${p.id}" data-price="${p.price}" data-cost="${p.cost || 0}">${esc(p.name)} — list ${rs(p.price)}</option>`).join('')}</select>
+    <label class="f" for="spPrice">Special price (Rs)</label><input class="input" id="spPrice" inputmode="numeric" required><small class="muted" id="spHint"></small>${modalButtons('Save price')}`, async (m, e) => {
+    await busy(e.submitter, () => API.post(`/api/admin/shops/${shopId}/special`, { pid: m.querySelector('#spP').value, price: parseInt(m.querySelector('#spPrice').value) }));
+    toast('Special price saved'); render({ quiet: true });
+  });
+  const hint = () => { const o = $('#spP').selectedOptions[0], v = +$('#spPrice').value; $('#spHint').textContent = `List ${rs(+o.dataset.price)} · cost ${rs(+o.dataset.cost)}${v ? ` · margin ${rs(v - +o.dataset.cost)}` : ''}`; };
+  $('#spP').addEventListener('change', hint); $('#spPrice').addEventListener('input', hint); hint();
+}
+async function removeSpecial(shopId, pid) { try { await API.post(`/api/admin/shops/${shopId}/special`, { pid, price: null }); toast('Special price removed'); render({ quiet: true }); } catch (e) { errBox(e); } }
 async function staffToggle(id, status) { try { await API.post('/api/admin/staff/' + id, { status }); render({ quiet: true }); } catch (e) { errBox(e); } }
 async function backupCopy() {
   const data = await API.get('/api/admin/backup');

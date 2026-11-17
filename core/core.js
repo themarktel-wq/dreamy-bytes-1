@@ -58,10 +58,39 @@
       return prefix + c.n;
     }
     function tierOf(u) { const s = settings(); return s.tiers.find((t) => t.id === (u && u.tier)) || s.tiers[0]; }
-    function priceFor(p, u) {
-      if (!u || u.role !== 'shop') return p.price;
-      return Math.round(p.price * (1 - (tierOf(u).disc || 0) / 100));
+    function activeDeal(pid) { const t = now(); return S.all('deals').find((d) => d.pid === pid && !d.cancelled && d.startsAt <= t && d.endsAt > t); }
+    /* Price a shop pays: tier discount, replaced by a special rate if one is set, and a flash deal wins if it is lower. */
+    function priceInfo(p, u) {
+      if (!u || u.role !== 'shop') return { price: p.price, kind: 'list' };
+      const tier = Math.round(p.price * (1 - (tierOf(u).disc || 0) / 100));
+      let best = { price: tier, kind: 'tier', regular: tier };
+      const sp = u.special && u.special[p.id];
+      if (sp) best = { price: sp, kind: 'special', regular: tier };
+      const d = activeDeal(p.id);
+      if (d && d.price < best.price) best = { price: d.price, kind: 'deal', regular: best.price, dealId: d.id, endsAt: d.endsAt, maxPerShop: d.maxPerShop || 0 };
+      return best;
     }
+    const priceFor = (p, u) => priceInfo(p, u).price;
+    function dealBought(dealId, shopId) {
+      return S.all('orders').filter((o) => o.shopId === shopId && o.status !== 'cancelled').reduce((a, o) => a + o.items.filter((l) => l.dealId === dealId).reduce((x, l) => x + l.qty, 0), 0);
+    }
+    /* Khata aging: payments and credits settle the oldest invoices first (FIFO). */
+    function agingOf(shopId) {
+      const es = S.all('ledger').filter((e) => e.shopId === shopId).sort((a, b) => a.at - b.at);
+      let credit = es.filter((e) => e.dir < 0).reduce((a, e) => a + e.amount, 0);
+      const open = [];
+      for (const e of es.filter((x) => x.dir > 0)) { const paid = Math.min(credit, e.amount); credit -= paid; if (e.amount - paid > 0) open.push({ at: e.at, ref: e.ref, due: e.amount - paid }); }
+      const b = { d0: 0, d30: 0, d60: 0, d90: 0, oldestAt: open.length ? open[0].at : null };
+      for (const o of open) { const days = (now() - o.at) / DAY; if (days > 90) b.d90 += o.due; else if (days > 60) b.d60 += o.due; else if (days > 30) b.d30 += o.due; else b.d0 += o.due; }
+      b.overdue = b.d30 + b.d60 + b.d90; b.open = open;
+      return b;
+    }
+    function supplierBalance(sid) { return S.all('supplierLedger').filter((e) => e.supplierId === sid).reduce((a, e) => a + e.amount * e.dir, 0); }
+    function supplierFind(name) {
+      const n = String(name || '').trim(); if (!n) return null;
+      return S.all('suppliers').find((x) => x.name.toLowerCase() === n.toLowerCase()) || null;
+    }
+    const shopName = (sid) => (S.get('users', sid) || { shop: { shopName: 'Shop' } }).shop.shopName;
     function balanceOf(shopId) {
       return S.all('ledger').filter((e) => e.shopId === shopId).reduce((a, e) => a + e.amount * e.dir, 0);
     }
@@ -83,14 +112,20 @@
       const canSee = u && (u.role !== 'shop' || u.status === 'active');
       out.stock = canSee ? p.stock : p.stock > 0 ? 1 : 0;
       out.inStock = p.stock > 0;
-      out.price = canSee ? priceFor(p, u) : null;
+      const pi = canSee ? priceInfo(p, u) : null;
+      out.price = pi ? pi.price : null;
       out.basePrice = canSee ? p.price : null;
-      if (u && u.role !== 'shop') Object.assign(out, { cost: p.cost, price: p.price, reorderLevel: p.reorderLevel, faulty: p.faulty || 0, active: p.active });
+      out.priceKind = pi ? pi.kind : null;
+      if (pi && pi.kind === 'deal') Object.assign(out, { regularPrice: pi.regular, dealEndsAt: pi.endsAt, dealMax: pi.maxPerShop, dealBought: u && u.role === 'shop' ? dealBought(pi.dealId, u.id) : 0 });
+      if (pi && pi.kind === 'special') out.regularPrice = pi.regular;
+      const d = activeDeal(p.id); if (d && !pi) out.hasDeal = true;
+      if (u && u.role !== 'shop') Object.assign(out, { cost: p.cost, price: p.price, reorderLevel: p.reorderLevel, faulty: p.faulty || 0, active: p.active, barcode: p.barcode || '', supplierId: p.supplierId || '', deal: d ? { price: d.price, endsAt: d.endsAt } : null });
       return out;
     }
     function orderView(o, u) {
       const shop = o.shopId ? S.get('users', o.shopId) : null;
-      const out = { ...o, shopName: shop ? shop.shop.shopName : o.walkInName || 'Walk-in customer', shopPhone: shop ? shop.phone : '' };
+      const rider = o.riderId ? S.get('users', o.riderId) : null;
+      const out = { ...o, shopName: shop ? shop.shop.shopName : o.walkInName || 'Walk-in customer', shopPhone: shop ? shop.phone : '', shopAddress: shop ? (shop.shop.address && shop.shop.market && shop.shop.address.includes(shop.shop.market) ? shop.shop.address : [shop.shop.address, shop.shop.market].filter(Boolean).join(', ')) : '', riderName: rider ? rider.name : '', riderPhone: rider ? rider.phone : '' };
       if (!u || u.role === 'shop') { out.items = o.items.map(({ cost, ...i }) => i); delete out.profit; }
       return out;
     }
@@ -106,7 +141,15 @@
         if (enforceMoq && qty < (p.moq || 1)) bad(`Minimum order for ${p.name} is ${p.moq}`);
         if (enforceMoq && p.packSize > 1 && qty % p.packSize) bad(`${p.name} is sold in packs of ${p.packSize}`);
         if (checkStock && qty > p.stock) bad(p.stock > 0 ? `Only ${p.stock} of ${p.name} available` : `${p.name} is out of stock`);
-        lines.push({ pid, sku: p.sku, name: p.name, qty, price: priceFor(p, u), cost: p.cost || 0 });
+        const pi = priceInfo(p, u);
+        if (pi.kind === 'deal' && pi.maxPerShop && u.role === 'shop') {
+          const left = pi.maxPerShop - dealBought(pi.dealId, u.id);
+          if (qty > left) bad(left > 0 ? `Flash deal limit: you can order ${left} more of ${p.name} at the deal price` : `You have used your flash deal limit for ${p.name}`);
+        }
+        const line = { pid, sku: p.sku, name: p.name, qty, price: pi.price, cost: p.cost || 0 };
+        if (pi.kind === 'deal') line.dealId = pi.dealId;
+        if (pi.kind === 'special') line.special = true;
+        lines.push(line);
       }
       const subtotal = lines.reduce((a, l) => a + l.price * l.qty, 0);
       return { lines, subtotal };
@@ -138,11 +181,24 @@
       if (status === 'confirmed' || (!wasSold && SOLD.includes(status))) confirmOrder(o, user.name, opts.override);
       if (status === 'cancelled' && wasSold) reverseOrder(o, user.name);
       if (status === 'delivered' && opts.collect && o.shopId) {
-        ledgerAdd({ shopId: o.shopId, type: 'payment', dir: -1, amount: o.total, method: o.payment === 'bank' ? 'bank' : 'cash', ref: o.no, note: `Collected on delivery of ${o.no}`, by: user.name });
+        const amount = opts.collect === true ? o.total : money(opts.collect, 'Amount collected');
+        if (amount > 0) {
+          ledgerAdd({ shopId: o.shopId, type: 'payment', dir: -1, amount, method: user.role === 'rider' ? 'cash (rider)' : o.payment === 'bank' ? 'bank' : 'cash', ref: o.no, note: `Collected on delivery of ${o.no}${user.role === 'rider' ? ' by ' + user.name : ''}`, by: user.name });
+          if (user.role === 'rider') S.put('riderCash', { id: id('rc'), riderId: user.id, dir: 1, amount, ref: o.no, note: `Collected from ${shopName(o.shopId)}`, at: now() });
+          o.collected = (o.collected || 0) + amount;
+        }
       }
+      if (status === 'delivered') o.deliveredAt = now();
       o.status = status;
       o.history.push({ status, at: now(), by: user.name, note: str(opts.note, 200) });
       S.put('orders', o);
+    }
+    const STATUS_TEXT = { confirmed: 'confirmed', packed: 'packed', dispatched: 'is on the way', delivered: 'delivered', cancelled: 'cancelled' };
+    function statusEvents(o) {
+      const ev = [{ to: 'admin', type: 'orders' }];
+      if (o.shopId) ev.push({ to: 'shop:' + o.shopId, type: 'orders', title: `Order ${o.no} ${STATUS_TEXT[o.status] || o.status}`, body: `${o.items.length} items · ${rs(o.total)}`, url: '#/order/' + o.id });
+      if (o.riderId) ev.push({ to: 'rider:' + o.riderId, type: 'orders' });
+      return ev;
     }
     const inRange = (t, from, to) => t >= from && t < to;
     function soldOrders(from, to) { return S.all('orders').filter((o) => SOLD.includes(o.status) && inRange(o.soldAt || o.createdAt, from, to)); }
@@ -168,7 +224,7 @@
       const keys = []; const rx = new RegExp('^' + pattern.replace(/:(\w+)/g, (_, k) => { keys.push(k); return '([^/]+)'; }) + '$');
       routes.push({ method, rx, keys, roles, fn });
     };
-    const ADMIN = ['admin'], STAFF = ['admin', 'staff'], SHOP = ['shop'], ANY = null, AUTH = ['admin', 'staff', 'shop'];
+    const ADMIN = ['admin'], STAFF = ['admin', 'staff'], SHOP = ['shop'], RIDER = ['rider'], ANY = null, AUTH = ['admin', 'staff', 'shop', 'rider'];
 
     // Public
     R('GET', '/api/info', ANY, () => {
@@ -203,7 +259,7 @@
       };
       S.put('users', u);
       const token = newSession(u);
-      return { status: 201, token, body: { user: publicUser(u) }, events: [{ to: 'admin', type: 'shops' }] };
+      return { status: 201, token, body: { user: publicUser(u) }, events: [{ to: 'admin', type: 'shops', title: 'New shop registered', body: `${u.shop.shopName} · ${u.shop.market || ''} — waiting for approval`, url: '#/admin/shop/' + u.id }] };
     });
     R('POST', '/api/auth/login', ANY, ({ body }) => {
       const phone = normPhone(body.phone);
@@ -225,6 +281,9 @@
       if (user.role === 'shop') {
         out.balance = balanceOf(user.id);
         out.unread = S.all('messages').filter((m) => m.shopId === user.id && m.from === 'admin' && !m.readShop).length;
+      } else if (user.role === 'rider') {
+        out.deliveries = S.all('orders').filter((o) => o.riderId === user.id && ['confirmed', 'packed', 'dispatched'].includes(o.status)).length;
+        out.cashInHand = S.all('riderCash').filter((c) => c.riderId === user.id).reduce((a, c) => a + c.amount * c.dir, 0);
       } else {
         out.unread = S.all('messages').filter((m) => m.from === 'shop' && !m.readAdmin).length;
         out.pendingOrders = S.all('orders').filter((o) => o.status === 'pending').length;
@@ -257,11 +316,11 @@
       if (payment === 'credit') { const msg = creditCheck(user, subtotal); if (msg) bad(msg + '. Choose cash, or ask the store to raise your limit.'); }
       const o = { id: id('o'), no: nextNo('order', 'LM-', 1000), shopId: user.id, items: lines, subtotal, discount: 0, total: subtotal, payment, note: str(body.note, 300, 'Note'), source: 'app', status: 'pending', createdAt: now(), history: [{ status: 'pending', at: now(), by: user.name }] };
       S.put('orders', o);
-      return { status: 201, body: orderView(o, user), events: [{ to: 'admin', type: 'orders' }] };
+      return { status: 201, body: orderView(o, user), events: [{ to: 'admin', type: 'orders', title: `New order ${o.no}`, body: `${user.shop.shopName} · ${o.items.length} items · ${rs(o.total)}`, url: '#/admin/order/' + o.id }] };
     });
     R('GET', '/api/orders', SHOP, ({ user }) => S.all('orders').filter((o) => o.shopId === user.id).sort((a, b) => b.createdAt - a.createdAt).map((o) => orderView(o, user)));
     R('GET', '/api/orders/:id', AUTH, ({ user, params }) => {
-      const o = S.get('orders', params.id); if (!o || (user.role === 'shop' && o.shopId !== user.id)) nf('Order not found');
+      const o = S.get('orders', params.id); if (!o || (user.role === 'shop' && o.shopId !== user.id) || (user.role === 'rider' && o.riderId !== user.id)) nf('Order not found');
       return orderView(o, user);
     });
     R('POST', '/api/orders/:id/cancel', SHOP, ({ user, params }) => {
@@ -271,7 +330,7 @@
       return { body: orderView(o, user), events: [{ to: 'admin', type: 'orders' }] };
     });
     R('GET', '/api/ledger', SHOP, ({ user }) => ({
-      balance: balanceOf(user.id), creditLimit: user.creditLimit || 0,
+      balance: balanceOf(user.id), creditLimit: user.creditLimit || 0, aging: (({ open, ...a }) => a)(agingOf(user.id)),
       entries: S.all('ledger').filter((e) => e.shopId === user.id).sort((a, b) => b.at - a.at).slice(0, 300),
     }));
     R('GET', '/api/messages', SHOP, ({ user }) => {
@@ -283,7 +342,7 @@
       const m = { id: id('g'), shopId: user.id, from: 'shop', by: user.name, text: reqStr(body.text, 1000, 'Message'), pid: str(body.pid, 40), at: now(), readAdmin: false, readShop: true };
       if (m.pid && !S.get('products', m.pid)) m.pid = '';
       S.put('messages', m);
-      return { status: 201, body: m, events: [{ to: 'admin', type: 'messages' }] };
+      return { status: 201, body: m, events: [{ to: 'admin', type: 'messages', title: `Message from ${user.shop.shopName}`, body: m.text.slice(0, 140), url: '#/admin/chat/' + user.id }] };
     });
     R('POST', '/api/requests', SHOP, ({ user, body }) => {
       const r = { id: id('r'), shopId: user.id, pid: str(body.pid, 40), text: reqStr(body.text, 300, 'Request'), qty: body.qty ? int(body.qty, 1, 100000, 'Quantity') : 0, status: 'open', at: now() };
@@ -299,7 +358,7 @@
       const qty = int(body.qty, 1, line.qty - already, 'Quantity');
       const c = { id: id('c'), no: nextNo('claim', 'CL-', 100), shopId: user.id, orderId: o.id, orderNo: o.no, pid: line.pid, name: line.name, qty, price: line.price, reason: reqStr(body.reason, 300, 'Reason'), status: 'open', at: now() };
       S.put('claims', c);
-      return { status: 201, body: c, events: [{ to: 'admin', type: 'claims' }] };
+      return { status: 201, body: c, events: [{ to: 'admin', type: 'claims', title: `Warranty claim ${c.no}`, body: `${user.shop.shopName}: ${c.qty} × ${c.name} — ${c.reason}`, url: '#/admin/claims' }] };
     });
 
     // Admin & staff
@@ -369,7 +428,7 @@
       const o = S.get('orders', params.id); if (!o) nf('Order not found');
       if (body.override && user.role !== 'admin') deny('Only the owner can override the credit limit');
       setStatus(o, String(body.status), user, { override: !!body.override, collect: !!body.collect, note: body.note });
-      return { body: orderView(o, user), events: o.shopId ? [{ to: 'shop:' + o.shopId, type: 'orders' }, { to: 'admin', type: 'orders' }] : [{ to: 'admin', type: 'orders' }] };
+      return { body: orderView(o, user), events: statusEvents(o) };
     });
     R('POST', '/api/admin/orders/:id/items', STAFF, ({ user, params, body }) => {
       const o = S.get('orders', params.id); if (!o) nf('Order not found');
@@ -415,6 +474,10 @@
       if (p.packSize > 1 && p.moq % p.packSize) bad('Minimum order must be a multiple of the pack size');
       p.reorderLevel = int(body.reorderLevel || 0, 0, 100000, 'Reorder level');
       p.featured = !!body.featured; p.isNew = !!body.isNew; p.active = body.active !== false;
+      if (body.barcode !== undefined) {
+        p.barcode = str(body.barcode, 60).replace(/\s+/g, '');
+        if (p.barcode && S.all('products').some((x) => x.id !== p.id && (x.barcode === p.barcode || x.sku.toLowerCase() === p.barcode.toLowerCase()))) bad(`Barcode ${p.barcode} is already used by another product`);
+      }
       if (body.img !== undefined) p.img = String(body.img).startsWith('data:') ? deps.saveImage(String(body.img)) : str(body.img, 500);
       p.updatedAt = now();
       return p;
@@ -459,19 +522,25 @@
     R('GET', '/api/admin/purchases', ADMIN, () => S.all('purchases').sort((a, b) => b.at - a.at).slice(0, 200));
     R('POST', '/api/admin/purchases', ADMIN, ({ user, body }) => {
       if (!Array.isArray(body.items) || !body.items.length) bad('Add at least one item');
-      const pu = { id: id('pu'), no: nextNo('purchase', 'PU-', 100), supplier: reqStr(body.supplier, 80, 'Supplier'), items: [], total: 0, paid: money(body.paid || 0, 'Amount paid'), note: str(body.note, 300), at: now(), by: user.name };
+      let sup = body.supplierId ? S.get('suppliers', String(body.supplierId)) : supplierFind(body.supplier);
+      if (!sup) { const nm = reqStr(body.supplier, 80, 'Supplier'); sup = { id: id('sp'), name: nm, phone: '', city: '', note: '', createdAt: now() }; S.put('suppliers', sup); }
+      const pu = { id: id('pu'), no: nextNo('purchase', 'PU-', 100), supplierId: sup.id, supplier: sup.name, items: [], total: 0, paid: money(body.paid || 0, 'Amount paid'), note: str(body.note, 300), at: now(), by: user.name };
       for (const it of body.items) {
         const p = S.get('products', String(it.pid)); if (!p) bad('Unknown product in purchase');
         const qty = int(it.qty, 1, 1e6, 'Quantity'), cost = money(it.cost, 'Cost');
         const base = Math.max(0, p.stock);
         p.cost = Math.round(((p.cost || 0) * base + cost * qty) / (base + qty));
         moveStock(p, qty, 'purchase', pu.no, user.name);
+        p.supplierId = sup.id; S.put('products', p);
         pu.items.push({ pid: p.id, name: p.name, qty, cost }); pu.total += qty * cost;
       }
+      if (pu.paid > pu.total) bad('Paid amount is more than the purchase total');
       S.put('purchases', pu);
+      S.put('supplierLedger', { id: id('sl'), supplierId: sup.id, type: 'purchase', dir: 1, amount: pu.total, ref: pu.no, note: `Purchase ${pu.no}`, at: now(), by: user.name });
+      if (pu.paid) S.put('supplierLedger', { id: id('sl'), supplierId: sup.id, type: 'payment', dir: -1, amount: pu.paid, method: str(body.method, 20) || 'cash', ref: pu.no, note: `Paid with ${pu.no}`, at: now(), by: user.name });
       if (body.announce) {
         S.put('announcements', { id: id('a'), kind: 'stock', title: 'New stock arrived', body: pu.items.map((i) => i.name).slice(0, 6).join(', '), at: now() });
-        return { status: 201, body: pu, events: [{ to: 'all', type: 'feed' }] };
+        return { status: 201, body: pu, events: [{ to: 'all', type: 'feed', title: 'New stock arrived', body: pu.items.map((i) => i.name).slice(0, 4).join(', '), url: '#/catalog' }] };
       }
       return { status: 201, body: pu };
     });
@@ -488,12 +557,13 @@
       if (kind === 'adjust' && user.role !== 'admin') deny('Only the owner can make khata adjustments');
       const dir = kind === 'adjust' && body.dir === 1 ? 1 : -1;
       const e = ledgerAdd({ shopId: u.id, type: kind, dir, amount, method: str(body.method, 20) || 'cash', note: str(body.note, 200), ref: '', by: user.name });
-      return { status: 201, body: { entry: e, balance: balanceOf(u.id) }, events: [{ to: 'shop:' + u.id, type: 'ledger' }] };
+      return { status: 201, body: { entry: e, balance: balanceOf(u.id) }, events: [{ to: 'shop:' + u.id, type: 'ledger', title: kind === 'payment' ? `Payment received: ${rs(amount)}` : 'Khata updated', body: `New khata balance: ${rs(balanceOf(u.id))}`, url: '#/khata' }] };
     });
     R('GET', '/api/admin/receivables', STAFF, () => S.all('users').filter((u) => u.role === 'shop').map((u) => {
       const entries = S.all('ledger').filter((e) => e.shopId === u.id);
       const lastPay = entries.filter((e) => e.type === 'payment').sort((a, b) => b.at - a.at)[0];
-      return { id: u.id, shopName: u.shop.shopName, name: u.name, phone: u.phone, market: u.shop.market, balance: balanceOf(u.id), creditLimit: u.creditLimit || 0, lastPaymentAt: lastPay ? lastPay.at : null };
+      const ag = agingOf(u.id); delete ag.open;
+      return { id: u.id, shopName: u.shop.shopName, name: u.name, phone: u.phone, market: u.shop.market, balance: balanceOf(u.id), creditLimit: u.creditLimit || 0, lastPaymentAt: lastPay ? lastPay.at : null, aging: ag, lastReminderAt: u.lastReminderAt || null };
     }).filter((r) => r.balance !== 0).sort((a, b) => b.balance - a.balance));
 
     // Messages
@@ -510,13 +580,13 @@
     R('POST', '/api/admin/messages/:shopId', STAFF, ({ user, params, body }) => {
       const u = S.get('users', params.shopId); if (!u || u.role !== 'shop') nf('Shop not found');
       const m = { id: id('g'), shopId: u.id, from: 'admin', by: user.name, text: reqStr(body.text, 1000, 'Message'), pid: str(body.pid, 40), at: now(), readAdmin: true, readShop: false };
-      S.put('messages', m); return { status: 201, body: m, events: [{ to: 'shop:' + u.id, type: 'messages' }] };
+      S.put('messages', m); return { status: 201, body: m, events: [{ to: 'shop:' + u.id, type: 'messages', title: `Message from ${settings().business.name}`, body: m.text.slice(0, 140), url: '#/messages' }] };
     });
 
     // Announcements, requests, claims
     R('POST', '/api/admin/announcements', STAFF, ({ body }) => {
       const a = { id: id('a'), kind: 'news', title: reqStr(body.title, 120, 'Title'), body: str(body.body, 1000, 'Details'), pid: str(body.pid, 40), at: now() };
-      S.put('announcements', a); return { status: 201, body: a, events: [{ to: 'all', type: 'feed' }] };
+      S.put('announcements', a); return { status: 201, body: a, events: [{ to: 'all', type: 'feed', title: a.title, body: a.body.slice(0, 140), url: '#/' }] };
     });
     R('DELETE', '/api/admin/announcements/:id', STAFF, ({ params }) => { S.del('announcements', params.id); return { ok: true }; });
     R('GET', '/api/admin/requests', STAFF, () => S.all('requests').sort((a, b) => b.at - a.at).slice(0, 300).map((r) => ({ ...r, shopName: S.get('users', r.shopId)?.shop.shopName || '—', product: r.pid ? S.get('products', r.pid)?.name || '' : '' })));
@@ -535,10 +605,11 @@
         if (body.replace) { if (!p || p.stock < c.qty) bad('Not enough stock to send a replacement'); moveStock(p, -c.qty, 'replacement', c.no, user.name); }
         if (credit) ledgerAdd({ shopId: c.shopId, type: 'return', dir: -1, amount: credit, ref: c.no, note: `Claim ${c.no}: ${c.qty} × ${c.name}`, by: user.name });
         c.resolution = body.replace ? 'replaced' : 'credited';
+        c.supplierId = p ? p.supplierId || '' : '';
       } else if (body.status !== 'rejected') bad('Choose approve or reject');
       c.status = body.status; c.closedAt = now(); c.adminNote = str(body.note, 300); c.by = user.name;
       S.put('claims', c);
-      return { body: c, events: [{ to: 'shop:' + c.shopId, type: 'claims' }] };
+      return { body: c, events: [{ to: 'shop:' + c.shopId, type: 'claims', title: `Claim ${c.no} ${c.status}`, body: c.status === 'approved' ? (c.resolution === 'replaced' ? 'A replacement is on its way.' : `${rs(c.qty * c.price)} credited to your khata.`) : c.adminNote || 'Message the store for details.', url: '#/orders' }] };
     });
 
     // Reports
@@ -579,6 +650,7 @@
       s.business = { name: reqStr(b.name, 60, 'Business name'), tagline: str(b.tagline, 120), phone: str(b.phone, 30), whatsapp: str(b.whatsapp, 20).replace(/\D/g, ''), address: str(b.address, 200), hours: str(b.hours, 100), bank: str(b.bank, 300) };
       if (Array.isArray(body.tiers) && body.tiers.length) s.tiers = body.tiers.slice(0, 6).map((t, i) => ({ id: str(t.id, 20) || 't' + i, name: reqStr(t.name, 30, 'Tier name'), disc: int(t.disc || 0, 0, 50, 'Tier discount') }));
       if (Array.isArray(body.markets)) s.markets = body.markets.map((m) => str(m, 60)).filter(Boolean).slice(0, 40);
+      if (body.reminders) s.reminders = { enabled: !!body.reminders.enabled, minDays: int(body.reminders.minDays || 30, 1, 365, 'Reminder age'), everyDays: int(body.reminders.everyDays || 7, 1, 90, 'Reminder interval') };
       S.put('settings', s); return s;
     });
     R('GET', '/api/admin/staff', ADMIN, () => S.all('users').filter((u) => u.role !== 'shop').map(publicUser));
@@ -586,11 +658,11 @@
       const phone = normPhone(body.phone);
       if (S.all('users').some((u) => u.phone === phone)) bad('This number is already registered');
       const pw = str(body.password, 100); if (pw.length < 6) bad('Password must be at least 6 characters');
-      const u = { id: id('u'), role: 'staff', status: 'active', phone, name: reqStr(body.name, 60, 'Name'), pass: deps.hashPassword(pw), createdAt: now() };
+      const u = { id: id('u'), role: body.role === 'rider' ? 'rider' : 'staff', status: 'active', phone, name: reqStr(body.name, 60, 'Name'), pass: deps.hashPassword(pw), createdAt: now() };
       S.put('users', u); return { status: 201, body: publicUser(u) };
     });
     R('POST', '/api/admin/staff/:id', ADMIN, ({ user, params, body }) => {
-      const u = S.get('users', params.id); if (!u || u.role !== 'staff') nf('Staff member not found');
+      const u = S.get('users', params.id); if (!u || !['staff', 'rider'].includes(u.role)) nf('Staff member not found');
       if (body.status) { u.status = body.status === 'blocked' ? 'blocked' : 'active'; if (u.status === 'blocked') S.all('sessions').filter((s) => s.userId === u.id).forEach((s) => S.del('sessions', s.id)); }
       if (body.password) { if (String(body.password).length < 6) bad('Password must be at least 6 characters'); u.pass = deps.hashPassword(String(body.password)); }
       S.put('users', u); return publicUser(u);
@@ -601,14 +673,196 @@
       if (d.length > 2.8e6) bad('Image is too large (max 2 MB)');
       return { url: deps.saveImage(d) };
     });
-    const BACKUP = ['settings', 'users', 'products', 'orders', 'ledger', 'stockMoves', 'purchases', 'messages', 'announcements', 'requests', 'claims', 'counters'];
+    const BACKUP = ['settings', 'users', 'products', 'orders', 'ledger', 'stockMoves', 'purchases', 'messages', 'announcements', 'requests', 'claims', 'counters', 'deals', 'suppliers', 'supplierLedger', 'riderCash'];
     R('GET', '/api/admin/backup', ADMIN, () => { const out = { app: 'lahore-mobile-wholesale', v: 1, at: now() }; BACKUP.forEach((c) => (out[c] = S.all(c))); return out; });
     R('POST', '/api/admin/restore', ADMIN, ({ body }) => {
       if (!body || body.app !== 'lahore-mobile-wholesale') bad('This file is not a Lahore Mobile backup');
+      ['deals', 'suppliers', 'supplierLedger', 'riderCash'].forEach((c) => { if (!body[c]) body[c] = []; });
       BACKUP.forEach((c) => { if (!Array.isArray(body[c])) bad(`Backup is missing ${c}`); });
       BACKUP.forEach((c) => { S.all(c).forEach((d) => S.del(c, d.id)); body[c].forEach((d) => S.put(c, d)); });
       return { ok: true };
     });
+
+
+    /* ================= Flash deals ================= */
+    R('GET', '/api/deals', ANY, ({ user }) => {
+      const t = now();
+      return S.all('deals').filter((d) => !d.cancelled && d.startsAt <= t && d.endsAt > t).sort((a, b) => a.endsAt - b.endsAt).map((d) => {
+        const p = S.get('products', d.pid); if (!p || !p.active) return null;
+        return { id: d.id, title: d.title, endsAt: d.endsAt, maxPerShop: d.maxPerShop, product: shopView(p, user) };
+      }).filter(Boolean);
+    });
+    R('GET', '/api/admin/deals', STAFF, () => S.all('deals').sort((a, b) => b.createdAt - a.createdAt).slice(0, 100).map((d) => {
+      const sold = S.all('orders').filter((o) => o.status !== 'cancelled').reduce((a, o) => a + o.items.filter((l) => l.dealId === d.id).reduce((x, l) => x + l.qty, 0), 0);
+      return { ...d, name: S.get('products', d.pid)?.name || '—', listPrice: S.get('products', d.pid)?.price || 0, sold, live: !d.cancelled && d.startsAt <= now() && d.endsAt > now() };
+    }));
+    R('POST', '/api/admin/deals', ADMIN, ({ body }) => {
+      const p = S.get('products', String(body.pid)); if (!p || !p.active) bad('Choose a product');
+      const price = money(body.price, 'Deal price'); if (!price) bad('Enter the deal price');
+      if (price >= p.price) bad(`Deal price must be below the list price of ${rs(p.price)}`);
+      const endsAt = Number(body.endsAt); if (!endsAt || endsAt <= now() + 5 * 60e3) bad('The deal must end at least 5 minutes from now');
+      if (endsAt > now() + 14 * DAY) bad('A flash deal can run for at most 14 days');
+      if (activeDeal(p.id)) bad('This product already has a live deal. End it first.');
+      const d = { id: id('d'), pid: p.id, price, startsAt: now(), endsAt, maxPerShop: body.maxPerShop ? int(body.maxPerShop, 1, 100000, 'Limit per shop') : 0, title: str(body.title, 120) || `Flash deal: ${p.name}`, createdAt: now() };
+      S.put('deals', d);
+      const until = new Date(endsAt).toLocaleString('en-PK', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+      S.put('announcements', { id: id('a'), kind: 'deal', title: d.title, body: `${rs(price)} instead of ${rs(p.price)} · until ${until}${d.maxPerShop ? ` · max ${d.maxPerShop} per shop` : ''}`, pid: p.id, at: now() });
+      return { status: 201, body: d, events: [{ to: 'all', type: 'feed', title: `⚡ ${d.title}`, body: `${rs(price)} (list ${rs(p.price)}) until ${until}`, url: '#/p/' + p.id }] };
+    });
+    R('DELETE', '/api/admin/deals/:id', ADMIN, ({ params }) => {
+      const d = S.get('deals', params.id); if (!d) nf('Deal not found');
+      d.cancelled = true; d.endsAt = Math.min(d.endsAt, now()); S.put('deals', d); return { body: d, events: [{ to: 'all', type: 'feed' }] };
+    });
+
+    /* ================= Special prices per shop ================= */
+    R('GET', '/api/admin/shops/:id/special', STAFF, ({ params }) => {
+      const u = S.get('users', params.id); if (!u || u.role !== 'shop') nf('Shop not found');
+      return Object.entries(u.special || {}).map(([pid, price]) => { const p = S.get('products', pid); return p ? { pid, price, name: p.name, sku: p.sku, listPrice: p.price, tierPrice: Math.round(p.price * (1 - (tierOf(u).disc || 0) / 100)), cost: p.cost || 0 } : null; }).filter(Boolean);
+    });
+    R('POST', '/api/admin/shops/:id/special', ADMIN, ({ params, body }) => {
+      const u = S.get('users', params.id); if (!u || u.role !== 'shop') nf('Shop not found');
+      const p = S.get('products', String(body.pid)); if (!p) bad('Choose a product');
+      u.special = u.special || {};
+      if (body.price === null || body.price === '' || body.price === undefined) delete u.special[p.id];
+      else { const price = money(body.price, 'Special price'); if (!price) bad('Enter a price'); u.special[p.id] = price; }
+      S.put('users', u);
+      return { body: { ok: true }, events: [{ to: 'shop:' + u.id, type: 'account' }] };
+    });
+    R('GET', '/api/admin/prices/:shopId', STAFF, ({ params }) => {
+      const u = params.shopId === 'walkin' ? null : S.get('users', params.shopId);
+      const out = {}; S.all('products').forEach((p) => { const pi = priceInfo(p, u); out[p.id] = { price: pi.price, kind: pi.kind }; }); return out;
+    });
+
+    /* ================= Riders ================= */
+    R('GET', '/api/admin/riders', STAFF, () => S.all('users').filter((u) => u.role === 'rider').map((u) => ({
+      ...publicUser(u), cashInHand: S.all('riderCash').filter((c) => c.riderId === u.id).reduce((a, c) => a + c.amount * c.dir, 0),
+      active: S.all('orders').filter((o) => o.riderId === u.id && ['confirmed', 'packed', 'dispatched'].includes(o.status)).length,
+      deliveredToday: S.all('orders').filter((o) => o.riderId === u.id && o.status === 'delivered' && o.deliveredAt > now() - DAY).length,
+      cash: S.all('riderCash').filter((c) => c.riderId === u.id).sort((a, b) => b.at - a.at).slice(0, 30),
+    })));
+    R('POST', '/api/admin/orders/:id/assign', STAFF, ({ user, params, body }) => {
+      const o = S.get('orders', params.id); if (!o) nf('Order not found');
+      if (!o.shopId) bad('Counter sales are not delivered');
+      if (!['confirmed', 'packed', 'dispatched'].includes(o.status)) bad('Confirm the order before assigning a rider');
+      if (body.riderId) { const r = S.get('users', String(body.riderId)); if (!r || r.role !== 'rider' || r.status !== 'active') bad('Choose an active rider'); o.riderId = r.id; o.history.push({ status: o.status, at: now(), by: user.name, note: `Assigned to ${r.name}` }); }
+      else { o.riderId = ''; o.history.push({ status: o.status, at: now(), by: user.name, note: 'Rider removed' }); }
+      S.put('orders', o);
+      const ev = [{ to: 'admin', type: 'orders' }];
+      if (o.riderId) ev.push({ to: 'rider:' + o.riderId, type: 'orders', title: `New delivery ${o.no}`, body: `${shopName(o.shopId)} · ${rs(o.total)}`, url: '#/rider' });
+      return { body: orderView(o, user), events: ev };
+    });
+    R('POST', '/api/admin/riders/:id/settle', STAFF, ({ user, params, body }) => {
+      const r = S.get('users', params.id); if (!r || r.role !== 'rider') nf('Rider not found');
+      const held = S.all('riderCash').filter((c) => c.riderId === r.id).reduce((a, c) => a + c.amount * c.dir, 0);
+      const amount = money(body.amount, 'Amount'); if (!amount) bad('Enter the amount handed over'); if (amount > held) bad(`${r.name} is holding only ${rs(held)}`);
+      S.put('riderCash', { id: id('rc'), riderId: r.id, dir: -1, amount, ref: '', note: `Handed over to ${user.name}`, at: now() });
+      return { cashInHand: held - amount };
+    });
+    R('GET', '/api/rider/orders', RIDER, ({ user }) => S.all('orders').filter((o) => o.riderId === user.id && (['confirmed', 'packed', 'dispatched'].includes(o.status) || (o.status === 'delivered' && o.deliveredAt > now() - DAY)))
+      .sort((a, b) => (a.status === 'delivered') - (b.status === 'delivered') || a.createdAt - b.createdAt).map((o) => ({ ...orderView(o, null), balance: balanceOf(o.shopId) })));
+    R('POST', '/api/rider/orders/:id/status', RIDER, ({ user, params, body }) => {
+      const o = S.get('orders', params.id); if (!o || o.riderId !== user.id) nf('Delivery not found');
+      if (body.status === 'dispatched') { if (o.status === 'dispatched') bad('Already picked up'); setStatus(o, 'dispatched', user, { note: 'Picked up by rider' }); }
+      else if (body.status === 'delivered') setStatus(o, 'delivered', user, { collect: body.collected ? money(body.collected, 'Amount collected') : 0, note: str(body.note, 200) });
+      else bad('Unknown action');
+      return { body: orderView(o, null), events: statusEvents(o) };
+    });
+
+    /* ================= Suppliers ================= */
+    function supplierStats(sp) {
+      const bought = new Map();
+      S.all('purchases').filter((pu) => pu.supplierId === sp.id).forEach((pu) => pu.items.forEach((i) => bought.set(i.pid, (bought.get(i.pid) || 0) + i.qty)));
+      const faulty = new Map();
+      S.all('claims').filter((c) => c.status === 'approved' && c.supplierId === sp.id).forEach((c) => faulty.set(c.pid, (faulty.get(c.pid) || 0) + c.qty));
+      const units = [...bought.values()].reduce((a, b) => a + b, 0), bad = [...faulty.values()].reduce((a, b) => a + b, 0);
+      const pending = S.all('products').filter((p) => p.supplierId === sp.id && (p.faulty || 0) > 0).reduce((a, p) => a + p.faulty, 0);
+      return { units, faultyUnits: bad, faultyRate: units ? Math.round((bad / units) * 1000) / 10 : 0, pendingReturn: pending,
+        byProduct: [...bought.entries()].map(([pid, qty]) => ({ pid, name: S.get('products', pid)?.name || '—', bought: qty, faulty: faulty.get(pid) || 0, rate: Math.round(((faulty.get(pid) || 0) / qty) * 1000) / 10, waiting: S.get('products', pid)?.supplierId === sp.id ? S.get('products', pid)?.faulty || 0 : 0 })).sort((a, b) => b.rate - a.rate) };
+    }
+    R('GET', '/api/admin/suppliers', ADMIN, () => S.all('suppliers').map((sp) => { const st = supplierStats(sp); delete st.byProduct; return { ...sp, balance: supplierBalance(sp.id), purchases: S.all('purchases').filter((p) => p.supplierId === sp.id).reduce((a, p) => a + p.total, 0), ...st }; }).sort((a, b) => b.balance - a.balance));
+    R('POST', '/api/admin/suppliers', ADMIN, ({ body }) => {
+      const name = reqStr(body.name, 80, 'Supplier name'); if (supplierFind(name)) bad('A supplier with this name already exists');
+      const sp = { id: id('sp'), name, phone: str(body.phone, 30), city: str(body.city, 60), note: str(body.note, 300), createdAt: now() };
+      S.put('suppliers', sp);
+      const opening = money(body.opening || 0, 'Opening balance');
+      if (opening) S.put('supplierLedger', { id: id('sl'), supplierId: sp.id, type: 'adjust', dir: 1, amount: opening, ref: '', note: 'Opening balance', at: now() });
+      return { status: 201, body: sp };
+    });
+    R('GET', '/api/admin/suppliers/:id', ADMIN, ({ params }) => {
+      const sp = S.get('suppliers', params.id); if (!sp) nf('Supplier not found');
+      return { supplier: sp, balance: supplierBalance(sp.id), stats: supplierStats(sp), entries: S.all('supplierLedger').filter((e) => e.supplierId === sp.id).sort((a, b) => b.at - a.at), purchases: S.all('purchases').filter((p) => p.supplierId === sp.id).sort((a, b) => b.at - a.at) };
+    });
+    R('POST', '/api/admin/suppliers/:id', ADMIN, ({ params, body }) => {
+      const sp = S.get('suppliers', params.id); if (!sp) nf('Supplier not found');
+      sp.name = reqStr(body.name, 80, 'Supplier name'); sp.phone = str(body.phone, 30); sp.city = str(body.city, 60); sp.note = str(body.note, 300);
+      S.put('suppliers', sp); return sp;
+    });
+    R('POST', '/api/admin/suppliers/:id/payments', ADMIN, ({ user, params, body }) => {
+      const sp = S.get('suppliers', params.id); if (!sp) nf('Supplier not found');
+      const amount = money(body.amount, 'Amount'); if (!amount) bad('Enter the amount paid');
+      S.put('supplierLedger', { id: id('sl'), supplierId: sp.id, type: 'payment', dir: -1, amount, method: str(body.method, 20) || 'cash', ref: '', note: str(body.note, 200) || 'Payment', at: now(), by: user.name });
+      return { balance: supplierBalance(sp.id) };
+    });
+    R('POST', '/api/admin/suppliers/:id/returns', ADMIN, ({ user, params, body }) => {
+      const sp = S.get('suppliers', params.id); if (!sp) nf('Supplier not found');
+      if (!Array.isArray(body.items) || !body.items.length) bad('Choose the faulty items to return');
+      let value = 0; const names = [];
+      for (const it of body.items) {
+        const p = S.get('products', String(it.pid)); if (!p) bad('Unknown product');
+        const qty = int(it.qty, 1, p.faulty || 0, `Faulty ${p.name}`);
+        p.faulty -= qty; S.put('products', p); value += qty * (p.cost || 0); names.push(`${qty} × ${p.name}`);
+      }
+      const ref = nextNo('sreturn', 'SR-', 100);
+      if (value) S.put('supplierLedger', { id: id('sl'), supplierId: sp.id, type: 'return', dir: -1, amount: value, ref, note: `Faulty returned: ${names.join(', ')}`.slice(0, 300), at: now(), by: user.name });
+      return { ref, value, balance: supplierBalance(sp.id) };
+    });
+    R('GET', '/api/admin/reports/faulty', ADMIN, () => S.all('suppliers').map((sp) => ({ id: sp.id, name: sp.name, ...supplierStats(sp) })).sort((a, b) => b.faultyRate - a.faultyRate));
+
+    /* ================= Payment reminders ================= */
+    function dueReminders(force) {
+      const r = settings().reminders || { enabled: false, minDays: 30, everyDays: 7 };
+      return S.all('users').filter((u) => u.role === 'shop' && u.status === 'active').map((u) => {
+        const ag = agingOf(u.id); const bal = balanceOf(u.id);
+        const old = ag.open.filter((o) => (now() - o.at) / DAY > r.minDays).reduce((a, o) => a + o.due, 0);
+        return { u, ag, bal, old };
+      }).filter((x) => x.old > 0 && (force || !x.u.lastReminderAt || now() - x.u.lastReminderAt >= r.everyDays * DAY));
+    }
+    function sendReminders(force, by) {
+      const r = settings().reminders || {}; const biz = settings().business;
+      const due = dueReminders(force); const events = [];
+      for (const { u, bal, old } of due) {
+        const text = `Assalam o Alaikum ${u.name}, a friendly reminder from ${biz.name}: your khata balance is ${rs(bal)}, of which ${rs(old)} is more than ${r.minDays || 30} days old. Please arrange payment.${biz.bank ? ' Bank/wallet: ' + biz.bank : ''} Shukriya.`;
+        S.put('messages', { id: id('g'), shopId: u.id, from: 'admin', by: by || 'Automatic reminder', text, pid: '', at: now(), readAdmin: true, readShop: false, reminder: true });
+        u.lastReminderAt = now(); S.put('users', u);
+        events.push({ to: 'shop:' + u.id, type: 'messages', title: 'Payment reminder', body: `Khata balance ${rs(bal)} · ${rs(old)} overdue`, url: '#/khata' });
+      }
+      return { sent: due.length, shops: due.map((d) => d.u.shop.shopName), events };
+    }
+    R('POST', '/api/admin/reminders/run', STAFF, ({ user, body }) => { const r = sendReminders(!!body.force, user.name); return { body: { sent: r.sent, shops: r.shops }, events: r.events.concat([{ to: 'admin', type: 'messages' }]) }; });
+    function runReminders() {
+      let out = { sent: 0, events: [] };
+      S.tx(() => { const r = settings() && settings().reminders; if (r && r.enabled) out = sendReminders(false, ''); });
+      return out;
+    }
+
+    /* ================= Push subscriptions ================= */
+    R('POST', '/api/push/subscribe', AUTH, ({ user, body }) => {
+      const sub = body.subscription || {};
+      const endpoint = str(sub.endpoint, 1000); if (!/^https:\/\//.test(endpoint) && !/^http:\/\/(localhost|127\.0\.0\.1)/.test(endpoint)) bad('Invalid subscription');
+      const keys = sub.keys || {}; if (!keys.p256dh || !keys.auth) bad('Invalid subscription keys');
+      S.put('pushSubs', { id: deps.sha(endpoint), userId: user.id, role: user.role, endpoint, keys: { p256dh: str(keys.p256dh, 200), auth: str(keys.auth, 100) }, at: now() });
+      return { ok: true };
+    });
+    R('POST', '/api/push/unsubscribe', AUTH, ({ body }) => { const e = str(body.endpoint, 1000); if (e) S.del('pushSubs', deps.sha(e)); return { ok: true }; });
+    function pushTargets(to) {
+      const users = S.all('users');
+      const ids = to === 'all' ? users.filter((u) => u.role === 'shop' && u.status === 'active').map((u) => u.id)
+        : to === 'admin' ? users.filter((u) => u.role === 'admin' || u.role === 'staff').map((u) => u.id)
+          : [String(to).split(':')[1]];
+      const set = new Set(ids);
+      return S.all('pushSubs').filter((s) => set.has(s.userId));
+    }
+    function dropPushSub(id2) { S.tx(() => S.del('pushSubs', id2)); }
 
     /* ---------- dispatcher ---------- */
     const RES_KEYS = new Set(['status', 'body', 'token', 'clearToken', 'events']);
@@ -644,6 +898,7 @@
           id: 'main',
           business: { name: 'Lahore Mobile', tagline: 'Wholesale mobile accessories', phone: '0300 0000000', whatsapp: '923000000000', address: 'Shop #12, Hafeez Centre, Gulberg III, Lahore', hours: 'Daily 11 am – 10 pm', bank: '' },
           tiers: [{ id: 'standard', name: 'Standard', disc: 0 }, { id: 'silver', name: 'Silver', disc: 3 }, { id: 'gold', name: 'Gold', disc: 5 }],
+          reminders: { enabled: true, minDays: 30, everyDays: 7 },
           markets: ['Hafeez Centre', 'Hall Road', 'Mall Road', 'Liberty', 'Johar Town', 'Model Town', 'Ichhra', 'Anarkali', 'Shah Alam', 'Township', 'DHA', 'Other'],
         });
         S.put('users', { id: 'u_admin', role: 'admin', status: 'active', phone: normPhone(adminPhone), name: 'Owner', pass: deps.hashPassword(adminPassword), createdAt: now() });
@@ -715,12 +970,38 @@
           c.orderNo = S.get('orders', c.orderId)?.no || ''; S.put('claims', c);
           S.put('requests', { id: id('r'), shopId: 'u_s1', pid: 'p_pb-mag-5k', text: 'Need 10 MagSafe power banks when back in stock', qty: 10, status: 'open', at: now() - DAY });
           void admin;
+          // suppliers, rider, deal, special price, barcodes
+          const sups = [['Hall Road Importers', '0321 4440001', 'Lahore'], ['Shenzhen Display Co.', '+86 755 0000 0000', 'Shenzhen']];
+          sups.forEach(([name, phone, city], i) => S.put('suppliers', { id: 'sp_' + i, name, phone, city, note: '', createdAt: now() - 90 * DAY }));
+          const buy = (si, items, d, paid) => {
+            const pu = { id: id('pu'), no: nextNo('purchase', 'PU-', 100), supplierId: 'sp_' + si, supplier: sups[si][0], items: [], total: 0, paid, note: '', at: now() - d * DAY, by: 'Owner' };
+            items.forEach(([sku, qty]) => { const p = S.get('products', 'p_' + sku.toLowerCase()); p.supplierId = 'sp_' + si; S.put('products', p); pu.items.push({ pid: p.id, name: p.name, qty, cost: p.cost }); pu.total += qty * p.cost; });
+            S.put('purchases', pu);
+            S.put('supplierLedger', { id: id('sl'), supplierId: 'sp_' + si, type: 'purchase', dir: 1, amount: pu.total, ref: pu.no, note: 'Purchase ' + pu.no, at: pu.at });
+            if (paid) S.put('supplierLedger', { id: id('sl'), supplierId: 'sp_' + si, type: 'payment', dir: -1, amount: paid, method: 'bank', ref: pu.no, note: 'Paid with ' + pu.no, at: pu.at });
+          };
+          buy(1, [['PN-IP11-IN', 40], ['PN-IP13-OL', 12], ['PN-RN13-OL', 10], ['PN-A15-OR', 20]], 30, 300000);
+          buy(1, [['PN-A05-TF', 40], ['PN-SP20-TF', 60], ['PN-SP10-TF', 15]], 20, 100000);
+          buy(0, [['GL-9D-IP', 2000], ['CS-SIL-MIX', 900], ['CB-CC-1M', 1200], ['CH-SAM-25', 200], ['AU-BUD-PRO', 150]], 25, 150000);
+          const pp = S.get('products', 'p_pn-sp20-tf'); pp.faulty = 3; S.put('products', pp);
+          S.put('claims', { id: id('c'), no: nextNo('claim', 'CL-', 100), shopId: 'u_s0', orderId: '', orderNo: '', pid: 'p_pn-sp20-tf', name: pp.name, qty: 3, price: pp.price, reason: 'Lines on display', status: 'approved', resolution: 'credited', supplierId: 'sp_1', at: now() - 5 * DAY, closedAt: now() - 4 * DAY });
+          S.put('users', { id: 'u_r0', role: 'rider', status: 'active', phone: '03066666666', name: 'Imran (rider)', pass: deps.hashPassword('rider123'), createdAt: now() - 30 * DAY });
+          const dispatched = S.all('orders').find((o) => o.status === 'dispatched'); if (dispatched) { dispatched.riderId = 'u_r0'; S.put('orders', dispatched); }
+          const confirmed = S.all('orders').find((o) => o.status === 'confirmed'); if (confirmed) { confirmed.riderId = 'u_r0'; S.put('orders', confirmed); }
+          S.put('riderCash', { id: id('rc'), riderId: 'u_r0', dir: 1, amount: 18500, ref: '', note: 'Collected from Tariq Mobile Zone', at: now() - 3600e3 });
+          S.put('deals', { id: 'd_demo', pid: 'p_au-bud-pro', price: 1250, startsAt: now() - 3600e3, endsAt: now() + 6 * 3600e3, maxPerShop: 20, title: 'Flash deal: Pro 2 Style Earbuds', createdAt: now() - 3600e3 });
+          S.put('announcements', { id: id('a'), kind: 'deal', title: 'Flash deal: Pro 2 Style Earbuds', body: 'Rs 1,250 instead of Rs 1,450 · today only · max 20 per shop', pid: 'p_au-bud-pro', at: now() - 3600e3 });
+          const raza = S.get('users', 'u_s0'); raza.special = { 'p_pn-ip11-in': 3150, 'p_gl-9d-ip': 48 }; S.put('users', raza);
+          [['p_gl-9d-ip', '8964000000011'], ['p_cb-cc-1m', '8964000000028'], ['p_ch-sam-25', '8964000000035'], ['p_au-hf-tc', '8964000000042']].forEach(([pid, bc]) => { const x = S.get('products', pid); x.barcode = bc; S.put('products', x); });
+          // older unpaid invoice so aging buckets show something
+          ledgerAdd({ shopId: 'u_s3', type: 'invoice', dir: 1, amount: 22000, ref: 'LM-0990', note: 'Opening balance (older order)', by: 'Owner', at: now() - 75 * DAY });
+          ledgerAdd({ shopId: 'u_s1', type: 'invoice', dir: 1, amount: 41000, ref: 'LM-0985', note: 'Opening balance (older order)', by: 'Owner', at: now() - 40 * DAY });
         }
       });
       return true;
     }
 
-    return { handle, seed, CATEGORIES, GRADES };
+    return { handle, seed, runReminders, pushTargets, dropPushSub, CATEGORIES, GRADES };
   }
 
   const api = { createCore, normPhone, CATEGORIES, GRADES };

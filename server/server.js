@@ -11,6 +11,7 @@ const { DatabaseSync } = require('node:sqlite');
 const { createCore } = require('../core/core.js');
 const { createMemStore } = require('../core/memstore.js');
 const { SEED_IMAGES } = require('../core/seed-images.js');
+const webpush = require('./webpush.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const PORT = Number(process.env.PORT) || 8080;
@@ -62,6 +63,16 @@ if (core.seed({ demo: process.env.DEMO === '1', adminPhone: process.env.ADMIN_PH
   console.log(`\n  First run: created the owner account\n  Mobile:   ${process.env.ADMIN_PHONE || '03000000000'}\n  Password: ${adminPassword}\n  Sign in and change the password from Admin → Settings.\n`);
 }
 
+/* ---------- push notifications ---------- */
+const VAPID = webpush.loadVapid(path.join(DATA, 'vapid.json'));
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@example.com';
+function pushOut(ev) {
+  if (!ev.title) return;
+  for (const sub of core.pushTargets(ev.to)) {
+    webpush.send(sub, { title: ev.title, body: ev.body || '', url: ev.url || '#/' }, VAPID, VAPID_SUBJECT).then((r) => { if (r.gone) core.dropPushSub(sub.id); else if (!r.ok && process.env.PUSH_DEBUG) console.warn('push failed', r); });
+  }
+}
+
 /* ---------- live updates (Server-Sent Events) ---------- */
 const clients = new Set();
 function userFromToken(token) {
@@ -71,11 +82,15 @@ function userFromToken(token) {
 function broadcast(events) {
   for (const ev of events || []) {
     for (const c of clients) {
-      const hit = ev.to === 'all' || (ev.to === 'admin' && c.role !== 'shop') || ev.to === 'shop:' + c.userId;
-      if (hit) c.res.write(`event: change\ndata: ${JSON.stringify({ type: ev.type })}\n\n`);
+      const hit = (ev.to === 'all' && c.role === 'shop') || (ev.to === 'admin' && (c.role === 'admin' || c.role === 'staff')) || ev.to.endsWith(':' + c.userId);
+      if (hit) c.res.write(`event: change\ndata: ${JSON.stringify({ type: ev.type, title: ev.title || '', url: ev.url || '' })}\n\n`);
     }
+    pushOut(ev);
   }
 }
+/* Automatic payment reminders: checked every hour; each shop is reminded at most once per interval (Settings). */
+setInterval(() => { try { broadcast(core.runReminders().events); } catch (e) { console.error('reminders', e); } }, 3600e3).unref();
+setTimeout(() => { try { broadcast(core.runReminders().events); } catch (e) { console.error('reminders', e); } }, 30e3).unref();
 setInterval(() => { for (const c of clients) c.res.write(': ping\n\n'); }, 25000).unref();
 
 /* ---------- HTTP ---------- */
@@ -128,6 +143,7 @@ const server = http.createServer(async (req, res) => {
       req.on('close', () => clients.delete(c));
       return;
     }
+    if (url.pathname === '/api/push/key') return send(res, 200, { key: VAPID.publicKeyB64 });
     if (url.pathname.startsWith('/api/')) {
       if (rateLimited(ip)) return send(res, 429, { error: 'Too many requests. Please wait a minute.' });
       if (req.method !== 'GET' && req.headers['content-type'] && !req.headers['content-type'].includes('application/json')) return send(res, 415, { error: 'Send JSON' });

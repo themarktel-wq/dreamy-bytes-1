@@ -150,4 +150,101 @@ t('demo seed builds a consistent dataset', () => {
   assert.ok(d.month.total > 0 && d.pendingOrders === 2 && d.pendingShops === 1 && d.openClaims === 1);
   assert.ok(s2.all('products').every((p) => p.stock >= 0));
 });
+
+/* ---------- new features ---------- */
+t('special price overrides the tier price for one shop only', () => {
+  ok(call('POST', `/api/admin/shops/${shopId}/special`, { pid: 'p_ch-sam-25', price: 555 }, admin));
+  const p = call('GET', '/api/products/p_ch-sam-25', null, shopTok).body;
+  assert.equal(p.price, 555); assert.equal(p.priceKind, 'special');
+  const other = ok(call('POST', '/api/auth/register', { name: 'B', shopName: 'B Shop', phone: '03215555555', password: 'secret1' }));
+  ok(call('POST', `/api/admin/shops/${other.body.user.id}`, { status: 'active' }, admin));
+  assert.equal(call('GET', '/api/products/p_ch-sam-25', null, other.token).body.price, 620);
+});
+let deal;
+t('flash deal lowers price, respects per-shop limit, and expires', () => {
+  assert.equal(call('POST', '/api/admin/deals', { pid: 'p_au-hf-tc', price: 999, endsAt: clock + 3600e3 }, admin).status, 400, 'deal must be below list');
+  deal = ok(call('POST', '/api/admin/deals', { pid: 'p_au-hf-tc', price: 120, endsAt: clock + 3600e3, maxPerShop: 40 }, admin)).body;
+  const p = call('GET', '/api/products/p_au-hf-tc', null, shopTok).body;
+  assert.equal(p.price, 120); assert.equal(p.priceKind, 'deal'); assert.equal(p.regularPrice, 157);
+  assert.equal(call('GET', '/api/deals', null, shopTok).body.length, 1);
+  ok(call('POST', '/api/orders', { items: [{ pid: 'p_au-hf-tc', qty: 40 }], payment: 'cash' }, shopTok));
+  assert.match(call('POST', '/api/orders', { items: [{ pid: 'p_au-hf-tc', qty: 40 }], payment: 'cash' }, shopTok).body.error, /deal limit/);
+  clock += 2 * 3600e3;
+  assert.equal(call('GET', '/api/products/p_au-hf-tc', null, shopTok).body.price, 157, 'price returns after the deal ends');
+});
+t('purchase creates supplier khata; payment and faulty return reduce it', () => {
+  const pu = ok(call('POST', '/api/admin/purchases', { supplier: 'Display House', items: [{ pid: 'p_pn-ip11-in', qty: 10, cost: 2800 }], paid: 8000 }, admin)).body;
+  const sups = ok(call('GET', '/api/admin/suppliers', null, admin)).body; const sp = sups.find((x) => x.name === 'Display House');
+  assert.equal(sp.balance, 28000 - 8000);
+  ok(call('POST', `/api/admin/suppliers/${sp.id}/payments`, { amount: 5000 }, admin));
+  assert.equal(store.get('products', 'p_pn-ip11-in').supplierId, sp.id);
+  const faulty = store.get('products', 'p_pn-ip11-in').faulty;
+  assert.equal(call('POST', `/api/admin/suppliers/${sp.id}/returns`, { items: [{ pid: 'p_pn-ip11-in', qty: faulty + 1 }] }, admin).status, 400);
+  const r = ok(call('POST', `/api/admin/suppliers/${sp.id}/returns`, { items: [{ pid: 'p_pn-ip11-in', qty: 1 }] }, admin)).body;
+  assert.equal(r.balance, 28000 - 8000 - 5000 - store.get('products', 'p_pn-ip11-in').cost);
+  assert.equal(store.get('products', 'p_pn-ip11-in').faulty, faulty - 1);
+  void pu;
+});
+t('faulty rate per supplier counts approved claims', () => {
+  const o = ok(call('POST', '/api/orders', { items: [{ pid: 'p_pn-ip11-in', qty: 2 }], payment: 'cash' }, shopTok)).body;
+  ok(call('POST', `/api/admin/orders/${o.id}/status`, { status: 'confirmed' }, admin));
+  const c = ok(call('POST', '/api/claims', { orderId: o.id, pid: 'p_pn-ip11-in', qty: 1, reason: 'No touch' }, shopTok)).body;
+  ok(call('POST', `/api/admin/claims/${c.id}`, { status: 'approved' }, admin));
+  const rep = ok(call('GET', '/api/admin/reports/faulty', null, admin)).body.find((x) => x.name === 'Display House');
+  assert.equal(rep.faultyUnits, 1); assert.equal(rep.units, 10); assert.equal(rep.faultyRate, 10);
+});
+t('rider delivers, collects cash onto khata, and settles with the store', () => {
+  ok(call('POST', '/api/admin/staff', { name: 'Imran', phone: '03127777777', password: 'rider12', role: 'rider' }, admin));
+  const rider = ok(call('POST', '/api/auth/login', { phone: '03127777777', password: 'rider12' })).token;
+  const riderId = call('GET', '/api/me', null, rider).body.user.id;
+  const o = ok(call('POST', '/api/orders', { items: [{ pid: 'p_cb-cl-1m', qty: 40 }], payment: 'cash' }, shopTok)).body;
+  assert.equal(call('POST', `/api/admin/orders/${o.id}/assign`, { riderId }, admin).status, 400, 'must confirm first');
+  ok(call('POST', `/api/admin/orders/${o.id}/status`, { status: 'confirmed' }, admin));
+  ok(call('POST', `/api/admin/orders/${o.id}/assign`, { riderId }, admin));
+  assert.equal(call('GET', '/api/admin/dashboard', null, rider).status, 403, 'riders cannot open admin');
+  assert.equal(call('GET', `/api/orders/${order.id}`, null, rider).status, 404, 'riders cannot read other orders');
+  assert.equal(ok(call('GET', '/api/rider/orders', null, rider)).body.length, 1);
+  ok(call('POST', `/api/rider/orders/${o.id}/status`, { status: 'dispatched' }, rider));
+  const bal = call('GET', '/api/ledger', null, shopTok).body.balance;
+  ok(call('POST', `/api/rider/orders/${o.id}/status`, { status: 'delivered', collected: o.total }, rider));
+  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, bal - o.total);
+  assert.equal(call('GET', '/api/me', null, rider).body.cashInHand, o.total);
+  assert.equal(call('POST', `/api/admin/riders/${riderId}/settle`, { amount: o.total + 1 }, admin).status, 400);
+  ok(call('POST', `/api/admin/riders/${riderId}/settle`, { amount: o.total }, admin));
+  assert.equal(call('GET', '/api/me', null, rider).body.cashInHand, 0);
+});
+t('aging puts old unpaid invoices in the right bucket (FIFO)', () => {
+  const s3 = ok(call('POST', '/api/auth/register', { name: 'C', shopName: 'Aging Shop', phone: '03216666666', password: 'secret1' }));
+  const sid = s3.body.user.id;
+  ok(call('POST', `/api/admin/shops/${sid}`, { status: 'active', creditLimit: 100000 }, admin));
+  const o1 = ok(call('POST', '/api/orders', { items: [{ pid: 'p_cs-sil-mix', qty: 40 }], payment: 'credit' }, s3.token)).body;
+  ok(call('POST', `/api/admin/orders/${o1.id}/status`, { status: 'confirmed' }, admin));
+  clock += 45 * 864e5;
+  const o2 = ok(call('POST', '/api/orders', { items: [{ pid: 'p_cs-sil-mix', qty: 40 }], payment: 'credit' }, s3.token)).body;
+  ok(call('POST', `/api/admin/orders/${o2.id}/status`, { status: 'confirmed' }, admin));
+  ok(call('POST', '/api/admin/payments', { shopId: sid, amount: 1000 }, admin));
+  const r = ok(call('GET', '/api/admin/receivables', null, admin)).body.find((x) => x.id === sid);
+  assert.equal(r.aging.d30, o1.total - 1000, 'payment settled the oldest invoice first');
+  assert.equal(r.aging.d0, o2.total);
+});
+t('reminders message overdue shops once per interval', () => {
+  const first = ok(call('POST', '/api/admin/reminders/run', {}, admin)).body;
+  assert.ok(first.shops.includes('Aging Shop'));
+  assert.equal(ok(call('POST', '/api/admin/reminders/run', {}, admin)).body.sent, 0, 'not repeated within the interval');
+  assert.ok(core.runReminders().sent === 0);
+  clock += 8 * 864e5;
+  assert.ok(core.runReminders().sent >= 1, 'automatic run sends again after the interval');
+});
+t('barcodes must be unique', () => {
+  const p = store.get('products', 'p_cb-cc-1m');
+  ok(call('PUT', '/api/admin/products/p_cb-cc-1m', { ...p, barcode: '123456789012' }, admin));
+  const q = store.get('products', 'p_cb-cl-1m');
+  assert.match(call('PUT', '/api/admin/products/p_cb-cl-1m', { ...q, barcode: '123456789012' }, admin).body.error, /already used/);
+});
+t('push subscriptions are stored per user and targeted', () => {
+  ok(call('POST', '/api/push/subscribe', { subscription: { endpoint: 'https://push.example/abc', keys: { p256dh: 'k', auth: 'a' } } }, shopTok));
+  assert.equal(core.pushTargets('shop:' + shopId).length, 1);
+  assert.equal(core.pushTargets('admin').length, 0);
+  assert.equal(core.pushTargets('all').length, 1);
+});
 console.log(`\n${passed} tests passed`);

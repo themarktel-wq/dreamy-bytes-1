@@ -815,3 +815,28 @@ a.sc:hover { border-color: transparent; box-shadow: var(--shadow); }
   .act .icon-btn { width: 26px; height: 26px; position: relative; }
   .act .badge-dot { top: -7px; right: -9px; }
 }
+
+/* ===== Printing ===== */
+body.printing .announce, body.printing .topbar, body.printing .m-search, body.printing .catnav, body.printing footer, body.printing .tabbar, body.printing .demo-bar, body.printing #cmpBar, body.printing .install { display: none !important; }
+body.printing { background: #fff; padding-bottom: 0; }
+.print-bar { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--bg-soft); }
+.sheet-a4 { max-width: 210mm; margin: 20px auto; padding: 14mm; background: #fff; color: #111; font-size: 13px; box-shadow: var(--shadow); }
+.inv { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.inv th, .inv td { padding: 7px 8px; border-bottom: 1px solid #e4e8ef; text-align: left; }
+.inv th { background: #f5f7fb; font-weight: 600; }
+.inv .num { text-align: right; font-variant-numeric: tabular-nums; }
+.receipt { width: 72mm; margin: 20px auto; padding: 4mm; background: #fff; color: #000; font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; box-shadow: var(--shadow); }
+.receipt .c { text-align: center; } .receipt .r { text-align: right; } .receipt hr { border: 0; border-top: 1px dashed #000; margin: 6px 0; }
+.label-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; max-width: 200mm; margin: 16px auto; padding: 0 16px; }
+.label { display: flex; gap: 3mm; align-items: center; border: 1px dashed #c8ced8; border-radius: 2mm; padding: 3mm; font-size: 11px; color: #111; break-inside: avoid; min-height: 26mm; }
+.label svg { width: 20mm; height: 20mm; flex: none; }
+.label b { color: #111; }
+.qr-fallback { width: 20mm; min-height: 20mm; display: grid; place-items: center; font: 600 10px ui-monospace, monospace; border: 1px solid #111; word-break: break-all; text-align: center; padding: 1mm; flex: none; }
+@media print {
+  .no-print { display: none !important; }
+  .sheet-a4, .receipt { box-shadow: none; margin: 0 auto; }
+  .sheet-a4 { padding: 0; }
+  .label-grid { padding: 0; margin: 0; }
+  #view.enter { animation: none; }
+  .toasts { display: none; }
+}
