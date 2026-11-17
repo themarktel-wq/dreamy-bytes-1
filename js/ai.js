@@ -51,7 +51,7 @@ function aiSend(e) {
   bubble('me', esc(q));
   const r = brain(q);
   botSay(r.text, r.products || [], r.quick || []);
-  if (r.go) setTimeout(() => (location.hash = r.go), 1300);
+  if (r.go) setTimeout(() => go(r.go), 1300);
 }
 
 /* ---------- Understanding ---------- */

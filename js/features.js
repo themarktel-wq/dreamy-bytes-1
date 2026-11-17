@@ -52,7 +52,7 @@ route('kit', (r) => {
   </div>`;
 });
 after('kit', () => {
-  $('#kitModel').addEventListener('change', (e) => { KIT = { model: e.target.value }; location.hash = '#/kit?model=' + e.target.value; });
+  $('#kitModel').addEventListener('change', (e) => { KIT = { model: e.target.value }; go('#/kit?model=' + e.target.value); });
   $$('.kit-opt').forEach((b) => b.addEventListener('click', () => {
     const k = b.dataset.k; KIT[k] = KIT[k] === b.dataset.id ? null : b.dataset.id;
     $$(`.kit-opt[data-k="${k}"]`).forEach((x) => x.classList.toggle('on', x.dataset.id === KIT[k]));
@@ -75,7 +75,7 @@ function kitToCart() {
   const ids = kitIds();
   ids.forEach((id) => addToCart(id, { kit: true, silent: true }));
   toast(`Kit added to cart (${ids.length} items)`, 'kit');
-  location.hash = '#/cart';
+  go('#/cart');
 }
 
 /* ================= TRADE-IN ================= */
@@ -130,7 +130,7 @@ function applyTrade(v) {
   const m = DB.model(TA.model);
   S.trade = { model: m.name, value: v, apply: true, at: Date.now() };
   S.persist(); toast(`${rs(v)} trade-in credit applied to your cart`, 'swap');
-  location.hash = '#/shop?cat=phone';
+  go('#/shop?cat=phone');
 }
 
 /* ================= WARRANTY VAULT ================= */
@@ -157,16 +157,17 @@ route('warranty', () => {
     <p class="muted" style="font-size:13px">Cards are stored on this device. To check PTA status, dial *#06# for your IMEI and SMS it to 8484.</p>
   </div>`;
 });
-function setImei(id) {
+async function setImei(id) {
   const v = Store.get('vault', []), w = v.find((x) => x.id === id); if (!w) return;
-  const imei = prompt('Enter IMEI or serial number (dial *#06# on your phone):', w.imei || '');
+  const imei = await uiPrompt('IMEI or serial number', 'Dial *#06# on your phone to see it', w.imei || '', { inputmode: 'numeric' });
   if (imei === null) return;
   w.imei = imei.replace(/[^0-9A-Za-z]/g, '').slice(0, 20); Store.set('vault', v); render();
 }
-function delVault(id) { if (!confirm('Delete this warranty card?')) return; Store.set('vault', Store.get('vault', []).filter((x) => x.id !== id)); render(); }
-function addVaultManual() {
-  const name = prompt('Product name (e.g. Galaxy A56):'); if (!name) return;
-  const months = parseInt(prompt('Warranty length in months:', '12')) || 12;
+async function delVault(id) { if (!(await uiConfirm('Delete this warranty card?', 'This removes it from this device.'))) return; Store.set('vault', Store.get('vault', []).filter((x) => x.id !== id)); render(); }
+async function addVaultManual() {
+  const r = await uiDialog({ title: 'Add an earlier purchase', fields: [{ label: 'Product name', placeholder: 'e.g. Galaxy A56' }, { label: 'Warranty length (months)', value: '12', inputmode: 'numeric' }], ok: 'Add card' });
+  if (!r || !r[0].trim()) return;
+  const name = r[0].trim(), months = parseInt(r[1]) || 12;
   const v = Store.get('vault', []); v.unshift({ id: uid('w'), name: name.slice(0, 60), order: 'Manual', start: Date.now(), months, imei: '' }); Store.set('vault', v); render();
 }
 
@@ -237,7 +238,7 @@ function referFriend() {
   let code = Store.get('ref'); if (!code) { code = 'LM' + Math.random().toString(36).slice(2, 7).toUpperCase(); Store.set('ref', code); }
   const url = location.href.split('#')[0] + '?ref=' + code;
   const data = { title: DB.settings.shopName, text: `Shop phones and accessories at ${DB.settings.shopName} — use code ${code} for Rs 500 off.`, url };
-  if (navigator.share) navigator.share(data).catch(() => {}); else { if (navigator.clipboard) navigator.clipboard.writeText(data.text + ' ' + url); toast('Referral link copied'); }
+  shareOrCopy(data);
 }
 
 /* ================= STORE ================= */

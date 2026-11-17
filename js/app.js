@@ -166,7 +166,7 @@ function toggleCompare(id, btn) {
 }
 function renderCompareBar() {
   let bar = $('#cmpBar');
-  if (!S.compare.length || location.hash.startsWith('#/compare') || location.hash.startsWith('#/admin')) { if (bar) bar.remove(); return; }
+  if (!S.compare.length || curPath().startsWith('#/compare') || curPath().startsWith('#/admin')) { if (bar) bar.remove(); return; }
   if (!bar) { bar = document.createElement('div'); bar.id = 'cmpBar'; bar.className = 'cmp-bar'; document.body.appendChild(bar); }
   bar.innerHTML = `${S.compare.length} of 3 selected
     <a class="btn btn-sm btn-white" href="#/compare">Compare</a>

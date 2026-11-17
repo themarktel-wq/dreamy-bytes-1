@@ -101,7 +101,7 @@ function boot() {
   $('#sIn').addEventListener('keydown', (e) => {
     const items = $$('#sRes .s-item');
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sIdx = Math.max(0, Math.min(items.length - 1, sIdx + (e.key === 'ArrowDown' ? 1 : -1))); items.forEach((x, i) => x.classList.toggle('hl', i === sIdx)); }
-    if (e.key === 'Enter') { saveRecent(); location.hash = sIdx >= 0 && items[sIdx] ? items[sIdx].getAttribute('href') : '#/shop?q=' + encodeURIComponent(e.target.value); }
+    if (e.key === 'Enter') { saveRecent(); const to = sIdx >= 0 && items[sIdx] ? items[sIdx].getAttribute('href') : '#/shop?q=' + encodeURIComponent(e.target.value); if (ROUTER.mem) go(to); else location.hash = to; }
     if (e.key === 'Escape') closeSearch();
   });
   $('#sMic').addEventListener('click', (e) => voice(e.currentTarget, (t) => { $('#sIn').value = t; searchRender(t); }));
@@ -110,13 +110,22 @@ function boot() {
     if ((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); openSearch(); }
     if (e.key === 'Escape') { closeAI(); closeSearch(); }
   });
-  addEventListener('hashchange', () => { closeSearch(); if (innerWidth < 960) closeAI(); render(); });
+  if (ROUTER.mem) {
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href^="#"]');
+      if (!a || e.defaultPrevented) return;
+      e.preventDefault();
+      const href = a.getAttribute('href');
+      if (href.startsWith('#/') || href === '#') go(href === '#' ? '#/' : href);
+      else { const t = document.getElementById(href.slice(1)); if (t) t.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  } else addEventListener('hashchange', () => { closeSearch(); if (innerWidth < 960) closeAI(); render(); });
 
   const ref = new URLSearchParams(location.search).get('ref');
   if (ref) { Store.set('referredBy', ref); setTimeout(() => toast(`Referral code ${esc(ref)} applied — mention it on WhatsApp for Rs 500 off`, 'tag'), 2000); }
 
   render();
   checkAlerts();
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if (!ROUTER.mem && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 boot();

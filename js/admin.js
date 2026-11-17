@@ -4,7 +4,8 @@
    (Firebase / Supabase) — see README. */
 
 let ADM = { tab: 'dash', pin: '' };
-const isAdmin = () => sessionStorage.getItem('lm_admin') === '1';
+const isAdmin = () => { try { return sessionStorage.getItem('lm_admin') === '1'; } catch { return !!ADM.ok; } };
+function setAdmin(on) { ADM.ok = on; try { on ? sessionStorage.setItem('lm_admin', '1') : sessionStorage.removeItem('lm_admin'); } catch {} }
 
 route('admin', () => {
   if (!isAdmin()) {
@@ -17,7 +18,7 @@ route('admin', () => {
   }
   const tabs = [['dash', 'Dashboard'], ['products', 'Products'], ['orders', 'Orders'], ['banners', 'Banners'], ['models', 'Phone Models'], ['settings', 'Settings'], ['data', 'Backup']];
   return `<div class="wrap"><div class="page-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h1>Admin</h1><p>${esc(DB.settings.shopName)} control center</p></div>
-    <button class="btn btn-ghost btn-sm" onclick="sessionStorage.removeItem('lm_admin');render()">${icon('lock')} Logout</button></div>
+    <button class="btn btn-ghost btn-sm" onclick="setAdmin(false);render()">${icon('lock')} Logout</button></div>
     <div class="admin-tabs">${tabs.map(([k, n]) => `<button class="${ADM.tab === k ? 'on' : ''}" onclick="ADM.tab='${k}';render()">${n}</button>`).join('')}</div>
     <div id="admBody">${(ADMIN_TABS[ADM.tab] || ADMIN_TABS.dash)()}</div></div>
     <div class="modal" id="admModal"><div class="sheet" id="admSheet"></div></div>`;
@@ -26,7 +27,7 @@ function pinKey(k) {
   if (k === '⌫') ADM.pin = ADM.pin.slice(0, -1); else if (ADM.pin.length < 4) ADM.pin += k;
   $$('#pinDots i').forEach((d, i) => d.classList.toggle('f', i < ADM.pin.length));
   if (ADM.pin.length === 4) {
-    if (ADM.pin === String(DB.settings.adminPin)) { sessionStorage.setItem('lm_admin', '1'); toast('Signed in'); render(); }
+    if (ADM.pin === String(DB.settings.adminPin)) { setAdmin(true); toast('Signed in'); render(); }
     else { const d = $('#pinDots'); d.classList.add('shake'); setTimeout(() => { d.classList.remove('shake'); ADM.pin = ''; $$('#pinDots i').forEach((x) => x.classList.remove('f')); }, 450); }
   }
 }
@@ -133,7 +134,7 @@ function admFilter() {
   $('#admRows').innerHTML = admRows(DB.products.filter((p) => (!c || p.cat === c) && (!q || searchScore(p, q) > 0)));
 }
 function quickStock(id, v) { const p = DB.byId(id); p.stock = Math.max(0, parseInt(v) || 0); DB.save('products'); toast('Stock updated'); }
-function delProduct(id) { if (!confirm('Delete this product?')) return; DB.products = DB.products.filter((p) => p.id !== id); DB.save('products'); render(); }
+async function delProduct(id) { if (!(await uiConfirm('Delete this product?', 'It will be removed from the store.'))) return; DB.products = DB.products.filter((p) => p.id !== id); DB.save('products'); render(); }
 function modal(html) { $('#admSheet').innerHTML = html; $('#admModal').classList.add('on'); $('#admModal').onclick = (e) => { if (e.target.id === 'admModal') closeModal(); }; }
 function closeModal() { $('#admModal').classList.remove('on'); }
 function editProduct(id) {
@@ -220,7 +221,7 @@ function saveBanner(e, id) {
   if (id) Object.assign(DB.banners.find((x) => x.id === id), f); else DB.banners.push({ id: uid('b'), ...f });
   DB.save('banners'); closeModal(); render();
 }
-function delBanner(id) { if (!confirm('Delete banner?')) return; DB.banners = DB.banners.filter((b) => b.id !== id); DB.save('banners'); render(); }
+async function delBanner(id) { if (!(await uiConfirm('Delete this banner?'))) return; DB.banners = DB.banners.filter((b) => b.id !== id); DB.save('banners'); render(); }
 function moveBanner(i, d) { const j = i + d; if (j < 0) return; [DB.banners[i], DB.banners[j]] = [DB.banners[j], DB.banners[i]]; DB.save('banners'); render(); }
 
 /* ---------- models ---------- */
@@ -241,7 +242,7 @@ function saveModel(e, id) {
   if (id) Object.assign(DB.model(id), f); else DB.models.push(f);
   DB.save('models'); closeModal(); render();
 }
-function delModel(id) { if (!confirm('Delete model?')) return; DB.models = DB.models.filter((m) => m.id !== id); DB.save('models'); render(); }
+async function delModel(id) { if (!(await uiConfirm('Delete this phone model?'))) return; DB.models = DB.models.filter((m) => m.id !== id); DB.save('models'); render(); }
 
 /* ---------- settings ---------- */
 function saveSettings(e) {
@@ -269,22 +270,22 @@ function dl(blob, name) { const a = document.createElement('a'); a.href = URL.cr
 function importData(file) {
   if (!file) return;
   const r = new FileReader();
-  r.onload = () => {
+  r.onload = async () => {
     try {
       const d = JSON.parse(r.result);
       if (d.app !== 'lahore-mobile' || !Array.isArray(d.products)) throw new Error('bad file');
-      if (!confirm(`Import ${d.products.length} products? Mojooda data replace ho jayega.`)) return;
+      if (!(await uiConfirm(`Import ${d.products.length} products?`, 'This replaces the current store data.', 'Import'))) return;
       DB.products = d.products; DB.banners = d.banners || DB.banners; DB.models = d.models || DB.models;
       ['products', 'banners', 'models'].forEach((k) => DB.save(k));
       if (d.settings) { Store.set('settings', d.settings); }
       if (d.orders) Store.set('orders', d.orders);
-      DB.load(); toast('Import mukammal'); render();
-    } catch { toast('Ghalat file', 'info'); }
+      DB.load(); toast('Import complete'); render();
+    } catch { toast('That file is not a Lahore Mobile backup', 'info'); }
   };
   r.readAsText(file);
 }
-function resetAll() {
-  if (!confirm('Sab products/banners/models/settings sample data par reset? (Orders bhi delete)')) return;
+async function resetAll() {
+  if (!(await uiConfirm('Reset to sample data?', 'Products, banners, models, settings and orders will be replaced.', 'Reset'))) return;
   ['products', 'banners', 'models', 'settings', 'orders', 'edited', 'seedv'].forEach((k) => Store.del(k));
-  DB.load(); toast('Reset ho gaya'); render();
+  DB.load(); toast('Reset complete'); render();
 }

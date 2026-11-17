@@ -32,8 +32,18 @@ function card(p) {
 /* ================= ROUTER ================= */
 const routes = {};
 function route(name, fn) { routes[name] = fn; }
+/* Navigation: uses the URL hash on a normal site; inside hosts that only allow plain #names
+   (window.LM_MEMORY_ROUTER = true) it keeps the current page in memory instead. */
+const ROUTER = { mem: !!window.LM_MEMORY_ROUTER, path: '#/' };
+function curPath() { return ROUTER.mem ? ROUTER.path : location.hash; }
+function go(h) {
+  if (!ROUTER.mem) { location.hash = h; return; }
+  ROUTER.path = h || '#/';
+  closeSearch(); if (innerWidth < 960) closeAI();
+  render();
+}
 function parseHash() {
-  const h = location.hash.replace(/^#\/?/, '');
+  const h = curPath().replace(/^#\/?/, '');
   const [path, qs] = h.split('?');
   const parts = path.split('/').filter(Boolean);
   return { name: parts[0] || 'home', arg: parts[1], q: new URLSearchParams(qs || '') };
@@ -64,7 +74,10 @@ function observeReveal() {
   io = io || new IntersectionObserver((ents) => ents.forEach((e) => {
     if (e.isIntersecting) { e.target.classList.add('in'); if (e.target.dataset.count) countUp(e.target); io.unobserve(e.target); }
   }), { rootMargin: '0px 0px -40px 0px' });
-  $$('.reveal:not(.in), [data-count]').forEach((el, i) => { el.style.transitionDelay = (i % 4) * 60 + 'ms'; io.observe(el); });
+  $$('.reveal:not(.in):not(.below), [data-count]').forEach((el, i) => {
+    if (el.getBoundingClientRect().top > innerHeight) { el.classList.add('below'); el.style.animationDelay = (i % 4) * 60 + 'ms'; }
+    io.observe(el);
+  });
 }
 const arrowLink = (href, text) => `<a href="${href}">${text} ${icon('arrow')}</a>`;
 const secHead = (eyebrow, title, sub, link) => `<div class="sec-head"><div>${eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''}<h3>${title}</h3>${sub ? `<div class="sub">${sub}</div>` : ''}</div>${link || ''}</div>`;
@@ -194,7 +207,7 @@ function hourFmt(x) { const h = x % 12 || 12; return h + (x < 12 ? ' am' : ' pm'
 function pickPhone(id) {
   S.myPhone = id; S.persist(); updateBadges();
   toast(`Showing accessories for your ${DB.model(id).name}`, 'phone');
-  location.hash = '#/shop?fit=1';
+  go('#/shop?fit=1');
 }
 let heroTimer;
 after('home', () => {
@@ -263,7 +276,7 @@ after('shop', () => {
   $('#fCat').addEventListener('click', (e) => { const b = e.target.closest('.pill'); if (!b) return; F.cat = b.dataset.v; applyFilters(); });
   $('#fBrand').addEventListener('click', (e) => { const b = e.target.closest('.pill'); if (!b) return; const v = b.dataset.v; F.brands = F.brands.includes(v) ? F.brands.filter((x) => x !== v) : [...F.brands, v]; applyFilters(); });
   ['fMin', 'fMax'].forEach((id) => $('#' + id).addEventListener('input', () => { F.min = $('#fMin').value; F.max = $('#fMax').value; applyFilters(); }));
-  $('#fFit').addEventListener('change', (e) => { if (e.target.checked && !S.myPhone) { e.target.checked = false; toast('Select your phone first', 'phone'); location.hash = '#/myphone'; return; } F.fit = e.target.checked; applyFilters(); });
+  $('#fFit').addEventListener('change', (e) => { if (e.target.checked && !S.myPhone) { e.target.checked = false; toast('Select your phone first', 'phone'); go('#/myphone'); return; } F.fit = e.target.checked; applyFilters(); });
   $('#fPta').addEventListener('change', (e) => { F.pta = e.target.checked; applyFilters(); });
   $('#fStock').addEventListener('change', (e) => { F.stock = e.target.checked; applyFilters(); });
   $('#fSort').addEventListener('change', (e) => { F.sort = e.target.value; applyFilters(); });
@@ -365,7 +378,7 @@ route('p', (r) => {
             <button class="btn btn-ghost btn-sm btn-block" style="margin-top:12px" onclick="setAlert('${p.id}')">${icon('bell')} ${alert ? `Alert set below ${rs(alert.target)}` : 'Notify me when the price drops'}</button>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-ghost btn-sm" onclick="toggleCompare('${p.id}');location.hash='#/compare'">${icon('compare')} Compare</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleCompare('${p.id}');go('#/compare')">${icon('compare')} Compare</button>
             <button class="btn btn-ghost btn-sm" onclick="shareProduct('${p.id}')">${icon('share')} Share</button>
             <button class="btn btn-ghost btn-sm" onclick="openAI('Tell me about ${esc(p.name).replace(/'/g, '')}')">${icon('chat')} Ask a question</button>
           </div>
@@ -429,9 +442,9 @@ function addReview(e, id) {
   $('#revList').insertAdjacentHTML('afterbegin', reviewHTML(rev));
   e.target.reset(); toast('Thank you — your review has been posted');
 }
-function setAlert(id) {
+async function setAlert(id) {
   const p = DB.byId(id), cur = S.alerts[id];
-  const v = prompt(`We'll notify you when ${p.name} drops below your target price.\nTarget price (Rs):`, cur ? cur.target : Math.round(p.price * 0.95));
+  const v = await uiDialog({ title: 'Price drop alert', text: `We'll notify you when ${p.name} drops below your target price. Leave it empty to remove the alert.`, fields: [{ label: 'Target price (Rs)', value: cur ? cur.target : Math.round(p.price * 0.95), inputmode: 'numeric' }], ok: 'Set alert' }).then((r) => (r ? r[0] : null));
   if (v === null) return;
   const t = parseInt(String(v).replace(/\D/g, ''));
   if (!t) { delete S.alerts[id]; S.persist(); toast('Price alert removed', 'bell'); render(); return; }
@@ -456,8 +469,7 @@ function checkAlerts() {
 function shareProduct(id) {
   const p = DB.byId(id), url = location.href.split('#')[0] + '#/p/' + id;
   const data = { title: p.name, text: `${p.name} — ${rs(p.price)} at ${DB.settings.shopName}`, url };
-  if (navigator.share) navigator.share(data).catch(() => {});
-  else { if (navigator.clipboard) navigator.clipboard.writeText(url); toast('Link copied'); }
+  shareOrCopy(data);
 }
 
 /* ================= CART ================= */
@@ -510,7 +522,7 @@ function qty(key, d) {
 /* ================= CHECKOUT ================= */
 route('checkout', () => {
   const t = cartTotals();
-  if (!t.lines.length) { setTimeout(() => (location.hash = '#/cart')); return ''; }
+  if (!t.lines.length) { setTimeout(() => go('#/cart')); return ''; }
   const me = Store.get('me', {});
   return `<div class="wrap"><div class="page-head"><h1>Checkout</h1><p>No account needed. Our team confirms every order on WhatsApp within minutes.</p></div>
   <form class="two-col" id="coForm" onsubmit="placeOrder(event)">
@@ -578,8 +590,8 @@ function placeOrder(e) {
   Store.set('vault', vault);
   const msg = `*New order ${id}*\n\n${order.items.map((i) => `• ${i.qty} × ${i.name}${i.storage ? ' ' + i.storage : ''}${i.color ? ' (' + i.color + ')' : ''} — ${rs(i.price * i.qty)}`).join('\n')}\n\nSubtotal: ${rs(t.sub)}${t.kitDisc ? `\nKit discount: −${rs(t.kitDisc)}` : ''}${t.trade ? `\nTrade-in (${S.trade.model}): −${rs(t.trade)}` : ''}\nDelivery: ${delivery ? rs(delivery) : 'Free'}\n*Total: ${rs(total)}*\n\nName: ${fd.name}\nPhone: ${fd.phone}\n${coMode === 'pickup' ? 'Store pickup' : 'Address: ' + fd.address}\nPayment: ${fd.pay}${fd.note ? '\nNote: ' + fd.note : ''}`;
   S.cart = []; if (S.trade && S.trade.apply) S.trade = null; S.persist(); updateBadges();
-  window.open(waLink(msg), '_blank');
-  location.hash = '#/done/' + id;
+  Store.set('lastOrder', { id, msg });
+  go('#/done/' + id);
 }
 function warrantyMonths(p) {
   const w = String((p.specs || {}).Warranty || '');
@@ -588,9 +600,15 @@ function warrantyMonths(p) {
   if (/month/i.test(w)) return n;
   return ['charger', 'audio', 'powerbank', 'watch', 'phone'].includes(p.cat) ? 6 : 0;
 }
-route('done', (r) => `<div class="wrap" style="text-align:center;padding:72px 0;max-width:560px">
+route('done', (r) => {
+  const last = Store.get('lastOrder', {});
+  const msg = last.id === r.arg ? last.msg : '';
+  return `<div class="wrap" style="text-align:center;padding:72px 16px;max-width:600px">
   <div style="width:72px;height:72px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:var(--ok-bg);color:var(--ok);animation:pop .5s">${icon('check', 'width="36" height="36"')}</div>
-  <h1 style="margin:20px 0 8px">Thank you. Order ${esc(r.arg)} received.</h1>
-  <p class="muted">Please send the WhatsApp message that just opened — our team will confirm your order within 10 minutes during store hours.</p>
+  <h1 style="margin:20px 0 8px">Order ${esc(r.arg)} is ready to send</h1>
+  <p class="muted">Send it to us on WhatsApp to confirm. Our team replies within 10 minutes during store hours.</p>
+  ${msg ? `<a class="btn btn-primary" style="height:54px;margin-top:20px;padding:0 28px" href="${waLink(msg)}" target="_blank" rel="noopener">${icon('wa')} Send order on WhatsApp</a>
+  <p class="muted" style="font-size:13px;margin-top:12px">WhatsApp not opening? Message us on <b style="color:var(--ink);user-select:all">${esc(DB.settings.phone)}</b> with your order number.</p>` : ''}
   <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px">
-    <a class="btn btn-primary" href="#/warranty">${icon('vault')} View warranty cards</a><a class="btn btn-ghost" href="#/">Continue shopping</a></div></div>`);
+    <a class="btn btn-ghost" href="#/warranty">${icon('vault')} View warranty cards</a><a class="btn btn-ghost" href="#/">Continue shopping</a></div></div>`;
+});

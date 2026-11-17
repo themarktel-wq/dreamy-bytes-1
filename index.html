@@ -61,7 +61,7 @@
           </div>
           <div><h6>Shop</h6><a href="#/shop?cat=phone">Phones</a><a href="#/shop?cat=case">Covers &amp; Cases</a><a href="#/shop?cat=protector">Screen Protectors</a><a href="#/shop?cat=charger">Chargers</a><a href="#/shop?cat=audio">Audio</a><a href="#/shop?cat=watch">Smart Watches</a></div>
           <div><h6>Services</h6><a href="#/myphone">Phone Match</a><a href="#/kit">Kit Builder</a><a href="#/tradein">Trade-in</a><a href="#/warranty">Warranty Vault</a><a href="#/compare">Compare</a></div>
-          <div><h6>Help</h6><a href="#/store">Store &amp; timings</a><a href="#/community">Community</a><a href="javascript:openAI()">Shopping assistant</a><a href="javascript:installApp()">Install the app</a><a href="#/admin">Admin</a></div>
+          <div><h6>Help</h6><a href="#/store">Store &amp; timings</a><a href="#/community">Community</a><a href="#" onclick="event.preventDefault();openAI()">Shopping assistant</a><a href="#" onclick="event.preventDefault();installApp()">Install the app</a><a href="#/admin">Admin</a></div>
         </div>
       </div>
     </div>
@@ -76,7 +76,7 @@
   <nav class="tabbar" id="tabbar">
     <a href="#/" data-r="home"><span data-i="home"></span>Home</a>
     <a href="#/shop" data-r="shop"><span data-i="grid"></span>Shop</a>
-    <a href="javascript:openAI()"><span data-i="chat"></span>Assistant</a>
+    <a href="#" onclick="event.preventDefault();openAI()"><span data-i="chat"></span>Assistant</a>
     <a href="#/cart" data-r="cart"><span data-i="cart"></span>Cart<i class="badge-dot cart-count"></i></a>
     <a href="#/more" data-r="more"><span data-i="menu"></span>More</a>
   </nav>

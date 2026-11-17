@@ -96,6 +96,33 @@ const Store = {
   del(k) { try { localStorage.removeItem('lm_' + k); } catch {} },
 };
 
+/* ---------- In-page dialogs (replace prompt/confirm, which some hosts block) ---------- */
+function uiDialog({ title, text = '', fields = [], ok = 'OK', danger = false }) {
+  return new Promise((resolve) => {
+    const m = document.createElement('div');
+    m.className = 'modal on';
+    m.innerHTML = `<form class="sheet" style="max-width:440px">
+      <h3>${esc(title)}</h3>${text ? `<p class="muted" style="margin:6px 0 0">${esc(text)}</p>` : ''}
+      ${fields.map((f, i) => `<label class="f" for="dlg${i}">${esc(f.label)}</label><input class="input" id="dlg${i}" name="f${i}" value="${esc(f.value ?? '')}" ${f.type ? `type="${f.type}"` : ''} ${f.inputmode ? `inputmode="${f.inputmode}"` : ''} placeholder="${esc(f.placeholder || '')}">`).join('')}
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px"><button type="button" class="btn btn-ghost" data-x>Cancel</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}">${esc(ok)}</button></div></form>`;
+    const done = (v) => { m.remove(); resolve(v); };
+    m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-x]')) done(null); });
+    m.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); done(fields.length ? fields.map((_, i) => m.querySelector('#dlg' + i).value) : true); });
+    document.body.appendChild(m);
+    const first = m.querySelector('input') || m.querySelector('button:not([data-x])');
+    setTimeout(() => first && first.focus(), 30);
+  });
+}
+const uiConfirm = (title, text, ok = 'Delete') => uiDialog({ title, text, ok, danger: true }).then((v) => !!v);
+const uiPrompt = (title, label, value = '', extra = {}) => uiDialog({ title, fields: [{ label, value, ...extra }], ok: extra.ok || 'Save' }).then((v) => (v ? v[0] : null));
+function copyText(text, msg = 'Copied') {
+  try { navigator.clipboard.writeText(text).then(() => toast(msg), () => toast(text, 'info')); } catch { toast(text, 'info'); }
+}
+function shareOrCopy(data) {
+  const copy = () => copyText(data.url ? data.text + ' ' + data.url : data.text, 'Link copied');
+  if (navigator.share) navigator.share(data).catch((e) => { if (!e || e.name !== 'AbortError') copy(); }); else copy();
+}
+
 /* ---------- Toasts ---------- */
 function toast(msg, ic = 'check') {
   const box = $('#toasts');
