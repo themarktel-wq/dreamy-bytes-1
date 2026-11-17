@@ -134,7 +134,7 @@ route('admin/pos', async () => {
       <div><div style="display:flex;gap:8px;margin-bottom:8px"><input class="input" id="posScan" placeholder="Scan barcode / QR or type SKU, then Enter" autocomplete="off" aria-label="Scan"><button class="btn btn-ghost" id="posCam" aria-label="Scan with camera">${icon('search')} Camera</button></div><input class="input" id="posQ" placeholder="Search product, SKU or model" style="margin-bottom:10px" aria-label="Search products"><div class="pos-grid" id="posGrid"></div></div>
       <div class="box" style="padding:18px;align-self:start;position:sticky;top:100px">
         <label class="f" style="margin-top:0" for="posShop">Customer</label>
-        <select class="select" id="posShop"><option value="">Walk-in customer (paid now)</option>${POS.shops.map((s) => `<option value="${s.id}">${esc(s.shop.shopName)} · ${esc(s.tierName)} · bal ${rs(s.balance)}</option>`).join('')}</select>
+        <select class="select" id="posShop"><option value="">Walk-in customer (paid now)</option>${POS.shops.map((s) => `<option value="${s.id}">${esc(s.shop.shopName)} · khata ${rs(s.balance)}</option>`).join('')}</select>
         <div id="posLines" style="margin-top:12px"></div>
         <div class="form-grid" style="margin-top:4px">
           <div><label class="f" for="posDisc">Discount</label><input class="input" id="posDisc" inputmode="numeric" value="0"></div>
@@ -164,7 +164,7 @@ after('admin/pos', () => {
   $('#posGo').addEventListener('click', posComplete);
   grid(); posDraw();
 });
-function posPrice(p) { if (POS.prices && POS.prices[p.id]) return POS.prices[p.id].price; const s = POS.shops.find((x) => x.id === POS.shopId); return s ? Math.round(p.price * (1 - (s.tierDisc || 0) / 100)) : p.price; }
+function posPrice(p) { if (POS.prices && POS.prices[p.id]) return POS.prices[p.id].price; return p.price; }
 function posAdd(pid) { const l = POS.lines.find((x) => x.pid === pid); const p = POS.products.find((x) => x.id === pid); if (l) l.qty = Math.min(p.stock, l.qty + 1); else POS.lines.push({ pid, qty: 1 }); posDraw(); }
 function posQty(pid, v) { const p = POS.products.find((x) => x.id === pid); const l = POS.lines.find((x) => x.pid === pid); l.qty = Math.max(0, Math.min(p.stock, parseInt(v) || 0)); POS.lines = POS.lines.filter((x) => x.qty > 0); posDraw(); }
 function posDraw() {
@@ -338,7 +338,7 @@ route('admin/shops', async (r) => {
   return adminLayout('shops', `
     <div class="head-row"><div><h1>Shops</h1><p>${shops.filter((s) => s.status === 'active').length} active · ${shops.filter((s) => s.status === 'pending').length} waiting for approval</p></div><button class="btn btn-primary" onclick="addShop()">${icon('plus')} Add shop</button></div>
     <div class="seg" style="margin-bottom:14px">${[['', 'All'], ['pending', 'Pending'], ['active', 'Active'], ['blocked', 'Blocked']].map(([k, l]) => `<a href="#/admin/shops${k ? '?f=' + k : ''}" class="${f === k ? 'on' : ''}">${l}</a>`).join('')}</div>
-    ${list.length ? `<div class="list">${list.map((s) => `<a href="#/admin/shop/${s.id}"><div class="li-main"><b>${esc(s.shop.shopName)}</b><small>${esc(s.name)} · ${esc(s.phone)}${s.shop.market ? ' · ' + esc(s.shop.market) : ''} · ${esc(s.tierName)}</small></div><div class="li-end">${s.status === 'active' ? `<b style="color:${s.balance > s.creditLimit ? 'var(--danger)' : 'var(--ink)'}">${rs(s.balance)}</b><small>${s.orders} orders</small>` : badge(s.status)}</div></a>`).join('')}</div>` : `<div class="empty">${icon('store')}<p>No shops here yet.</p></div>`}`);
+    ${list.length ? `<div class="list">${list.map((s) => `<a href="#/admin/shop/${s.id}"><div class="li-main"><b>${esc(s.shop.shopName)}</b><small>${esc(s.name)} · ${esc(s.phone)}${s.shop.market ? ' · ' + esc(s.shop.market) : ''}</small></div><div class="li-end">${s.status === 'active' ? `<b style="color:${s.balance > s.creditLimit ? 'var(--danger)' : 'var(--ink)'}">${rs(s.balance)}</b><small>${s.orders} orders</small>` : badge(s.status)}</div></a>`).join('')}</div>` : `<div class="empty">${icon('store')}<p>No shops here yet.</p></div>`}`);
 });
 async function addShop() {
   const v = await uiDialog({ title: 'Add a shop', text: 'Creates an approved account. Share the mobile number and password with the shop owner.', ok: 'Create shop', fields: [{ label: 'Shop name' }, { label: 'Owner name' }, { label: 'Mobile number', inputmode: 'tel', placeholder: '03xx xxxxxxx' }, { label: 'Market / area', value: 'Hall Road' }, { label: 'Password for the shop', value: Math.random().toString(36).slice(2, 8) }] });
@@ -357,20 +357,19 @@ route('admin/shop', async (r) => {
       <div class="sc dark"><span>Khata balance</span><b>${rs(led.balance)}</b><small>Limit ${rs(s.creditLimit)}</small></div>
       <div class="sc"><span>Total purchases</span><b>${rs(s.sales)}</b><small>${s.orders} orders</small></div>
       <div class="sc"><span>Last order</span><b style="font-size:18px">${s.lastOrderAt ? ago(s.lastOrderAt) : '—'}</b><small>${s.lastPaymentAt ? 'Last payment ' + ago(s.lastPaymentAt) : 'No payments yet'}</small></div>
-      <div class="sc"><span>Price tier</span><b style="font-size:18px">${esc(s.tierName)}</b><small>${s.tierDisc}% off list</small></div>
+      <div class="sc"><span>Special prices</span><b style="font-size:18px">${special.length}</b><small>${special.length ? 'Fixed rates for this shop' : 'Pays the normal price'}</small></div>
     </div>
     <div class="two-col" style="margin-top:20px">
       <div>
         <div class="head-row" style="margin-bottom:10px"><h3 style="margin:0;font-size:18px">Khata</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="recordPayment('${s.id}')">${icon('cash')} Record payment</button>${API.isOwner ? `<button class="btn btn-ghost btn-sm" onclick="khataAdjust('${s.id}')">Adjustment</button>` : ''}<a class="btn btn-ghost btn-sm" href="${waLink(s.phone, `Assalam o Alaikum ${s.name}, ${API.info.business.name} ka khata balance ${rs(led.balance)} hai. Shukriya.`)}" target="_blank" rel="noopener">${icon('wa')} Send balance</a><a class="btn btn-ghost btn-sm" href="#/print/statement/${s.id}">${icon('receipt')} Statement</a></div></div>
         ${led.entries.length ? `<div class="tbl-wrap"><table class="tbl" style="min-width:480px"><thead><tr><th>Date</th><th>Entry</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead><tbody>${led.entries.slice(0, 60).map((e) => `<tr><td>${fmtDate(e.at)}</td><td>${TYPE[e.type] || esc(e.type)} <span class="muted">${esc(e.ref || '')}</span><br><small class="muted">${esc(e.note || '')}${e.method ? ' · ' + esc(e.method) : ''} · ${esc(e.by || '')}</small></td><td class="num">${e.dir > 0 ? rs(e.amount) : ''}</td><td class="num">${e.dir < 0 ? rs(e.amount) : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No khata entries yet.</p>'}
         <div class="head-row" style="margin:28px 0 10px"><h3 style="margin:0;font-size:18px">Special prices</h3>${API.isOwner ? `<button class="btn btn-ghost btn-sm" onclick="addSpecial('${s.id}')">${icon('plus')} Add special price</button>` : ''}</div>
-        <p class="muted" style="font-size:13.5px;margin:-4px 0 10px">Fixed rates for this shop only. They replace the tier price; a flash deal still applies if it is lower.</p>
-        ${special.length ? `<div class="tbl-wrap"><table class="tbl" style="min-width:460px"><thead><tr><th>Product</th><th class="num">List</th><th class="num">Tier</th><th class="num">Special</th>${API.isOwner ? '<th class="num">Margin</th><th></th>' : ''}</tr></thead><tbody>${special.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${rs(x.listPrice)}</td><td class="num">${rs(x.tierPrice)}</td><td class="num"><b>${rs(x.price)}</b></td>${API.isOwner ? `<td class="num" style="color:${x.price < x.cost ? 'var(--danger)' : 'inherit'}">${rs(x.price - x.cost)}</td><td class="num"><button class="btn btn-ghost btn-sm" onclick="removeSpecial('${s.id}','${x.pid}')" aria-label="Remove">${icon('close')}</button></td>` : ''}</tr>`).join('')}</tbody></table></div>` : '<p class="muted">No special prices.</p>'}
+        <p class="muted" style="font-size:13.5px;margin:-4px 0 10px">Fixed rates for this shop only. They replace the normal price; a flash deal still applies if it is lower.</p>
+        ${special.length ? `<div class="tbl-wrap"><table class="tbl" style="min-width:460px"><thead><tr><th>Product</th><th class="num">Normal price</th><th class="num">Special</th>${API.isOwner ? '<th class="num">Margin</th><th></th>' : ''}</tr></thead><tbody>${special.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${rs(x.listPrice)}</td><td class="num"><b>${rs(x.price)}</b></td>${API.isOwner ? `<td class="num" style="color:${x.price < x.cost ? 'var(--danger)' : 'inherit'}">${rs(x.price - x.cost)}</td><td class="num"><button class="btn btn-ghost btn-sm" onclick="removeSpecial('${s.id}','${x.pid}')" aria-label="Remove">${icon('close')}</button></td>` : ''}</tr>`).join('')}</tbody></table></div>` : '<p class="muted">No special prices.</p>'}
         <h3 style="margin:28px 0 10px;font-size:18px">Orders</h3>
         ${orders.length ? `<div class="list">${orders.slice(0, 30).map((o) => `<a href="#/admin/order/${o.id}"><div class="li-main"><b>${esc(o.no)}</b><small>${fmtDateTime(o.createdAt)} · ${o.items.length} items</small></div><div class="li-end"><b>${rs(o.total)}</b>${badge(o.status)}</div></a>`).join('')}</div>` : '<p class="muted">No orders yet.</p>'}
       </div>
       <form class="box" style="padding:22px;align-self:start" onsubmit="saveShopSettings(event,'${s.id}')"><h3 style="margin:0;font-size:17px">Account settings</h3>
-        <label class="f" for="shTier">Price tier</label><select class="select" id="shTier" name="tier">${API.info.tiers.map((t) => `<option value="${t.id}" ${t.id === s.tier ? 'selected' : ''}>${esc(t.name)} (${t.disc}% off)</option>`).join('')}</select>
         <label class="f" for="shLimit">Khata credit limit (Rs)</label><input class="input" id="shLimit" name="creditLimit" inputmode="numeric" value="${s.creditLimit}" ${API.isOwner ? '' : 'disabled'}>
         <label class="f" for="shStatus">Status</label><select class="select" id="shStatus" name="status"><option value="active" ${s.status === 'active' ? 'selected' : ''}>Active</option><option value="pending" ${s.status === 'pending' ? 'selected' : ''}>Pending approval</option><option value="blocked" ${s.status === 'blocked' ? 'selected' : ''}>Blocked</option></select>
         <label class="f" for="shPw">Reset password (optional)</label><input class="input" id="shPw" name="password" placeholder="New password for the shop" autocomplete="off">
@@ -510,10 +509,9 @@ route('admin/settings', async () => {
       <div><label class="f" for="stPhone">Phone (shown to shops)</label><input class="input" id="stPhone" name="phone" value="${esc(b.phone)}"></div>
       <div><label class="f" for="stWa">WhatsApp (92XXXXXXXXXX)</label><input class="input" id="stWa" name="whatsapp" value="${esc(b.whatsapp)}"></div>
       <div class="full"><label class="f" for="stAddr">Address</label><input class="input" id="stAddr" name="address" value="${esc(b.address)}"></div>
+      <div class="full"><label class="f" for="stMap">Google Maps link</label><input class="input" id="stMap" name="mapUrl" value="${esc(b.mapUrl || '')}" placeholder="https://maps.app.goo.gl/…"></div>
       <div><label class="f" for="stHours">Hours</label><input class="input" id="stHours" name="hours" value="${esc(b.hours)}"></div>
       <div><label class="f" for="stBank">Bank / wallet details for payments</label><input class="input" id="stBank" name="bank" value="${esc(b.bank)}" placeholder="e.g. Meezan 0123… · JazzCash 0300…"></div></div>
-      <h3 style="margin:24px 0 0;font-size:18px">Price tiers</h3><p class="muted" style="font-size:13.5px;margin:4px 0 0">Discount off the list price for each tier. Assign tiers on each shop's page.</p>
-      <div class="form-grid">${s.tiers.map((t, i) => `<div><label class="f" for="tn${i}">Tier ${i + 1} name</label><input class="input" id="tn${i}" name="tn${i}" value="${esc(t.name)}"><input type="hidden" name="ti${i}" value="${esc(t.id)}"></div><div><label class="f" for="td${i}">Discount %</label><input class="input" id="td${i}" name="td${i}" inputmode="numeric" value="${t.disc}"></div>`).join('')}</div>
       <h3 style="margin:24px 0 0;font-size:18px">Automatic payment reminders</h3><p class="muted" style="font-size:13.5px;margin:4px 0 0">The server checks every hour and reminds shops with old dues in their app chat plus a phone notification.</p>
       <div class="form-grid"><label class="switch full">Send automatic reminders <input type="checkbox" name="remOn" ${s.reminders && s.reminders.enabled ? 'checked' : ''}></label>
         <div><label class="f" for="remMin">Remind when dues are older than (days)</label><input class="input" id="remMin" name="remMin" inputmode="numeric" value="${(s.reminders && s.reminders.minDays) || 30}"></div>
@@ -531,8 +529,7 @@ route('admin/settings', async () => {
 });
 async function saveSettings(e) {
   e.preventDefault(); const d = formData(e.target);
-  const tiers = [0, 1, 2, 3, 4, 5].filter((i) => d['tn' + i] !== undefined).map((i) => ({ id: d['ti' + i], name: d['tn' + i], disc: parseInt(d['td' + i]) || 0 }));
-  await busy(e.submitter, () => API.put('/api/admin/settings', { business: { name: d.name, tagline: d.tagline, phone: d.phone, whatsapp: d.whatsapp, address: d.address, hours: d.hours, bank: d.bank }, tiers, markets: d.markets.split(','), reminders: { enabled: !!e.target.remOn.checked, minDays: parseInt(d.remMin) || 30, everyDays: parseInt(d.remEvery) || 7 } }));
+  await busy(e.submitter, () => API.put('/api/admin/settings', { business: { name: d.name, tagline: d.tagline, phone: d.phone, whatsapp: d.whatsapp, address: d.address, mapUrl: d.mapUrl, hours: d.hours, bank: d.bank }, markets: d.markets.split(','), reminders: { enabled: !!e.target.remOn.checked, minDays: parseInt(d.remMin) || 30, everyDays: parseInt(d.remEvery) || 7 } }));
   API.info = await API.get('/api/info'); Shell.brand(); toast('Settings saved');
 }
 async function addStaff(role = 'staff') {

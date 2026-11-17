@@ -57,15 +57,14 @@
       c.n += 1; S.put('counters', c);
       return prefix + c.n;
     }
-    function tierOf(u) { const s = settings(); return s.tiers.find((t) => t.id === (u && u.tier)) || s.tiers[0]; }
     function activeDeal(pid) { const t = now(); return S.all('deals').find((d) => d.pid === pid && !d.cancelled && d.startsAt <= t && d.endsAt > t); }
-    /* Price a shop pays: tier discount, replaced by a special rate if one is set, and a flash deal wins if it is lower. */
+    /* Price a shop pays: the list price, replaced by a special rate if one is set; a flash deal wins if it is lower. */
     function priceInfo(p, u) {
       if (!u || u.role !== 'shop') return { price: p.price, kind: 'list' };
-      const tier = Math.round(p.price * (1 - (tierOf(u).disc || 0) / 100));
-      let best = { price: tier, kind: 'tier', regular: tier };
+      const list = p.price;
+      let best = { price: list, kind: 'list', regular: list };
       const sp = u.special && u.special[p.id];
-      if (sp) best = { price: sp, kind: 'special', regular: tier };
+      if (sp) best = { price: sp, kind: 'special', regular: list };
       const d = activeDeal(p.id);
       if (d && d.price < best.price) best = { price: d.price, kind: 'deal', regular: best.price, dealId: d.id, endsAt: d.endsAt, maxPerShop: d.maxPerShop || 0 };
       return best;
@@ -104,7 +103,7 @@
     function publicUser(u) {
       if (!u) return null;
       const out = { id: u.id, role: u.role, name: u.name, phone: u.phone, status: u.status, createdAt: u.createdAt };
-      if (u.role === 'shop') Object.assign(out, { shop: u.shop, tier: u.tier, tierName: tierOf(u).name, tierDisc: tierOf(u).disc, creditLimit: u.creditLimit || 0, favs: u.favs || [] });
+      if (u.role === 'shop') Object.assign(out, { shop: u.shop, creditLimit: u.creditLimit || 0, favs: u.favs || [] });
       return out;
     }
     function shopView(p, u) {
@@ -229,7 +228,7 @@
     // Public
     R('GET', '/api/info', ANY, () => {
       const s = settings();
-      return { business: s.business, categories: CATEGORIES, grades: GRADES, tiers: s.tiers.map(({ id, name, disc }) => ({ id, name, disc })), markets: s.markets };
+      return { business: s.business, categories: CATEGORIES, grades: GRADES, markets: s.markets };
     });
     R('GET', '/api/products', ANY, ({ user, query }) => {
       let list = S.all('products').filter((p) => p.active);
@@ -255,7 +254,7 @@
       const u = {
         id: id('u'), role: 'shop', status: 'pending', phone, name: reqStr(body.name, 60, 'Your name'), pass: deps.hashPassword(pw),
         shop: { shopName: reqStr(body.shopName, 80, 'Shop name'), market: str(body.market, 60), address: str(body.address, 200) },
-        tier: settings().tiers[0].id, creditLimit: 0, favs: [], createdAt: now(),
+        creditLimit: 0, favs: [], createdAt: now(),
       };
       S.put('users', u);
       const token = newSession(u);
@@ -401,13 +400,12 @@
       const phone = normPhone(body.phone);
       if (S.all('users').some((u) => u.phone === phone)) bad('A shop with this number already exists');
       const pw = str(body.password, 100); if (pw.length < 6) bad('Set a password of at least 6 characters for the shop');
-      const u = { id: id('u'), role: 'shop', status: 'active', phone, name: reqStr(body.name, 60, 'Owner name'), pass: deps.hashPassword(pw), shop: { shopName: reqStr(body.shopName, 80, 'Shop name'), market: str(body.market, 60), address: str(body.address, 200) }, tier: settings().tiers.some((t) => t.id === body.tier) ? body.tier : settings().tiers[0].id, creditLimit: money(body.creditLimit || 0, 'Credit limit'), favs: [], createdAt: now() };
+      const u = { id: id('u'), role: 'shop', status: 'active', phone, name: reqStr(body.name, 60, 'Owner name'), pass: deps.hashPassword(pw), shop: { shopName: reqStr(body.shopName, 80, 'Shop name'), market: str(body.market, 60), address: str(body.address, 200) }, creditLimit: money(body.creditLimit || 0, 'Credit limit'), favs: [], createdAt: now() };
       S.put('users', u); return { status: 201, body: publicUser(u) };
     });
     R('POST', '/api/admin/shops/:id', STAFF, ({ user, params, body }) => {
       const u = S.get('users', params.id); if (!u || u.role !== 'shop') nf('Shop not found');
       if (body.status) { if (!['active', 'blocked', 'pending'].includes(body.status)) bad('Unknown status'); u.status = body.status; if (body.status === 'blocked') S.all('sessions').filter((s) => s.userId === u.id).forEach((s) => S.del('sessions', s.id)); }
-      if (body.tier !== undefined) { if (!settings().tiers.some((t) => t.id === body.tier)) bad('Unknown price tier'); u.tier = body.tier; }
       if (body.creditLimit !== undefined) { if (user.role !== 'admin') deny('Only the owner can change credit limits'); u.creditLimit = money(body.creditLimit, 'Credit limit'); }
       if (body.shopName) u.shop.shopName = reqStr(body.shopName, 80, 'Shop name');
       if (body.name) u.name = reqStr(body.name, 60, 'Owner name');
@@ -647,8 +645,7 @@
     R('PUT', '/api/admin/settings', ADMIN, ({ body }) => {
       const s = settings();
       const b = body.business || {};
-      s.business = { name: reqStr(b.name, 60, 'Business name'), tagline: str(b.tagline, 120), phone: str(b.phone, 30), whatsapp: str(b.whatsapp, 20).replace(/\D/g, ''), address: str(b.address, 200), hours: str(b.hours, 100), bank: str(b.bank, 300) };
-      if (Array.isArray(body.tiers) && body.tiers.length) s.tiers = body.tiers.slice(0, 6).map((t, i) => ({ id: str(t.id, 20) || 't' + i, name: reqStr(t.name, 30, 'Tier name'), disc: int(t.disc || 0, 0, 50, 'Tier discount') }));
+      s.business = { name: reqStr(b.name, 60, 'Business name'), tagline: str(b.tagline, 120), phone: str(b.phone, 30), whatsapp: str(b.whatsapp, 20).replace(/\D/g, ''), address: str(b.address, 200), mapUrl: /^https:\/\//.test(String(b.mapUrl || '')) ? str(b.mapUrl, 300) : '', hours: str(b.hours, 100), bank: str(b.bank, 300) };
       if (Array.isArray(body.markets)) s.markets = body.markets.map((m) => str(m, 60)).filter(Boolean).slice(0, 40);
       if (body.reminders) s.reminders = { enabled: !!body.reminders.enabled, minDays: int(body.reminders.minDays || 30, 1, 365, 'Reminder age'), everyDays: int(body.reminders.everyDays || 7, 1, 90, 'Reminder interval') };
       S.put('settings', s); return s;
@@ -717,7 +714,7 @@
     /* ================= Special prices per shop ================= */
     R('GET', '/api/admin/shops/:id/special', STAFF, ({ params }) => {
       const u = S.get('users', params.id); if (!u || u.role !== 'shop') nf('Shop not found');
-      return Object.entries(u.special || {}).map(([pid, price]) => { const p = S.get('products', pid); return p ? { pid, price, name: p.name, sku: p.sku, listPrice: p.price, tierPrice: Math.round(p.price * (1 - (tierOf(u).disc || 0) / 100)), cost: p.cost || 0 } : null; }).filter(Boolean);
+      return Object.entries(u.special || {}).map(([pid, price]) => { const p = S.get('products', pid); return p ? { pid, price, name: p.name, sku: p.sku, listPrice: p.price, cost: p.cost || 0 } : null; }).filter(Boolean);
     });
     R('POST', '/api/admin/shops/:id/special', ADMIN, ({ params, body }) => {
       const u = S.get('users', params.id); if (!u || u.role !== 'shop') nf('Shop not found');
@@ -896,10 +893,9 @@
       S.tx(() => {
         S.put('settings', {
           id: 'main',
-          business: { name: 'Lahore Mobile', tagline: 'Wholesale mobile accessories', phone: '0300 0000000', whatsapp: '923000000000', address: 'Shop #12, Hafeez Centre, Gulberg III, Lahore', hours: 'Daily 11 am – 10 pm', bank: '' },
-          tiers: [{ id: 'standard', name: 'Standard', disc: 0 }, { id: 'silver', name: 'Silver', disc: 3 }, { id: 'gold', name: 'Gold', disc: 5 }],
+          business: { name: 'Lahore Mobile', tagline: 'Wholesale mobile accessories', phone: '0303 6603409', whatsapp: '923036603409', address: 'Main Butt Chowk, near Gourmet Bakery, Tajpura Housing Scheme, Lahore', mapUrl: 'https://maps.app.goo.gl/ux9cupKioaUZTiwf7', hours: 'Daily 11 am – 10 pm', bank: '' },
           reminders: { enabled: true, minDays: 30, everyDays: 7 },
-          markets: ['Hafeez Centre', 'Hall Road', 'Mall Road', 'Liberty', 'Johar Town', 'Model Town', 'Ichhra', 'Anarkali', 'Shah Alam', 'Township', 'DHA', 'Other'],
+          markets: ['Tajpura', 'Harbanspura', 'Shalimar', 'Mughalpura', 'Hafeez Centre', 'Hall Road', 'Mall Road', 'Liberty', 'Johar Town', 'Model Town', 'Ichhra', 'Anarkali', 'Shah Alam', 'Township', 'DHA', 'Other'],
         });
         S.put('users', { id: 'u_admin', role: 'admin', status: 'active', phone: normPhone(adminPhone), name: 'Owner', pass: deps.hashPassword(adminPassword), createdAt: now() });
         const P = (sku, cat, name, brand, grade, models, price, retail, cost, stock, packSize, moq, reorder, img, extra = {}) => {
@@ -946,8 +942,8 @@
             ['Usman Tariq', 'Tariq Mobile Zone', 'Johar Town', '03033333333', 'standard', 75000],
             ['Bilal Ahmed', 'Bilal Accessories', 'Anarkali', '03044444444', 'standard', 50000],
           ];
-          shops.forEach(([name, shopName, market, phone, tier, limit], i) => S.put('users', { id: 'u_s' + i, role: 'shop', status: 'active', phone, name, pass: deps.hashPassword('shop123'), shop: { shopName, market, address: market + ', Lahore' }, tier, creditLimit: limit, favs: [], createdAt: now() - (60 - i) * DAY }));
-          S.put('users', { id: 'u_s9', role: 'shop', status: 'pending', phone: '03055555555', name: 'Hamza Iqbal', pass: deps.hashPassword('shop123'), shop: { shopName: 'Iqbal Telecom', market: 'Township', address: 'Township, Lahore' }, tier: 'standard', creditLimit: 0, favs: [], createdAt: now() - DAY / 3 });
+          shops.forEach(([name, shopName, market, phone, , limit], i) => S.put('users', { id: 'u_s' + i, role: 'shop', status: 'active', phone, name, pass: deps.hashPassword('shop123'), shop: { shopName, market, address: market + ', Lahore' }, creditLimit: limit, favs: [], createdAt: now() - (60 - i) * DAY }));
+          S.put('users', { id: 'u_s9', role: 'shop', status: 'pending', phone: '03055555555', name: 'Hamza Iqbal', pass: deps.hashPassword('shop123'), shop: { shopName: 'Iqbal Telecom', market: 'Township', address: 'Township, Lahore' }, creditLimit: 0, favs: [], createdAt: now() - DAY / 3 });
           const admin = S.get('users', 'u_admin');
           const mk = (shopIdx, daysAgo, items, status, payment = 'credit') => {
             const shop = S.get('users', 'u_s' + shopIdx);

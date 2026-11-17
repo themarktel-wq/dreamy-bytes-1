@@ -69,7 +69,7 @@ const API = {
 /* ---------- In-browser demo backend ---------- */
 const Demo = {
   core: null, store: null, token: '',
-  KEY: 'lm_wholesale_demo_v1',
+  KEY: 'lm_wholesale_demo_v2',
   start() {
     let initial = {};
     try { initial = JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch {}

@@ -18,15 +18,18 @@ const Shell = {
       $('#actions').innerHTML = `<a class="act" href="#/rider"><span class="icon-btn">${icon('truck')}<i class="badge-dot rider-count"></i></span><span class="act-label">Deliveries<b>${esc(u.name.split(' ')[0])}</b></span></a><a class="act" href="#/account"><span class="icon-btn">${icon('user')}</span></a>`;
       $('#catnav').innerHTML = `<a href="#/rider">My deliveries</a>`;
       $('#tabbar').innerHTML = `<a href="#/rider" data-r="rider">${icon('truck')}Deliveries<i class="badge-dot rider-count"></i></a><a href="#/account" data-r="account">${icon('user')}Account</a>`;
-      $('#tabbar').style.gridTemplateColumns = 'repeat(2,1fr)';
+      $('#tabbar').style.gridTemplateColumns = 'repeat(2,1fr)'; $('#chatFab').classList.add('hidden');
       $('#demoBar').classList.toggle('hidden', API.mode !== 'demo'); this.badges(); return;
     }
     $('#tabbar').style.gridTemplateColumns = '';
     $('#actions').innerHTML = !u
-      ? `<a class="btn btn-ghost btn-sm" href="#/login">Sign in</a><a class="btn btn-primary btn-sm" href="#/register">Register shop</a>`
+      ? `${act('#/login', 'user', 'Sign in', 'Account')}${act('#/register', 'store', 'Register', 'Free shop account').replace('class="act"', 'class="act hide-sm"')}${act('#/cart', 'cart', 'Rs 0', 'Your cart')}`
       : admin
         ? `${act('#/admin/messages', 'chat', 'Messages', 'Shops', 'msg-count')}${act('#/admin', 'dash', 'Admin', esc(u.name), 'adm-count')}`
-        : `${act('#/messages', 'chat', 'Messages', 'Store', 'msg-count')}${act('#/cart', 'cart', 'Cart', 'Order', 'cart-count')}${act('#/account', 'user', esc(u.shop.shopName.split(' ')[0]), 'Account')}`;
+        : `${act('#/messages', 'chat', 'Messages', 'Chat with store', 'msg-count')}${act('#/saved', 'heart', 'Saved', 'Your items').replace('class="act"', 'class="act hide-sm"')}${act('#/cart', 'cart', '<span id="cartTotal">Rs 0</span>', 'Your cart', 'cart-count')}${act('#/account', 'user', esc(u.shop.shopName.split(' ')[0]), 'Account')}`;
+    const fab = $('#chatFab');
+    fab.classList.toggle('hidden', admin);
+    fab.innerHTML = u ? `<a href="#/messages">${icon('chat')}Chat with the store</a>` : `<a href="${bizWa('Assalam o Alaikum, I want to know about wholesale rates.')}" target="_blank" rel="noopener">${icon('wa')}WhatsApp us</a>`;
     $('#catnav').innerHTML = admin
       ? `<a href="#/admin">Dashboard</a><a href="#/admin/orders">Orders</a><a href="#/admin/pos">Counter sale</a><a href="#/admin/products">Inventory</a><a href="#/admin/shops">Shops</a><a href="#/admin/khata">Khata</a><span class="sp"></span><a href="#/catalog">Catalogue view</a>`
       : API.info.categories.map((c) => `<a href="#/catalog?cat=${c.id}" data-c="${c.id}">${esc(c.name)}</a>`).join('') + (u ? `<span class="sp"></span><a href="#/orders">My orders</a><a href="#/khata">Khata</a>` : '');
@@ -42,6 +45,7 @@ const Shell = {
   badges() {
     const me = API.me || {};
     $$('.cart-count').forEach((b) => (b.textContent = Cart.count() || ''));
+    const ct = $('#cartTotal'); if (ct) ct.textContent = rs(Cart.items().reduce((a, l) => { const p = (typeof pById === 'function') && pById(l.pid); return a + (p && p.price ? p.price * l.qty : 0); }, 0));
     $$('.msg-count').forEach((b) => (b.textContent = me.unread || ''));
     $$('.adm-count').forEach((b) => (b.textContent = me.pendingOrders || ''));
     $$('.rider-count').forEach((b) => (b.textContent = me.deliveries || ''));

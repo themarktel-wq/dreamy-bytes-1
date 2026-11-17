@@ -41,10 +41,10 @@ t('shops cannot reach admin routes', () => {
   assert.equal(call('GET', '/api/admin/dashboard', null, shopTok).status, 403);
   assert.equal(call('GET', '/api/admin/dashboard').status, 401);
 });
-t('admin approves shop with gold tier and credit limit', () => {
-  ok(call('POST', `/api/admin/shops/${shopId}`, { status: 'active', tier: 'gold', creditLimit: 20000 }, admin));
+t('admin approves shop and sets a credit limit; everyone pays the list price', () => {
+  ok(call('POST', `/api/admin/shops/${shopId}`, { status: 'active', creditLimit: 20000 }, admin));
   const p = call('GET', '/api/products/p_cb-cc-1m', null, shopTok).body;
-  assert.equal(p.price, Math.round(140 * 0.95));
+  assert.equal(p.price, 140);
   assert.equal(p.cost, undefined, 'shops never see cost');
 });
 t('MOQ and pack size are enforced', () => {
@@ -57,7 +57,7 @@ t('stock is checked when ordering', () => {
 let order;
 t('credit order within limit is placed with server-side prices', () => {
   order = ok(call('POST', '/api/orders', { items: [{ pid: 'p_cb-cc-1m', qty: 40, price: 1 }, { pid: 'p_pn-ip11-in', qty: 2 }], payment: 'credit' }, shopTok)).body;
-  assert.equal(order.total, 40 * 133 + 2 * 3230);
+  assert.equal(order.total, 40 * 140 + 2 * 3400);
   assert.equal(order.status, 'pending');
   assert.equal(order.items[0].cost, undefined);
 });
@@ -69,7 +69,7 @@ t('confirming deducts stock, writes khata and profit', () => {
   const o = ok(call('POST', `/api/admin/orders/${order.id}/status`, { status: 'confirmed' }, admin)).body;
   assert.equal(store.get('products', 'p_pn-ip11-in').stock, before - 2);
   assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, order.total);
-  assert.equal(o.profit, 40 * (133 - 88) + 2 * (3230 - 2850));
+  assert.equal(o.profit, 40 * (140 - 88) + 2 * (3400 - 2850));
 });
 t('invalid transitions are refused and leave data unchanged', () => {
   const stock = store.get('products', 'p_pn-ip11-in').stock;
@@ -87,7 +87,7 @@ t('claim approval credits the shop and tracks faulty stock', () => {
   const c = ok(call('POST', '/api/claims', { orderId: order.id, pid: 'p_pn-ip11-in', qty: 1, reason: 'Dead pixels' }, shopTok)).body;
   assert.equal(call('POST', '/api/claims', { orderId: order.id, pid: 'p_pn-ip11-in', qty: 2, reason: 'x' }, shopTok).status, 400, 'cannot claim more than bought');
   ok(call('POST', `/api/admin/claims/${c.id}`, { status: 'approved' }, admin));
-  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, order.total - 5000 - 3230);
+  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, order.total - 5000 - 3400);
   assert.equal(store.get('products', 'p_pn-ip11-in').faulty, 1);
 });
 t('cancelling a confirmed order restocks and reverses khata', () => {
@@ -107,7 +107,7 @@ t('counter sale to walk-in must be fully paid; shop sale can go on khata', () =>
   ok(call('POST', '/api/admin/sales', { items: [{ pid: 'p_au-hf-tc', qty: 2 }] }, admin));
   const bal = call('GET', '/api/ledger', null, shopTok).body.balance;
   ok(call('POST', '/api/admin/sales', { shopId, items: [{ pid: 'p_au-hf-tc', qty: 10 }], paid: 500 }, admin));
-  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, bal + 10 * 157 - 500);
+  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, bal + 10 * 165 - 500);
 });
 t('failed request rolls back every change', () => {
   const p = store.get('products', 'p_pn-a15-or'), stock = p.stock;
@@ -165,12 +165,12 @@ t('flash deal lowers price, respects per-shop limit, and expires', () => {
   assert.equal(call('POST', '/api/admin/deals', { pid: 'p_au-hf-tc', price: 999, endsAt: clock + 3600e3 }, admin).status, 400, 'deal must be below list');
   deal = ok(call('POST', '/api/admin/deals', { pid: 'p_au-hf-tc', price: 120, endsAt: clock + 3600e3, maxPerShop: 40 }, admin)).body;
   const p = call('GET', '/api/products/p_au-hf-tc', null, shopTok).body;
-  assert.equal(p.price, 120); assert.equal(p.priceKind, 'deal'); assert.equal(p.regularPrice, 157);
+  assert.equal(p.price, 120); assert.equal(p.priceKind, 'deal'); assert.equal(p.regularPrice, 165);
   assert.equal(call('GET', '/api/deals', null, shopTok).body.length, 1);
   ok(call('POST', '/api/orders', { items: [{ pid: 'p_au-hf-tc', qty: 40 }], payment: 'cash' }, shopTok));
   assert.match(call('POST', '/api/orders', { items: [{ pid: 'p_au-hf-tc', qty: 40 }], payment: 'cash' }, shopTok).body.error, /deal limit/);
   clock += 2 * 3600e3;
-  assert.equal(call('GET', '/api/products/p_au-hf-tc', null, shopTok).body.price, 157, 'price returns after the deal ends');
+  assert.equal(call('GET', '/api/products/p_au-hf-tc', null, shopTok).body.price, 165, 'price returns after the deal ends');
 });
 t('purchase creates supplier khata; payment and faulty return reduce it', () => {
   const pu = ok(call('POST', '/api/admin/purchases', { supplier: 'Display House', items: [{ pid: 'p_pn-ip11-in', qty: 10, cost: 2800 }], paid: 8000 }, admin)).body;

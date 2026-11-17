@@ -20,8 +20,8 @@ function loginView(note) {
       ${demo ? `<div style="border-top:1px solid var(--line);margin-top:22px;padding-top:18px"><b style="color:var(--ink);font-size:14px">Try the demo</b>
         <div class="demo-pick">
           <button onclick="demoLogin('03000000000','admin123')">${icon('lock')}<span><b>Owner / admin</b><small>Dashboard, orders, inventory, khata, reports</small></span></button>
-          <button onclick="demoLogin('03011111111','shop123')">${icon('store')}<span><b>Raza Mobiles (shop)</b><small>Gold tier · Hall Road</small></span></button>
-          <button onclick="demoLogin('03033333333','shop123')">${icon('store')}<span><b>Tariq Mobile Zone (shop)</b><small>Standard tier · Johar Town</small></span></button>
+          <button onclick="demoLogin('03011111111','shop123')">${icon('store')}<span><b>Raza Mobiles (shop)</b><small>Hall Road · khata limit Rs 300,000</small></span></button>
+          <button onclick="demoLogin('03033333333','shop123')">${icon('store')}<span><b>Tariq Mobile Zone (shop)</b><small>Johar Town · khata limit Rs 75,000</small></span></button>
           <button onclick="demoLogin('03066666666','rider123')">${icon('truck')}<span><b>Imran (rider)</b><small>Deliveries and cash collection</small></span></button>
         </div></div>` : ''}
     </div></div></div>`;
@@ -63,60 +63,128 @@ async function doRegister(e) {
 }
 
 /* ================= HOME ================= */
+const HOME_SLIDES = [
+  { img: 'assets/img/hero-iphones.jpg', tag: 'Wholesale · Lahore', title: 'Panels and parts at wholesale prices.', sub: 'LCD and OLED panels, batteries and spares — tested before dispatch, with warranty claims in the app.', cta: 'Browse panels', link: '#/catalog?cat=panel' },
+  { img: 'assets/img/hero-accessories.jpg', tag: 'Accessories in bulk', title: 'Covers, glass and chargers by the box.', sub: 'Order in packs straight from your phone. Live stock, no phone calls needed.', cta: 'Shop accessories', link: '#/catalog?cat=protector' },
+  { img: 'assets/img/hero-trade.jpg', tag: 'Khata credit', title: 'Order today. Settle on khata.', sub: 'Approved shops order on credit and see their full khata statement in the app.', cta: 'Open a shop account', link: '#/register' },
+  { img: 'assets/img/hero-audio.jpg', tag: 'Earbuds & handsfree', title: 'Fast-selling audio, ready to ship.', sub: 'Earbuds, handsfree and power banks with the suggested retail price and your margin shown.', cta: 'Shop audio', link: '#/catalog?cat=audio' },
+];
 route('home', async () => {
   if (API.isAdmin) { setTimeout(() => go('#/admin')); return ''; }
   if (API.isRider) { setTimeout(() => go('#/rider')); return ''; }
   const [products, feed, deals] = await Promise.all([loadProducts(true), API.get('/api/feed'), API.get('/api/deals')]);
-  const b = API.info.business, cats = API.info.categories;
-  const featured = products.filter((p) => p.featured).slice(0, 8);
-  const fresh = products.filter((p) => p.isNew).concat(products.filter((p) => !p.isNew)).slice(0, 8);
+  const b = API.info.business, cats = API.info.categories, u = API.user, me = API.me || {};
+  const slides = u ? HOME_SLIDES.filter((s) => s.link !== '#/register') : HOME_SLIDES;
+  const featured = products.filter((p) => p.featured).concat(products.filter((p) => !p.featured)).slice(0, 8);
+  const fresh = products.filter((p) => p.isNew).concat(products.filter((p) => !p.isNew && !p.featured)).slice(0, 8);
+  const panels = products.filter((p) => p.cat === 'panel').slice(0, 8);
   const catTiles = cats.map((c) => { const img = (products.find((p) => p.cat === c.id && p.img) || {}).img; return `<a class="cat" href="#/catalog?cat=${c.id}">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<div style="width:100%;height:100%;display:grid;place-items:center;color:#98a2b3">${icon(CAT_ICON[c.id] || 'box', 'width="40%" height="40%" stroke-width="1.2"')}</div>`}<span><span>${esc(c.name)}<small>${products.filter((p) => p.cat === c.id).length} products</small></span>${icon('arrow')}</span></a>`; }).join('');
-
-  if (!API.user) {
-    return `<div class="wrap">
-      <section class="hero" style="height:auto;min-height:420px;margin-top:20px">
-        <div class="slide on"><img src="assets/img/hero-accessories.jpg" alt="">
-          <div class="copy"><span class="tag">Wholesale · Lahore</span><h2>Wholesale mobile accessories, delivered to your shop.</h2>
-            <p>Panels, glass, covers, chargers and earbuds at trade prices. Order from your phone and pay on khata.</p>
-            <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-white" href="#/register">Register your shop ${icon('arrow')}</a><a class="btn btn-outline-w" href="#/login">Sign in</a></div></div></div>
-      </section>
-      <div class="usp">
-        <div>${icon('tag')}<span><b>Trade prices</b>Tier discounts for regular shops</span></div>
-        <div>${icon('receipt')}<span><b>Khata credit</b>Order now, settle weekly</span></div>
-        <div>${icon('truck')}<span><b>Same-day dispatch</b>Across Lahore markets</span></div>
-        <div>${icon('shield')}<span><b>Tested panels</b>Warranty claims in the app</span></div>
-      </div>
-      <section class="section">${secHead('How it works', 'Start ordering in three steps')}
-        <div class="steps3"><div class="step3"><div class="n">1</div><b>Register your shop</b><p>Your name, shop name and mobile number. Takes one minute.</p></div>
-          <div class="step3"><div class="n">2</div><b>Get approved</b><p>We confirm your shop and set your price tier and khata limit.</p></div>
-          <div class="step3"><div class="n">3</div><b>Order and chat</b><p>See live stock and prices, place orders, and message us from the app.</p></div></div></section>
-      <section class="section">${secHead('Catalogue', 'What we stock', 'Prices are visible after your shop is approved.', arrowLink('#/catalog', 'Browse catalogue'))}<div class="cats">${catTiles}</div></section>
-      <section class="section">${secHead('Popular', 'Best sellers')}<div class="grid">${featured.map(pcard).join('')}</div></section>
-      <section class="section"><div class="cta-band"><div><h3>Questions about wholesale rates?</h3><p>${esc(b.name)} · ${esc(b.address)} · ${esc(b.hours)}</p></div>
-        <div class="acts"><a class="btn btn-white" href="${bizWa('Assalam o Alaikum, I want to open a wholesale account.')}" target="_blank" rel="noopener">${icon('wa')} WhatsApp us</a><a class="btn btn-outline-w" href="#/register">Register</a></div></div></section>
-    </div>`;
-  }
-
-  const u = API.user, me = API.me;
+  const brands = [...new Set(products.map((p) => p.brand).filter((x) => x && x !== b.name))].slice(0, 6);
   const orders = API.isActiveShop ? await API.get('/api/orders') : [];
   const open = orders.filter((o) => !['delivered', 'cancelled'].includes(o.status));
   const last = orders.find((o) => o.status !== 'cancelled');
-  return `<div class="wrap">
-    <div class="page-head"><h1>Assalam o Alaikum, ${esc(u.name.split(' ')[0])}</h1><p>${esc(u.shop.shopName)}${u.shop.market ? ' · ' + esc(u.shop.market) : ''}${u.status === 'active' ? ` · ${esc(u.tierName)} tier${u.tierDisc ? ` (${u.tierDisc}% off)` : ''}` : ''}</p></div>
-    ${u.status !== 'active' ? `<div class="banner-note">${icon('clock')}<div><b>Your shop is waiting for approval.</b><br>The store will confirm your account shortly. You can browse the catalogue now; prices and ordering unlock after approval. <a href="${bizWa(`Assalam o Alaikum, I registered ${u.shop.shopName} (${u.phone}). Please approve my account.`)}" target="_blank" rel="noopener" style="text-decoration:underline">Message the store</a></div></div>` : `
-    <div class="summary-cards">
-      <a class="sc dark" href="#/khata"><span>${icon('receipt')} Khata balance</span><b>${rs(me.balance || 0)}</b><small>Limit ${rs(u.creditLimit)}</small></a>
-      <a class="sc" href="#/orders"><span>${icon('truck')} Open orders</span><b>${open.length}</b><small>${open.length ? badge(open[0].status) + ' ' + esc(open[0].no) : 'Nothing in progress'}</small></a>
-      <a class="sc ${me.unread ? 'alert' : ''}" href="#/messages"><span>${icon('chat')} Messages</span><b>${me.unread || 0}</b><small>${me.unread ? 'New replies from the store' : 'Chat with the store'}</small></a>
-      <a class="sc" href="#/saved"><span>${icon('heart')} Saved items</span><b>${(u.favs || []).length}</b><small>Your regular items</small></a>
-    </div>
-    ${last ? `<div class="box" style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:200px"><b style="color:var(--ink)">Reorder ${esc(last.no)}</b><div class="muted" style="font-size:13.5px">${last.items.length} items · ${rs(last.total)} · ${fmtDate(last.createdAt)}</div></div><button class="btn btn-ghost" onclick="reorder('${last.id}')">${icon('repeat')} Add all to cart</button></div>` : ''}`}
+  const mapLink = b.mapUrl || `https://www.google.com/maps/search/${encodeURIComponent(b.address)}`;
 
-    ${deals.length ? `<section class="section" style="margin-top:32px">${secHead('Flash deals', '⚡ Live deals', 'Prices end when the timer runs out.')}<div class="rail">${deals.map((d) => pcard(d.product)).join('')}</div></section>` : ''}
-    ${feed.length ? `<section class="section" style="margin-top:32px">${secHead('Updates', 'From the store')}<div style="display:grid;gap:10px">${feed.slice(0, 4).map((a) => `<${a.pid ? `a href="#/p/${a.pid}"` : 'div'} class="feed-item"><b>${esc(a.title)}</b>${a.body ? `<p>${esc(a.body)}</p>` : ''}<small>${ago(a.at)}</small></${a.pid ? 'a' : 'div'}>`).join('')}</div></section>` : ''}
-    <section class="section">${secHead('Categories', 'Shop by category', '', arrowLink('#/catalog', 'Full catalogue'))}<div class="cats">${catTiles}</div></section>
-    <section class="section">${secHead('Just in', 'New and featured stock')}<div class="grid">${fresh.map(pcard).join('')}</div></section>
+  return `<div class="wrap">
+    <div class="hero-grid">
+      <section class="hero" id="hero" aria-roledescription="carousel">
+        ${slides.map((s, i) => `<div class="slide ${i === 0 ? 'on' : ''}"><img src="${esc(s.img)}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}>
+          <div class="copy"><span class="tag">${esc(s.tag)}</span><h2>${esc(s.title)}</h2><p>${esc(s.sub)}</p>
+            <a class="btn btn-white" href="${s.link}">${esc(s.cta)} ${icon('arrow')}</a></div></div>`).join('')}
+        <div class="hero-ctrl">${slides.map((_, i) => `<button class="dot ${i === 0 ? 'on' : ''}" aria-label="Slide ${i + 1}" data-i="${i}"></button>`).join('')}</div>
+        <div class="hero-arrows"><button id="heroPrev" aria-label="Previous">${icon('back')}</button><button id="heroNext" aria-label="Next">${icon('arrow')}</button></div>
+      </section>
+      <div class="promo-col">
+        ${deals.length
+          ? `<a class="promo" href="#/p/${deals[0].product.id}"><img src="${esc(deals[0].product.img || 'assets/img/hero-audio.jpg')}" alt="" loading="lazy"><div><small>⚡ Flash deal · ends in ${countdown(deals[0].endsAt)}</small><b>${esc(deals[0].product.name)}</b><span>${deals[0].product.price != null ? rs(deals[0].product.price) + ' · ' : ''}View deal ${icon('arrow')}</span></div></a>`
+          : `<a class="promo" href="#/catalog?cat=audio"><img src="assets/img/hero-audio.jpg" alt="" loading="lazy"><div><small>Audio</small><b>Earbuds and handsfree</b><span>Shop audio ${icon('arrow')}</span></div></a>`}
+        ${u ? `<a class="promo" href="#/khata"><img src="assets/img/hero-accessories.jpg" alt="" loading="lazy"><div><small>Your khata</small><b>${u.status === 'active' ? rs(me.balance || 0) + ' balance' : 'Waiting for approval'}</b><span>${u.status === 'active' ? 'View statement' : 'Message the store'} ${icon('arrow')}</span></div></a>`
+          : `<a class="promo" href="#/register"><img src="assets/img/hero-accessories.jpg" alt="" loading="lazy"><div><small>For shop owners</small><b>Open a free shop account</b><span>Register in one minute ${icon('arrow')}</span></div></a>`}
+      </div>
+    </div>
+
+    <div class="usp">
+      <div>${icon('tag')}<span><b>Wholesale prices</b>Same fair price for every shop</span></div>
+      <div>${icon('receipt')}<span><b>Khata credit</b>Order now, settle later</span></div>
+      <div>${icon('truck')}<span><b>Same-day delivery</b>By our own riders</span></div>
+      <div>${icon('shield')}<span><b>Tested panels</b>Warranty claims in the app</span></div>
+    </div>
+
+    ${u && u.status !== 'active' ? `<div class="banner-note">${icon('clock')}<div><b>Your shop is waiting for approval.</b><br>The store will confirm your account shortly. You can browse the catalogue now; prices and ordering unlock after approval. <a href="${bizWa(`Assalam o Alaikum, I registered ${u.shop.shopName} (${u.phone}). Please approve my account.`)}" target="_blank" rel="noopener" style="text-decoration:underline">Message the store on WhatsApp</a></div></div>` : ''}
+    ${API.isActiveShop ? `<section class="section" style="margin-top:32px">${secHead('Your account', `Assalam o Alaikum, ${esc(u.name.split(' ')[0])}`, esc(u.shop.shopName) + (u.shop.market ? ' · ' + esc(u.shop.market) : ''))}
+      <div class="summary-cards">
+        <a class="sc dark" href="#/khata"><span>${icon('receipt')} Khata balance</span><b>${rs(me.balance || 0)}</b><small>Limit ${rs(u.creditLimit)}</small></a>
+        <a class="sc" href="#/orders"><span>${icon('truck')} Open orders</span><b>${open.length}</b><small>${open.length ? badge(open[0].status) + ' ' + esc(open[0].no) : 'Nothing in progress'}</small></a>
+        <a class="sc ${me.unread ? 'alert' : ''}" href="#/messages"><span>${icon('chat')} Messages</span><b>${me.unread || 0}</b><small>${me.unread ? 'New replies from the store' : 'Chat with the store'}</small></a>
+        ${last ? `<button class="sc" style="text-align:left" onclick="reorder('${last.id}')"><span>${icon('repeat')} Order again</span><b style="font-size:18px">${esc(last.no)}</b><small>${last.items.length} items · ${rs(last.total)}</small></button>` : `<a class="sc" href="#/saved"><span>${icon('heart')} Saved items</span><b>${(u.favs || []).length}</b><small>Your regular items</small></a>`}
+      </div></section>` : ''}
+
+    <section class="section">
+      ${secHead('Categories', 'Shop by category', u ? '' : 'Prices are shown after your shop is approved.', arrowLink('#/catalog', 'View all products'))}
+      <div class="cats">${catTiles}</div>
+    </section>
+
+    ${deals.length ? `<section class="section">${secHead('Flash deals', 'Live deals', 'Prices end when the timer runs out.', arrowLink('#/catalog', 'Full catalogue'))}<div class="rail">${deals.map((d) => pcard(d.product)).join('')}</div></section>` : ''}
+
+    ${panels.length ? `<section class="section">${secHead('Panels', 'LCD and OLED panels', 'Tested before dispatch. Report any faulty panel from your order.', arrowLink('#/catalog?cat=panel', 'All panels'))}<div class="grid">${panels.map(pcard).join('')}</div></section>` : ''}
+
+    <section class="section">${secHead('Best sellers', 'Popular with shops', '', arrowLink('#/catalog', 'Shop all'))}<div class="rail">${featured.map(pcard).join('')}</div></section>
+  </div>
+
+  <div class="band"><div class="wrap">
+    ${secHead('How it works', 'Order for your shop in three steps', 'Free for shop owners. No fees, no subscription.')}
+    <div class="services">
+      ${[
+        ['register', 'store', 'Register your shop', 'Your name, shop name and mobile number. Takes one minute.', u ? 'You are registered' : 'Register now'],
+        ['catalog', 'search', 'Find what you need', 'Search by phone model, SKU or category. Live stock on every item.', 'Browse catalogue'],
+        ['cart', 'cart', 'Order on cash or khata', 'Place the order from your phone. We confirm it and our rider delivers.', 'View cart'],
+        ['messages', 'chat', 'Chat and claims', 'Ask about rates, track orders and report faulty items in the app.', 'Message us'],
+      ].map(([r, ic, t, d, c]) => `<a class="service" href="#/${r}"><span class="ic">${icon(ic)}</span><b>${t}</b><p>${d}</p><span>${c} ${icon('arrow')}</span></a>`).join('')}
+    </div>
+  </div></div>
+
+  <div class="wrap">
+    ${feed.length ? `<section class="section">${secHead('Updates', 'From the store')}<div style="display:grid;gap:10px">${feed.slice(0, 4).map((a) => `<${a.pid ? `a href="#/p/${a.pid}"` : 'div'} class="feed-item"><b>${esc(a.title)}</b>${a.body ? `<p>${esc(a.body)}</p>` : ''}<small>${ago(a.at)}</small></${a.pid ? 'a' : 'div'}>`).join('')}</div></section>` : ''}
+
+    <section class="section">${secHead('New stock', 'Just arrived')}<div class="grid">${fresh.map(pcard).join('')}</div></section>
+
+    ${brands.length ? `<section class="section">${secHead('Brands', 'Brands we stock')}<div class="brands">${brands.map((x) => `<a href="#/catalog?q=${encodeURIComponent(x)}">${esc(x)}</a>`).join('')}</div></section>` : ''}
+
+    <section class="section">
+      <div class="store-block"><img src="assets/img/store.jpg" alt="" loading="lazy">
+        <div><div class="eyebrow">Visit our shop</div><h3>${esc(b.name)}</h3>
+          <div class="info-row">${icon('pin')}<span>${esc(b.address)}</span></div>
+          <div class="info-row">${icon('clock')}<span>${esc(b.hours)}</span></div>
+          <div class="info-row">${icon('phone')}<span style="user-select:all">${esc(b.phone)}</span></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"><a class="btn btn-primary" href="${esc(mapLink)}" target="_blank" rel="noopener">${icon('pin')} Get directions</a><a class="btn btn-wa" href="${bizWa('Assalam o Alaikum, I have a question about wholesale.')}" target="_blank" rel="noopener">${icon('wa')} WhatsApp us</a></div>
+        </div></div>
+    </section>
+
+    <section class="section">
+      <div class="cta-band"><div><h3>${u ? 'Need something that is not listed?' : 'Get trade prices for your shop'}</h3><p>${u ? 'Message us — we source panels and accessories on order.' : 'Register free in one minute. We approve shops in Lahore the same day.'}</p></div>
+        <div class="acts">${u ? `<a class="btn btn-white" href="#/messages">${icon('chat')} Message the store</a>` : `<a class="btn btn-white" href="#/register">Register your shop ${icon('arrow')}</a><a class="btn btn-outline-w" href="#/login">Sign in</a>`}<button class="btn btn-outline-w" onclick="installApp()">${icon('install')} Install the app</button></div></div>
+    </section>
   </div>`;
+});
+let heroTimer;
+after('home', () => {
+  const slides = $$('#hero .slide'), dots = $$('#hero .dot');
+  if (!slides.length) return;
+  let i = 0;
+  const restart = () => { clearInterval(heroTimer); heroTimer = setInterval(() => { if (!document.hidden && parseHash().name === 'home') go2(i + 1); }, 6000); };
+  const go2 = (n) => {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    dots.forEach((d, k) => { d.classList.toggle('on', false); if (k === i) { void d.offsetWidth; d.classList.add('on'); } });
+    restart();
+  };
+  restart();
+  dots.forEach((d) => d.addEventListener('click', () => go2(+d.dataset.i)));
+  $('#heroPrev').addEventListener('click', () => go2(i - 1));
+  $('#heroNext').addEventListener('click', () => go2(i + 1));
+  const hero = $('#hero'); let sx = null;
+  hero.addEventListener('touchstart', (e) => (sx = e.touches[0].clientX), { passive: true });
+  hero.addEventListener('touchend', (e) => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) go2(i + (dx < 0 ? 1 : -1)); sx = null; });
 });
 async function reorder(orderId) {
   const o = await API.get('/api/orders/' + orderId);
@@ -170,7 +238,7 @@ route('catalog', async (r) => {
   CF.q = r.q.get('q') || ''; CF.cat = r.q.get('cat') || ''; CF.grade = ''; CF.brand = '';
   const cats = API.info.categories;
   return `<div class="wrap">${crumb('Catalogue')}
-    <div class="page-head" style="padding-top:12px"><h1 id="catTitle">Catalogue</h1><p>${API.isActiveShop ? `Your ${esc(API.user.tierName)} prices are shown${API.user.tierDisc ? ` (${API.user.tierDisc}% off list)` : ''}.` : API.user ? 'Prices unlock after your shop is approved.' : 'Sign in with your shop account to see trade prices.'}</p></div>
+    <div class="page-head" style="padding-top:12px"><h1 id="catTitle">Catalogue</h1><p>${API.isActiveShop ? 'Wholesale prices, live stock, and the margin you make at the suggested retail price.' : API.user ? 'Prices unlock after your shop is approved.' : 'Sign in with your shop account to see trade prices.'}</p></div>
     <div class="box" style="display:grid;gap:12px;padding:14px">
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <input class="input" id="cfQ" placeholder="Search by name, SKU or phone model (e.g. A15, iPhone 11)" value="${esc(CF.q)}" style="flex:1;min-width:220px">
@@ -228,7 +296,7 @@ route('p', async (r) => {
         <h1>${esc(p.name)}</h1>
         <div class="muted" style="font-size:14px">SKU ${esc(p.sku)} · ${stockTag(p)}</div>
         ${p.price != null ? `
-          <div class="price" style="margin:18px 0 2px"><b>${rs(p.price)}</b><span class="muted">per piece</span>${p.basePrice > p.price ? `<s>${rs(p.basePrice)}</s><span class="off" style="color:var(--ok)">${p.priceKind === 'deal' ? 'Flash deal' : p.priceKind === 'special' ? 'Your special rate' : esc(API.user.tierName) + ' price'}</span>` : ''}</div>
+          <div class="price" style="margin:18px 0 2px"><b>${rs(p.price)}</b><span class="muted">per piece</span>${p.basePrice > p.price ? `<s>${rs(p.basePrice)}</s><span class="off" style="color:var(--ok)">${p.priceKind === 'deal' ? 'Flash deal' : p.priceKind === 'special' ? 'Your special rate' : ''}</span>` : ''}</div>
           ${p.priceKind === 'deal' ? `<div class="banner-note" style="margin-top:12px">${icon('bolt')}<div><b>Flash deal ends in ${countdown(p.dealEndsAt)}</b><br>Regular price ${rs(p.regularPrice)}${p.dealMax ? ` · limit ${p.dealMax} per shop${p.dealBought ? ` (you've bought ${p.dealBought})` : ''}` : ''}</div></div>` : ''}
           ${p.retail ? `<div class="emi">Suggested retail ${rs(p.retail)} · <span class="margin">${margin}% margin for you</span></div>` : ''}
           <div class="meta-row" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;font-size:13px">${p.packSize > 1 ? `<span class="badge plain">Sold in packs of ${p.packSize}</span>` : ''}<span class="badge plain">Minimum order ${p.moq}</span></div>
