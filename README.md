@@ -1,6 +1,6 @@
-# Hunarly — Digital Products Business (Pakistan)
+# Skillstack — Digital Products Business (Pakistan)
 
-**Seekho. Banao. Kamao.** — A complete, ready-to-launch digital products store for the Pakistani market.
+**Stack skills. Stack income.** — A complete, ready-to-launch digital products store for the Pakistani market.
 
 ## What's inside
 

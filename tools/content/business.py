@@ -263,7 +263,7 @@ Post about the product before it exists: "I'm creating a [product] to help [audi
 ## Sales channels
 - Instagram & Facebook (content + DMs)
 - WhatsApp (catalogue + status + broadcast)
-- Your own website (like Hunarly)
+- Your own website (like Skillstack)
 - Facebook groups (follow group rules)
 - Marketplaces: Gumroad, Payhip, Etsy (international buyers)
 ## Payment & delivery in Pakistan

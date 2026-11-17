@@ -218,7 +218,7 @@ CAPTIONS = {
 "Ab shopping hui asaan aur sasti 🛍️",
 "Aaj ka deal miss mat karna! 🔥",
 "Ghar ki zaroorat, behtareen qeemat par.",
-"Hunar seekho, paisa kamao 💡",
+"Skill seekho, paisa kamao 💡",
 "Pakistan ka apna brand 🇵🇰",
 ],
 }

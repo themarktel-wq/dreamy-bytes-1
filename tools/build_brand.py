@@ -1,9 +1,11 @@
-"""Generate Hunarly brand assets: logo, banners, 9 posts, 9 ad creatives.
+"""Generate Skillstack brand assets: logos, banners, 9 posts, 9 ad creatives.
 
-Writes HTML sources to brand/_src, then renders PNGs with Playwright (tools/render.js).
+Writes HTML sources to brand/_src, renders PNGs with Playwright (tools/render.js).
+Concepts are grounded in the research in docs/01 and docs/05.
 """
 import json
 import os
+import shutil
 import subprocess
 import sys
 
@@ -16,212 +18,329 @@ BR = os.path.join(ROOT, "brand")
 SRC = os.path.join(BR, "_src")
 CSS = os.path.join(ROOT, "website", "assets", "styles.css")
 P = {p["slug"]: p for p in PRODUCTS}
+HANDLE = "@skillstack.pk"
 
 BASE = """
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-body{margin:0;background:#070B16;font-family:Inter,'Inter Display',sans-serif;color:#F8FAFC;-webkit-font-smoothing:antialiased}
-.art{position:relative;overflow:hidden;background:#070B16;display:flex;flex-direction:column}
-.art .glow{position:absolute;border-radius:50%;filter:blur(110px);opacity:.5}
-.g1{background:#10B981}.g2{background:#6366F1}.g3{background:#A3E635}.g4{background:#F5B941}
-.brand{display:flex;align-items:center;gap:14px;font-weight:800;letter-spacing:-.02em}
-.brand svg{flex:none}
-.grad{background:linear-gradient(135deg,#10B981,#A3E635);-webkit-background-clip:text;background-clip:text;color:transparent}
-.tag{display:inline-block;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#10B981}
-.pillx{display:inline-flex;align-items:center;gap:10px;border-radius:99px;background:rgba(16,185,129,.12);border:2px solid rgba(16,185,129,.4);color:#A7F3D0;font-weight:700}
-.cta{display:inline-flex;align-items:center;gap:12px;border-radius:22px;background:linear-gradient(135deg,#10B981,#A3E635);color:#04210F;font-weight:800}
-.muted{color:#94A3B8}
-.foot{display:flex;justify-content:space-between;align-items:center;color:#94A3B8;font-weight:600}
-.chk{display:flex;gap:16px;align-items:flex-start}
-.chk svg{flex:none;color:#10B981}
-.cover{box-shadow:0 60px 120px -30px rgba(0,0,0,.9)}
-.price-big{font-weight:800;letter-spacing:-.04em;line-height:1}
-.strike{text-decoration:line-through;color:#64748B;font-weight:600}
-.cardx{background:rgba(15,23,42,.8);border:2px solid rgba(148,163,184,.15);border-radius:28px}
+body{margin:0;background:#F6F3EE;font-family:Inter,sans-serif;color:#111018;-webkit-font-smoothing:antialiased}
+.art{position:relative;overflow:hidden;background:#F6F3EE;display:flex;flex-direction:column;box-sizing:border-box}
+.d{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.045em;line-height:.98}
+.mk{background:linear-gradient(transparent 60%,#FFE27A 60%,#FFE27A 94%,transparent 94%);padding:0 .05em}
+.v{color:#5B2EFF}.t{color:#FF6B2C}.mu{color:#6B6878}
+.sk{background:#fff;border:3px solid #111018;border-radius:28px;box-shadow:10px 10px 0 #111018}
+.pill{display:inline-flex;align-items:center;gap:10px;border-radius:99px;background:#111018;color:#FFE27A;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.cta{display:inline-flex;align-items:center;gap:12px;border-radius:99px;background:#5B2EFF;color:#fff;font-weight:800}
+.brand{display:flex;align-items:center;gap:12px;font-family:'Bricolage Grotesque';font-weight:800;letter-spacing:-.045em}
+.foot{display:flex;justify-content:space-between;align-items:center;font-weight:600;color:#6B6878}
+.wa{background:#EFE7DD;border-radius:30px;overflow:hidden;border:3px solid #111018;box-shadow:10px 10px 0 #111018}
+.wa .top{background:#075E54;color:#fff;display:flex;align-items:center;gap:18px;padding:22px 28px;font-weight:700}
+.wa .av{width:58px;height:58px;border-radius:50%;background:#FFE27A;display:grid;place-items:center;color:#111018;font-weight:800;font-size:26px}
+.wa .body{padding:26px;display:flex;flex-direction:column;gap:16px}
+.b{max-width:80%;padding:16px 22px;border-radius:20px;font-size:30px;line-height:1.3;position:relative}
+.b small{display:block;text-align:right;font-size:18px;color:#7A7A7A;margin-top:4px}
+.in{background:#fff;align-self:flex-start;border-top-left-radius:6px}
+.out{background:#D9FDD3;align-self:flex-end;border-top-right-radius:6px}
+.notes{background:#FFFDF6;border:3px solid #111018;border-radius:30px;box-shadow:10px 10px 0 #111018;overflow:hidden}
+.notes .bar{background:#FFE27A;padding:18px 30px;font-weight:700;font-size:24px;display:flex;justify-content:space-between;border-bottom:3px solid #111018}
+.check{display:flex;gap:16px;align-items:flex-start}
+.check i{flex:none;width:34px;height:34px;border-radius:50%;background:#5B2EFF;color:#fff;display:grid;place-items:center;font-style:normal;font-size:20px;font-weight:800;margin-top:4px}
+.x i{background:#E4DED4;color:#6B6878}
+.cover{box-shadow:0 30px 60px -20px rgba(17,16,24,.45)}
+.src{font-size:20px;color:#6B6878}
+.bc .cover.lg{max-width:none}
 </style>"""
 
 
 def page(body, w, h):
     return (f'<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="file://{CSS}">{BASE}'
-            f'<style>.bg-glow{{display:none}}</style></head><body><div class="art" style="width:{w}px;height:{h}px">{body}</div></body></html>')
+            f'</head><body><div class="art" style="width:{w}px;height:{h}px">{body}</div></body></html>')
 
 
 def logo(size):
     return LOGO.replace("<svg ", f'<svg width="{size}" height="{size}" ')
 
 
-def brandmark(size, fs, color="#F8FAFC"):
-    return f'<div class="brand" style="font-size:{fs}px;color:{color}">{logo(size)}<span>Hunarly</span></div>'
+def brandmark(size=52, fs=40, color="#111018"):
+    return f'<div class="brand" style="font-size:{fs}px;color:{color}">{logo(size)}<span>skillstack</span></div>'
 
 
-def glows(*specs):
-    return "".join(f'<div class="glow {c}" style="width:{s}px;height:{s}px;left:{x}px;top:{y}px"></div>' for c, s, x, y in specs)
+def bigcover(p, width, rot=0, extra=""):
+    return f'<div class="bc" style="width:{width}px;transform:rotate({rot}deg);{extra}">{cover(p, "lg")}</div>'
 
 
-def big_cover(p, width, rot=0, extra=""):
-    return f'<div style="width:{width}px;transform:rotate({rot}deg);{extra}">{cover(p, "lg").replace("max-width:360px", "")}</div>'
+def foot(left=None, color="#6B6878"):
+    return f'<div class="foot" style="font-size:26px;color:{color}">{brandmark(50, 38, "#111018" if color == "#6B6878" else color)}<span>{left or HANDLE}</span></div>'
 
 
-def check(t, fs=30):
-    return f'<div class="chk" style="font-size:{fs}px">{ICON["check"].replace("<svg ", f"<svg width={fs+8} height={fs+8} ")}<span>{t}</span></div>'
+def frame(inner, w=1080, h=1350, bg="#F6F3EE", pad=76):
+    return (f'<div style="position:absolute;inset:0;background:{bg}"></div><div style="position:relative;padding:{pad}px;display:flex;flex-direction:column;'
+            f'height:100%;box-sizing:border-box;gap:34px">{inner}</div>', w, h)
 
 
-def foot(fs=26):
-    return f'<div class="foot" style="font-size:{fs}px">{brandmark(46, 30)}<span>{BRAND["domain"]}</span></div>'
+def bars_deco(color, size=260, style=""):
+    u = size / 64
+    return (f'<svg width="{size}" height="{size*56/64}" viewBox="0 0 64 56" style="position:absolute;{style}"><rect x="0" y="0" width="44" height="14" rx="7" fill="{color}"/>'
+            f'<rect x="18" y="20" width="44" height="14" rx="7" fill="{color}"/><rect x="0" y="40" width="44" height="14" rx="7" fill="{color}"/></svg>')
 
 
-ASSETS = {}
+A = {}
+B = dict(BUNDLE, cat="bundle")
 
-# ---------------- LOGOS ----------------
-for name, bg, col in [("logo-dark", "#070B16", "#F8FAFC"), ("logo-light", "#FFFFFF", "#0A0F1F")]:
-    ASSETS[f"logo/{name}"] = (f'<div style="flex:1;display:grid;place-items:center;background:{bg}">'
-                              f'<div><div class="brand" style="font-size:150px;color:{col};gap:40px">{logo(190)}<span>Hunarly</span></div>'
-                              f'<div style="text-align:right;font-size:40px;font-weight:600;color:{"#94A3B8" if bg != "#FFFFFF" else "#5B6475"};margin-top:6px;letter-spacing:.02em">Seekho. Banao. Kamao.</div></div></div>', 1600, 700)
-ASSETS["logo/icon-1024"] = (f'<div style="flex:1;display:grid;place-items:center;background:transparent">{logo(1024)}</div>', 1024, 1024)
-ASSETS["logo/profile-picture"] = (f'<div style="flex:1;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#0F2A22,#070B16 70%)">{logo(560)}</div>', 1080, 1080)
+# =============== LOGOS ===============
+A["logo/logo-primary"] = (f'<div style="flex:1;display:grid;place-items:center">{brandmark(220, 190)}</div>', 1600, 600)
+A["logo/logo-on-ink"] = (f'<div style="flex:1;display:grid;place-items:center;background:#111018">{brandmark(220, 190, "#F6F3EE").replace("#111018", "#F6F3EE")}</div>', 1600, 600)
+A["logo/logo-on-violet"] = (f'<div style="flex:1;display:grid;place-items:center;background:#5B2EFF"><div class="brand" style="font-size:190px;color:#fff">'
+                            f'{logo(220).replace("#5B2EFF", "#FFE27A").replace("#111018", "#FFFFFF")}<span>skillstack</span></div></div>', 1600, 600)
+A["logo/icon-1024"] = (f'<div style="flex:1;display:grid;place-items:center;background:transparent">{logo(1024)}</div>', 1024, 1024)
+A["logo/profile-picture"] = (f'<div style="flex:1;display:grid;place-items:center;background:#F6F3EE">{logo(640)}</div>', 1080, 1080)
+A["logo/app-icon-violet"] = (f'<div style="flex:1;display:grid;place-items:center;background:#5B2EFF;border-radius:220px">'
+                             f'{logo(620).replace("#5B2EFF", "#FFE27A").replace("#111018", "#FFFFFF")}</div>', 1024, 1024)
 
-# ---------------- BANNERS ----------------
-covers3 = (f'<div style="position:absolute;right:120px;top:50%;transform:translateY(-50%);display:flex;gap:0;align-items:center">'
-           f'{big_cover(P["fiverr-freelancing-blueprint"], 250, -8, "margin-right:-60px;")}{big_cover(P["ai-prompt-vault"], 290, 0, "position:relative;z-index:2")}'
-           f'{big_cover(P["meta-ads-playbook"], 250, 8, "margin-left:-60px;")}</div>')
-ASSETS["banners/facebook-cover-1640x624"] = (glows(("g1", 600, -100, -250), ("g2", 500, 1200, 200)) +
-    f'<div style="position:absolute;left:110px;top:50%;transform:translateY(-50%);max-width:720px">'
-    f'{brandmark(70, 48)}<div style="font-size:78px;font-weight:800;letter-spacing:-.04em;line-height:1.02;margin:28px 0 18px">Seekho. Banao. <span class="grad">Kamao.</span></div>'
-    f'<div class="muted" style="font-size:30px">Premium AI & online-earning digital products for Pakistan</div></div>' + covers3, 1640, 624)
-ASSETS["banners/youtube-banner-2560x1440"] = (glows(("g1", 900, 200, 100), ("g2", 700, 1700, 600)) +
-    f'<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1546px;height:423px;display:flex;align-items:center;justify-content:space-between">'
-    f'<div>{brandmark(80, 56)}<div style="font-size:84px;font-weight:800;letter-spacing:-.04em;line-height:1.02;margin-top:24px">Freelancing · AI · <span class="grad">E-commerce</span></div>'
-    f'<div class="muted" style="font-size:34px;margin-top:14px">New videos every week — Seekho. Banao. Kamao.</div></div></div>', 2560, 1440)
-ASSETS["banners/og-website-1200x630"] = (glows(("g1", 500, -100, -200), ("g3", 380, 900, 400)) +
-    f'<div style="padding:70px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;justify-content:space-between;max-width:700px">{brandmark(60, 40)}'
-    f'<div><div style="font-size:64px;font-weight:800;letter-spacing:-.04em;line-height:1.04">25 premium digital products for <span class="grad">Pakistan</span></div>'
-    f'<div class="muted" style="font-size:26px;margin-top:16px">AI · Freelancing · E-commerce · Marketing · Careers</div></div></div>'
-    f'<div style="position:absolute;right:70px;top:90px">{big_cover(P["ai-prompt-vault"], 330, 6)}</div>', 1200, 630)
-ASSETS["banners/website-hero-1920x800"] = (glows(("g1", 800, -200, -300), ("g2", 600, 1400, 300), ("g3", 400, 700, 600)) +
-    f'<div style="position:absolute;left:160px;top:50%;transform:translateY(-50%);max-width:900px">'
-    f'<div class="pillx" style="font-size:24px;padding:10px 22px">✦ 25 products · Launch offer</div>'
-    f'<div style="font-size:96px;font-weight:800;letter-spacing:-.045em;line-height:1;margin:30px 0 22px">Learn the skills.<br>Build the <span class="grad">income.</span></div>'
-    f'<div class="cta" style="font-size:32px;padding:24px 40px">All 25 products · {rs(BUNDLE["price"])} →</div></div>' + covers3.replace("right:120px", "right:200px"), 1920, 800)
-ASSETS["banners/whatsapp-status-1080x1920"] = (glows(("g1", 700, -200, -100), ("g2", 600, 600, 1300)) +
-    f'<div style="padding:120px 80px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;justify-content:space-between;align-items:center;text-align:center">{brandmark(80, 54)}'
-    f'{big_cover(dict(BUNDLE, cat="bundle"), 520, -4)}'
-    f'<div><div style="font-size:84px;font-weight:800;letter-spacing:-.04em;line-height:1.02">All 25 products<br><span class="grad">{rs(BUNDLE["price"])}</span></div>'
-    f'<div class="muted" style="font-size:36px;margin-top:20px">Reply "ALL" to order 💬</div></div></div>', 1080, 1920)
+# =============== BANNERS ===============
+row3 = (f'<div style="position:absolute;right:90px;top:50%;transform:translateY(-50%);display:flex;align-items:center">'
+        f'{bigcover(P["fiverr-freelancing-blueprint"], 250, -9, "margin-right:-70px;")}{bigcover(P["ai-prompt-vault"], 280, 0, "position:relative;z-index:2")}'
+        f'{bigcover(P["meta-ads-playbook"], 250, 9, "margin-left:-70px;")}</div>')
+A["banners/facebook-cover-1640x624"] = (
+    f'<div style="position:absolute;left:100px;top:50%;transform:translateY(-50%);max-width:760px">{brandmark(64, 50)}'
+    f'<div class="d" style="font-size:86px;margin:26px 0 18px">Skip the course.<br><span class="mk">Get the kit.</span></div>'
+    f'<div class="mu" style="font-size:30px">25 practical kits for freelancing, AI & e-commerce · from Rs 499</div></div>' + row3, 1640, 624)
+A["banners/youtube-banner-2560x1440"] = (
+    bars_deco("#E9E3FF", 900, "right:-120px;top:120px") +
+    f'<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1546px;height:423px;display:flex;align-items:center">'
+    f'<div>{brandmark(90, 70)}<div class="d" style="font-size:96px;margin-top:22px">Freelancing · AI · <span class="v">E-commerce</span></div>'
+    f'<div class="mu" style="font-size:36px;margin-top:14px">New skill videos every week — in Roman Urdu & English</div></div></div>', 2560, 1440)
+A["banners/og-website-1200x630"] = (
+    f'<div style="padding:70px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;justify-content:space-between;max-width:700px">{brandmark(56, 44)}'
+    f'<div><div class="d" style="font-size:76px">Skip the Rs 50,000 course. <span class="mk">Get the kit.</span></div>'
+    f'<div class="mu" style="font-size:26px;margin-top:16px">25 kits from Rs 499 · JazzCash · Easypaisa</div></div></div>'
+    f'<div style="position:absolute;right:80px;top:80px">{bigcover(P["ai-prompt-vault"], 330, 5)}</div>', 1200, 630)
+A["banners/whatsapp-status-1080x1920"] = (
+    f'<div style="padding:130px 80px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;justify-content:space-between;align-items:center;text-align:center">{brandmark(80, 64)}'
+    f'<div style="position:relative;height:760px;width:900px">'
+    f'<div style="position:absolute;left:40px;top:60px">{bigcover(P["fiverr-freelancing-blueprint"], 400, -10)}</div>'
+    f'<div style="position:absolute;right:40px;top:20px">{bigcover(P["meta-ads-playbook"], 400, 9)}</div>'
+    f'<div style="position:absolute;left:230px;top:150px">{bigcover(B, 440, -2)}</div></div>'
+    f'<div><div class="d" style="font-size:96px">All 25 kits<br><span class="mk">{rs(BUNDLE["price"])}</span></div>'
+    f'<div style="font-size:40px;margin-top:26px;font-weight:600">Reply <b class="v">"ALL"</b> to order</div></div></div>', 1080, 1920)
 
-# ---------------- 9 POSTS (1080x1080) ----------------
-S = 1080
-
-
-def post(body, glow=(("g1", 600, -200, -250), ("g2", 500, 700, 700))):
-    return (glows(*glow) + f'<div style="position:relative;padding:80px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;justify-content:space-between">{body}</div>', S, S)
-
-
-ASSETS["posts/post-01-brand-intro"] = post(
-    f'{brandmark(64, 42)}<div><div class="tag" style="font-size:26px">Introducing Hunarly</div>'
-    f'<div style="font-size:120px;font-weight:800;letter-spacing:-.05em;line-height:.98;margin:20px 0">Seekho.<br>Banao.<br><span class="grad">Kamao.</span></div>'
-    f'<div class="muted" style="font-size:34px;max-width:820px">Premium digital products to help Pakistanis earn with freelancing, AI & e-commerce.</div></div>'
-    f'<div class="foot" style="font-size:28px"><span>Follow for daily skills 💡</span><span>{BRAND["domain"]}</span></div>')
-
-grid9 = "".join(f'<div style="width:190px">{cover(p)}</div>' for p in PRODUCTS[:8])
-ASSETS["posts/post-02-launch-25-products"] = post(
-    f'<div><div class="tag" style="font-size:26px">Now live</div><div style="font-size:92px;font-weight:800;letter-spacing:-.045em;line-height:1;margin-top:14px">25 products.<br><span class="grad">One mission.</span></div></div>'
-    f'<div style="display:flex;flex-wrap:wrap;gap:22px;transform:rotate(-4deg) scale(.9);margin:0 -40px;justify-content:center">{grid9.replace("width:190px", "width:200px")}</div>'
-    + foot(), (("g1", 600, 500, -200), ("g3", 400, -100, 800)))
-
-prompts = ["Write 10 Facebook ad headlines for [product]…", "Create a 30-day content plan for [business]…", "Rewrite my CV bullets with numbers…",
-           "Write a Fiverr gig description for [service]…", "Turn this blog into a 7-slide carousel…"]
-ASSETS["posts/post-03-chatgpt-prompts"] = post(
-    f'<div><div class="tag" style="font-size:26px">Save this 📌</div><div style="font-size:78px;font-weight:800;letter-spacing:-.04em;line-height:1.02;margin-top:14px">5 ChatGPT prompts that save you <span class="grad">2 hours a day</span></div></div>'
-    f'<div style="display:grid;gap:16px">' + "".join(f'<div class="cardx" style="padding:20px 26px;font-size:28px;display:flex;gap:18px"><b class="grad" style="font-size:30px">0{i}</b><span>{t}</span></div>' for i, t in enumerate(prompts, 1)) + '</div>'
-    f'<div class="foot" style="font-size:26px"><span>220+ more in the AI Prompt Vault →</span>{brandmark(46, 30)}</div>')
-
-ASSETS["posts/post-04-fiverr-first-order"] = post(
-    f'<div style="display:flex;gap:50px;align-items:center;flex:1"><div style="flex:1"><div class="tag" style="font-size:26px">Freelancing</div>'
-    f'<div style="font-size:84px;font-weight:800;letter-spacing:-.045em;line-height:1;margin:16px 0 30px">Your first <span class="grad">Fiverr order</span> in 30 days</div>'
-    + check("Pick a niche that sells") + check("Write gigs that rank") + check("Get the first order") + check("Withdraw to Pakistani bank") +
-    f'</div>{big_cover(P["fiverr-freelancing-blueprint"], 340, 5)}</div>' + foot(), (("g2", 600, 600, -200), ("g1", 500, -200, 700)))
-
-ASSETS["posts/post-05-quote"] = post(
-    f'{brandmark(56, 36)}<div><div style="font-size:200px;line-height:.6;font-weight:800" class="grad">“</div>'
-    f'<div style="font-size:96px;font-weight:800;letter-spacing:-.045em;line-height:1.02">Your skill is your <span class="grad">hunar.</span><br>Your hunar is your income.</div></div>'
-    f'<div class="foot" style="font-size:28px"><span>Double tap if you agree 💚</span><span>{BRAND["domain"]}</span></div>', (("g1", 700, 400, 300), ("g4", 300, -50, -50)))
-
-steps = [("01", "Choose", "Pick a product or the All-Access Pass"), ("02", "Pay", "JazzCash · Easypaisa · Bank transfer"), ("03", "Receive", "Download links on WhatsApp & email")]
-ASSETS["posts/post-06-how-to-order"] = post(
-    f'<div><div class="tag" style="font-size:26px">How to order</div><div style="font-size:88px;font-weight:800;letter-spacing:-.045em;line-height:1;margin-top:14px">3 steps.<br><span class="grad">No card needed.</span></div></div>'
-    f'<div style="display:grid;gap:20px">' + "".join(f'<div class="cardx" style="padding:28px 32px;display:flex;gap:28px;align-items:center"><div class="grad" style="font-size:64px;font-weight:800">{n}</div><div><div style="font-size:38px;font-weight:800">{t}</div><div class="muted" style="font-size:28px">{d}</div></div></div>' for n, t, d in steps) + '</div>'
+# =============== 9 POSTS (1080x1350, 4:5) ===============
+# Post 1 — Manifesto / brand intro
+A["posts/post-01-manifesto"] = frame(
+    bars_deco("#5B2EFF", 520, "right:-70px;top:120px") +
+    f'<div class="pill" style="font-size:24px;padding:12px 24px;align-self:flex-start">Introducing skillstack</div>'
+    f'<div style="flex:1"></div>'
+    f'<div class="d" style="font-size:132px">Careers aren\'t<br>built in one<br>course.<br><span class="mk">They\'re stacked.</span></div>'
+    f'<div style="font-size:34px;line-height:1.4;max-width:860px">One practical kit at a time — freelancing, AI, e-commerce and career skills, made for Pakistan.</div>'
     + foot())
 
-rows = [("Selling price", "1,500"), ("Product cost", "− 650"), ("Commission (10%)", "− 150"), ("Fees & packaging", "− 70"), ("Returns allowance", "− 75"), ("Ads per order", "− 100")]
-ASSETS["posts/post-07-daraz-profit-math"] = post(
-    f'<div><div class="tag" style="font-size:26px">Daraz sellers 👇</div><div style="font-size:76px;font-weight:800;letter-spacing:-.04em;line-height:1.02;margin-top:14px">Is your product <span class="grad">actually</span> profitable?</div></div>'
-    f'<div class="cardx" style="padding:30px 40px;font-size:32px">' + "".join(f'<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:2px dashed rgba(148,163,184,.15)"><span class="muted">{a}</span><b>Rs {b}</b></div>' for a, b in rows) +
-    f'<div style="display:flex;justify-content:space-between;padding-top:18px;font-size:42px;font-weight:800"><span>Profit</span><span class="grad">Rs 455 (30%)</span></div></div>'
-    f'<div class="foot" style="font-size:24px"><span>Example numbers · check your category commission</span>{brandmark(46, 30)}</div>')
+# Post 2 — Data hook
+A["posts/post-02-freelance-data"] = frame(
+    f'<div class="pill" style="font-size:24px;padding:12px 24px;align-self:flex-start">Pakistan · FY2025-26</div>'
+    f'<div style="flex:1;display:flex;flex-direction:column;justify-content:center">'
+    f'<div class="d v" style="font-size:250px;letter-spacing:-.06em">$1.76B</div>'
+    f'<div class="d" style="font-size:66px;margin-top:10px">earned by Pakistani freelancers last year.</div>'
+    f'<div class="sk" style="padding:34px 40px;margin-top:50px;font-size:44px;font-weight:700;transform:rotate(-1.5deg);align-self:flex-start">Kitna hissa aap ka tha? 👀</div></div>'
+    f'<div class="src">Source: Finance Adviser via BOL News, 2026 — record freelance export earnings.</div>' + foot())
 
-ASSETS["posts/post-08-myth-vs-fact"] = post(
-    f'<div><div class="tag" style="font-size:26px">Myth vs Fact</div><div style="font-size:84px;font-weight:800;letter-spacing:-.045em;line-height:1;margin-top:14px">Freelancing in Pakistan</div></div>'
-    f'<div style="display:grid;gap:22px">'
-    f'<div class="cardx" style="padding:30px 34px;border-color:rgba(244,63,94,.4)"><div style="font-size:26px;font-weight:800;color:#F43F5E">✗ MYTH</div><div style="font-size:40px;font-weight:700;margin-top:8px">"You need a degree and expensive courses."</div></div>'
-    f'<div class="cardx" style="padding:30px 34px;border-color:rgba(16,185,129,.5)"><div style="font-size:26px;font-weight:800;color:#10B981">✓ FACT</div><div style="font-size:40px;font-weight:700;margin-top:8px">Clients pay for a <span class="grad">specific skill</span> and proof you can deliver it.</div></div></div>'
-    + foot(), (("g2", 600, -200, -200), ("g1", 500, 700, 700)))
+# Post 3 — Relatable meme (two-panel)
+A["posts/post-03-fiverr-meme"] = frame(
+    f'<div class="d" style="font-size:70px">Fiverr account banane ke baad:</div>'
+    f'<div style="display:grid;grid-template-rows:1fr 1fr;gap:26px;flex:1">'
+    f'<div class="sk" style="padding:40px;display:flex;gap:30px;align-items:center;background:#E9E3FF"><div style="font-size:150px">🤩</div>'
+    f'<div><div style="font-size:30px;font-weight:800;color:#5B2EFF">DAY 1</div><div class="d" style="font-size:58px">"Bas pehla order aa jaye, phir dekhna."</div></div></div>'
+    f'<div class="sk" style="padding:40px;display:flex;gap:30px;align-items:center;background:#FFE27A"><div style="font-size:150px">🫠</div>'
+    f'<div><div style="font-size:30px;font-weight:800;color:#FF6B2C">DAY 90</div><div class="d" style="font-size:58px">*refreshes app for the 400th time*</div></div></div></div>'
+    f'<div style="font-size:34px;font-weight:600">Problem skill nahi — <span class="mk">gig ka niche, title aur price</span> hai.</div>' + foot("Tag that friend 👇"))
 
-ASSETS["posts/post-09-all-access-offer"] = post(
-    f'<div style="text-align:center"><div class="pillx" style="font-size:28px;padding:12px 26px">✦ LAUNCH OFFER</div>'
-    f'<div style="font-size:96px;font-weight:800;letter-spacing:-.045em;line-height:1;margin-top:26px">All <span class="grad">25 products</span></div></div>'
-    f'<div style="display:flex;justify-content:center">{big_cover(dict(BUNDLE, cat="bundle"), 330, -4)}</div>'
-    f'<div style="text-align:center"><span class="strike" style="font-size:42px">{rs(BUNDLE["mrp"])}</span>&nbsp;&nbsp;<span class="price-big grad" style="font-size:110px">{rs(BUNDLE["price"])}</span>'
-    f'<div class="muted" style="font-size:28px;margin-top:10px">DM "ALL" or order at {BRAND["domain"]}</div></div>', (("g4", 500, 600, -150), ("g1", 600, -200, 600)))
+# Post 4 — WhatsApp chat (native format)
+A["posts/post-04-whatsapp-chat"] = frame(
+    f'<div class="d" style="font-size:66px">Har dost ka ek sawal:</div>'
+    f'<div class="wa" style="flex:1"><div class="top"><div class="av">A</div><div><div style="font-size:30px">Ali (college)</div><div style="font-size:20px;opacity:.8">online</div></div></div>'
+    f'<div class="body"><div class="b in">Yaar Fiverr pe order kaise aata hai? 😩 3 mahine ho gaye<small>9:41 pm</small></div>'
+    f'<div class="b out">3 kaam karo:<br>1️⃣ Ek specific niche chuno<br>2️⃣ Title mein woh likho jo buyer search karta hai<br>3️⃣ Basic package sasta, Standard pe focus<small>9:42 pm ✓✓</small></div>'
+    f'<div class="b in">Bas itna? 😮<small>9:42 pm</small></div>'
+    f'<div class="b out">Poora system Fiverr Blueprint mein hai 👇<small>9:43 pm ✓✓</small></div></div></div>'
+    + foot("Save & send to Ali 📌"))
 
-# ---------------- 9 AD CREATIVES (1080x1350) ----------------
-AW, AH = 1080, 1350
+# Post 5 — Notes-app save-worthy list
+prompts = ["Act as a Fiverr expert. Suggest 10 gig ideas for my skill: [skill]",
+           "Rewrite my CV bullets with numbers & action verbs: [paste]",
+           "Write 10 Reel hooks for [product] in Roman Urdu",
+           "Explain [topic] like I'm 15, then quiz me with 5 MCQs",
+           "Turn this voice note into a professional client email: [paste]"]
+A["posts/post-05-chatgpt-notes"] = frame(
+    f'<div class="d" style="font-size:76px">5 ChatGPT prompts jo <span class="mk">2 ghante</span> bachaate hain</div>'
+    f'<div class="notes" style="flex:1"><div class="bar"><span>‹ Notes</span><span>Done</span></div><div style="padding:40px 40px;display:grid;gap:38px">'
+    + "".join(f'<div class="check"><i>{i}</i><div style="font-size:36px;line-height:1.35">{t}</div></div>' for i, t in enumerate(prompts, 1)) +
+    '</div></div><div style="font-size:30px;font-weight:600">220+ more in the <span class="v">AI Prompt Vault</span> · Save this 📌</div>' + foot())
+
+# Post 6 — Getting paid (education)
+steps = [("Payoneer account", "Most Pakistani freelancers withdraw Fiverr & Upwork earnings this way."),
+         ("Bank account in your own name", "Name must match your CNIC and platform profile."),
+         ("Keep records for tax", "Ask a tax advisor about filer status & IT-export rates.")]
+A["posts/post-06-getting-paid"] = frame(
+    f'<div class="pill" style="font-size:24px;padding:12px 24px;align-self:flex-start">PayPal ❌ in Pakistan</div>'
+    f'<div class="d" style="font-size:84px">Phir freelancers ko <span class="v">paise milte kaise</span> hain?</div>'
+    f'<div style="display:grid;gap:22px;flex:1;align-content:center">'
+    + "".join(f'<div class="sk" style="padding:30px 36px;display:flex;gap:28px;align-items:center"><div class="d v" style="font-size:80px">0{i}</div>'
+              f'<div><div style="font-size:38px;font-weight:800">{t}</div><div class="mu" style="font-size:27px;margin-top:4px">{d}</div></div></div>' for i, (t, d) in enumerate(steps, 1)) +
+    '</div>' + foot("Save for later 📌"))
+
+# Post 7 — Course vs kit
+rows_c = [("Price", "Rs 50,000+", "From Rs 499"), ("Time", "Weeks of videos", "One evening"), ("Examples", "Mostly foreign", "Fiverr, Daraz, JazzCash"),
+          ("Payment", "Card / fixed batch", "JazzCash · Easypaisa"), ("You get", "Lectures", "Templates & checklists")]
+A["posts/post-07-course-vs-kit"] = frame(
+    f'<div class="d" style="font-size:96px">Course <span class="mu">vs</span> <span class="mk">Kit</span></div>'
+    f'<div class="sk" style="flex:1;overflow:hidden;display:grid;grid-template-columns:1fr 1fr 1.15fr;font-size:31px">'
+    f'<div style="padding:26px;font-weight:800;border-bottom:3px solid #111018"></div><div style="padding:26px;font-weight:800;border-bottom:3px solid #111018;border-left:3px solid #111018">Big course</div>'
+    f'<div style="padding:26px;font-weight:800;border-bottom:3px solid #111018;border-left:3px solid #111018;background:#5B2EFF;color:#fff">Skillstack kit</div>'
+    + "".join(f'<div style="padding:26px;font-weight:700;color:#6B6878;{"border-bottom:2px solid #E4DED4;" if i < 4 else ""}">{a}</div>'
+              f'<div style="padding:26px;border-left:3px solid #111018;{"border-bottom:2px solid #E4DED4;" if i < 4 else ""}">{b}</div>'
+              f'<div style="padding:26px;border-left:3px solid #111018;background:#F4F0FF;font-weight:700;{"border-bottom:2px solid #E4DED4;" if i < 4 else ""}">{c}</div>' for i, (a, b, c) in enumerate(rows_c)) +
+    '</div><div class="src">Typical local digital-skills course fees: Rs 48,000–80,000 (IBA listings, 2026).</div>' + foot())
+
+# Post 8 — This or that
+A["posts/post-08-fiverr-or-upwork"] = frame(
+    f'<div class="d" style="font-size:84px;text-align:center">Beginner ho? Kahan start karoge?</div>'
+    f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:26px;flex:1">'
+    f'<div class="sk" style="padding:40px;background:#BFEBD3;display:flex;flex-direction:column;gap:20px"><div class="d" style="font-size:90px">Fiverr</div>'
+    f'<div style="font-size:80px">🛒</div><div style="font-size:38px;line-height:1.5;font-weight:500">✓ Buyers come to you<br>✓ Easy start for beginners<br>✓ Fixed-price packages</div>'
+    f'<div style="margin-top:auto;font-size:44px;font-weight:800">Comment <span class="t">F</span></div></div>'
+    f'<div class="sk" style="padding:40px;background:#E9E3FF;display:flex;flex-direction:column;gap:20px"><div class="d" style="font-size:90px">Upwork</div>'
+    f'<div style="font-size:80px">💼</div><div style="font-size:38px;line-height:1.5;font-weight:500">✓ You pitch to clients<br>✓ Bigger, longer projects<br>✓ Pays off with experience</div>'
+    f'<div style="margin-top:auto;font-size:44px;font-weight:800">Comment <span class="v">U</span></div></div></div>'
+    f'<div style="font-size:30px;text-align:center;font-weight:600">We\'ll reply with the right kit for your choice 💬</div>' + foot())
+
+# Post 9 — Offer
+A["posts/post-09-all-access-offer"] = frame(
+    f'<div class="pill" style="font-size:24px;padding:12px 24px;align-self:center">Launch offer</div>'
+    f'<div class="d" style="font-size:110px;text-align:center">The whole stack.</div>'
+    f'<div style="position:relative;flex:1">'
+    f'<div style="position:absolute;left:90px;top:50px">{bigcover(P["fiverr-freelancing-blueprint"], 290, -10)}</div>'
+    f'<div style="position:absolute;right:90px;top:30px">{bigcover(P["daraz-seller-launch-kit"], 290, 9)}</div>'
+    f'<div style="position:absolute;left:50%;top:70px;transform:translateX(-50%)">{bigcover(B, 340, -1)}</div></div>'
+    f'<div style="text-align:center"><div style="font-size:40px;font-weight:700">All 25 kits · <s class="mu">{rs(BUNDLE["mrp"])}</s></div>'
+    f'<div class="d v" style="font-size:150px">{rs(BUNDLE["price"])}</div><div style="font-size:30px;font-weight:600;margin-top:6px">DM <b>"ALL"</b> or order at {BRAND["domain"]}</div></div>', pad=70)
+
+# =============== 9 ADS (1080x1350) ===============
+def price_cta(p, cta):
+    return (f'<div style="display:flex;justify-content:space-between;align-items:center"><div><div class="mu" style="font-size:30px"><s>{rs(p["mrp"])}</s></div>'
+            f'<div class="d" style="font-size:96px">{rs(p["price"])}</div></div><div class="cta" style="font-size:36px;padding:28px 44px">{cta} →</div></div>')
 
 
-def ad(kicker, headline, bullets, p, price_line, cta, glow=(("g1", 650, -220, -250), ("g2", 520, 650, 850)), rot=5):
-    bl = "".join(check(b, 32) for b in bullets)
-    return (glows(*glow) + f'<div style="position:relative;padding:80px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;gap:36px">'
-            f'<div style="display:flex;justify-content:space-between;align-items:center">{brandmark(60, 38)}<div class="pillx" style="font-size:24px;padding:10px 20px">{kicker}</div></div>'
-            f'<div style="font-size:86px;font-weight:800;letter-spacing:-.045em;line-height:1">{headline}</div>'
-            f'<div style="display:flex;gap:40px;align-items:center;flex:1"><div style="flex:1;display:grid;gap:22px">{bl}</div>{big_cover(p, 360, rot)}</div>'
-            f'<div style="display:flex;justify-content:space-between;align-items:center">{price_line}<div class="cta" style="font-size:34px;padding:26px 40px">{cta} →</div></div></div>', AW, AH)
+def head_row(tag):
+    return f'<div style="display:flex;justify-content:space-between;align-items:center">{brandmark(54, 42)}<div class="pill" style="font-size:22px;padding:12px 22px">{tag}</div></div>'
 
 
-def pl(p):
-    return f'<div><div class="strike" style="font-size:34px">{rs(p["mrp"])}</div><div class="price-big" style="font-size:84px">{rs(p["price"])}</div></div>'
+# Ad 1 — Bundle stack
+A["ads/ad-01-all-access-stack"] = frame(
+    head_row(f"Save {off(BUNDLE)}%") +
+    f'<div class="d" style="font-size:98px">25 kits for less than <span class="mk">the price of 3.</span></div>'
+    f'<div style="position:relative;flex:1">'
+    f'<div style="position:absolute;left:40px;top:50px">{bigcover(P["ai-prompt-vault"], 280, -11)}</div>'
+    f'<div style="position:absolute;right:40px;top:40px">{bigcover(P["meta-ads-playbook"], 280, 10)}</div>'
+    f'<div style="position:absolute;left:50%;top:70px;transform:translateX(-50%)">{bigcover(B, 330, -1)}</div></div>'
+    + price_cta(BUNDLE, "Get all 25"))
 
+# Ad 2 — Prompt Vault (notes app)
+A["ads/ad-02-prompt-vault-notes"] = frame(
+    head_row("AI & ChatGPT") +
+    f'<div class="d" style="font-size:90px">ChatGPT sirf <span class="mk">"hi"</span> likhne ke liye nahi hai.</div>'
+    f'<div style="display:flex;gap:30px;flex:1;align-items:center"><div class="notes" style="flex:1"><div class="bar"><span>Prompts I use daily</span><span>220+</span></div>'
+    f'<div style="padding:28px 30px;display:grid;gap:20px">'
+    + "".join(f'<div class="check"><i>✓</i><div style="font-size:28px;line-height:1.3">{t}</div></div>' for t in
+              ["Write 5 ad captions for my store", "Fix my CV bullets", "Fiverr gig description", "Excel formula for sales", "Reply to an angry client"]) +
+    f'</div></div>{bigcover(P["ai-prompt-vault"], 300, 6)}</div>' + price_cta(P["ai-prompt-vault"], "Get the Vault"))
 
-B = dict(BUNDLE, cat="bundle")
-ASSETS["ads/ad-01-all-access-bundle"] = ad(f"SAVE {off(BUNDLE)}%", f'All <span class="grad">25 products</span> for less than the price of 3',
-    ["AI, freelancing & e-commerce", "Excel tools & Word templates", "Every future product free", "JazzCash / Easypaisa"], B, pl(BUNDLE), "Get All-Access",
-    (("g4", 600, 500, -250), ("g1", 600, -200, 800)), -4)
-ASSETS["ads/ad-02-ai-prompt-vault"] = ad("AI & CHATGPT", 'Stop typing <span class="grad">"hi"</span> into ChatGPT.',
-    ["220+ copy-paste prompts", "Ads, captions, CVs, Excel", "Roman Urdu prompts", "Works with any AI"], P["ai-prompt-vault"], pl(P["ai-prompt-vault"]), "Get the Vault")
-ASSETS["ads/ad-03-fiverr-blueprint"] = ad("FREELANCING", 'Still waiting for your <span class="grad">first Fiverr order?</span>',
-    ["Choose a niche that sells", "Gig titles that rank", "30-day action plan", "Withdraw safely in PK"], P["fiverr-freelancing-blueprint"], pl(P["fiverr-freelancing-blueprint"]), "Start Today",
-    (("g2", 650, 500, -250), ("g1", 500, -200, 850)))
-ASSETS["ads/ad-04-meta-ads-playbook"] = ad("FOR BUSINESS OWNERS", 'Boost karte ho, <span class="grad">sales nahi aati?</span>',
-    ["Campaign structures for PKR budgets", "Creative testing system", "Kill / scale rulebook", "Pakistan benchmarks"], P["meta-ads-playbook"], pl(P["meta-ads-playbook"]), "Fix My Ads",
-    (("g2", 650, -200, -200), ("g4", 400, 700, 900)))
-ASSETS["ads/ad-05-daraz-kit"] = ad("E-COMMERCE", 'Launch your <span class="grad">Daraz store</span> the right way',
-    ["Find winning products", "Listing SEO template", "Real profit math", "11.11 campaign plan"], P["daraz-seller-launch-kit"], pl(P["daraz-seller-launch-kit"]), "Launch Store",
-    (("g4", 600, 600, -250), ("g1", 500, -200, 800)))
-ASSETS["ads/ad-06-cv-templates"] = ad("JOB SEEKERS", 'Your CV gets rejected <span class="grad">before a human sees it.</span>',
-    ["3 ATS-friendly Word templates", "Fresh grad & experienced", "Achievement bullet formula", "Edit in 10 minutes"], P["ats-cv-templates"], pl(P["ats-cv-templates"]), "Fix My CV",
-    (("g1", 600, 600, -200), ("g2", 500, -200, 850)))
-ASSETS["ads/ad-07-budget-planner"] = ad("PERSONAL FINANCE", 'Salary aati hai, <span class="grad">jaati kahan hai?</span>',
-    ["12 auto-calculating months", "Committee (BC) tracker", "Savings goals", "Works in Google Sheets"], P["pkr-budget-planner"], pl(P["pkr-budget-planner"]), "Plan My Money",
-    (("g4", 600, -200, -250), ("g1", 500, 700, 850)))
-ASSETS["ads/ad-08-whatsapp-scripts"] = ad("SELL ON WHATSAPP", '"Price zyada hai" — <span class="grad">ab kya reply karein?</span>',
-    ["55+ copy-paste scripts", "Objection handling", "COD confirmation", "English + Roman Urdu"], P["whatsapp-sales-scripts"], pl(P["whatsapp-sales-scripts"]), "Get Scripts",
-    (("g1", 650, 550, -250), ("g3", 400, -150, 900)))
-ASSETS["ads/ad-09-skills-not-degrees"] = ad("SEEKHO · BANAO · KAMAO", 'Learn a skill. <span class="grad">Work with global clients.</span>',
-    ["Freelancing & AI guides", "Priced for Pakistan", "Delivered on WhatsApp", "Free updates"], P["ai-content-writing-course"], f'<div class="muted" style="font-size:30px;max-width:380px">25 products from <b style="color:#F8FAFC">Rs 499</b></div>', "Explore Now",
-    (("g2", 600, 600, -250), ("g1", 600, -200, 800)))
+# Ad 3 — Fiverr chat
+A["ads/ad-03-fiverr-chat"] = frame(
+    head_row("Freelancing") +
+    f'<div class="wa"><div class="top"><div class="av">S</div><div style="font-size:30px">Sana</div></div><div class="body">'
+    f'<div class="b in">3 mahine ho gaye, ek bhi order nahi aaya 😭<small>11:02 pm</small></div>'
+    f'<div class="b out">Skill theek hai — gig ka niche, title aur pricing check karo. Yeh blueprint dekho 👇<small>11:03 pm ✓✓</small></div></div></div>'
+    f'<div style="display:flex;gap:30px;align-items:center;flex:1"><div style="flex:1;display:grid;gap:18px;font-size:32px">'
+    + "".join(f'<div class="check"><i>✓</i><div>{t}</div></div>' for t in ["Pick a niche that sells", "Titles buyers actually search", "30-day action plan", "Withdraw safely in Pakistan"]) +
+    f'</div>{bigcover(P["fiverr-freelancing-blueprint"], 300, 6)}</div>' + price_cta(P["fiverr-freelancing-blueprint"], "Start today"))
+
+# Ad 4 — Boost vs ads
+A["ads/ad-04-boost-vs-ads"] = frame(
+    head_row("For business owners") +
+    f'<div class="d" style="font-size:96px">Boost karte ho, <span class="mk">sales nahi aati?</span></div>'
+    f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">'
+    f'<div class="sk" style="padding:34px;background:#fff"><div style="font-size:30px;font-weight:800;color:#6B6878">"BOOST POST"</div>'
+    f'<div style="font-size:30px;line-height:1.5;margin-top:14px" class="x">✕ Likes, not buyers<br>✕ No testing<br>✕ No idea what worked</div></div>'
+    f'<div class="sk" style="padding:34px;background:#5B2EFF;color:#fff"><div style="font-size:30px;font-weight:800;color:#FFE27A">REAL CAMPAIGN</div>'
+    f'<div style="font-size:30px;line-height:1.5;margin-top:14px">✓ Optimised for orders<br>✓ 3 creatives tested<br>✓ Kill / scale rules</div></div></div>'
+    f'<div style="display:flex;justify-content:center;flex:1;align-items:center">{bigcover(P["meta-ads-playbook"], 280, -4)}</div>'
+    + price_cta(P["meta-ads-playbook"], "Fix my ads"))
+
+# Ad 5 — Daraz receipt
+rows = [("Selling price", "1,500"), ("Product cost", "− 650"), ("Commission (example 10%)", "− 150"), ("Fees & packaging", "− 70"), ("Returns allowance", "− 75"), ("Ads per order", "− 100")]
+A["ads/ad-05-daraz-receipt"] = frame(
+    head_row("Daraz sellers") +
+    f'<div class="d" style="font-size:86px">Profit calculate kiya, <span class="mk">ya andaza lagaya?</span></div>'
+    f'<div style="display:flex;gap:30px;align-items:center;flex:1"><div class="sk" style="flex:1;padding:34px 36px;font-family:\'Courier New\',monospace;font-size:27px;background:#FFFDF6">'
+    f'<div style="text-align:center;font-weight:800;font-size:30px;margin-bottom:16px">— PROFIT RECEIPT —</div>'
+    + "".join(f'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:2px dashed #E4DED4"><span>{a}</span><b>{b}</b></div>' for a, b in rows) +
+    f'<div style="display:flex;justify-content:space-between;padding-top:16px;font-size:34px;font-weight:800;color:#5B2EFF"><span>PROFIT</span><span>Rs 455</span></div>'
+    f'<div class="mu" style="font-size:20px;margin-top:10px">*Example. Use your category\'s real commission.</div></div>'
+    f'{bigcover(P["daraz-seller-launch-kit"], 280, 6)}</div>' + price_cta(P["daraz-seller-launch-kit"], "Launch store"))
+
+# Ad 6 — CV red pen
+A["ads/ad-06-cv-redpen"] = frame(
+    head_row("Job seekers") +
+    f'<div class="d" style="font-size:80px">Aap ki CV <span class="mk">insaan se pehle</span> software parhta hai.</div>'
+    f'<div class="sk" style="padding:36px;background:#fff;display:grid;gap:22px">'
+    f'<div style="font-size:24px;font-weight:800;color:#6B6878">BEFORE</div>'
+    f'<div style="font-size:34px;text-decoration:line-through;text-decoration-color:#E5372B;text-decoration-thickness:4px;color:#6B6878">Responsible for handling customer complaints.</div>'
+    f'<div style="font-size:24px;font-weight:800;color:#5B2EFF">AFTER</div>'
+    f'<div style="font-size:34px;font-weight:600"><span class="mk">Cut complaint response time from 48 to 12 hours</span> by setting up a WhatsApp ticket system.</div></div>'
+    f'<div style="display:flex;gap:30px;align-items:center;flex:1"><div style="flex:1;display:grid;gap:16px;font-size:31px">'
+    + "".join(f'<div class="check"><i>✓</i><div>{t}</div></div>' for t in ["3 ATS-friendly Word templates", "Fresh grad & experienced", "Bullet formula + action verbs"]) +
+    f'</div>{bigcover(P["ats-cv-templates"], 240, 6)}</div>' + price_cta(P["ats-cv-templates"], "Fix my CV"))
+
+# Ad 7 — Salary day vs 20th
+A["ads/ad-07-salary-meme"] = frame(
+    head_row("Personal finance") +
+    f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">'
+    f'<div class="sk" style="padding:36px;text-align:center;background:#BFEBD3"><div style="font-size:150px">😎</div><div class="d" style="font-size:52px">Salary day</div></div>'
+    f'<div class="sk" style="padding:36px;text-align:center;background:#FFE27A"><div style="font-size:150px">🥲</div><div class="d" style="font-size:52px">20 tareekh</div></div></div>'
+    f'<div class="d" style="font-size:80px">Salary aati hai — <span class="mk">jaati kahan hai?</span></div>'
+    f'<div style="display:flex;gap:30px;align-items:center;flex:1"><div style="flex:1;display:grid;gap:16px;font-size:31px">'
+    + "".join(f'<div class="check"><i>✓</i><div>{t}</div></div>' for t in ["12 auto-calculating months", "Committee (BC) tracker", "Savings goals in PKR"]) +
+    f'</div>{bigcover(P["pkr-budget-planner"], 250, 6)}</div>' + price_cta(P["pkr-budget-planner"], "Plan my money"))
+
+# Ad 8 — WhatsApp objection
+A["ads/ad-08-price-zyada-hai"] = frame(
+    head_row("Sell on WhatsApp") +
+    f'<div class="wa"><div class="top"><div class="av">C</div><div style="font-size:30px">Customer</div></div><div class="body">'
+    f'<div class="b in">Price zyada hai 😒<small>4:15 pm</small></div>'
+    f'<div class="b out">Bilkul samajh sakte hain! Price mein free delivery aur 7-day exchange shamil hai. Aur COD hai — paise tab dein jab parcel haath mein ho 😊<small>4:16 pm ✓✓</small></div>'
+    f'<div class="b in">Acha theek hai, book kar dein 👍<small>4:16 pm</small></div></div></div>'
+    f'<div style="display:flex;gap:30px;align-items:center;flex:1"><div class="d" style="font-size:66px;flex:1">55+ scripts jo <span class="mk">chat ko order</span> mein badalte hain.</div>'
+    f'{bigcover(P["whatsapp-sales-scripts"], 260, 6)}</div>' + price_cta(P["whatsapp-sales-scripts"], "Get scripts"))
+
+# Ad 9 — Course vs kit (broad)
+A["ads/ad-09-course-vs-kit"] = frame(
+    head_row("Skip the course") +
+    f'<div class="d" style="font-size:90px">You don\'t need 40 hours of video.<br><span class="mk">You need the next step.</span></div>'
+    f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;flex:1">'
+    f'<div class="sk" style="padding:36px;background:#fff"><div style="font-size:30px;font-weight:800;color:#6B6878">BIG COURSE</div><div class="d" style="font-size:76px;margin:12px 0">Rs 50,000+</div>'
+    f'<div style="font-size:32px;line-height:1.6;color:#6B6878">✕ Weeks of lectures<br>✕ Foreign examples<br>✕ Card payments<br>✕ Theory first</div></div>'
+    f'<div class="sk" style="padding:36px;background:#111018;color:#F6F3EE"><div style="font-size:30px;font-weight:800;color:#FFE27A">SKILLSTACK KIT</div><div class="d" style="font-size:76px;margin:12px 0;color:#FFE27A">Rs 499+</div>'
+    f'<div style="font-size:32px;line-height:1.6">✓ Act the same day<br>✓ Pakistani examples<br>✓ JazzCash / Easypaisa<br>✓ Templates & scripts</div></div></div>'
+    f'<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:32px;font-weight:700">25 kits · freelancing, AI,<br>e-commerce & careers</div>'
+    f'<div class="cta" style="font-size:36px;padding:28px 44px">Browse kits →</div></div>')
 
 
 def main():
+    shutil.rmtree(SRC, ignore_errors=True)
+    for d in ("posts", "ads", "banners", "logo"):
+        shutil.rmtree(os.path.join(BR, d), ignore_errors=True)
     os.makedirs(SRC, exist_ok=True)
     jobs = []
-    for name, (body, w, h) in ASSETS.items():
+    for name, (body, w, h) in A.items():
         src = os.path.join(SRC, name.replace("/", "__") + ".html")
         with open(src, "w", encoding="utf-8") as f:
             f.write(page(body, w, h))
@@ -231,15 +350,17 @@ def main():
     with open(os.path.join(SRC, "jobs.json"), "w") as f:
         json.dump(jobs, f)
     subprocess.run(["node", os.path.join(os.path.dirname(__file__), "render.js"), os.path.join(SRC, "jobs.json")], check=True)
-    # vector logo files
-    with open(os.path.join(BR, "logo", "hunarly-icon.svg"), "w") as f:
+    with open(os.path.join(BR, "logo", "skillstack-icon.svg"), "w") as f:
         f.write(LOGO.replace('aria-hidden="true"', 'xmlns="http://www.w3.org/2000/svg"'))
-    word = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 72">' + LOGO.replace('<svg viewBox="0 0 64 64" aria-hidden="true">', '<svg x="0" y="4" width="64" height="64" viewBox="0 0 64 64">') +
-            '<text x="80" y="52" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="46" letter-spacing="-1" fill="{c}">Hunarly</text></svg>')
-    for n, c in [("hunarly-logo-dark-bg.svg", "#F8FAFC"), ("hunarly-logo-light-bg.svg", "#0A0F1F")]:
+    word = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 72">' + LOGO.replace('<svg viewBox="0 0 64 64" aria-hidden="true">', '<svg x="0" y="4" width="64" height="64" viewBox="0 0 64 64">') +
+            '<text x="74" y="52" font-family="Bricolage Grotesque, Inter, Arial, sans-serif" font-weight="800" font-size="50" letter-spacing="-2" fill="{c}">skillstack</text></svg>')
+    for n, c in [("skillstack-logo.svg", "#111018"), ("skillstack-logo-on-dark.svg", "#F6F3EE")]:
+        svg = word.replace("{c}", c)
+        if c != "#111018":
+            svg = svg.replace('fill="#111018"', 'fill="#F6F3EE"')
         with open(os.path.join(BR, "logo", n), "w") as f:
-            f.write(word.replace("{c}", c))
-    print("brand assets:", len(ASSETS))
+            f.write(svg)
+    print("brand assets:", len(A))
 
 
 if __name__ == "__main__":

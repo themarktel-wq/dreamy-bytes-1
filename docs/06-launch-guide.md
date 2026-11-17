@@ -19,7 +19,7 @@ python3 tools/build_all.py           # products + website (+ brand if Playwright
 Outputs: `products/` (25 files), `website/` (the site), `brand/` (PNG assets).
 
 ## Step 3 — Host the website (free)
-**Netlify (easiest):** netlify.com → Add new site → Deploy manually → drag the `website` folder. Then Domain settings → add `hunarly.pk`.
+**Netlify (easiest):** netlify.com → Add new site → Deploy manually → drag the `website` folder. Then Domain settings → add `skillstack.pk`.
 **Vercel / GitHub Pages:** set the publish directory to `website/`.
 **Domain:** buy `.pk` from PKNIC-accredited registrars or `.com` from Namecheap/Cloudflare; point DNS to the host.
 

@@ -109,43 +109,25 @@ Because the bundle is the most profitable sale, **every campaign's goal is ultim
 
 ---
 
-## Ad copy for the 9 creatives (`brand/ads/`)
+## Ad copy for the 9 creatives (`brand/ads/`, 1080×1350)
 
-**Ad 01 — All-Access Bundle**
-- Primary text: *All 25 Hunarly products for less than the price of 3. AI prompts, Fiverr & Upwork guides, Daraz & Shopify playbooks, CV templates, budget & business sheets — plus every future product, free. Pay with JazzCash, Easypaisa or bank. Delivered on WhatsApp.* 👇
-- Headline: All 25 products — Rs 4,999 · Description: One payment. Lifetime updates. · CTA: Send Message / Shop Now
+Each creative uses a different *angle*, so Phase 1 tests angles, not just products. Formats were picked from the research in `docs/05`: native-looking formats (chat, notes, receipt) and humour beat polished ads with Pakistani audiences.
 
-**Ad 02 — AI Prompt Vault**
-- Primary: *ChatGPT sirf "hi" likhne ke liye nahi hai 😄 220+ copy-paste prompts for ads, captions, CVs, Excel, freelancing & study — with Roman Urdu prompts. Rs 999 only.*
-- Headline: 220+ ChatGPT prompts · CTA: Shop Now
+| Ad | Angle | Primary text | Headline | CTA |
+|---|---|---|---|---|
+| **01 — All-Access stack** | Value / bundle | Poora stack, 25 kits: AI prompts, Fiverr & Upwork guides, Daraz & Shopify playbooks, CV templates, budget & business sheets. Har nayi kit bhi free milegi. JazzCash ya Easypaisa se payment, WhatsApp par delivery. | 25 kits for less than the price of 3 | Send Message |
+| **02 — Prompt Vault (notes)** | Curiosity / utility | ChatGPT sirf "hi" likhne ke liye nahi hai 😄 220+ copy-paste prompts for captions, CVs, Fiverr gigs, Excel and client emails. Roman Urdu prompts bhi included hain. | 220+ prompts you'll actually use | Shop Now |
+| **03 — Fiverr chat** | Pain → relief | 3 mahine ho gaye, ek bhi order nahi aaya? Aksar skill nahi, gig ka niche, title aur pricing problem hoti hai. Fiverr Freelancing Blueprint mein step-by-step system aur 30-day plan hai. | Your Fiverr gig, fixed step by step | Learn More |
+| **04 — Boost vs ads** | Myth-busting | Boost karte ho, sales nahi aati? Boost aur campaign mein farq hai. Seekhein ke Rs 1,000–5,000/day budget par campaigns kaise banate hain, creatives kaise test karte hain, aur ad kab band ya scale karna hai. | Run ads that sell, not boosts | Shop Now |
+| **05 — Daraz receipt** | Logic / math | Profit calculate kiya, ya andaza lagaya? Commission, fees, returns aur ads ke baad asal profit kitna bachta hai? Stock khareedne se pehle yeh math karein. | Know your real Daraz profit | Shop Now |
+| **06 — CV red pen** | Before / after | Bohat si companies ATS software use karti hain jo insaan se pehle aap ki CV parhta hai. 3 clean, ATS-friendly Word templates aur bullet formula, jo "responsible for…" ko asal result mein badal deta hai. | Your CV, rewritten to get read | Download |
+| **07 — Salary meme** | Humour / relatable | Salary day 😎 vs 20 tareekh 🥲 PKR budget planner: 12 auto-calculating months, committee (BC) tracker aur savings goals. Excel aur Google Sheets dono mein chalta hai. | Salary aati hai, jaati kahan hai? | Shop Now |
+| **08 — "Price zyada hai"** | Demo of the product | "Price zyada hai" sun kar chat khatam na karein. 55+ copy-paste WhatsApp scripts: greetings, objections, COD confirmation, follow-ups aur reviews. English + Roman Urdu. | Turn chats into orders | Send Message |
+| **09 — Course vs kit** | Positioning (broad) | You don't need 40 hours of video. You need the next step. Practical kits for freelancing, AI, e-commerce and careers, from Rs 499, made for Pakistan. | Skip the course. Get the kit. | Learn More |
 
-**Ad 03 — Fiverr Blueprint**
-- Primary: *Fiverr account bana liya, order nahi aaya? Most gigs fail because of the niche, title and pricing — not your skill. The Fiverr Freelancing Blueprint shows you step by step: niche → gig → first order → withdrawal in Pakistan.*
-- Headline: Your first Fiverr order — the system · CTA: Learn More
+**Testing order:** launch all 9 in Phase 1. In week 2 keep the **top 2 angles** (lowest cost per conversation/purchase), then make 3 variations of each: new hook line, same format, or the same message as a Reel.
 
-**Ad 04 — Meta Ads Playbook**
-- Primary: *Boost karte ho, sales nahi aati? Boosting isn't advertising. Learn campaign structure, creative testing and kill/scale rules built for Rs 500–5,000/day budgets.*
-- Headline: Ads that sell, on PKR budgets · CTA: Shop Now
-
-**Ad 05 — Daraz Kit**
-- Primary: *Thinking of selling on Daraz? Find products that sell, write listings that rank, and calculate real profit after commission, fees and returns — before you spend on stock.*
-- Headline: Launch your Daraz store right · CTA: Shop Now
-
-**Ad 06 — CV Templates**
-- Primary: *Applying everywhere but no calls? Many companies use ATS software that filters CVs before a human reads them. Get 3 clean, ATS-friendly Word templates + the bullet formula recruiters love. Rs 699.*
-- Headline: ATS-friendly CV templates · CTA: Download
-
-**Ad 07 — Budget Planner**
-- Primary: *Salary aati hai, jaati kahan hai? 🤔 A PKR budget planner with 12 auto-calculating months, committee (BC) tracker and savings goals. Works in Excel & Google Sheets. Rs 499.*
-- Headline: Take control of your salary · CTA: Shop Now
-
-**Ad 08 — WhatsApp Scripts**
-- Primary: *"Price zyada hai" — ab kya reply karein? 55+ copy-paste WhatsApp scripts for greetings, objections, COD confirmations, follow-ups and reviews. English + Roman Urdu.*
-- Headline: Turn chats into orders · CTA: Send Message
-
-**Ad 09 — Skills (brand / broad)**
-- Primary: *Learn a skill. Work with global clients. Hunarly makes practical freelancing, AI and e-commerce skills affordable for every Pakistani — 25 products from Rs 499. Seekho. Banao. Kamao.*
-- Headline: 25 products from Rs 499 · CTA: Learn More
+**Reel versions to make first (higher reach than statics):** Ad 03 (typed chat screen-recording), Ad 07 (two-shot meme with trending audio), Ad 09 (talking head: "Maine Rs 60,000 ka course chhoda aur yeh kiya…", only if it is a true story from the founder or creator).
 
 ### Policy guardrails (avoid rejections & bans)
 - No income claims ("earn Rs 1 lakh/month"), no "guaranteed", no before/after bank screenshots.

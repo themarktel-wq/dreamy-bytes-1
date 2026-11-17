@@ -59,7 +59,7 @@ Many new sellers lose money because they forget hidden costs. Calculate:
 # Listing SEO Template
 ## Title formula
 **Brand + Product type + Key feature + Size/Variant + Use case**
-Example: "Hunar Home Kitchen Organiser Rack – 3 Tier Stainless Steel – Spice & Jar Storage"
+Example: "GharPlus Kitchen Organiser Rack – 3 Tier Stainless Steel – Spice & Jar Storage"
 ## Listing template
 - **Main image:** white background, product fills 80% of the frame.
 - **Images 2–6:** close-ups, size with hand/object for scale, in-use photo, packaging, infographic of features.

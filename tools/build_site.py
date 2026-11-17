@@ -1,4 +1,4 @@
-"""Generate the Hunarly static website into website/."""
+"""Generate the Skillstack static website into website/."""
 import json
 import os
 import re
@@ -7,7 +7,7 @@ from html import escape
 from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(__file__))
-from catalog import BRAND, CATEGORIES, PRODUCTS, BUNDLE, FMT_LABEL
+from catalog import BRAND, CATEGORIES, PRODUCTS, BUNDLE, FMT_LABEL, CAT_STYLE
 from build_products import CONTENT
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -18,9 +18,7 @@ os.makedirs(os.path.join(SITE, "product"), exist_ok=True)
 # The section stays hidden while this list is empty — never publish made-up reviews.
 TESTIMONIALS = []
 
-GRAD = {"ai": ("#10B981", "#A3E635"), "freelance": ("#38BDF8", "#6366F1"), "ecom": ("#F59E0B", "#EF4444"),
-        "marketing": ("#EC4899", "#8B5CF6"), "career": ("#14B8A6", "#0EA5E9"), "business": ("#F5B941", "#10B981"),
-        "bundle": ("#F5B941", "#A3E635")}
+
 
 S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"'
 ICON = {
@@ -51,7 +49,13 @@ ICON = {
 }
 WA_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 2.5 1 3 .8 3.6.8.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4-.1-.2-.3-.2-.6-.4zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.7 15.6 2.2 13.8 2.2 12 2.2 6.6 6.6 2.2 12 2.2c2.6 0 5.1 1 6.9 2.9 1.8 1.8 2.9 4.3 2.9 6.9 0 5.4-4.4 9.8-9.8 9.8zM20.5 3.5C18.2 1.2 15.2 0 12 0 5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.8 1 3.8 1.5 5.8 1.5 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.4z"/></svg>'
 
-LOGO = '''<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10B981"/><stop offset="1" stop-color="#A3E635"/></linearGradient></defs><rect width="64" height="64" rx="18" fill="url(#lg)"/><rect x="16" y="15" width="9" height="34" rx="4.5" fill="#06140F"/><rect x="39" y="15" width="9" height="34" rx="4.5" fill="#06140F"/><path d="M22 36c6-6 14-6 20 0" stroke="#06140F" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="53" cy="11" r="6" fill="#F5B941" stroke="#070B16" stroke-width="3"/></svg>'''
+LOGO = '''<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="40" height="14" rx="7" fill="#5B2EFF"/><rect x="18" y="25" width="40" height="14" rx="7" fill="#FF6B2C"/><rect x="6" y="42" width="40" height="14" rx="7" fill="#111018"/></svg>'''
+
+
+def bars(fg, ac):
+    """Big stacked-bars motif used on covers (echo of the logo)."""
+    return (f'<svg class="cv-bars" viewBox="0 0 64 56" aria-hidden="true"><rect x="0" y="0" width="44" height="14" rx="7" fill="{ac}"/>'
+            f'<rect x="18" y="20" width="44" height="14" rx="7" fill="{ac}"/><rect x="0" y="40" width="44" height="14" rx="7" fill="{ac}"/></svg>')
 
 
 def off(p):
@@ -63,12 +67,14 @@ def rs(n):
 
 
 def cover(p, cls=""):
-    c1, c2 = GRAD[p.get("cat", "bundle")]
-    cat = CATEGORIES.get(p.get("cat"), "All-Access")
-    fmt = FMT_LABEL.get(p.get("fmt"), "25 products")
-    return (f'<div class="cover {cls}" style="--c1:{c1};--c2:{c2}"><div><div class="cv-top">{LOGO}Hunarly</div></div>'
-            f'<div><span class="cv-cat">{escape(cat)}</span><div class="cv-title">{escape(p["name"])}</div><div class="cv-bar"></div>'
-            f'<div class="cv-fmt" style="margin-top:8px">{fmt}</div></div><div class="cv-icon" style="color:{c2}">{ICON[p.get("cat","bundle")]}</div></div>')
+    key = p.get("cat", "bundle")
+    bg, fg, ac = CAT_STYLE[key]
+    cat = CATEGORIES.get(key, "All-Access")
+    fmt = FMT_LABEL.get(p.get("fmt"), "All 25 products")
+    num = f"No. {p['id']:02d}" if "id" in p else "All 25"
+    return (f'<div class="cover {cls}" style="--bg:{bg};--fg:{fg};--ac:{ac}"><div class="cv-top"><span>{num}</span><span class="cv-cat">{escape(cat)}</span></div>'
+            f'{bars(fg, ac)}<div><div class="cv-title">{escape(p["name"])}</div><div class="cv-bar"></div>'
+            f'<div class="cv-fmt">{fmt} · skillstack</div></div></div>')
 
 
 def toc(p):
@@ -109,7 +115,7 @@ def head(title, desc, root, canonical=""):
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{escape(title)}</title>
 <meta name="description" content="{escape(desc)}">
-<meta name="theme-color" content="#070B16">
+<meta name="theme-color" content="#F6F3EE">
 <meta property="og:title" content="{escape(title)}">
 <meta property="og:description" content="{escape(desc)}">
 <meta property="og:type" content="website">
@@ -117,7 +123,7 @@ def head(title, desc, root, canonical=""):
 <link rel="canonical" href="https://{BRAND['domain']}/{canonical}">
 <link rel="icon" href="{root}assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{root}assets/styles.css">
 <!-- Meta Pixel: paste your pixel code here (see docs/04-meta-ads-90-day-plan.md) -->
 </head>
@@ -129,9 +135,9 @@ def head(title, desc, root, canonical=""):
 def header(root, active=""):
     links = [("index.html", "Home"), ("shop.html", "Shop"), ("product/all-access.html", "All-Access"), ("faq.html", "FAQ"), ("contact.html", "Contact")]
     nav = "".join(f'<a href="{root}{h}" class="{"active" if active == t else ""}">{t}</a>' for h, t in links)
-    return f'''<div class="announce">🎉 Launch offer: All 25 products for just {rs(BUNDLE["price"])} — <a href="{root}product/all-access.html">Get All-Access</a></div>
+    return f'''<div class="announce">Launch offer: <b>all 25 kits for {rs(BUNDLE["price"])}</b> — <a href="{root}product/all-access.html">Get All-Access</a></div>
 <header class="header"><div class="container nav">
-<a href="{root}index.html" class="logo">{LOGO}<span>Hunarly</span></a>
+<a href="{root}index.html" class="logo">{LOGO}<span>skillstack</span></a>
 <nav class="nav-links">{nav}</nav>
 <div class="nav-cta"><a href="{root}shop.html" class="btn btn-primary btn-sm">Browse Products</a>
 <a href="{root}cart.html" class="cart-btn" aria-label="Cart">{ICON["cart"]}<span class="cart-count">0</span></a>
@@ -145,23 +151,23 @@ def footer(root):
     data = {"root": root, "whatsapp": BRAND["whatsapp"],
             "bundle": {"slug": BUNDLE["slug"], "price": BUNDLE["price"]},
             "products": [dict(slug=p["slug"], name=p["name"], price=p["price"], mrp=p["mrp"], fmt=FMT_LABEL[p["fmt"]],
-                              c1=GRAD[p["cat"]][0], c2=GRAD[p["cat"]][1], icon=f'<div class="cv-icon" style="color:{GRAD[p["cat"]][1]}">{ICON[p["cat"]]}</div>') for p in PRODUCTS]
+                              bg=CAT_STYLE[p["cat"]][0], icon=bars(CAT_STYLE[p["cat"]][1], CAT_STYLE[p["cat"]][2])) for p in PRODUCTS]
             + [dict(slug=BUNDLE["slug"], name=BUNDLE["name"], price=BUNDLE["price"], mrp=BUNDLE["mrp"], fmt="All 25 products + future updates",
-                    c1=GRAD["bundle"][0], c2=GRAD["bundle"][1], icon=f'<div class="cv-icon" style="color:#A3E635">{ICON["bundle"]}</div>')]}
+                    bg=CAT_STYLE["bundle"][0], icon=bars(CAT_STYLE["bundle"][1], CAT_STYLE["bundle"][2]))]}
     pays = "".join(f"<span>{p['method'].split(' ')[0]}</span>" for p in BRAND["payments"])
     return f'''<footer><div class="container">
 <div class="foot-grid">
-<div><a href="{root}index.html" class="logo">{LOGO}<span>Hunarly</span></a>
+<div><a href="{root}index.html" class="logo">{LOGO}<span>skillstack</span></a>
 <p class="muted" style="margin-top:14px;font-size:14.5px;max-width:320px">{BRAND["promise"]}. {BRAND["tagline"]}</p>
 <div class="socials"><a href="{BRAND["instagram"]}" aria-label="Instagram">{ICON["ig"]}</a><a href="{BRAND["facebook"]}" aria-label="Facebook">{ICON["fb"]}</a><a href="{BRAND["tiktok"]}" aria-label="TikTok">{ICON["tt"]}</a></div></div>
 <div><h5>Categories</h5><ul>{cats}</ul></div>
 <div><h5>Store</h5><ul><li><a href="{root}shop.html">All products</a></li><li><a href="{root}product/all-access.html">All-Access Pass</a></li><li><a href="{root}cart.html">Cart</a></li><li><a href="{root}about.html">About us</a></li></ul></div>
 <div><h5>Help</h5><ul><li><a href="{root}faq.html">FAQ</a></li><li><a href="{root}contact.html">Contact</a></li><li><a href="{root}refund-policy.html">Refund policy</a></li><li><a href="{root}privacy-policy.html">Privacy policy</a></li><li><a href="{root}terms.html">Terms</a></li></ul></div>
 </div>
-<div class="copy"><span>© 2026 Hunarly · {BRAND["domain"]} · Made in Pakistan 🇵🇰</span><div class="pay-icons">{pays}</div></div>
+<div class="copy"><span>© 2026 Skillstack · {BRAND["domain"]} · Made in Pakistan 🇵🇰</span><div class="pay-icons">{pays}</div></div>
 </div></footer>
-<a class="wa-float" href="https://wa.me/{BRAND["whatsapp"]}?text={'Assalam%20o%20Alaikum%20Hunarly!%20I%20have%20a%20question.'}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">{WA_SVG}</a>
-<script>window.HUNARLY={json.dumps(data)};</script>
+<a class="wa-float" href="https://wa.me/{BRAND["whatsapp"]}?text={'Assalam%20o%20Alaikum%20Skillstack!%20I%20have%20a%20question.'}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">{WA_SVG}</a>
+<script>window.SKILLSTACK={json.dumps(data)};</script>
 <script src="{root}assets/app.js" defer></script>
 </body></html>'''
 
@@ -195,8 +201,8 @@ def bundle_section(root):
     rows = "".join(f"<tr><td>{escape(p['name'])}</td><td>{rs(p['mrp'])}</td></tr>" for p in PRODUCTS[:6])
     return f'''<section id="all-access"><div class="container"><div class="bundle reveal">
 <div style="position:relative;z-index:1"><span class="pill"><b>BEST VALUE</b> Save {rs(BUNDLE["mrp"]-BUNDLE["price"])}</span>
-<h2>Get <span class="grad-text">all 25 products</span> for less than the price of 3</h2>
-<p class="muted" style="font-size:17px">One payment. Lifetime access to every product in the store — plus every new product we launch.</p>
+<h2>The whole stack.<br>25 kits. One payment.</h2>
+<p class="muted" style="font-size:17px">Less than the price of 3 kits. Lifetime access to every product in the store — plus every new product we launch.</p>
 <ul class="check-list">
 <li>{ICON["check"]}<span>All 25 premium products (PDF guides, Excel tools & Word templates)</span></li>
 <li>{ICON["check"]}<span>Every <b>future product</b> added free</span></li>
@@ -206,9 +212,9 @@ def bundle_section(root):
 <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" data-buy="{BUNDLE["slug"]}">Get All-Access — {rs(BUNDLE["price"])} {ICON["arrow"]}</button>
 <a href="{root}product/all-access.html" class="btn btn-ghost">See everything included</a></div>
 </div>
-<div class="bundle-price"><span class="eyebrow">Total value</span>
+<div class="bundle-price"><span class="eyebrow">What you get</span>
 <table class="value-table">{rows}<tr><td>+ 19 more products</td><td>…</td></tr></table>
-<div class="was">{rs(BUNDLE["mrp"])}</div><div class="big grad-text">{rs(BUNDLE["price"])}</div>
+<div class="was">{rs(BUNDLE["mrp"])}</div><div class="big">{rs(BUNDLE["price"])}</div>
 <p class="muted" style="font-size:13.5px;margin-top:8px">One-time payment · JazzCash / Easypaisa / Bank</p></div>
 </div></div></section>'''
 
@@ -230,50 +236,60 @@ def build_index():
                 "ecom": "Daraz & Shopify store playbooks", "marketing": "Meta ads, Instagram, YouTube & content",
                 "career": "CVs, cover letters, interviews & study", "business": "Sheets, scripts & small-business kits"}
     cats = "".join(f'''<a href="shop.html?cat={k}" class="cat-tile reveal">
-<div class="ic" style="background:linear-gradient(135deg,{GRAD[k][0]},{GRAD[k][1]})">{ICON[k]}</div>
-<h3>{v}</h3><p>{cat_desc[k]} · {cat_count[k]} products</p><span class="arrow">{ICON["arrow"]}</span></a>''' for k, v in CATEGORIES.items())
-    marquee_items = [p["name"] for p in PRODUCTS]
-    marquee = "".join(f"<span>{escape(m)}</span>" for m in marquee_items * 2)
+<div class="ic" style="background:{CAT_STYLE[k][0]};color:{CAT_STYLE[k][1]}">{ICON[k]}</div>
+<h3>{v}</h3><p>{cat_desc[k]} · {cat_count[k]} kits</p><span class="arrow">{ICON["arrow"]}</span></a>''' for k, v in CATEGORIES.items())
+    marquee = "".join(f"<span>{escape(p['name'])}</span>" for p in PRODUCTS * 2)
     testi = ""
     if TESTIMONIALS:
-        testi = '<section><div class="container"><div class="sec-head"><span class="eyebrow">Reviews</span><h2>What our customers say</h2></div><div class="features">' + "".join(
+        testi = '<section style="padding-top:0"><div class="container"><div class="sec-head"><span class="eyebrow">Reviews</span><h2>What buyers say</h2></div><div class="features">' + "".join(
             f'<div class="feature reveal"><p style="color:var(--ink)">“{escape(t["text"])}”</p><h4 style="margin-top:12px">{escape(t["name"])}</h4><p>{escape(t["city"])}</p></div>' for t in TESTIMONIALS) + "</div></div></section>"
-    p1, p2, p3 = PRODUCTS[0], PRODUCTS[1], PRODUCTS[5]
-    html = head(f"Hunarly — {BRAND['promise']}", "AI prompts, freelancing blueprints, Daraz & Shopify guides, Meta ads playbook, CV templates and business sheets — premium digital products made for Pakistan.", root) + header(root, "Home") + f'''
+    p1, p2, p3 = PRODUCTS[1], PRODUCTS[0], PRODUCTS[5]
+    html = head(f"Skillstack — {BRAND['promise']}", "Skip the Rs 50,000 course. 25 practical kits for freelancing, AI, e-commerce and careers — from Rs 499, delivered on WhatsApp.", root) + header(root, "Home") + f'''
 <main>
 <section class="hero"><div class="container hero-grid">
 <div>
-<span class="pill reveal"><b>NEW</b> 25 premium digital products for Pakistan</span>
-<h1 class="reveal d1">Learn the skills.<br>Build the income.<br><span class="rotator" data-words="Freelancing|AI Skills|E-commerce|Meta Ads|Your Career"><span class="grad-text">Freelancing</span></span></h1>
-<p class="lead reveal d2">Ready-to-use guides, templates and AI toolkits that help Pakistanis earn online — priced in rupees, delivered on WhatsApp. <b style="color:var(--ink)">{BRAND["tagline"]}</b></p>
-<div class="hero-ctas reveal d3"><a href="shop.html" class="btn btn-primary">Explore 25 Products {ICON["arrow"]}</a><a href="product/all-access.html" class="btn btn-ghost">Get All-Access · {rs(BUNDLE["price"])}</a></div>
-<div class="trust-row reveal d3"><span>{ICON["wallet"]} JazzCash · Easypaisa · Bank</span><span>{ICON["bolt"]} Delivered on WhatsApp</span><span>{ICON["refresh"]} Free updates</span></div>
+<span class="pill reveal"><b>NEW</b> 25 kits for Pakistani freelancers & sellers</span>
+<h1 class="reveal d1">Skip the Rs 50,000 course.<br><span class="mark">Get the kit.</span></h1>
+<p class="lead reveal d2">Step-by-step guides, templates and AI toolkits for freelancing, e-commerce and careers — <b>from Rs 499</b>, paid by JazzCash or Easypaisa, delivered on WhatsApp.</p>
+<div class="hero-ctas reveal d3"><a href="shop.html" class="btn btn-primary">Browse the 25 kits {ICON["arrow"]}</a><a href="product/all-access.html" class="btn btn-ghost">Get all 25 · {rs(BUNDLE["price"])}</a></div>
+<div class="trust-row reveal d3"><span>{ICON["wallet"]} JazzCash · Easypaisa · Bank</span><span>{ICON["chat"]} Delivered on WhatsApp</span><span>{ICON["refresh"]} Free updates</span></div>
 </div>
 <div class="hero-visual" aria-hidden="true">
-<div class="float-card c1">{cover(p2)}</div>
-<div class="float-card c2">{cover(p3)}</div>
-<div class="float-card c3">{cover(p1)}</div>
-<div class="stat-chip s1"><div class="ic">{ICON["download"]}</div><div><b>25 products</b><small>PDF · Excel · Word</small></div></div>
-<div class="stat-chip s2"><div class="ic">{ICON["wallet"]}</div><div><b>From {rs(min(p["price"] for p in PRODUCTS))}</b><small>Priced for Pakistan</small></div></div>
+<div class="stack-card s1">{cover(p1, "lg")}</div>
+<div class="stack-card s2">{cover(p3, "lg")}</div>
+<div class="stack-card s3">{cover(p2, "lg")}</div>
+<div class="sticker t1"><div class="ic">{ICON["wallet"]}</div><div><b>From Rs 499</b><small>Not Rs 50,000</small></div></div>
+<div class="sticker t2"><div class="ic" style="background:var(--lavender)">{ICON["download"]}</div><div><b>PDF · Excel · Word</b><small>Use on phone or laptop</small></div></div>
 </div>
 </div></section>
 <div class="marquee"><div class="marquee-track">{marquee}</div></div>
 
-<section><div class="container"><div class="stats">
-<div class="stat reveal"><b class="grad-text" data-count="25">25</b><span>Premium products</span></div>
-<div class="stat reveal d1"><b class="grad-text" data-count="6">6</b><span>Skill categories</span></div>
-<div class="stat reveal d2"><b class="grad-text" data-count="220" data-suf="+">220+</b><span>AI prompts in the vault</span></div>
-<div class="stat reveal d3"><b class="grad-text" data-count="{off(BUNDLE)}" data-suf="%">{off(BUNDLE)}%</b><span>Saved with All-Access</span></div>
+<section><div class="container">
+<div class="sec-head reveal"><span class="eyebrow">Why now</span><h2>Pakistan is already earning online. <span class="hl">The playbook shouldn't cost a salary.</span></h2></div>
+<div class="stats">
+<div class="stat reveal"><b>$1.76B</b><span>earned by Pakistani freelancers in FY2025-26, a record</span></div>
+<div class="stat reveal d1"><b>2M+</b><span>registered Pakistani freelancers, most in their 20s & 30s</span></div>
+<div class="stat reveal d2"><b>Rs 48k–80k</b><span>typical price of local digital-skills courses</span></div>
+<div class="stat reveal d3"><b>Rs 499</b><span>where a Skillstack kit starts</span></div>
+</div>
+<p class="src">Sources: <a href="https://www.bolnews.com/latest-news/pakistans-freelancers-hit-record-1-76-billion-in-export-earnings/" target="_blank" rel="noopener">BOL News (Finance Adviser)</a>, <a href="https://arynews.tv/pakistan-freelancers-coded-their-way-to-557-million" target="_blank" rel="noopener">ARY News</a>, <a href="https://ossie.iba.edu.pk/oise/enroll-in-the-digital-marketing-diploma.php" target="_blank" rel="noopener">IBA course listings</a>.</p>
+</div></section>
+
+<section style="padding-top:0"><div class="container">
+<div class="sec-head reveal"><span class="eyebrow">Course vs kit</span><h2>You don't need 40 hours of video.<br>You need the <span class="mark">next step</span>.</h2></div>
+<div class="compare">
+<div class="cmp reveal"><h3>Big online course</h3><div class="big">Rs 50,000+</div><ul><li>Weeks of long videos</li><li>Generic, often foreign examples</li><li>Card payments, fixed batches</li><li>Theory first, action later</li></ul></div>
+<div class="cmp us reveal d1"><h3>Skillstack kit</h3><div class="big" style="color:var(--butter)">From Rs 499</div><ul><li>Read in an evening, act the next day</li><li>Fiverr, Daraz, JazzCash, WhatsApp — Pakistani examples</li><li>JazzCash / Easypaisa, delivered on WhatsApp</li><li>Checklists, templates & copy-paste scripts</li></ul></div>
 </div></div></section>
 
 <section style="padding-top:0"><div class="container">
-<div class="sec-head reveal"><span class="eyebrow">Shop by goal</span><h2>What do you want to <span class="grad-text">achieve</span>?</h2><p>Every product is built around one outcome — your first order, your first sale, your next job.</p></div>
+<div class="sec-head reveal"><span class="eyebrow">Shop by goal</span><h2>What are you trying to do?</h2><p>Every kit is built around one outcome: your first order, your first sale, or your next job.</p></div>
 <div class="cats">{cats}</div></div></section>
 
 <section style="padding-top:0"><div class="container">
-<div class="sec-head reveal"><span class="eyebrow">Bestsellers</span><h2>Most loved by Pakistani learners</h2><p>Start with the products that get people results fastest.</p></div>
+<div class="sec-head reveal"><span class="eyebrow">Start here</span><h2>The kits people pick first</h2></div>
 <div class="grid">{cards}</div>
-<div class="center" style="margin-top:36px"><a href="shop.html" class="btn btn-ghost">View all 25 products {ICON["arrow"]}</a></div>
+<div class="center" style="margin-top:36px"><a href="shop.html" class="btn btn-ghost">See all 25 kits {ICON["arrow"]}</a></div>
 </div></section>
 
 {bundle_section(root)}
@@ -281,9 +297,9 @@ def build_index():
 <section><div class="container">
 <div class="sec-head reveal"><span class="eyebrow">How it works</span><h2>Order in 2 minutes. No card needed.</h2></div>
 <div class="steps">
-<div class="step reveal"><div class="ic">{ICON["cart"]}</div><h3>Choose your products</h3><p>Add products to your cart, or grab the All-Access Pass for everything.</p></div>
-<div class="step reveal d1"><div class="ic">{ICON["wallet"]}</div><h3>Pay with JazzCash, Easypaisa or bank</h3><p>Checkout opens WhatsApp with your order. Send the payment screenshot.</p></div>
-<div class="step reveal d2"><div class="ic">{ICON["download"]}</div><h3>Get instant access</h3><p>We verify and send your download links on WhatsApp & email. Start today.</p></div>
+<div class="step reveal"><div class="ic">{ICON["cart"]}</div><h3>Pick your kits</h3><p>Add kits to your cart, or get the All-Access Pass for everything.</p></div>
+<div class="step reveal d1"><div class="ic">{ICON["wallet"]}</div><h3>Pay your way</h3><p>JazzCash, Easypaisa or bank transfer. Checkout opens WhatsApp with your order.</p></div>
+<div class="step reveal d2"><div class="ic">{ICON["download"]}</div><h3>Get your files</h3><p>We verify your payment and send download links on WhatsApp and email.</p></div>
 </div></div></section>
 
 {testi}
@@ -296,9 +312,9 @@ def build_index():
 </div></section>
 
 <section style="padding-top:0"><div class="container"><div class="cta-band reveal">
-<h2>Your skill is your hunar.<br>Start building it today.</h2>
-<p>Join Pakistanis learning freelancing, AI and e-commerce the practical way.</p>
-<a href="shop.html" class="btn btn-dark">Browse all products {ICON["arrow"]}</a>
+<h2>Stop watching. <span class="hl">Start stacking.</span></h2>
+<p>One skill this month. One more next month. That's how careers are built.</p>
+<a href="shop.html" class="btn btn-dark">Browse the 25 kits {ICON["arrow"]}</a>
 </div></div></section>
 </main>''' + footer(root)
     write("index.html", html)
@@ -308,9 +324,9 @@ def build_shop():
     root = ""
     chips = '<button class="chip" data-cat="all">All</button>' + "".join(f'<button class="chip" data-cat="{k}">{v}</button>' for k, v in CATEGORIES.items())
     cards = "".join(product_card(p, root, i) for i, p in enumerate(PRODUCTS))
-    html = head("Shop all products — Hunarly", "Browse 25 premium digital products for freelancing, AI, e-commerce, marketing, careers and business in Pakistan.", root, "shop.html") + header(root, "Shop") + f'''
+    html = head("Shop all products — Skillstack", "Browse 25 premium digital products for freelancing, AI, e-commerce, marketing, careers and business in Pakistan.", root, "shop.html") + header(root, "Shop") + f'''
 <main><section style="padding-top:60px"><div class="container">
-<div class="sec-head"><span class="eyebrow">The store</span><h2>All <span class="grad-text">25 products</span></h2><p>Filter by goal, search, or get everything with All-Access.</p></div>
+<div class="sec-head"><span class="eyebrow">The store</span><h2>All <span class="hl">25 products</span></h2><p>Filter by goal, search, or get everything with All-Access.</p></div>
 <div class="search"><input id="q" type="search" placeholder="Search e.g. Fiverr, CV, Daraz, ChatGPT…" aria-label="Search products">
 <select id="sort" class="chip" aria-label="Sort" style="padding:0 14px"><option value="pop">Popular</option><option value="low">Price: low → high</option><option value="high">Price: high → low</option></select></div>
 <div class="filters">{chips}</div>
@@ -331,9 +347,9 @@ def build_product(p):
     toc_html = "".join(f"<li>{escape(t)}</li>" for t in toc(p))
     faqs = [FMT_FAQ[p["fmt"]]] + FAQ_COMMON[:3] + FAQ_COMMON[4:]
     wa_text = f"Assalam o Alaikum! I want to buy {p['name']} ({rs(p['price'])})."
-    ld = {"@context": "https://schema.org", "@type": "Product", "name": p["name"], "description": p["desc"], "brand": {"@type": "Brand", "name": "Hunarly"},
+    ld = {"@context": "https://schema.org", "@type": "Product", "name": p["name"], "description": p["desc"], "brand": {"@type": "Brand", "name": "Skillstack"},
           "offers": {"@type": "Offer", "price": p["price"], "priceCurrency": "PKR", "availability": "https://schema.org/InStock"}}
-    html = head(f"{p['name']} — Hunarly", p["tagline"] + ". " + p["desc"][:110], root, f"product/{p['slug']}.html") + header(root) + f'''
+    html = head(f"{p['name']} — Skillstack", p["tagline"] + ". " + p["desc"][:110], root, f"product/{p['slug']}.html") + header(root) + f'''
 <script type="application/ld+json">{json.dumps(ld)}</script>
 <main><div class="container">
 <div class="crumbs"><a href="../index.html">Home</a> / <a href="../shop.html?cat={p["cat"]}">{CATEGORIES[p["cat"]]}</a> / {escape(p["name"])}</div>
@@ -371,7 +387,7 @@ def build_bundle():
     root = "../"
     b = dict(BUNDLE, cat="bundle")
     items = "".join(f'<li>{ICON["check"]}<span><a href="{x["slug"]}.html"><b>{escape(x["name"])}</b></a> <span class="muted">— {FMT_LABEL[x["fmt"]]} · worth {rs(x["mrp"])}</span></span></li>' for x in PRODUCTS)
-    html = head(f"{BUNDLE['name']} — Hunarly", f"All 25 Hunarly products for {rs(BUNDLE['price'])}. " + BUNDLE["tagline"], root, "product/all-access.html") + header(root, "All-Access") + f'''
+    html = head(f"{BUNDLE['name']} — Skillstack", f"All 25 Skillstack products for {rs(BUNDLE['price'])}. " + BUNDLE["tagline"], root, "product/all-access.html") + header(root, "All-Access") + f'''
 <main><div class="container">
 <div class="crumbs"><a href="../index.html">Home</a> / All-Access Pass</div>
 <div class="pdp">
@@ -383,7 +399,7 @@ def build_bundle():
 <div class="price-row"><span class="price">{rs(BUNDLE["price"])}</span><span class="mrp">{rs(BUNDLE["mrp"])}</span><span class="off">{off(BUNDLE)}% OFF</span></div>
 <div class="save-note">You save {rs(BUNDLE["mrp"]-BUNDLE["price"])}</div>
 <div class="pdp-buy"><button class="btn btn-primary btn-block" data-buy="{BUNDLE["slug"]}">Get All-Access — {rs(BUNDLE["price"])} {ICON["arrow"]}</button>
-<a class="btn btn-wa btn-block" href="https://wa.me/{BRAND["whatsapp"]}?text=Assalam%20o%20Alaikum!%20I%20want%20the%20Hunarly%20All-Access%20Pass." target="_blank" rel="noopener">{WA_SVG} Order on WhatsApp</a></div>
+<a class="btn btn-wa btn-block" href="https://wa.me/{BRAND["whatsapp"]}?text=Assalam%20o%20Alaikum!%20I%20want%20the%20Skillstack%20All-Access%20Pass." target="_blank" rel="noopener">{WA_SVG} Order on WhatsApp</a></div>
 <div class="mini-trust"><div>{ICON["infinity"]}Future products free</div><div>{ICON["wallet"]}JazzCash / Easypaisa</div><div>{ICON["chat"]}Priority support</div></div>
 <div class="box"><h3>Everything included (25 products)</h3><ul class="check-list" style="margin:0">{items}</ul></div>
 </div></div>
@@ -398,7 +414,7 @@ def build_cart():
     root = ""
     pays = "".join(f'''<label class="pay-opt"><input type="radio" name="payment" value="{escape(p["method"])}" {"checked" if i == 0 else ""} required>
 <span><b>{escape(p["method"])}</b><small>{escape(p["title"])} · {escape(p["number"])}</small></span></label>''' for i, p in enumerate(BRAND["payments"]))
-    html = head("Cart & Checkout — Hunarly", "Complete your Hunarly order with JazzCash, Easypaisa or bank transfer.", root, "cart.html") + header(root) + f'''
+    html = head("Cart & Checkout — Skillstack", "Complete your Skillstack order with JazzCash, Easypaisa or bank transfer.", root, "cart.html") + header(root) + f'''
 <main><div class="container">
 <div class="sec-head" style="margin:50px auto 10px"><h2>Your cart</h2></div>
 <div class="checkout">
@@ -427,12 +443,12 @@ def build_cart():
 
 def prose(path, title, body, desc):
     root = ""
-    write(path, head(f"{title} — Hunarly", desc, root, path) + header(root) + f'<main><div class="container"><article class="prose">{body}</article></div></main>' + footer(root))
+    write(path, head(f"{title} — Skillstack", desc, root, path) + header(root) + f'<main><div class="container"><article class="prose">{body}</article></div></main>' + footer(root))
 
 
 def build_pages():
-    wa = f'<a class="grad-text" style="font-weight:700" href="https://wa.me/{BRAND["whatsapp"]}">{BRAND["whatsapp_display"]}</a>'
-    prose("thank-you.html", "Thank you", f'''<span class="eyebrow">Order received</span><h1>Shukriya! 💚 Your order is on its way.</h1>
+    wa = f'<a class="hl" style="font-weight:700" href="https://wa.me/{BRAND["whatsapp"]}">{BRAND["whatsapp_display"]}</a>'
+    prose("thank-you.html", "Thank you", f'''<span class="eyebrow">Order received</span><h1>Shukriya! Your order is on its way.</h1>
 <p id="ty-order"></p>
 <h2>What happens next</h2><ul>
 <li>WhatsApp opened with your order details. <b>Send it</b>, along with your payment screenshot.</li>
@@ -440,38 +456,38 @@ def build_pages():
 <li>Your download links arrive on WhatsApp and email.</li></ul>
 <p>WhatsApp didn't open? Message us at {wa} with your order details.</p>
 <p><a href="shop.html" class="btn btn-ghost" style="margin-top:12px">Continue browsing</a></p>''', "Thank you for your order.")
-    prose("about.html", "About us", f'''<span class="eyebrow">About Hunarly</span><h1>Pakistan has talent. We help turn it into income.</h1>
-<p><b>Hunar</b> means skill. Hunarly exists to make practical, modern skills — freelancing, AI, e-commerce, marketing and career growth — affordable and easy for every Pakistani.</p>
+    prose("about.html", "About us", f'''<span class="eyebrow">About Skillstack</span><h1>Careers are built one skill at a time.</h1>
+<p>Skillstack makes practical, modern skills — freelancing, AI, e-commerce, marketing and career growth — affordable for every Pakistani. Each kit is one skill. Stack them, and you build a career.</p>
 <p>Most online courses are expensive, built for other countries, or full of theory. Our products are different: short, practical, priced in rupees, and built around tools and platforms Pakistanis actually use — Fiverr, Upwork, Daraz, Shopify, WhatsApp, JazzCash and Easypaisa.</p>
 <h2>Our promise</h2><ul><li>Practical over theory — every product has templates, checklists or tools you can use the same day.</li><li>Honest marketing — no fake income claims, no fake reviews.</li><li>Real support — a real person answers your WhatsApp.</li></ul>
-<p><b>{BRAND["tagline"]}</b></p>''', "About Hunarly, Pakistan's store for AI and online-earning digital products.")
+<p><b>{BRAND["tagline"]}</b></p>''', "About Skillstack — practical skill kits for Pakistan.")
     prose("contact.html", "Contact", f'''<span class="eyebrow">Contact</span><h1>We're here to help</h1>
 <p>The fastest way to reach us is WhatsApp: {wa} (10am–10pm, every day).</p>
-<p>Email: <a class="grad-text" href="mailto:{BRAND["email"]}">{BRAND["email"]}</a> — we reply within 24 hours.</p>
+<p>Email: <a class="hl" href="mailto:{BRAND["email"]}">{BRAND["email"]}</a> — we reply within 24 hours.</p>
 <p>Please include your <b>order ID</b> if your question is about an order.</p>
-<p><a class="btn btn-wa" href="https://wa.me/{BRAND["whatsapp"]}" target="_blank" rel="noopener">{WA_SVG} Chat on WhatsApp</a></p>''', "Contact Hunarly support on WhatsApp or email.")
+<p><a class="btn btn-wa" href="https://wa.me/{BRAND["whatsapp"]}" target="_blank" rel="noopener">{WA_SVG} Chat on WhatsApp</a></p>''', "Contact Skillstack support on WhatsApp or email.")
     prose("faq.html", "FAQ", '<span class="eyebrow">Help centre</span><h1>Frequently asked questions</h1>' + faq_html(FAQ_COMMON + list(FMT_FAQ.values()) + [
         ("Do you offer Cash on Delivery?", "No — digital products are delivered online, so we accept JazzCash, Easypaisa and bank transfer."),
         ("Are results guaranteed?", "No honest product can guarantee income. Our products give you a clear system, templates and tools; results depend on your effort and consistency."),
-        ("Will I get a certificate?", "Our products are practical guides and toolkits, not accredited courses, so they don't include certificates.")]), "Answers to common questions about Hunarly products, payment and delivery.")
+        ("Will I get a certificate?", "Our products are practical guides and toolkits, not accredited courses, so they don't include certificates.")]), "Answers to common questions about Skillstack products, payment and delivery.")
     prose("refund-policy.html", "Refund policy", f'''<h1>Refund policy</h1><p>Last updated: November 2026</p>
 <p>Because digital products can't be returned once downloaded, we handle refunds fairly case by case:</p>
 <ul><li><b>File not working or corrupted:</b> we send a working file; if we can't fix it within 48 hours, you get a full refund.</li>
 <li><b>Product not as described:</b> contact us within 7 days of purchase with details and we'll refund or exchange it for another product of equal value.</li>
 <li><b>Duplicate payment:</b> refunded in full.</li>
 <li><b>Changed your mind after download:</b> not eligible for a refund, but we're happy to exchange it for another product within 7 days.</li></ul>
-<p>Refunds are sent to the same JazzCash, Easypaisa or bank account within 3 working days. To request one, message {wa} with your order ID.</p>''', "Hunarly refund policy.")
+<p>Refunds are sent to the same JazzCash, Easypaisa or bank account within 3 working days. To request one, message {wa} with your order ID.</p>''', "Skillstack refund policy.")
     prose("privacy-policy.html", "Privacy policy", f'''<h1>Privacy policy</h1><p>Last updated: November 2026</p>
 <p>We collect only what we need to deliver your order: your name, WhatsApp number, email, city and payment confirmation.</p>
 <ul><li>We use your details to deliver products, provide support and (if you agree) send product updates and offers.</li>
 <li>We never sell your data.</li><li>Our website may use analytics and the Meta Pixel to measure ads. You can block these with your browser settings.</li>
-<li>Your cart is stored only in your own browser.</li><li>To delete your data, message us on WhatsApp or email {BRAND["email"]}.</li></ul>''', "Hunarly privacy policy.")
+<li>Your cart is stored only in your own browser.</li><li>To delete your data, message us on WhatsApp or email {BRAND["email"]}.</li></ul>''', "Skillstack privacy policy.")
     prose("terms.html", "Terms", f'''<h1>Terms of use</h1><p>Last updated: November 2026</p>
 <ul><li>Each purchase grants one personal, non-transferable license for personal use or use in your own business.</li>
 <li>You may not resell, share, upload, or redistribute our products, in whole or in part.</li>
 <li>Our products are educational. We don't guarantee specific income or results. Platform rules (Fiverr, Upwork, Daraz, Meta, YouTube) change — always check the latest official rules.</li>
 <li>Prices are in Pakistani Rupees and may change. The price at the time of your order applies.</li>
-<li>Questions? Contact {BRAND["email"]}.</li></ul>''', "Hunarly terms of use.")
+<li>Questions? Contact {BRAND["email"]}.</li></ul>''', "Skillstack terms of use.")
 
 
 def build_extras():

@@ -1,4 +1,4 @@
-# 03 — AI Workflows to Run Hunarly
+# 03 — AI Workflows to Run Skillstack
 
 > **Khulasa:** Yeh 7 workflows business ko chalane ke liye hain — order delivery, WhatsApp replies, content banana, ads ki copy, naye products banana, reviews aur weekly report. Pehle manual (ChatGPT/Claude + Google Sheets) se shuru karein, phir orders barhne par Make.com / n8n se automate karein.
 
@@ -25,7 +25,7 @@ Please don't share these links — they're licensed to you only.
 ```
 
 **Google Drive setup for "25 product access":**
-- Make a folder `Hunarly Products` with 25 sub-folders (01 … 25) + one `All-Access` folder that contains shortcuts to all 25.
+- Make a folder `Skillstack Products` with 25 sub-folders (01 … 25) + one `All-Access` folder that contains shortcuts to all 25.
 - Share each folder **"Anyone with the link → Viewer"** (simple) OR share by customer email (safer — Drive → Share → add buyer's Gmail as Viewer). Email sharing lets you revoke access for refunds/abuse.
 - For Excel/Word templates, customers can File → Make a copy / Download.
 
@@ -41,9 +41,9 @@ Please don't share these links — they're licensed to you only.
 ## Workflow 2 — WhatsApp AI reply assistant
 **Goal:** reply in under 5 minutes, 10am–10pm, consistent tone.
 - Save the scripts from product #14 (WhatsApp Sales Scripts) as quick replies: `/hi /price /order /pay /deliver /review /sorry`.
-- Keep a ChatGPT/Claude **Project** called "Hunarly Support" with this system prompt:
+- Keep a ChatGPT/Claude **Project** called "Skillstack Support" with this system prompt:
 ```
-You are Hunarly's WhatsApp support assistant. Hunarly sells 25 digital products for Pakistanis (list + prices below) and an All-Access Pass for Rs 4,999.
+You are Skillstack's WhatsApp support assistant. Skillstack sells 25 digital products for Pakistanis (list + prices below) and an All-Access Pass for Rs 4,999.
 Reply in the customer's language (English or Roman Urdu), friendly, under 60 words, with one clear next step.
 Payment: JazzCash, Easypaisa, bank transfer. Delivery: Google Drive links on WhatsApp/email after payment verification.
 Never promise income. Never invent features. If unsure, say a team member will confirm.
@@ -55,9 +55,9 @@ Never promise income. Never invent features. If unsure, say a team member will c
 ---
 
 ## Workflow 3 — Weekly content engine (2 hours/week)
-1. **Monday — ideas (15 min):** prompt: *"Give me 10 Instagram/TikTok post ideas for Hunarly this week. Audience: Pakistani students, freelancers and small sellers. Pillars: Educate, Entertain, Prove, Sell. Tie 2 ideas to [season/event]."*
+1. **Monday — ideas (15 min):** prompt: *"Give me 10 Instagram/TikTok post ideas for Skillstack this week. Audience: Pakistani students, freelancers and small sellers. Pillars: Educate, Entertain, Prove, Sell. Tie 2 ideas to [season/event]."*
 2. **Scripts & captions (30 min):** for each chosen idea: *"Write a 30-second Reel script with a 2-second hook, on-screen text, and a caption with CTA 'DM PRICE'. Tone: friendly, Roman Urdu mix."* — use hooks from product #8.
-3. **Design (45 min):** duplicate the Hunarly templates in Canva (recreate from `brand/posts`), swap text.
+3. **Design (45 min):** duplicate the Skillstack templates in Canva (recreate from `brand/posts`), swap text.
 4. **Film (30 min):** batch-film 4 Reels (screen recordings of products, talking head, packing-style "delivery" of files).
 5. **Schedule:** Meta Business Suite for Instagram + Facebook; TikTok scheduler.
 

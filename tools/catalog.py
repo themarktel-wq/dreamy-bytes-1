@@ -1,21 +1,21 @@
-"""Hunarly product catalog — single source of truth.
+"""Skillstack product catalog — single source of truth.
 
 Website pages, product files and ad copy are all generated from this file.
 Edit prices / text here, then run `python3 tools/build_all.py`.
 """
 
 BRAND = {
-    "name": "Hunarly",
-    "domain": "hunarly.pk",
-    "tagline": "Seekho. Banao. Kamao.",
-    "promise": "Pakistan's premium store for AI & online-earning digital products",
+    "name": "Skillstack",
+    "domain": "skillstack.pk",
+    "tagline": "Stack skills. Stack income.",
+    "promise": "Practical toolkits for freelancing, AI & e-commerce — made for Pakistan",
     # ---- CLIENT: replace these before going live ----
     "whatsapp": "923000000000",          # international format, no +
     "whatsapp_display": "+92 300 0000000",
-    "email": "support@hunarly.pk",
-    "instagram": "https://instagram.com/hunarly.pk",
-    "facebook": "https://facebook.com/hunarly.pk",
-    "tiktok": "https://tiktok.com/@hunarly.pk",
+    "email": "support@skillstack.pk",
+    "instagram": "https://instagram.com/skillstack.pk",
+    "facebook": "https://facebook.com/skillstack.pk",
+    "tiktok": "https://tiktok.com/@skillstack.pk",
     "payments": [
         {"method": "JazzCash", "title": "Account Title Here", "number": "0300-0000000"},
         {"method": "Easypaisa", "title": "Account Title Here", "number": "0345-0000000"},
@@ -30,6 +30,19 @@ CATEGORIES = {
     "marketing": "Marketing",
     "career": "Career & Jobs",
     "business": "Business Tools",
+}
+
+# Palette: Ivory + Violet. Each category gets its own cover colour (bg, text, accent).
+PALETTE = {"ivory": "#F6F3EE", "ink": "#111018", "violet": "#5B2EFF", "tangerine": "#FF6B2C",
+           "butter": "#FFE27A", "lavender": "#E9E3FF", "mint": "#BFEBD3", "muted": "#6B6878", "line": "#E4DED4"}
+CAT_STYLE = {
+    "ai": ("#5B2EFF", "#FFFFFF", "#FFE27A"),
+    "freelance": ("#111018", "#F6F3EE", "#FF6B2C"),
+    "ecom": ("#FF6B2C", "#FFFFFF", "#111018"),
+    "marketing": ("#FFE27A", "#111018", "#5B2EFF"),
+    "career": ("#E9E3FF", "#111018", "#5B2EFF"),
+    "business": ("#BFEBD3", "#111018", "#FF6B2C"),
+    "bundle": ("#111018", "#F6F3EE", "#FFE27A"),
 }
 
 # fmt: (file type, human label)
@@ -161,7 +174,7 @@ PRODUCTS = [
          includes=["110+ tools", "Category filters", "Use-case notes", "Free-plan column"]),
 ]
 
-BUNDLE = dict(slug="all-access", name="Hunarly All-Access Pass", price=4999, mrp=sum(p["mrp"] for p in PRODUCTS),
+BUNDLE = dict(slug="all-access", name="Skillstack All-Access Pass", price=4999, mrp=sum(p["mrp"] for p in PRODUCTS),
               tagline="All 25 products + every future product — one payment")
 
 FMT_LABEL = {"pdf": "PDF Guide", "xlsx": "Excel / Google Sheets", "docx": "Editable Word Templates"}

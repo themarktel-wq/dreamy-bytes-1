@@ -1,4 +1,4 @@
-"""Branded PDF generator for Hunarly products.
+"""Branded PDF generator for Skillstack products.
 
 Content is written in a tiny markup:
     # Chapter heading          (starts a new page)
@@ -22,45 +22,54 @@ from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph,
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-FONT_DIR = "/usr/share/fonts/truetype/dejavu/"
-pdfmetrics.registerFont(TTFont("Body", FONT_DIR + "DejaVuSans.ttf"))
-pdfmetrics.registerFont(TTFont("Body-Bold", FONT_DIR + "DejaVuSans-Bold.ttf"))
-pdfmetrics.registerFont(TTFont("Body-Oblique", FONT_DIR + "DejaVuSans.ttf"))
+import os
+from catalog import CAT_STYLE, BRAND
+FD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
+DJ = "/usr/share/fonts/truetype/dejavu/"
+pdfmetrics.registerFont(TTFont("Body", os.path.join(FD, "Inter-Regular.ttf")))
+pdfmetrics.registerFont(TTFont("Body-Semi", os.path.join(FD, "Inter-SemiBold.ttf")))
+pdfmetrics.registerFont(TTFont("Body-Bold", os.path.join(FD, "Inter-Bold.ttf")))
+pdfmetrics.registerFont(TTFont("Display", os.path.join(FD, "BricolageGrotesque-ExtraBold.ttf")))
+pdfmetrics.registerFont(TTFont("Display-Bold", os.path.join(FD, "BricolageGrotesque-Bold.ttf")))
+pdfmetrics.registerFont(TTFont("Sym", DJ + "DejaVuSans.ttf"))
 from reportlab.pdfbase.pdfmetrics import registerFontFamily
-registerFontFamily("Body", normal="Body", bold="Body-Bold", italic="Body-Oblique", boldItalic="Body-Bold")
+registerFontFamily("Body", normal="Body", bold="Body-Bold", italic="Body", boldItalic="Body-Bold")
 
-INK = colors.HexColor("#0B1220")
-NAVY = colors.HexColor("#0A0F1F")
-EMERALD = colors.HexColor("#10B981")
-EMERALD_D = colors.HexColor("#047857")
-LIME = colors.HexColor("#A3E635")
-GOLD = colors.HexColor("#F5B941")
-MUTED = colors.HexColor("#5B6475")
-SOFT = colors.HexColor("#ECFDF5")
-LINE = colors.HexColor("#E2E8F0")
+IVORY = colors.HexColor("#F6F3EE")
+INK = colors.HexColor("#111018")
+VIOLET = colors.HexColor("#5B2EFF")
+VIOLET_D = colors.HexColor("#4318D9")
+TANGERINE = colors.HexColor("#FF6B2C")
+BUTTER = colors.HexColor("#FFE27A")
+LAVENDER = colors.HexColor("#E9E3FF")
+MUTED = colors.HexColor("#6B6878")
+LINE = colors.HexColor("#E4DED4")
+# legacy names used below
+NAVY, EMERALD, EMERALD_D, LIME, GOLD, SOFT = INK, VIOLET, VIOLET_D, BUTTER, TANGERINE, LAVENDER
 
 W, H = A4
 
 S = {
-    "h1": ParagraphStyle("h1", fontName="Body-Bold", fontSize=22, leading=28, textColor=INK, spaceAfter=4),
+    "h1": ParagraphStyle("h1", fontName="Display", fontSize=26, leading=30, textColor=INK, spaceAfter=4),
     "kicker": ParagraphStyle("k", fontName="Body-Bold", fontSize=8.5, leading=12, textColor=EMERALD_D, spaceAfter=2),
-    "h2": ParagraphStyle("h2", fontName="Body-Bold", fontSize=13.5, leading=18, textColor=INK, spaceBefore=10, spaceAfter=4),
-    "p": ParagraphStyle("p", fontName="Body", fontSize=10, leading=15.5, textColor=colors.HexColor("#1F2937"), spaceAfter=6),
-    "li": ParagraphStyle("li", fontName="Body", fontSize=10, leading=14.5, textColor=colors.HexColor("#1F2937")),
-    "tip": ParagraphStyle("tip", fontName="Body", fontSize=9.6, leading=14, textColor=colors.HexColor("#064E3B")),
+    "h2": ParagraphStyle("h2", fontName="Display-Bold", fontSize=14.5, leading=18, textColor=INK, spaceBefore=10, spaceAfter=4),
+    "p": ParagraphStyle("p", fontName="Body", fontSize=10, leading=15.5, textColor=colors.HexColor("#2A2733"), spaceAfter=6),
+    "li": ParagraphStyle("li", fontName="Body", fontSize=10, leading=14.5, textColor=colors.HexColor("#2A2733")),
+    "tip": ParagraphStyle("tip", fontName="Body", fontSize=9.6, leading=14, textColor=INK),
     "cell": ParagraphStyle("cell", fontName="Body", fontSize=8.8, leading=12, textColor=INK),
     "cellh": ParagraphStyle("cellh", fontName="Body-Bold", fontSize=8.8, leading=12, textColor=colors.white),
 }
 
 
 _CMAP = set(pdfmetrics.getFont("Body").face.charToGlyph.keys())
+_SYM = set(pdfmetrics.getFont("Sym").face.charToGlyph.keys())
 _SUBS = {"🔴": "(R)", "🟡": "(A)", "🟢": "(G)", "✅": "✓", "❌": "✗", "➡️": "→", "👉": "→", "👇": "↓"}
 
 
 def _clean(t):
     for a, b in _SUBS.items():
         t = t.replace(a, b)
-    t = "".join(ch if (ord(ch) in _CMAP or ch == "\n") else "\x00" for ch in t)
+    t = "".join(ch if (ord(ch) in _CMAP or ord(ch) in _SYM or ch == "\n") else "\x00" for ch in t)
     t = re.sub(r"\s*\x00[\x00\s]*", " \x00 ", t)
     t = re.sub(r"\x00\s*$", "", t.strip())
     t = re.sub(r"^\s*\x00", "", t)
@@ -74,112 +83,114 @@ def _inline(t):
     t = t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t)
     t = re.sub(r"_(.+?)_", r"<i>\1</i>", t)
-    return t
+    return "".join(f'<font name="Sym">{ch}</font>' if (ord(ch) not in _CMAP and ord(ch) in _SYM) else ch for ch in t)
+
+
+def _wrap(text, font, size, maxw):
+    words, lines, cur = text.split(), [], ""
+    for w in words:
+        t = (cur + " " + w).strip()
+        if pdfmetrics.stringWidth(t, font, size) > maxw and cur:
+            lines.append(cur); cur = w
+        else:
+            cur = t
+    lines.append(cur)
+    return lines
+
+
+def _logo(c, x, y, s, ink=INK):
+    """Skillstack mark: three staggered rounded bars (violet / tangerine / ink) forming an S-stack."""
+    c.saveState()
+    u = s / 64.0
+    for bx, by, col in [(6, 42, VIOLET), (18, 25, TANGERINE), (6, 8, ink)]:
+        c.setFillColor(col)
+        c.roundRect(x + bx * u, y + by * u, 40 * u, 14 * u, 7 * u, stroke=0, fill=1)
+    c.restoreState()
+
+
+def _wordmark(c, x, y, s, ink=INK):
+    _logo(c, x, y - s * 0.22, s, ink)
+    c.setFillColor(ink)
+    c.setFont("Display", s * 0.78)
+    c.drawString(x + s * 1.08, y, "skillstack")
 
 
 def _cover(c, doc):
     meta = doc.meta
+    bg, fg, ac = [colors.HexColor(v) for v in CAT_STYLE[meta["catkey"]]]
     c.saveState()
-    c.setFillColor(NAVY)
+    c.setFillColor(IVORY)
     c.rect(0, 0, W, H, stroke=0, fill=1)
-    # glow circles
-    for r, a, col in [(260, 0.10, EMERALD), (180, 0.10, LIME), (120, 0.12, GOLD)]:
-        c.setFillColor(col)
-        c.setFillAlpha(a)
-        c.circle(W - 40, H - 120, r, stroke=0, fill=1)
-    c.setFillAlpha(1)
-    # logo mark
-    _logo(c, 22 * mm, H - 32 * mm, 11 * mm)
-    c.setFont("Body-Bold", 15)
-    c.setFillColor(colors.white)
-    c.drawString(36 * mm, H - 29.5 * mm, "Hunarly")
-    c.setFont("Body", 8.5)
-    c.setFillColor(colors.HexColor("#94A3B8"))
-    c.drawString(36 * mm, H - 34 * mm, "Seekho. Banao. Kamao.")
-    # category pill
-    c.setFillColor(EMERALD)
-    c.roundRect(22 * mm, H * 0.56, len(meta["cat"]) * 2.2 * mm + 10 * mm, 8 * mm, 4 * mm, stroke=0, fill=1)
-    c.setFillColor(NAVY)
-    c.setFont("Body-Bold", 9)
-    c.drawString(27 * mm, H * 0.56 + 2.7 * mm, meta["cat"].upper())
-    # title
-    title = meta["name"]
-    words, lines, cur = title.split(), [], ""
-    for w in words:
-        if len(cur + " " + w) > 20:
-            lines.append(cur.strip()); cur = w
-        else:
-            cur += " " + w
-    lines.append(cur.strip())
-    y = H * 0.56 - 18 * mm
-    c.setFillColor(colors.white)
-    c.setFont("Body-Bold", 34)
-    for ln in lines:
-        c.drawString(22 * mm, y, ln)
-        y -= 13 * mm
-    c.setFillColor(LIME)
-    c.rect(22 * mm, y + 6 * mm, 30 * mm, 1.6 * mm, stroke=0, fill=1)
-    c.setFillColor(colors.HexColor("#CBD5E1"))
-    c.setFont("Body", 12)
-    tl = meta["tagline"]
-    words, lines, cur = tl.split(), [], ""
-    for w in words:
-        if len(cur + " " + w) > 52:
-            lines.append(cur.strip()); cur = w
-        else:
-            cur += " " + w
-    lines.append(cur.strip())
-    y -= 4 * mm
-    for ln in lines:
-        c.drawString(22 * mm, y, ln)
-        y -= 6.5 * mm
-    # what's inside
-    y = 62 * mm
-    c.setFillColor(GOLD); c.setFont("Body-Bold", 8.5)
-    c.drawString(22 * mm, y, "WHAT'S INSIDE")
-    c.setFont("Body", 10); c.setFillColor(colors.white)
-    for item in meta.get("includes", [])[:4]:
-        y -= 7 * mm
-        c.setFillColor(EMERALD); c.circle(23.5 * mm, y + 1.2 * mm, 1.1 * mm, stroke=0, fill=1)
-        c.setFillColor(colors.white); c.drawString(27 * mm, y, item)
-    # footer
-    c.setFillColor(colors.HexColor("#64748B"))
-    c.setFont("Body", 8)
-    c.drawString(22 * mm, 18 * mm, f"© Hunarly · hunarly.pk · Licensed to the buyer for personal / own-business use. Resale prohibited.")
-    c.restoreState()
-
-
-def _logo(c, x, y, s):
-    """Hunarly mark: rounded square with stylised H + spark."""
+    m = 16 * mm
+    # colour panel
+    c.setFillColor(bg)
+    c.roundRect(m, 74 * mm, W - 2 * m, H - 74 * mm - 34 * mm, 9 * mm, stroke=0, fill=1)
+    _wordmark(c, m + 2 * mm, H - 22 * mm, 9 * mm)
+    c.setFont("Body-Semi", 8.5); c.setFillColor(MUTED)
+    c.drawRightString(W - m - 2 * mm, H - 20 * mm, BRAND["tagline"])
+    px, top = m + 12 * mm, H - 34 * mm - 14 * mm
+    # number + category
+    c.setFillColor(fg); c.setFont("Display", 13)
+    c.drawString(px, top - 4 * mm, f"No. {meta['id']:02d}")
+    label = meta["cat"].upper()
+    lw = pdfmetrics.stringWidth(label, "Body-Bold", 8.5) + 9 * mm
+    c.setFillColor(ac); c.roundRect(W - m - 12 * mm - lw, top - 6.5 * mm, lw, 8 * mm, 4 * mm, stroke=0, fill=1)
+    c.setFillColor(bg if ac != bg else fg); c.setFont("Body-Bold", 8.5)
+    c.drawCentredString(W - m - 12 * mm - lw / 2, top - 3.7 * mm, label)
+    # big stacked bars motif (decoration, echoes the logo)
     c.saveState()
-    c.setFillColor(EMERALD)
-    c.roundRect(x, y, s, s, s * 0.28, stroke=0, fill=1)
-    c.setFillColor(NAVY)
-    bw = s * 0.16
-    c.roundRect(x + s * 0.24, y + s * 0.2, bw, s * 0.6, bw / 2, stroke=0, fill=1)
-    c.roundRect(x + s * 0.60, y + s * 0.2, bw, s * 0.6, bw / 2, stroke=0, fill=1)
-    c.rect(x + s * 0.30, y + s * 0.43, s * 0.36, s * 0.14, stroke=0, fill=1)
-    c.setFillColor(GOLD)
-    c.circle(x + s * 0.86, y + s * 0.86, s * 0.12, stroke=0, fill=1)
+    c.setFillColor(ac); c.setFillAlpha(0.9)
+    u = 1.05 * mm
+    bx0, by0 = W - m - 10 * mm - 60 * u, 172 * mm
+    for bx, by in [(6, 42), (18, 25), (6, 8)]:
+        c.roundRect(bx0 + bx * u, by0 + by * u, 40 * u, 14 * u, 7 * u, stroke=0, fill=1)
+    c.restoreState()
+    # title
+    size = 46
+    lines = _wrap(meta["name"], "Display", size, W - 2 * m - 24 * mm)
+    while len(lines) > 3 and size > 30:
+        size -= 4; lines = _wrap(meta["name"], "Display", size, W - 2 * m - 24 * mm)
+    y = 74 * mm + 30 * mm + (len(lines) - 1) * size * 1.02 + 20 * mm
+    c.setFillColor(fg); c.setFont("Display", size)
+    for ln in lines:
+        c.drawString(px, y, ln); y -= size * 1.02
+    c.setFillColor(ac); c.roundRect(px, y + size * 0.55, 26 * mm, 2.4 * mm, 1.2 * mm, stroke=0, fill=1)
+    c.setFillColor(fg); c.setFont("Body", 11.5)
+    yy = y + size * 0.55 - 9 * mm
+    for ln in _wrap(meta["tagline"], "Body", 11.5, W - 2 * m - 30 * mm):
+        c.drawString(px, yy, ln); yy -= 6 * mm
+    # what's inside
+    y = 60 * mm
+    c.setFillColor(VIOLET); c.setFont("Body-Bold", 8.5)
+    c.drawString(m + 2 * mm, y, "WHAT'S INSIDE")
+    c.setFont("Body", 10.5)
+    for i, item in enumerate(meta.get("includes", [])[:4]):
+        col, row = i % 2, i // 2
+        xx, yy = m + 2 * mm + col * (W - 2 * m) / 2, y - 9 * mm - row * 8 * mm
+        c.setFillColor(TANGERINE); c.circle(xx + 1.3 * mm, yy + 1.2 * mm, 1.2 * mm, stroke=0, fill=1)
+        c.setFillColor(INK); c.drawString(xx + 5 * mm, yy, item)
+    c.setStrokeColor(LINE); c.line(m, 26 * mm, W - m, 26 * mm)
+    c.setFillColor(MUTED); c.setFont("Body", 7.8)
+    c.drawString(m + 2 * mm, 19 * mm, f"© Skillstack · {BRAND['domain']}")
+    c.drawRightString(W - m - 2 * mm, 19 * mm, "Licensed to the buyer for personal / own-business use. Resale prohibited.")
     c.restoreState()
 
 
 def _page(c, doc):
     c.saveState()
-    _logo(c, 18 * mm, H - 15 * mm, 5.5 * mm)
-    c.setFont("Body-Bold", 8.5)
-    c.setFillColor(INK)
-    c.drawString(25.5 * mm, H - 13.3 * mm, "Hunarly")
+    _wordmark(c, 18 * mm, H - 14 * mm, 5 * mm)
     c.setFont("Body", 8)
     c.setFillColor(MUTED)
     c.drawRightString(W - 18 * mm, H - 13.3 * mm, doc.meta["name"])
     c.setStrokeColor(LINE)
     c.line(18 * mm, H - 18 * mm, W - 18 * mm, H - 18 * mm)
     c.line(18 * mm, 15 * mm, W - 18 * mm, 15 * mm)
-    c.drawString(18 * mm, 10 * mm, "hunarly.pk  ·  For buyer's use only — please don't share or resell")
-    c.setFillColor(EMERALD_D)
-    c.setFont("Body-Bold", 8)
-    c.drawRightString(W - 18 * mm, 10 * mm, str(doc.page))
+    c.drawString(18 * mm, 10 * mm, f"{BRAND['domain']}  ·  For buyer's use only — please don't share or resell")
+    c.setFillColor(VIOLET)
+    c.roundRect(W - 18 * mm - 8 * mm, 8.3 * mm, 8 * mm, 5 * mm, 2.5 * mm, stroke=0, fill=1)
+    c.setFillColor(colors.white)
+    c.setFont("Body-Bold", 7.5)
+    c.drawCentredString(W - 18 * mm - 4 * mm, 9.9 * mm, str(doc.page))
     c.restoreState()
 
 
@@ -203,7 +214,7 @@ def _table(rows):
     t = Table(data, colWidths=[(W - 36 * mm) / n] * n, repeatRows=1)
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), INK),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8FAFC")]),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#FBF9F5")]),
         ("GRID", (0, 0), (-1, -1), 0.4, LINE),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
@@ -274,20 +285,20 @@ def parse(markup):
 
 INTRO = """
 ## How to use this product
-Thank you for choosing Hunarly. This product is designed to be **used**, not just read. Go through it once quickly, then come back to the chapter you need and take action the same day.
+Thank you for choosing Skillstack. This product is designed to be **used**, not just read. Go through it once quickly, then come back to the chapter you need and take action the same day.
 - Keep a notebook or Google Doc open and write your own version of every template.
 - Do the action steps at the end of each chapter before moving on.
 - Results come from consistency — small daily action beats one big weekend of reading.
-> Got a question? Message Hunarly support on WhatsApp with your order number — we reply within 24 hours.
+> Got a question? Message Skillstack support on WhatsApp with your order number — we reply within 24 hours.
 """
 
 OUTRO = """
 # Your Next Step
 You now have the system. The difference between people who earn online and people who don't is simply **implementation**. Pick one action from this guide and do it in the next 24 hours.
-## Keep growing with Hunarly
+## Keep growing with Skillstack
 - **AI Prompt Vault** — 220+ prompts to do any task faster.
 - **Meta Ads Playbook (PKR)** — turn your skill or store into sales with ads.
-- **Hunarly All-Access Pass** — all 25 products + every future product for one payment.
+- **Skillstack All-Access Pass** — all 25 products + every future product for one payment.
 ## License
 This product is licensed to the original buyer for personal use or use inside your own business. You may not resell, share, upload or redistribute this file. Thank you for supporting Pakistani creators.
 """
@@ -295,7 +306,7 @@ This product is licensed to the original buyer for personal use or use inside yo
 
 def build_pdf(path, meta, markup):
     doc = BaseDocTemplate(path, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm,
-                          topMargin=24 * mm, bottomMargin=20 * mm, title=meta["name"], author="Hunarly")
+                          topMargin=24 * mm, bottomMargin=20 * mm, title=meta["name"], author="Skillstack")
     doc.meta = meta
     frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="f")
     doc.addPageTemplates([PageTemplate("cover", frames=[frame], onPage=_cover),

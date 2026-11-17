@@ -1,69 +1,83 @@
-# 02 — Hunarly Brand Guidelines
+# 02 — Skillstack Brand Guidelines
 
-> **Khulasa:** Brand ka naam **Hunarly** (hunar = skill). Tagline **"Seekho. Banao. Kamao."** Colors: dark navy background, emerald-lime gradient, gold accent. Font: Inter. Tone: dost jaisa, honest, practical — kabhi fake income claims nahi.
+> **Khulasa:** Brand ka naam **Skillstack**, tagline **"Stack skills. Stack income."** Colors: ivory background, ink black, electric violet primary, tangerine aur butter-yellow accents. Fonts: Bricolage Grotesque (headlines) + Inter (body). Look: light, editorial, premium. Purane "dark neon hustle" look se jaan boojh kar alag rakha gaya hai, taake brand trustworthy lage, scammy nahi.
 
-## Name & story
-**Hunarly** = *Hunar* (Urdu: skill, craft) + *-ly* (modern, global). It says: Pakistani roots, global skills.
-**Tagline:** Seekho. Banao. Kamao. (Learn. Build. Earn.)
-**One-liner:** Pakistan's premium store for AI & online-earning digital products.
-**Domain suggestions:** hunarly.pk / hunarly.com.pk / gethunarly.com · Handles: @hunarly.pk
-> Before printing anything: check the name is free on IPO-Pakistan trademark search, domain registrars, Instagram, TikTok and Facebook. If taken, the brand system works with any name — just change `BRAND` in `tools/catalog.py` and rebuild.
+## 1. Positioning (why this brand exists)
+**One-liner:** Practical toolkits for freelancing, AI & e-commerce — made for Pakistan.
+**Big idea:** *Skip the Rs 50,000 course. Get the kit.* Pakistan's digital-skills market is dominated by long, expensive courses (local programmes typically Rs 48,000–80,000). Most beginners don't need 40 hours of video. They need the next practical step, in Pakistani context, at a price they can pay with JazzCash.
+**Name logic:** each product is one skill. You *stack* skills over time → a career. The name explains the product and supports bundle sales (the "whole stack").
 
-## Logo
+| We are | We are not |
+|---|---|
+| A practical toolkit shelf | A "get rich online" guru |
+| Honest about effort & results | Income screenshots & guarantees |
+| Local (Fiverr, Daraz, JazzCash, Roman Urdu) | Generic, foreign-example content |
+| Premium but affordable | Cheap-looking or spammy |
+
+## 2. Logo
+**Mark:** three staggered rounded bars — violet, tangerine, ink. Reads as a *stack* of kits and an abstract *S*. The zig-zag also suggests momentum/progress.
+**Wordmark:** `skillstack` in lowercase Bricolage Grotesque ExtraBold, tight tracking (−4%). Lowercase = friendly and modern.
+
 | File | Use |
 |---|---|
-| `brand/logo/hunarly-icon.svg` | App icon, favicon, watermark (vector) |
-| `brand/logo/hunarly-logo-dark-bg.svg` | Logo on dark backgrounds (vector) |
-| `brand/logo/hunarly-logo-light-bg.svg` | Logo on white backgrounds (vector) |
-| `brand/logo/logo-dark.png`, `logo-light.png` | Logo + tagline lockups |
-| `brand/logo/icon-1024.png` | Transparent icon (high-res) |
-| `brand/logo/profile-picture.png` | Instagram / Facebook / WhatsApp / TikTok DP |
+| `brand/logo/skillstack-logo.svg` | Primary logo on light backgrounds (vector) |
+| `brand/logo/skillstack-logo-on-dark.svg` | Logo on ink/dark backgrounds (vector) |
+| `brand/logo/skillstack-icon.svg` | Mark only — favicon, watermark |
+| `brand/logo/logo-primary.png`, `logo-on-ink.png`, `logo-on-violet.png` | PNG lockups |
+| `brand/logo/profile-picture.png` | Instagram / Facebook / TikTok / WhatsApp DP |
+| `brand/logo/app-icon-violet.png` | App icon / highlight cover style |
 
-**The mark:** a rounded emerald→lime square with a bold "H" whose crossbar is a smile-curve (growth / happy customer), and a gold dot (the "spark" of a new skill).
-**Rules:** keep clear space = height of the gold dot on all sides · minimum size 24 px · don't recolour, stretch, add shadows or put on busy photos.
+**Rules:** clear space = height of one bar on all sides · minimum width 24 px (mark) / 90 px (full logo) · on violet backgrounds use the butter/white version (`logo-on-violet.png`) · never rotate, outline, add shadows, or change bar order.
 
-## Colours
-| Name | Hex | Use |
+## 3. Colour
+| Name | Hex | Role |
 |---|---|---|
-| Night | `#070B16` | Main background |
-| Navy | `#0A0F1F` | Cards, covers |
-| Emerald | `#10B981` | Primary brand colour |
-| Lime | `#A3E635` | Gradient end, highlights |
-| Gold | `#F5B941` | Offers, badges, logo dot |
-| Snow | `#F8FAFC` | Text on dark |
-| Slate | `#94A3B8` | Secondary text |
-| Rose | `#F43F5E` | "Hot" badges, myth/warning only |
+| Ivory | `#F6F3EE` | Main background (60%) |
+| Ink | `#111018` | Text, dark panels, borders |
+| Violet | `#5B2EFF` | Primary — buttons, links, key words (30% with ink) |
+| Tangerine | `#FF6B2C` | Offers, badges, energy accent |
+| Butter | `#FFE27A` | Highlighter behind key words, stickers (10%) |
+| Lavender | `#E9E3FF` | Soft cards, backgrounds |
+| Mint | `#BFEBD3` | Soft cards (business/positive) |
+| Muted | `#6B6878` | Secondary text |
+| Line | `#E4DED4` | Borders, dividers |
 
-**Signature gradient:** `linear-gradient(135deg, #10B981, #A3E635)` — used for key words in headlines and CTA buttons. 60-30-10 rule: 60% Night, 30% Navy/Slate, 10% gradient/gold.
+**Why this palette:** Pakistani "online earning" feeds are full of black/neon-green, crypto-style creatives. A light ivory feed with violet and a yellow highlighter is instantly different in the scroll, reads as premium/editorial, and still feels energetic. Violet is rare among local competitors and owns the brand.
 
-## Typography
-- **Inter** (free, Google Fonts) — ExtraBold 800 for headlines (tight letter-spacing −3% to −4.5%), SemiBold 600 for labels, Regular 400 for body.
-- Eyebrow labels: 12–14 px, bold, UPPERCASE, letter-spacing 0.14em, emerald.
-- In Canva use **Inter** too (available). Fallback: Poppins.
+**Product cover colours (one per category — a collectible "series" look):**
+| Category | Cover | Text | Accent |
+|---|---|---|---|
+| AI & ChatGPT | Violet | White | Butter |
+| Freelancing | Ink | Ivory | Tangerine |
+| E-commerce | Tangerine | White | Ink |
+| Marketing | Butter | Ink | Violet |
+| Career & Jobs | Lavender | Ink | Violet |
+| Business Tools | Mint | Ink | Tangerine |
+| All-Access bundle | Ink | Ivory | Butter |
 
-## Visual style
-- Dark, premium, glowing gradient "orbs" in the background (emerald, indigo, lime, gold).
-- Product covers: dark cards with category colour glow, Hunarly logo top-left, category pill, bold title, icon bottom-right.
-- Rounded corners (20–28 px), soft glass cards, generous spacing.
-- Highlight 1–3 words of each headline with the gradient.
+## 4. Typography
+- **Bricolage Grotesque** ExtraBold 800 — headlines, prices, numbers. Tracking −4% to −5%, line-height 0.95–1.05. (Free, Google Fonts.)
+- **Inter** 400/600/700 — body, UI, captions.
+- **Highlighter:** wrap 1–4 key words of a headline in the butter highlighter (`.mark`). Use **once** per design.
+- Canva: Bricolage Grotesque and Inter are both available.
 
-| Category | Cover gradient |
-|---|---|
-| AI & ChatGPT | Emerald → Lime |
-| Freelancing | Sky → Indigo |
-| E-commerce | Amber → Red |
-| Marketing | Pink → Violet |
-| Career & Jobs | Teal → Sky |
-| Business Tools | Gold → Emerald |
+## 5. Visual language
+1. **Ivory canvas, ink type**, generous margins (≥ 7% of width).
+2. **Sticker cards:** white card, 3 px ink border, hard offset shadow (10 px, ink). Signature element across posts, ads and website.
+3. **Native formats:** WhatsApp chats, Notes-app lists, receipts, comparison tables. These look like content, not ads, which suits Pakistani audiences who scroll past polished ads.
+4. **Covers as heroes:** the product covers are the main "product photography". Stack and rotate them (−10° to +10°).
+5. **Emoji:** used like a person texting, 1–3 per design, never as decoration spam.
+6. **No stock photos of money, cars or laptops on beaches. Ever.**
 
-## Voice & tone
-- **Friendly big-brother/sister**, not a guru. Simple English with natural Roman Urdu ("Price zyada hai? Let me explain").
-- **Honest:** never "earn Rs 1 lakh in 7 days", never "guaranteed". Say "a clear system", "step-by-step", "practical".
-- **Words we use:** seekho, practical, step-by-step, made for Pakistan, PKR, WhatsApp, templates, system.
-- **Words we avoid:** guaranteed income, passive income overnight, secret method, get rich, 100% results.
+## 6. Voice
+- Smart older sibling, not a guru. Mix of simple English and natural Roman Urdu: *"Boost karte ho, sales nahi aati?"*
+- **Specific > hype:** "Titles buyers actually search" beats "Unlock unlimited success".
+- **Honest:** we sell systems and templates, not income. Never: guaranteed, passive income, overnight, secret, "earn Rs X per month".
+- Signature lines: *Skip the course. Get the kit.* · *Stop watching. Start stacking.* · *The whole stack.*
 
-## Asset inventory
-- `brand/banners/` — Facebook cover, YouTube banner, website hero, OG/link preview, WhatsApp status
-- `brand/posts/` — 9 launch posts (1080×1080) — captions in `05-content-calendar-and-captions.md`
-- `brand/ads/` — 9 ad creatives (1080×1350, 4:5) — ad copy in `04-meta-ads-90-day-plan.md`
-- To edit any design: change text in `tools/build_brand.py` and run `python3 tools/build_brand.py`.
+## 7. Asset inventory
+- `brand/banners/` — Facebook cover, YouTube banner, OG link preview, WhatsApp status
+- `brand/posts/` — 9 launch posts (1080×1350) → captions in `docs/05`
+- `brand/ads/` — 9 ad creatives (1080×1350) → copy in `docs/04`
+- Edit designs in `tools/build_brand.py`, then run `python3 tools/build_brand.py`.
+- Before launch: check the name in the IPO-Pakistan trademark search and check domain/handle availability (`skillstack.pk`, `@skillstack.pk`). If a handle is taken, use `@skillstack.pakistan` or `@getskillstack`.

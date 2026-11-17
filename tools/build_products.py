@@ -1,4 +1,4 @@
-"""Generate all 25 Hunarly product files into products/."""
+"""Generate all 25 Skillstack product files into products/."""
 import os
 import sys
 
@@ -28,7 +28,7 @@ for m in (freelance, ecom, marketing, business):
 CONTENT["ai-prompt-vault"] = vault_markup()[0]
 
 # ---------- XLSX helpers ----------
-NAVY, EMER, SOFT, GOLD = "0A0F1F", "10B981", "ECFDF5", "F5B941"
+NAVY, EMER, SOFT, GOLD = "111018", "5B2EFF", "E9E3FF", "FF6B2C"
 HFONT = Font(bold=True, color="FFFFFF", name="Calibri", size=11)
 HFILL = PatternFill("solid", fgColor=NAVY)
 TFONT = Font(bold=True, size=18, color=NAVY, name="Calibri")
@@ -69,13 +69,13 @@ def grid(ws, r1, r2, c1, c2, fmt=None):
             if fmt:
                 cell.number_format = fmt
             if r % 2 == 0:
-                cell.fill = PatternFill("solid", fgColor="F8FAFC")
+                cell.fill = PatternFill("solid", fgColor="FBF9F5")
 
 
 def about_sheet(wb, p, steps):
     ws = wb.active
     ws.title = "Start Here"
-    title(ws, f"Hunarly · {p['name']}", "Seekho. Banao. Kamao.  |  hunarly.pk", 6)
+    title(ws, f"Skillstack · {p['name']}", "Stack skills. Stack income.  |  skillstack.pk", 6)
     ws.column_dimensions["A"].width = 100
     rows = [p["desc"], "", "HOW TO USE"] + [f"{i}. {s}" for i, s in enumerate(steps, 1)] + [
         "", "Google Sheets: File → Import → Upload this file (formulas keep working).",
@@ -114,7 +114,7 @@ def build_calendar(p, path):
     dv = DataValidation(type="list", formula1='"Planned,Filmed,Posted,Skipped"', allow_blank=True)
     ws.add_data_validation(dv)
     dv.add("H6:H95")
-    ws.conditional_formatting.add("H6:H95", CellIsRule(operator="equal", formula=['"Posted"'], fill=PatternFill("solid", fgColor="BBF7D0")))
+    ws.conditional_formatting.add("H6:H95", CellIsRule(operator="equal", formula=['"Posted"'], fill=PatternFill("solid", fgColor="E9E3FF")))
     ws.conditional_formatting.add("H6:H95", CellIsRule(operator="equal", formula=['"Filmed"'], fill=PatternFill("solid", fgColor="FEF3C7")))
     hb = wb.create_sheet("Hook Bank")
     title(hb, "Hook Bank", "50 proven opening lines — replace ___", 2)
@@ -357,7 +357,7 @@ def build_tools(p, path):
     last = 4 + len(TOOLS)
     grid(ws, 5, last, 1, 6)
     ws.auto_filter.ref = f"A4:F{last}"
-    ws.conditional_formatting.add(f"E5:E{last}", CellIsRule(operator="equal", formula=['"Yes"'], fill=PatternFill("solid", fgColor="BBF7D0")))
+    ws.conditional_formatting.add(f"E5:E{last}", CellIsRule(operator="equal", formula=['"Yes"'], fill=PatternFill("solid", fgColor="E9E3FF")))
     cs = wb.create_sheet("By Category")
     title(cs, "Tools per category", "", 2)
     header(cs, 4, ["Category", "Number of tools"], [26, 18])
@@ -379,10 +379,10 @@ def doc_base(p):
         s.left_margin = s.right_margin = Cm(2)
         s.top_margin = s.bottom_margin = Cm(1.8)
     h = d.add_paragraph()
-    r = h.add_run("Hunarly")
+    r = h.add_run("skillstack")
     r.bold = True
     r.font.size = Pt(12)
-    r.font.color.rgb = RGBColor(0x10, 0xB9, 0x81)
+    r.font.color.rgb = RGBColor(0x5B, 0x2E, 0xFF)
     h.add_run("   ·   " + p["name"]).font.color.rgb = RGBColor(0x5B, 0x64, 0x75)
     t = d.add_heading(p["name"], 0)
     d.add_paragraph(p["desc"])
@@ -396,7 +396,7 @@ def cv_section(d, title):
     r = p.add_run(title.upper())
     r.bold = True
     r.font.size = Pt(11)
-    r.font.color.rgb = RGBColor(0x0A, 0x0F, 0x1F)
+    r.font.color.rgb = RGBColor(0x5B, 0x2E, 0xFF)
     p.paragraph_format.space_before = Pt(10)
     p.paragraph_format.space_after = Pt(2)
 
@@ -547,7 +547,7 @@ DOCX = {"ats-cv-templates": build_cv, "cover-letter-pack": build_cover, "freelan
 def main():
     for p in PRODUCTS:
         path = os.path.join(OUT, product_file(p))
-        meta = dict(p, cat=CATEGORIES[p["cat"]])
+        meta = dict(p, cat=CATEGORIES[p["cat"]], catkey=p["cat"])
         if p["fmt"] == "pdf":
             build_pdf(path, meta, CONTENT[p["slug"]])
         elif p["fmt"] == "xlsx":

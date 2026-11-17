@@ -1,9 +1,9 @@
-/* Hunarly storefront — cart, checkout, animations. No dependencies. */
+/* Skillstack storefront — cart, checkout, animations. No dependencies. */
 (function () {
-  const CFG = window.HUNARLY || {};
+  const CFG = window.SKILLSTACK || {};
   const PRODUCTS = CFG.products || [];
   const BY_SLUG = Object.fromEntries(PRODUCTS.map(p => [p.slug, p]));
-  const KEY = "hunarly_cart_v1";
+  const KEY = "skillstack_cart_v1";
   const px = (ev, data) => { try { if (window.fbq) window.fbq("track", ev, data); } catch (e) {} };
   const fmt = n => "Rs " + Number(n).toLocaleString("en-PK");
 
@@ -140,7 +140,7 @@
       const { items, subtotal, mrp, total } = totals();
       cartEl.innerHTML = items.length ? items.map(p => `
         <div class="line-item">
-          <div class="cover" style="--c1:${p.c1};--c2:${p.c2}">${p.icon}</div>
+          <div class="cover" style="--bg:${p.bg}">${p.icon}</div>
           <div><h4>${p.name}</h4><span class="muted" style="font-size:13px">${p.fmt}</span><br><a href="#" class="remove" data-remove="${p.slug}">Remove</a></div>
           <div style="text-align:right"><b>${fmt(p.price)}</b><br><span class="mrp">${fmt(p.mrp)}</span></div>
         </div>`).join("") : `<div class="empty">Your cart is empty. <a href="${CFG.root}shop.html" class="grad-text" style="font-weight:700">Browse products →</a></div>`;
@@ -160,8 +160,8 @@
       const d = Object.fromEntries(new FormData(form));
       const id = "HN-" + Date.now().toString(36).toUpperCase().slice(-6);
       const lines = items.map((p, i) => `${i + 1}. ${p.name} — ${fmt(p.price)}`).join("\n");
-      const msg = `Assalam o Alaikum Hunarly! 👋\nI want to place an order.\n\n🧾 Order ID: ${id}\n${lines}\n\n💰 Total: ${fmt(total)}\n💳 Payment: ${d.payment}\n\n👤 Name: ${d.name}\n📱 WhatsApp: ${d.phone}\n📧 Email: ${d.email}\n🏙️ City: ${d.city}\n\nI will send the payment screenshot here.`;
-      try { sessionStorage.setItem("hunarly_last_order", JSON.stringify({ id, total, payment: d.payment })); } catch (e) {}
+      const msg = `Assalam o Alaikum Skillstack! 👋\nI want to place an order.\n\n🧾 Order ID: ${id}\n${lines}\n\n💰 Total: ${fmt(total)}\n💳 Payment: ${d.payment}\n\n👤 Name: ${d.name}\n📱 WhatsApp: ${d.phone}\n📧 Email: ${d.email}\n🏙️ City: ${d.city}\n\nI will send the payment screenshot here.`;
+      try { sessionStorage.setItem("skillstack_last_order", JSON.stringify({ id, total, payment: d.payment })); } catch (e) {}
       px("InitiateCheckout", { content_ids: cart.slice(), value: total, currency: "PKR", num_items: items.length });
       const url = `https://wa.me/${CFG.whatsapp}?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank", "noopener");
@@ -174,7 +174,7 @@
   const ty = document.querySelector("#ty-order");
   if (ty) {
     try {
-      const o = JSON.parse(sessionStorage.getItem("hunarly_last_order"));
+      const o = JSON.parse(sessionStorage.getItem("skillstack_last_order"));
       if (o) ty.innerHTML = `Order <b>${o.id}</b> · ${fmt(o.total)} · ${o.payment}`;
     } catch (e) {}
   }

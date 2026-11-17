@@ -4,9 +4,24 @@
 
 ## 1. Chosen niche
 
-**Brand:** Hunarly — *Seekho. Banao. Kamao.*
+**Brand:** Skillstack — *Stack skills. Stack income.*
 **Niche:** Practical AI & online-earning skills for Pakistanis (freelancing, e-commerce, marketing, careers, small business).
-**Positioning:** "Premium but affordable. Made for Pakistan." — PKR pricing, local platforms (Fiverr, Daraz, JazzCash, WhatsApp), Roman Urdu examples, no fake income claims.
+**Positioning:** *"Skip the Rs 50,000 course. Get the kit."* Short, practical kits (Rs 499–1,999) instead of long, expensive courses. PKR pricing, local platforms (Fiverr, Daraz, JazzCash, WhatsApp), Roman Urdu examples, no fake income claims.
+
+## Market research summary (November 2026)
+
+| Signal | Data | Source |
+|---|---|---|
+| Market size & growth | Record **$1.76B** freelance export earnings in FY2025-26; $557M in H1 FY26 (+58% YoY) | [BOL News](https://www.bolnews.com/latest-news/pakistans-freelancers-hit-record-1-76-billion-in-export-earnings/), [ARY News](https://arynews.tv/pakistan-freelancers-coded-their-way-to-557-million) |
+| Audience size | ~2.3M+ registered freelancers (estimates up to ~3M); ~60% aged 20s–30s | [MEA Tech Watch](https://meatechwatch.com/2026/02/26/how-2-37-million-pakistani-freelancers-earned-557-million-in-six-months/), [Arab News](https://www.arabnews.com/node/2616787/) |
+| Platforms | Fiverr is the most used (low barrier); Upwork for experienced freelancers; Payoneer is the main payout route; PayPal unavailable | [Digital Pakistan](https://digitalpakistan.pk/pakistan-freelance-economy/), [Jobbers](https://www.jobbers.io/?p=53560) |
+| Competitor pricing | Local digital-skills/e-commerce programmes around **Rs 48,000–80,000**; Extreme Commerce's VBC historically ~$180 | [IBA listing](https://ossie.iba.edu.pk/oise/enroll-in-the-digital-marketing-diploma.php), [ProPakistani](https://propakistani.pk/2020/10/09/local-firm-launches-state-of-the-art-e-learning-platform-to-boost-service-exports/) |
+| Content behaviour | Reels drive the most reach; Roman Urdu wins engagement; humour/memes and authentic content beat polished ads | [Geo.tv](https://www.geo.tv/latest/662104-monetising-creativity-pakistans-young-content-creators-are-redefining-careers), [Aurora](https://aurora.dawn.com/news/1145414), [GSSR study](https://www.humapub.com/admin/alljournals/gssr/papers/WCemGdjONG.pdf) |
+| Women & home earners | Growing number of women earning through digital work | [Express Tribune](https://tribune.com.pk/story/2634357/women-cash-in-on-digital-opportunities) |
+
+**The gap we fill:** the market has expensive, long-format courses at one end and free but scattered YouTube advice at the other. Nobody owns **affordable, structured, Pakistan-specific toolkits** that you can act on the same day. That gap is Skillstack's position.
+
+**Competitor visual audit:** most "online earning" brands and creators in Pakistan use dark backgrounds, neon green/gold, money and laptop stock photos, and income screenshots. Skillstack deliberately goes the other way (light ivory, violet, editorial type, native chat/notes formats) so it stands out in the feed and reads as trustworthy.
 
 ## 2. Why this niche (scoring)
 
