@@ -1,74 +1,92 @@
-# Lahore Mobile — Phones & Accessories PWA
+# Lahore Mobile Wholesale
 
-An installable web app (PWA) for a mobile phone and accessories shop in Lahore. It installs from Chrome on Android or Safari on iPhone (Add to Home Screen) and keeps working offline. It is plain HTML/CSS/JS with no build step.
+A wholesale ordering and back-office app for a mobile accessories supplier in Lahore. Retail shops in nearby markets install it on their phones, sign in, see trade prices and live stock, place orders on cash or khata, and chat with the store. The owner runs everything from the admin panel: orders, counter sales, inventory, purchases, shop accounts, khata, warranty claims and reports.
 
-## Features that set it apart
+It is an installable web app (PWA) with a small Node.js server. It has no external dependencies, needs only Node 22 or newer, and keeps its data in a single SQLite file.
 
-| Feature | What it does | Route |
+## What shops get
+
+- **Registration and approval**: a shop signs up with its mobile number, and the owner approves it and sets a price tier and credit limit. Until then, prices stay hidden.
+- **Catalogue**: search by name, SKU or phone model (for example "A15" or "iPhone 11"), with filters for category, grade (Original / OLED / Incell / TFT), brand and stock. Each product shows the shop's own tier price, the suggested retail price and the shop's margin.
+- **Ordering rules**: pack sizes and minimum order quantities are enforced.
+- **Cart and checkout**: pay by khata (credit), cash or bank. The credit limit is checked before the order goes through.
+- **Orders**: each order shows a status timeline. Shops can cancel while an order is pending, order the same items again with one tap, and copy the invoice.
+- **Warranty claims**: report a faulty item from an order, and the store credits the khata or sends a replacement.
+- **Khata**: a statement with a running balance and the store's payment details.
+- **Messages**: chat with the store, with product references and live updates.
+- **Other**: stock requests ("Notify me" when out of stock), saved items, and announcements from the store.
+
+## What the owner gets
+
+- **Dashboard**: today's and this month's sales and profit, receivables, new orders, unread messages, claims, low stock, a 14-day chart, and the top products and shops.
+- **Orders**: confirm, pack, dispatch and deliver. Confirming takes the stock and adds the order to the shop's khata. You can edit quantities and give a discount before confirming. You can override the credit limit (owner only). When an order is delivered you can record that the cash was collected.
+- **Counter sale (POS)**: sell to walk-in customers or registered shops at the shop's tier price, with partial payment going on khata.
+- **Inventory**: products with photos, SKU, compatible models, grade, pack size, minimum order, reorder level and cost price. Stock adjustments (count, damage, return) and the full stock history per product are recorded. Products that appear in past orders are archived instead of deleted.
+- **Purchases**: receive stock from suppliers. The average cost updates automatically, and you can post a "new stock" announcement.
+- **Shops**: approve or block shops, set tiers and credit limits, reset passwords, view each shop's khata and orders, record payments, make adjustments, and send WhatsApp reminders.
+- **Khata**: everything owed, with each shop's last payment date.
+- **Claims and requests**: approve a claim with a khata credit or a replacement, or reject it. Track faulty stock to send back to suppliers.
+- **Announcements**: posted to every shop's home screen. Price drops are announced automatically.
+- **Reports**: sales and profit by day, product, category and shop; stock value; days of stock left; slow movers.
+- **Settings**: business details, price tiers, market list, staff accounts, and backup/restore.
+- **Staff accounts**: staff can handle orders, sales, messages, payments and stock counts. They cannot see cost, profit or reports, edit products, or change credit limits.
+
+## Run it
+
+```bash
+node --no-warnings server/server.js
+```
+
+Open http://localhost:8080. On first run the server prints the owner's login: mobile `03000000000` and a random password. Change it in **Account → Change password**.
+
+Options (environment variables):
+
+| Variable | Default | Meaning |
 |---|---|---|
-| **Mera Phone Matcher** | The customer picks their phone once. Every cover, glass, cable, charger and watch is then marked "fits / doesn't fit", and chargers show their real charging speed (for example, "Full speed: 45W"). | `#/myphone` |
-| **Smart Kit Builder** | Builds a bundle (phone, cover, glass, charger and extras) that fits the chosen phone. 3 or more accessories get an automatic combo discount. | `#/kit` |
-| **Trade-in Estimator** | A 6-question condition check gives an estimated value. The customer can apply it as credit in the cart or confirm it on WhatsApp. | `#/tradein` |
-| **Warranty Vault** | Every order creates a digital warranty card with the IMEI, an expiry countdown and a one-tap claim on WhatsApp. | `#/warranty` |
-| **Price Tracker + Drop Alerts** | Each product shows a 90-day price chart and a "lowest price" badge. Customers can set a target price and get notified. | product page |
-| **Shopping Assistant** | Understands Roman Urdu and English ("50k tak gaming phone", "A56 ke liye charger"). It runs on the device, so it needs no API key and works offline. | AI button |
-| **PTA clarity** | Every phone shows a PTA or Non-PTA badge. Non-PTA phones also show an estimated PTA tax and the total including tax. | product page |
+| `PORT` | `8080` | Port to listen on |
+| `DATA_DIR` | `./data` | Where the database (`lahore-mobile.db`) and uploaded photos are kept |
+| `ADMIN_PHONE` / `ADMIN_PASSWORD` | `03000000000` / random | Owner account created on first run |
+| `DEMO` | off | `DEMO=1` adds sample shops, orders, khata and messages (all shops' password: `shop123`) |
+| `COOKIE_SECURE` | off | Set to `1` when served over HTTPS |
 
-## Design
+**Back up `DATA_DIR`.** It holds all your business data. The app also has **Settings → Backup**.
 
-The design is clean white and navy blue, set in Inter, with real product photography and subtle motion only (fades, image zoom, slide progress). The layout follows a standard retail structure: an announcement bar, a header with search, a category bar, a hero with promo tiles, a trust strip, shop-by-category tiles, product grids, services, brands, reviews, a store block and the footer.
+## Deploy
+
+Any server that runs Node 22 works: a small VPS (Hostinger, DigitalOcean or a local Pakistani host, roughly Rs 1,500–3,000 per month), Railway, or Fly.io. The hosting must keep a **persistent disk** for `DATA_DIR`; free tiers that wipe the disk on restart will lose your data. Put it behind HTTPS (Caddy or Nginx with Let's Encrypt), set `COOKIE_SECURE=1`, and point a domain such as `lahoremobile.pk` at it. Once it is on HTTPS, shops can install it from Chrome or Safari.
+
+## Demo mode
+
+If no server is reachable (for example on static hosting, or in the claude.ai artifact preview), the same business logic runs inside the browser on sample data saved in that browser. A yellow bar marks demo mode. Use it to show the app; it is not for real use.
+
+## Tests
+
+```bash
+node test/core.test.js
+```
+
+Runs 23 business-rule tests: pricing, MOQ, stock, credit limits, khata, claims, rollback, permissions and lockout.
+
+```bash
+node test/server.test.js
+```
+
+Tests HTTP, cookies, live events, uploads and persistence across restarts.
+
+## Code layout
+
+```
+core/core.js         all business rules and the API (shared by server and demo)
+core/memstore.js     transactional in-memory store
+server/server.js     HTTP server, SQLite persistence, sessions, live updates, uploads
+js/api.js            client: server mode or in-browser demo mode
+js/router.js         navigation, cart, helpers
+js/shop.js           shop-facing screens
+js/admin.js          admin panel
+js/main.js           header, tabs, live refresh, install prompt
+tools/build-artifact.py   single-page demo build for claude.ai artifacts
+```
 
 ## Photos
 
-`assets/img/` contains free stock photos from [Unsplash](https://unsplash.com/license), which can be used commercially without attribution. They are placeholders: some show older phone models, and products in the same category share one photo. Replace them with your own photos from **Admin → Products → Photo** (square images look best).
-
-## Also included
-
-- Photo hero carousel (swipe, auto-play, progress bars), scroll reveal, image zoom on product pages
-- Search with typo tolerance, voice search, recent and trending searches; filters for category, brand, price, PTA, in stock and "fits my phone"; 7 sort options
-- Suggestions based on what the customer viewed or saved and on their phone
-- Compare up to 3 products, wishlist, product reviews
-- Qist calculator (3/6/12 months), checkout on WhatsApp (delivery or shop pickup), free-delivery threshold
-- Community page: WhatsApp channel, Facebook, Instagram, TikTok and YouTube links, a Q&A wall and referral sharing
-- Live "Open now / Closed" status
-- **Admin panel** (`#/admin`, default PIN `1234`): dashboard charts, product CRUD with photo upload, stock editing, banners, orders with status updates and a WhatsApp reply button, phone models, all settings, JSON backup/restore, CSV export
-
-## Run locally
-
-```bash
-python3 -m http.server 8080
-```
-
-Then open http://localhost:8080. The service worker needs `http://localhost` or HTTPS, so opening the file directly won't work.
-
-## Deploy (free)
-
-Push this folder to **GitHub Pages**, **Netlify** or **Vercel**; any static host works. The site must be served over HTTPS for the install button to appear. On every deploy, change `VERSION` in `sw.js` so customers get the update.
-
-## First things to change (Admin → Settings)
-
-1. Real WhatsApp number (`92XXXXXXXXXX`), phone, address and Google Maps link
-2. Admin PIN
-3. Social media links
-4. Products: all prices in the seed data are **sample prices**. Edit them from Admin → Products and upload real photos.
-
-## Important limitation
-
-Admin edits and orders are saved in **that browser's storage** (localStorage). When the owner edits products on their phone, customers will **not** see the change. Use Admin → Backup to move data between devices. For a real live store where admin changes reach every customer, the next step is a backend such as **Firebase** or **Supabase**. The data layer (`DB` in `js/app.js`) is kept in one place so it can be swapped out.
-
-## Files
-
-```
-index.html            app shell
-css/style.css         design system + animations
-js/data.js            seed products, phone models, banners, settings
-js/ui.js              icons, logo, product illustrations, helpers
-js/app.js             state, compatibility engine, cart
-js/pages.js           router, home, shop, product, cart, checkout
-js/features.js        Mera Phone, Kit, Trade-in, Warranty, Compare, Community, Store
-js/ai.js              Lahori AI helper (offline NLU)
-js/admin.js           admin panel
-js/main.js            boot, search, voice, install prompt, service worker
-sw.js                 offline cache
-manifest.webmanifest  PWA manifest
-```
+`assets/img/` has free stock photos from Unsplash used as placeholders. Upload real product photos from **Inventory → product → Upload photo**.

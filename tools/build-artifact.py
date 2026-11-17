@@ -21,7 +21,7 @@ out = f'''<title>Lahore Mobile</title>
 {css}
 </style>
 {body}
-<script>window.LM_MEMORY_ROUTER = true;</script>
+<script>window.LM_MEMORY_ROUTER = true; window.LM_DEMO = true;</script>
 <script>
 {js}
 </script>

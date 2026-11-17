@@ -1,60 +1,92 @@
-/* Lahore Mobile — boot: header, search overlay, voice, PWA install, service worker. */
+/* Lahore Mobile — app shell: header, tabs, live updates, install prompt, boot. */
 
-/* ---------- Search overlay ---------- */
-let sIdx = -1;
-function openSearch() {
-  $('#searchOv').classList.add('on');
-  setTimeout(() => $('#sIn').focus(), 50);
-  searchRender($('#sIn').value);
-}
-function closeSearch() { $('#searchOv').classList.toggle('on', false); $('#sIn').value = ''; }
-function searchRender(q) {
-  const box = $('#sRes'); sIdx = -1;
-  if (!q.trim()) {
-    const recent = Store.get('recent', []);
-    const trending = ['iPhone 17', 'Galaxy A56', '45W charger', 'Earbuds', 'Power bank', 'Infinix'];
-    box.innerHTML = `${recent.length ? `<h5>Recent searches</h5><div class="pill-group">${recent.map((r, i) => `<button class="pill" data-recent="${i}">${esc(r)}</button>`).join('')}<button class="pill" onclick="Store.del('recent');searchRender('')">Clear</button></div>` : ''}
-      <h5>Popular searches</h5><div class="pill-group">${trending.map((r) => `<button class="pill" data-q="${r}">${r}</button>`).join('')}</div>
-      <h5>Categories</h5><div class="pill-group">${LM_CATEGORIES.map((c) => `<a class="pill" href="#/shop?cat=${c.id}">${c.name}</a>`).join('')}</div>`;
-    $$('[data-recent]', box).forEach((b) => b.addEventListener('click', () => searchGo(recent[+b.dataset.recent])));
-    $$('[data-q]', box).forEach((b) => b.addEventListener('click', () => searchGo(b.dataset.q)));
-    return;
-  }
-  const res = DB.products.map((p) => [searchScore(p, q), p]).filter((x) => x[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, 8).map((x) => x[1]);
-  box.innerHTML = res.length ? `<h5>Products</h5>` + res.map((p) => { const f = fit(p); return `<a class="s-item" href="#/p/${p.id}" onclick="saveRecent()">
-      <span class="thumb">${productArt(p)}</span><span><b style="color:var(--ink);font-weight:500">${highlight(p.name, q)}</b><br><span class="muted" style="font-size:13px">${catName(p.cat)} · ${rs(p.price)}</span>${f.ok === true && p.cat !== 'phone' ? ' <span style="color:var(--ok);font-size:12.5px">· fits your phone</span>' : ''}</span>${icon('chevron')}</a>`; }).join('')
-      + `<a class="btn btn-ghost btn-block" style="margin-top:12px" href="#/shop?q=${encodeURIComponent(q)}" onclick="saveRecent()">View all results</a>`
-    : `<div class="empty">${icon('search')}<p>No results for “${esc(q)}”.</p><button class="btn btn-primary" id="askAiBtn">${icon('chat')} Ask our assistant</button></div>`;
-  const ask = $('#askAiBtn'); if (ask) ask.addEventListener('click', () => { closeSearch(); openAI(q); });
-}
-function saveRecent() { const q = $('#sIn').value.trim(); if (!q) return; Store.set('recent', [q, ...Store.get('recent', []).filter((x) => x !== q)].slice(0, 6)); }
-function searchGo(q) { $('#sIn').value = q; searchRender(q); }
+const Shell = {
+  brand() {
+    const b = API.info.business;
+    const html = (inv) => `${logoSVG('', inv)}<span><span class="t1">${esc(b.name)}</span><span class="t2">${esc(b.tagline || 'Wholesale')}</span></span>`;
+    $('#brand').innerHTML = html(false); $('#brandFoot').innerHTML = html(true);
+    $('#announceText').textContent = `${b.tagline || 'Wholesale mobile accessories'} · ${b.hours}`;
+    $('#annPhone').textContent = b.phone;
+    $('#footAddr').textContent = b.address;
+    $('#footHours').textContent = b.hours;
+    document.title = b.name;
+  },
+  render() {
+    const u = API.user, admin = API.isAdmin;
+    const act = (href, ic, label, sub, badgeCls) => `<a class="act" href="${href}"><span class="icon-btn">${icon(ic)}${badgeCls ? `<i class="badge-dot ${badgeCls}"></i>` : ''}</span><span class="act-label">${sub}<b>${label}</b></span></a>`;
+    $('#actions').innerHTML = !u
+      ? `<a class="btn btn-ghost btn-sm" href="#/login">Sign in</a><a class="btn btn-primary btn-sm" href="#/register">Register shop</a>`
+      : admin
+        ? `${act('#/admin/messages', 'chat', 'Messages', 'Shops', 'msg-count')}${act('#/admin', 'dash', 'Admin', esc(u.name), 'adm-count')}`
+        : `${act('#/messages', 'chat', 'Messages', 'Store', 'msg-count')}${act('#/cart', 'cart', 'Cart', 'Order', 'cart-count')}${act('#/account', 'user', esc(u.shop.shopName.split(' ')[0]), 'Account')}`;
+    $('#catnav').innerHTML = admin
+      ? `<a href="#/admin">Dashboard</a><a href="#/admin/orders">Orders</a><a href="#/admin/pos">Counter sale</a><a href="#/admin/products">Inventory</a><a href="#/admin/shops">Shops</a><a href="#/admin/khata">Khata</a><span class="sp"></span><a href="#/catalog">Catalogue view</a>`
+      : API.info.categories.map((c) => `<a href="#/catalog?cat=${c.id}" data-c="${c.id}">${esc(c.name)}</a>`).join('') + (u ? `<span class="sp"></span><a href="#/orders">My orders</a><a href="#/khata">Khata</a>` : '');
+    const tab = (href, ic, label, r, b) => `<a href="${href}" data-r="${r}">${icon(ic)}${label}${b ? `<i class="badge-dot ${b}"></i>` : ''}</a>`;
+    $('#tabbar').innerHTML = admin
+      ? tab('#/admin', 'dash', 'Dashboard', 'admin/dash') + tab('#/admin/orders', 'truck', 'Orders', 'admin/orders', 'adm-count') + tab('#/admin/pos', 'cash', 'Sale', 'admin/pos') + tab('#/admin/messages', 'chat', 'Messages', 'admin/messages', 'msg-count') + tab('#/admin/products', 'box', 'Stock', 'admin/products')
+      : u
+        ? tab('#/', 'home', 'Home', 'home') + tab('#/catalog', 'grid', 'Catalogue', 'catalog') + tab('#/cart', 'cart', 'Cart', 'cart', 'cart-count') + tab('#/orders', 'truck', 'Orders', 'orders') + tab('#/messages', 'chat', 'Messages', 'messages', 'msg-count')
+        : tab('#/', 'home', 'Home', 'home') + tab('#/catalog', 'grid', 'Catalogue', 'catalog') + tab('#/login', 'user', 'Sign in', 'login') + tab('#/register', 'plus', 'Register', 'register');
+    $('#demoBar').classList.toggle('hidden', API.mode !== 'demo');
+    this.badges();
+  },
+  badges() {
+    const me = API.me || {};
+    $$('.cart-count').forEach((b) => (b.textContent = Cart.count() || ''));
+    $$('.msg-count').forEach((b) => (b.textContent = me.unread || ''));
+    $$('.adm-count').forEach((b) => (b.textContent = me.pendingOrders || ''));
+  },
+  update(r) {
+    const key = r.name === 'admin' ? 'admin/' + (r.sub || 'dash') : r.name;
+    const base = key.replace(/^(admin\/)(order|product|shop|chat)$/, (m, a, b) => a + ({ order: 'orders', product: 'products', shop: 'shops', chat: 'messages' })[b]);
+    $$('#tabbar a').forEach((a) => a.classList.toggle('on', a.dataset.r === base || (base === 'p' && a.dataset.r === 'catalog') || (base === 'order' && a.dataset.r === 'orders')));
+    const cat = r.name === 'catalog' ? r.q.get('cat') : null;
+    $$('#catnav a[data-c]').forEach((a) => a.classList.toggle('on', a.dataset.c === cat));
+    this.badges();
+  },
+};
 
-/* ---------- Voice (Web Speech API) ---------- */
-function voice(btn, onText) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { toast('Voice search is not supported in this browser', 'info'); return; }
-  const r = new SR(); r.lang = 'en-PK'; r.interimResults = false;
-  btn.classList.add('live');
-  r.onresult = (e) => onText(e.results[0][0].transcript);
-  r.onend = () => btn.classList.toggle('live', false);
-  r.onerror = () => { btn.classList.toggle('live', false); toast("Sorry, we didn't catch that", 'info'); };
-  r.start();
-}
+/* ---------- Live updates ---------- */
+let liveTimer;
+API.on(async (ev) => {
+  if (ev.type === 'auth') { Shell.render(); return; }
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(async () => {
+    await API.refreshMe().catch(() => {});
+    if (!API.user) { Shell.render(); return; }
+    Shell.badges();
+    const r = parseHash(), key = r.name === 'admin' ? 'admin/' + (r.sub || 'dash') : r.name;
+    const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.closest('.chat-input');
+    const refresh = { messages: ['messages', 'admin/messages', 'admin/chat', 'admin/dash'], orders: ['orders', 'order', 'admin/orders', 'admin/order', 'admin/dash', 'home'], shops: ['admin/shops', 'admin/dash'], claims: ['orders', 'admin/claims', 'admin/dash'], requests: ['admin/claims', 'admin/dash'], ledger: ['khata', 'home'], feed: ['home'], account: ['home', 'account'] }[ev.type] || [];
+    if (API.mode === 'server' && refresh.includes(key) && !typing && !document.querySelector('.modal.on')) {
+      const draft = $('#chatIn') ? $('#chatIn').value : '';
+      await render({ quiet: true });
+      if (draft && $('#chatIn')) $('#chatIn').value = draft;
+    }
+    if (API.mode === 'server') {
+      if (ev.type === 'orders' && API.isAdmin && key !== 'admin/orders') toast('Order update — check Orders', 'truck');
+      if (ev.type === 'messages' && !['messages', 'admin/chat'].includes(key)) toast('New message', 'chat');
+      if (ev.type === 'account') { toast('Your account was updated by the store', 'info'); Shell.render(); }
+    }
+  }, 120);
+});
+// Fallback refresh of unread counts (demo mode, or when live events are unavailable)
+setInterval(() => { if (API.user && document.visibilityState === 'visible') API.refreshMe().then(() => Shell.badges()).catch(() => {}); }, 60000);
 
 /* ---------- PWA install ---------- */
 let deferredPrompt = null;
 addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault(); deferredPrompt = e;
   const d = Store.get('installDismissed', 0);
-  if (!d || Date.now() - d > 3 * 864e5) setTimeout(showInstall, 12000);
+  if (!d || Date.now() - d > 3 * 864e5) setTimeout(showInstall, 15000);
 });
 addEventListener('appinstalled', () => { const b = $('#installBar'); if (b) b.remove(); toast('App installed'); });
 function isStandalone() { return matchMedia('(display-mode: standalone)').matches || navigator.standalone; }
 function showInstall() {
   if (isStandalone() || $('#installBar')) return;
   const d = document.createElement('div'); d.className = 'install'; d.id = 'installBar';
-  d.innerHTML = `${logoSVG('lg')}<div><b>Get the ${esc(DB.settings.shopName)} app</b>Faster browsing, works offline</div>
+  d.innerHTML = `${logoSVG('lg')}<div><b>Install the ${esc(API.info.business.name)} app</b>Order faster from your home screen</div>
     <button class="btn btn-primary btn-sm" onclick="installApp()">Install</button><button class="icon-btn" style="width:32px;height:32px" onclick="Store.set('installDismissed',Date.now());this.parentNode.remove()" aria-label="Dismiss">${icon('close')}</button>`;
   document.body.appendChild(d);
 }
@@ -62,54 +94,19 @@ async function installApp() {
   if (isStandalone()) { toast('The app is already installed'); return; }
   if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; const b = $('#installBar'); if (b) b.remove(); return; }
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const m = document.createElement('div'); m.className = 'modal on';
-  m.innerHTML = `<div class="sheet" style="text-align:center;max-width:420px"><div style="width:56px;margin:0 auto">${logoSVG()}</div><h3 style="margin-top:14px">Install the app</h3>
-    ${ios ? `<p class="muted">In Safari, tap <b>Share</b> ${icon('share', 'width="15" height="15" style="vertical-align:-2px"')}, then <b>Add to Home Screen</b>.</p>`
-          : `<p class="muted">In Chrome, open the <b>⋮</b> menu and tap <b>Install app</b> or <b>Add to Home screen</b>.</p>`}
-    <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Got it</button></div>`;
-  m.onclick = (e) => { if (e.target === m) m.remove(); };
-  document.body.appendChild(m);
+  uiDialog({ title: 'Install the app', text: ios ? 'In Safari, tap Share, then "Add to Home Screen".' : 'In Chrome, open the ⋮ menu and tap "Install app" or "Add to Home screen".', ok: 'Got it' });
 }
 
 /* ---------- Boot ---------- */
-function boot() {
-  DB.load();
-  const s = DB.settings;
-  document.title = `${s.shopName} — Phones & Accessories in Lahore`;
-  const brandHTML = (inv) => `${logoSVG('', inv)}<span><span class="t1">${esc(s.shopName)}</span><span class="t2">Phones · Accessories</span></span>`;
-  $('#brand').innerHTML = brandHTML(false); $('#brandFoot').innerHTML = brandHTML(true);
-  $('#announceText').textContent = `Free same-day delivery in Lahore on orders over ${rs(s.freeDeliveryOver)}`;
-  $('#annPhone').textContent = s.phone; $('#annPhone').href = 'tel:' + s.phone.replace(/\s/g, '');
-  $('#footAddr').textContent = s.address;
-  const st = shopOpen(); $('#footStatus').innerHTML = `<span class="status ${st.open ? '' : 'closed'}"><i></i>${st.text}</span>`;
-  $('#footSocial').innerHTML = [['whatsappChannel', 'wa'], ['facebook', 'fb'], ['instagram', 'ig'], ['tiktok', 'tiktok'], ['youtube', 'yt']].map(([k, ic]) => `<a href="${esc(s.social[k] || '#')}" target="_blank" rel="noopener" aria-label="${k}">${icon(ic)}</a>`).join('');
-  $('#yr').textContent = new Date().getFullYear();
-  $('#catnav').innerHTML = LM_CATEGORIES.map((c) => `<a href="#/shop?cat=${c.id}" data-c="${c.id}">${c.name}</a>`).join('') + `<span class="sp"></span><a href="#/tradein">Trade-in</a><a href="#/myphone" class="phone-pick" id="phonePick"></a>`;
+async function boot() {
+  await API.init();
+  Shell.brand(); Shell.render();
+  $('#headSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go('#/catalog?q=' + encodeURIComponent(e.target.value.trim())); e.target.blur(); } });
   $('#headSearchBtn').innerHTML = icon('search');
-  $('#searchBtn').innerHTML = icon('search');
-  $('#mSearchBtn').innerHTML = icon('search') + 'Search phones, covers, chargers…';
-  $('#phoneIc').innerHTML = icon('phone');
-  $('#wishBtn').innerHTML = icon('heart') + '<i class="badge-dot wish-count"></i>';
-  $('#cartBtn').innerHTML = icon('cart') + '<i class="badge-dot cart-count"></i>';
-  $('#sIc').innerHTML = icon('search', 'width="20" height="20"'); $('#sMic').innerHTML = icon('mic'); $('#sBack').innerHTML = icon('close'); $('#fabIc').innerHTML = icon('chat');
-  $$('#tabbar [data-i]').forEach((el) => (el.outerHTML = icon(el.dataset.i)));
-  $('#aiMount').innerHTML = aiPanelHTML();
-
-  ['#headSearch', '#headSearchBtn', '#searchBtn'].forEach((sel) => $(sel).addEventListener('click', openSearch));
-  $('#searchOv').addEventListener('click', (e) => { if (e.target.id === 'searchOv') closeSearch(); });
-  $('#sIn').addEventListener('input', (e) => searchRender(e.target.value));
-  $('#sIn').addEventListener('keydown', (e) => {
-    const items = $$('#sRes .s-item');
-    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sIdx = Math.max(0, Math.min(items.length - 1, sIdx + (e.key === 'ArrowDown' ? 1 : -1))); items.forEach((x, i) => x.classList.toggle('hl', i === sIdx)); }
-    if (e.key === 'Enter') { saveRecent(); const to = sIdx >= 0 && items[sIdx] ? items[sIdx].getAttribute('href') : '#/shop?q=' + encodeURIComponent(e.target.value); if (ROUTER.mem) go(to); else location.hash = to; }
-    if (e.key === 'Escape') closeSearch();
-  });
-  $('#sMic').addEventListener('click', (e) => voice(e.currentTarget, (t) => { $('#sIn').value = t; searchRender(t); }));
-  $('#aiMic').addEventListener('click', (e) => voice(e.currentTarget, (t) => { $('#aiIn').value = t; aiSend(); }));
-  addEventListener('keydown', (e) => {
-    if ((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); openSearch(); }
-    if (e.key === 'Escape') { closeAI(); closeSearch(); }
-  });
+  $('#headSearchBtn').addEventListener('click', () => go('#/catalog?q=' + encodeURIComponent($('#headSearch').value.trim())));
+  $('#mSearchBtn').innerHTML = icon('search') + 'Search parts, models, SKUs…';
+  $('#mSearchBtn').addEventListener('click', () => { go('#/catalog'); setTimeout(() => { const q = $('#cfQ'); if (q) q.focus(); }, 400); });
+  $('#yr').textContent = new Date().getFullYear();
   if (ROUTER.mem) {
     document.addEventListener('click', (e) => {
       const a = e.target.closest('a[href^="#"]');
@@ -119,13 +116,9 @@ function boot() {
       if (href.startsWith('#/') || href === '#') go(href === '#' ? '#/' : href);
       else { const t = document.getElementById(href.slice(1)); if (t) t.scrollIntoView({ behavior: 'smooth' }); }
     });
-  } else addEventListener('hashchange', () => { closeSearch(); if (innerWidth < 960) closeAI(); render(); });
-
-  const ref = new URLSearchParams(location.search).get('ref');
-  if (ref) { Store.set('referredBy', ref); setTimeout(() => toast(`Referral code ${esc(ref)} applied — mention it on WhatsApp for Rs 500 off`, 'tag'), 2000); }
-
+  } else addEventListener('hashchange', () => render());
+  addEventListener('keydown', (e) => { if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $('#headSearch').focus(); } });
   render();
-  checkAlerts();
-  if (!ROUTER.mem && 'serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if (!ROUTER.mem && API.mode === 'server' && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
-boot();
+boot().catch((e) => { console.error(e); $('#view').innerHTML = `<div class="wrap empty"><p>Could not start the app. Check your connection and reload.</p></div>`; });

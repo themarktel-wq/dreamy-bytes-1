@@ -8,6 +8,16 @@ const uid = (p = '') => p + Date.now().toString(36) + Math.random().toString(36)
 
 /* ---------- Icons (inline SVG, stroke-based) ---------- */
 const ICON_PATHS = {
+  box: '<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  inbox: '<path d="M3 13l3-8h12l3 8v6H3z"/><path d="M3 13h5l1 3h6l1-3h5"/>',
+  alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+  logout: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/>',
+  report: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  dash: '<rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/>',
+  cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 10v4M18 10v4"/>',
+  truck2: '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/>',
+  repeat: '<path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 013-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 01-3 3H3"/>',
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   chevron: '<path d="M9 6l6 6-6 6"/>',
   home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
@@ -83,9 +93,10 @@ function logoSVG(cls = '', inverted = false) {
 }
 
 /* ---------- Product illustration (used when no photo uploaded) ---------- */
+const CAT_ICON = { panel: 'phone', protector: 'shield', case: 'case', charger: 'bolt', cable: 'cable', audio: 'audio', powerbank: 'battery', battery: 'battery', other: 'box' };
 function productArt(p, cls = 'art') {
   if (p && p.img) return `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy" class="${cls}">`;
-  const cat = (LM_CATEGORIES.find((c) => c.id === (p && p.cat)) || {}).icon || 'phone';
+  const cat = CAT_ICON[p && p.cat] || 'box';
   return `<div class="${cls}" style="width:100%;height:100%;display:grid;place-items:center;color:#98a2b3;background:#f5f7fb">${icon(cat, 'width="34%" height="34%" stroke-width="1.2"')}</div>`;
 }
 

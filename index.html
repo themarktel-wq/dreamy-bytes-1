@@ -4,48 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lahore Mobile</title>
-  <meta name="description" content="Lahore Mobile — PTA-approved phones, genuine accessories, easy installments, trade-in and same-day delivery in Lahore.">
+  <meta name="description" content="Wholesale mobile accessories for Lahore shops — panels, glass, covers, chargers and earbuds. Order, chat and manage your khata from your phone.">
   <meta name="theme-color" content="#0b1f44">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Lahore Mobile">
-  <meta property="og:title" content="Lahore Mobile">
-  <meta property="og:description" content="Phones and accessories in Lahore — PTA approved, genuine, delivered today.">
-  <meta property="og:image" content="assets/img/hero-iphones.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div class="demo-bar hidden" id="demoBar">Demo mode — sample data stored in this browser only. <button onclick="switchAccount()">Switch account</button></div>
   <div class="announce">
     <div class="wrap">
-      <span id="announceText">Free same-day delivery in Lahore on orders over Rs 5,000</span>
-      <div class="extra"><a href="#/store">Store location</a><a href="#/warranty">Warranty</a><a id="annPhone" href="#/store"></a></div>
+      <span id="announceText"></span>
+      <div class="extra"><a href="#/catalog">Catalogue</a><a href="#/register">Open a shop account</a><span id="annPhone" style="user-select:all"></span></div>
     </div>
   </div>
 
   <header class="topbar">
     <div class="wrap">
-      <a href="#/" class="brand" id="brand" aria-label="Lahore Mobile home"></a>
-      <form class="head-search" onsubmit="event.preventDefault()">
-        <input id="headSearch" placeholder="Search phones, covers, chargers…" readonly aria-label="Search">
+      <a href="#/" class="brand" id="brand" aria-label="Home"></a>
+      <form class="head-search" onsubmit="event.preventDefault()" role="search">
+        <input id="headSearch" placeholder="Search parts, phone models, SKUs…" aria-label="Search" autocomplete="off">
         <button type="button" id="headSearchBtn" aria-label="Search"></button>
       </form>
-      <div class="top-actions">
-        <button class="icon-btn m-only" id="searchBtn" aria-label="Search"></button>
-        <a class="act" href="#/myphone" id="phoneAct"><span class="icon-btn" id="phoneIc"></span><span class="act-label" id="phoneLabel"></span></a>
-        <a class="act" href="#/wishlist" aria-label="Wishlist"><span class="icon-btn" id="wishBtn"></span><span class="act-label">Saved<b>Wishlist</b></span></a>
-        <a class="act" href="#/cart" aria-label="Cart"><span class="icon-btn" id="cartBtn"></span><span class="act-label">Your cart<b id="cartTotal">Rs 0</b></span></a>
-      </div>
+      <div class="top-actions" id="actions"></div>
     </div>
   </header>
-  <div class="m-search"><button onclick="openSearch()" id="mSearchBtn"></button></div>
-  <nav class="catnav"><div class="wrap" id="catnav"></div></nav>
+  <div class="m-search"><button type="button" id="mSearchBtn"></button></div>
+  <nav class="catnav" aria-label="Sections"><div class="wrap" id="catnav"></div></nav>
 
   <main id="view"></main>
 
@@ -55,55 +47,33 @@
         <div class="cols">
           <div>
             <a href="#/" class="brand" id="brandFoot"></a>
-            <p id="footAddr" style="max-width:340px;margin:18px 0 8px"></p>
-            <div id="footStatus"></div>
-            <div class="social" id="footSocial"></div>
+            <p id="footAddr" style="max-width:340px;margin:18px 0 4px"></p>
+            <p id="footHours" style="margin:0"></p>
           </div>
-          <div><h6>Shop</h6><a href="#/shop?cat=phone">Phones</a><a href="#/shop?cat=case">Covers &amp; Cases</a><a href="#/shop?cat=protector">Screen Protectors</a><a href="#/shop?cat=charger">Chargers</a><a href="#/shop?cat=audio">Audio</a><a href="#/shop?cat=watch">Smart Watches</a></div>
-          <div><h6>Services</h6><a href="#/myphone">Phone Match</a><a href="#/kit">Kit Builder</a><a href="#/tradein">Trade-in</a><a href="#/warranty">Warranty Vault</a><a href="#/compare">Compare</a></div>
-          <div><h6>Help</h6><a href="#/store">Store &amp; timings</a><a href="#/community">Community</a><a href="#" onclick="event.preventDefault();openAI()">Shopping assistant</a><a href="#" onclick="event.preventDefault();installApp()">Install the app</a><a href="#/admin">Admin</a></div>
+          <div><h6>Catalogue</h6><a href="#/catalog?cat=panel">LCD &amp; OLED panels</a><a href="#/catalog?cat=protector">Glass &amp; protectors</a><a href="#/catalog?cat=case">Covers &amp; cases</a><a href="#/catalog?cat=charger">Chargers</a><a href="#/catalog?cat=audio">Earbuds</a></div>
+          <div><h6>For shops</h6><a href="#/register">Open an account</a><a href="#/orders">My orders</a><a href="#/khata">Khata</a><a href="#/messages">Messages</a></div>
+          <div><h6>Help</h6><a href="#/login">Sign in</a><a href="#" onclick="event.preventDefault();installApp()">Install the app</a><a href="#/admin">Store admin</a></div>
         </div>
       </div>
     </div>
     <div class="bottom">
       <div class="wrap">
-        <span>© <span id="yr"></span> Lahore Mobile. All rights reserved. Prices may change without notice.</span>
-        <div class="paybadges"><span>Cash on Delivery</span><span>JazzCash</span><span>Easypaisa</span><span>Visa</span><span>Mastercard</span></div>
+        <span>© <span id="yr"></span> Lahore Mobile. Trade prices are for registered shops only.</span>
+        <div class="paybadges"><span>Khata credit</span><span>Cash</span><span>Bank transfer</span><span>JazzCash</span><span>Easypaisa</span></div>
       </div>
     </div>
   </footer>
 
-  <nav class="tabbar" id="tabbar">
-    <a href="#/" data-r="home"><span data-i="home"></span>Home</a>
-    <a href="#/shop" data-r="shop"><span data-i="grid"></span>Shop</a>
-    <a href="#" onclick="event.preventDefault();openAI()"><span data-i="chat"></span>Assistant</a>
-    <a href="#/cart" data-r="cart"><span data-i="cart"></span>Cart<i class="badge-dot cart-count"></i></a>
-    <a href="#/more" data-r="more"><span data-i="menu"></span>More</a>
-  </nav>
-
-  <div class="ai-fab"><button onclick="openAI()" aria-label="Shopping assistant"><span id="fabIc"></span>Ask our assistant</button></div>
-  <div id="aiMount"></div>
-
-  <div class="search-ov" id="searchOv" role="dialog" aria-label="Search">
-    <div class="search-panel">
-      <div class="search-bar">
-        <span id="sIc" style="color:var(--muted);display:grid"></span>
-        <input class="input" id="sIn" placeholder="Search phones, covers, chargers…" autocomplete="off" enterkeyhint="search">
-        <button class="icon-btn mic" id="sMic" aria-label="Voice search"></button>
-        <button class="icon-btn" onclick="closeSearch()" aria-label="Close" id="sBack"></button>
-      </div>
-      <div class="search-res" id="sRes"></div>
-    </div>
-  </div>
-
+  <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
   <div class="toasts" id="toasts" aria-live="polite"></div>
 
-  <script src="js/data.js"></script>
+  <script src="core/memstore.js"></script>
+  <script src="core/core.js"></script>
+  <script src="core/seed-images.js"></script>
   <script src="js/ui.js"></script>
-  <script src="js/app.js"></script>
-  <script src="js/pages.js"></script>
-  <script src="js/features.js"></script>
-  <script src="js/ai.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/shop.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/main.js"></script>
 </body>
