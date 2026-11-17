@@ -384,3 +384,4 @@ footer{border-top:1px solid var(--line);padding:60px 0 30px;margin-top:40px;back
 .sticker.t2{bottom:-6px;left:0}
 .bundle::before{display:none}
 @media (max-width:760px){.stack-card.s1{transform:translateX(-100%) rotate(-10deg)}.stack-card.s2{transform:translateX(0) rotate(9deg)}}
+.mobile-nav.open{background:var(--ivory)}

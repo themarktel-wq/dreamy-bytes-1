@@ -368,7 +368,7 @@ def build_product(p):
 <a class="btn btn-wa" href="https://wa.me/{BRAND["whatsapp"]}?text={quote(wa_text)}" target="_blank" rel="noopener">{WA_SVG} Order on WhatsApp</a></div>
 </div>
 <div class="mini-trust"><div>{ICON["bolt"]}Delivered on WhatsApp</div><div>{ICON["wallet"]}JazzCash / Easypaisa</div><div>{ICON["refresh"]}Free updates</div></div>
-<p style="color:#CBD5E1">{escape(p["desc"])}</p>
+<p style="color:var(--ink2)">{escape(p["desc"])}</p>
 <div class="box"><h3>What you'll be able to do</h3><ul class="check-list" style="margin:0">{outcomes}</ul></div>
 <div class="box"><h3>What's included</h3><ul class="check-list" style="margin:0">{includes}</ul></div>
 <div class="box"><h3>What's inside</h3><ol class="toc">{toc_html}</ol></div>
