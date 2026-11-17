@@ -8,6 +8,8 @@ const uid = (p = '') => p + Date.now().toString(36) + Math.random().toString(36)
 
 /* ---------- Icons (inline SVG, stroke-based) ---------- */
 const ICON_PATHS = {
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  chevron: '<path d="M9 6l6 6-6 6"/>',
   home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
   grid: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
@@ -69,110 +71,22 @@ function icon(name, extra = '') {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${ICON_PATHS[name] || ''}</svg>`;
 }
 
-/* ---------- Logo: phone frame + Minar silhouette (Lahore) ---------- */
-function logoSVG(cls = '', drawAnim = false) {
-  const d = drawAnim ? 'class="draw"' : '';
-  return `<svg class="${cls}" viewBox="0 0 64 64" aria-label="Lahore Mobile logo">
-    <defs>
-      <linearGradient id="lmg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16d39a"/><stop offset="1" stop-color="#0b8f69"/></linearGradient>
-      <linearGradient id="lmgold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd36e"/><stop offset="1" stop-color="#f2b632"/></linearGradient>
-    </defs>
-    <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#lmg)"/>
-    <rect ${d} x="19" y="11" width="26" height="42" rx="6" fill="none" stroke="#fff" stroke-width="2.6"/>
-    <path ${d} d="M32 15.5 L33.4 21 L35 37 L37.5 37 L38.5 44 L25.5 44 L26.5 37 L29 37 L30.6 21 Z" fill="url(#lmgold)" stroke="url(#lmgold)" stroke-width=".6" stroke-linejoin="round"/>
-    <circle cx="32" cy="14.2" r="1.3" fill="#ffd36e"/>
-    <path d="M27 48.5h10" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+/* ---------- Logo: flat navy mark (phone outline + Minar silhouette) ---------- */
+function logoSVG(cls = '', inverted = false) {
+  const bg = inverted ? '#ffffff' : '#0b1f44', fg = inverted ? '#0b1f44' : '#ffffff';
+  return `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true">
+    <rect width="64" height="64" rx="14" fill="${bg}"/>
+    <rect x="19" y="10" width="26" height="44" rx="6" fill="none" stroke="${fg}" stroke-width="3"/>
+    <path d="M32 16 L33.5 22 L35 37 L37.5 37 L38.5 45 L25.5 45 L26.5 37 L29 37 L30.5 22 Z" fill="${fg}"/>
+    <path d="M28 49.5h8" stroke="${fg}" stroke-width="2.6" stroke-linecap="round"/>
   </svg>`;
 }
 
 /* ---------- Product illustration (used when no photo uploaded) ---------- */
 function productArt(p, cls = 'art') {
-  if (p.img) return `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy" class="${cls}">`;
-  const h = p.hue ?? 160, id = 'g' + (p.id || '').replace(/[^a-z0-9]/gi, '');
-  const c1 = `hsl(${h} 70% 55%)`, c2 = `hsl(${(h + 40) % 360} 65% 30%)`, c3 = `hsl(${(h + 180) % 360} 70% 70%)`;
-  const defs = `<defs><linearGradient id="${id}a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient>
-    <linearGradient id="${id}b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c3}"/><stop offset=".6" stop-color="${c1}"/><stop offset="1" stop-color="#111"/></linearGradient>
-    <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>`;
-  let body = '';
-  switch (p.cat) {
-    case 'phone':
-      body = `<g transform="rotate(-8 100 100)">
-        <rect x="64" y="14" width="78" height="164" rx="18" fill="#0d0d0d" transform="translate(10 6)" opacity=".35"/>
-        <rect x="58" y="12" width="84" height="170" rx="20" fill="url(#${id}a)"/>
-        <rect x="63" y="17" width="74" height="160" rx="16" fill="url(#${id}b)"/>
-        <rect x="88" y="23" width="24" height="7" rx="3.5" fill="#000"/>
-        <circle cx="100" cy="110" r="26" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>
-        <text x="100" y="80" text-anchor="middle" font-family="Outfit,sans-serif" font-size="22" font-weight="700" fill="#fff" fill-opacity=".9">${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}</text>
-        <rect x="63" y="17" width="74" height="160" rx="16" fill="url(#${id}s)" opacity=".4"/>
-      </g>`;
-      break;
-    case 'case':
-      body = `<g transform="rotate(10 100 100)">
-        <rect x="56" y="12" width="88" height="176" rx="24" fill="url(#${id}a)" opacity=".9"/>
-        <rect x="63" y="19" width="74" height="162" rx="18" fill="${c2}" opacity=".55"/>
-        <rect x="70" y="26" width="38" height="40" rx="12" fill="#000" opacity=".55"/>
-        <circle cx="81" cy="38" r="7" fill="#222" stroke="${c3}" stroke-width="1.5"/><circle cx="97" cy="38" r="7" fill="#222" stroke="${c3}" stroke-width="1.5"/><circle cx="81" cy="54" r="7" fill="#222" stroke="${c3}" stroke-width="1.5"/>
-        <circle cx="100" cy="115" r="30" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4"/>
-        <rect x="56" y="12" width="88" height="176" rx="24" fill="url(#${id}s)" opacity=".5"/>
-      </g>`;
-      break;
-    case 'protector':
-      body = `<g transform="skewX(-12) translate(20 0)">
-        <rect x="58" y="20" width="80" height="160" rx="18" fill="${c3}" opacity=".18" stroke="${c1}" stroke-width="2"/>
-        <rect x="70" y="10" width="80" height="160" rx="18" fill="${c1}" opacity=".22" stroke="#fff" stroke-opacity=".7" stroke-width="2"/>
-        <path d="M80 30 L120 30 L90 150 L76 150 Z" fill="#fff" opacity=".25"/>
-        <rect x="100" y="16" width="20" height="5" rx="2.5" fill="#fff" opacity=".6"/>
-      </g>
-      <text x="100" y="195" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="16" fill="${c1}">9H</text>`;
-      break;
-    case 'charger':
-      body = `<g>
-        <rect x="55" y="55" width="90" height="90" rx="20" fill="url(#${id}a)"/>
-        <rect x="55" y="55" width="90" height="90" rx="20" fill="url(#${id}s)" opacity=".4"/>
-        <rect x="70" y="35" width="10" height="24" rx="3" fill="#bbb"/><rect x="120" y="35" width="10" height="24" rx="3" fill="#bbb"/>
-        <rect x="86" y="118" width="28" height="10" rx="5" fill="#111"/>
-        <path d="M104 72 L90 100 L101 100 L96 118 L112 90 L101 90 Z" fill="#fff" opacity=".9"/>
-        <text x="100" y="170" text-anchor="middle" font-family="Outfit" font-weight="800" font-size="18" fill="${c1}">${esc(p.watts || '')}W</text>
-      </g>`;
-      break;
-    case 'cable':
-      body = `<g fill="none" stroke-linecap="round">
-        <path d="M60 60 C 20 120, 180 90, 140 150 C 120 180, 70 170, 80 130 C 90 100, 150 110, 150 60" stroke="url(#${id}a)" stroke-width="9"/>
-        <rect x="48" y="30" width="24" height="34" rx="6" fill="${c2}" stroke="none"/><rect x="54" y="18" width="12" height="14" rx="3" fill="#ccc" stroke="none"/>
-        <rect x="138" y="30" width="24" height="34" rx="6" fill="${c2}" stroke="none"/><rect x="144" y="18" width="12" height="14" rx="3" fill="#ccc" stroke="none"/>
-      </g>`;
-      break;
-    case 'audio':
-      body = `<g>
-        <rect x="50" y="80" width="100" height="84" rx="38" fill="url(#${id}a)"/>
-        <path d="M50 118 h100" stroke="#000" stroke-opacity=".25" stroke-width="2"/>
-        <circle cx="100" cy="140" r="4" fill="${c3}"/>
-        <g transform="translate(66 22) rotate(-15)"><ellipse cx="14" cy="22" rx="16" ry="20" fill="#f4f4f4"/><rect x="8" y="34" width="12" height="40" rx="6" fill="#f4f4f4"/></g>
-        <g transform="translate(110 18) rotate(15)"><ellipse cx="14" cy="22" rx="16" ry="20" fill="#e9e9e9"/><rect x="8" y="34" width="12" height="40" rx="6" fill="#e9e9e9"/></g>
-        <rect x="50" y="80" width="100" height="84" rx="38" fill="url(#${id}s)" opacity=".35"/>
-      </g>`;
-      break;
-    case 'powerbank':
-      body = `<g transform="rotate(-10 100 100)">
-        <rect x="60" y="22" width="80" height="156" rx="20" fill="url(#${id}a)"/>
-        <rect x="60" y="22" width="80" height="156" rx="20" fill="url(#${id}s)" opacity=".35"/>
-        <circle cx="86" cy="150" r="4" fill="#7fffb0"/><circle cx="98" cy="150" r="4" fill="#7fffb0"/><circle cx="110" cy="150" r="4" fill="#7fffb0"/><circle cx="122" cy="150" r="4" fill="#fff" opacity=".3"/>
-        <path d="M104 62 L88 96 L101 96 L95 122 L114 86 L101 86 Z" fill="#fff" opacity=".85"/>
-      </g>`;
-      break;
-    case 'watch':
-      body = `<g>
-        <rect x="72" y="8" width="56" height="60" rx="14" fill="${c2}"/><rect x="72" y="132" width="56" height="60" rx="14" fill="${c2}"/>
-        <rect x="56" y="52" width="88" height="96" rx="28" fill="#111" stroke="url(#${id}a)" stroke-width="6"/>
-        <circle cx="100" cy="100" r="30" fill="none" stroke="${c1}" stroke-width="5" stroke-dasharray="140 60" transform="rotate(-90 100 100)"/>
-        <circle cx="100" cy="100" r="20" fill="none" stroke="${c3}" stroke-width="5" stroke-dasharray="80 60" transform="rotate(-90 100 100)"/>
-        <rect x="146" y="88" width="6" height="22" rx="3" fill="#999"/>
-      </g>`;
-      break;
-    default:
-      body = `<rect x="50" y="50" width="100" height="100" rx="24" fill="url(#${id}a)"/>`;
-  }
-  return `<svg class="${cls}" viewBox="0 0 200 200" role="img" aria-label="${esc(p.name)}">${defs}${body}</svg>`;
+  if (p && p.img) return `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy" class="${cls}">`;
+  const cat = (LM_CATEGORIES.find((c) => c.id === (p && p.cat)) || {}).icon || 'phone';
+  return `<div class="${cls}" style="width:100%;height:100%;display:grid;place-items:center;color:#98a2b3;background:#f5f7fb">${icon(cat, 'width="34%" height="34%" stroke-width="1.2"')}</div>`;
 }
 
 /* ---------- Persistent store (localStorage with safe fallbacks) ---------- */
@@ -210,20 +124,7 @@ function flyToCart(fromEl) {
   });
   setTimeout(() => f.remove(), 800);
 }
-function confetti(n = 70) {
-  const colors = ['#12b886', '#f2b632', '#ffffff', '#5aa9ff', '#ff4d6d'];
-  for (let i = 0; i < n; i++) {
-    const c = document.createElement('i');
-    c.className = 'confetti';
-    c.style.left = Math.random() * 100 + 'vw';
-    c.style.background = colors[i % colors.length];
-    c.style.animationDuration = 1.8 + Math.random() * 1.8 + 's';
-    c.style.animationDelay = Math.random() * .4 + 's';
-    c.style.borderRadius = i % 3 ? '2px' : '50%';
-    document.body.appendChild(c);
-    setTimeout(() => c.remove(), 4200);
-  }
-}
+function confetti() {}
 function countUp(el) {
   const end = +el.dataset.count, suf = el.dataset.suffix || '';
   const t0 = performance.now(), dur = 1400;
@@ -243,10 +144,10 @@ function sparkline(vals) {
   const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
   const last = pts[pts.length - 1];
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    <defs><linearGradient id="spf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--brand)" stop-opacity=".35"/><stop offset="1" stop-color="var(--brand)" stop-opacity="0"/></linearGradient></defs>
+    <defs><linearGradient id="spf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12306b" stop-opacity=".35"/><stop offset="1" stop-color="#12306b" stop-opacity="0"/></linearGradient></defs>
     <path d="${d} L${last[0]} ${h} L${pad} ${h} Z" fill="url(#spf)"/>
-    <path d="${d}" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray:800;stroke-dashoffset:800;animation:draw 1.4s ease forwards"/>
-    <circle cx="${last[0]}" cy="${last[1]}" r="5" fill="var(--gold)"/>
+    <path d="${d}" fill="none" stroke="#0b1f44" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="stroke-dasharray:800;stroke-dashoffset:800;animation:draw 1.4s ease forwards"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="5" fill="#0b1f44"/>
   </svg>`;
 }
 

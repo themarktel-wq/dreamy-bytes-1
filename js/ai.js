@@ -1,31 +1,31 @@
-/* Lahore Mobile — "Lahori AI" helper.
-   Runs fully on-device (no API key, works offline). Understands English + Roman Urdu:
+/* Lahore Mobile — shopping assistant.
+   Runs fully on-device (no API key, works offline). Understands English and Roman Urdu:
    budgets ("50k", "1 lakh", "50 hazar"), use-cases (gaming, camera, battery, selfie), categories,
-   brands, PTA, qist, trade-in, warranty, timing/location, and compatibility with the user's phone. */
+   brands, PTA, installments, trade-in, warranty, timings/location, and compatibility with the user's phone. */
 
-const AI = { open: false, history: Store.get('ai_hist', []) };
+const AI = { open: false, history: Store.get('ai_hist2', []) };
 
 function openAI(prefill) {
-  const p = $('#aiPanel');
-  p.classList.add('on'); AI.open = true;
+  $('#aiPanel').classList.add('on'); AI.open = true;
   if (!$('#aiMsgs').children.length) {
     if (AI.history.length) AI.history.slice(-12).forEach((m) => bubble(m.who, m.html, false));
     else greet();
   }
   if (prefill) { $('#aiIn').value = prefill; aiSend(); }
-  setTimeout(() => $('#aiIn').focus(), 300);
+  setTimeout(() => $('#aiIn').focus(), 250);
 }
-function closeAI() { $('#aiPanel').classList.remove('on'); AI.open = false; }
+function closeAI() { const p = $('#aiPanel'); if (p) p.classList.toggle('on', false); AI.open = false; }
 function greet() {
   const m = DB.model(S.myPhone);
-  botSay(`Assalam o Alaikum! 👋 Main Lahori AI hoon — ${DB.settings.shopName} ka smart helper.\nRoman Urdu ya English mein poochein, jaise:\n• "50k tak gaming phone"\n• "${m ? m.name : 'A56'} ke liye cover"\n• "PTA tax kitna hai?"`, [], ['50k tak best phone', 'Camera phone 1.5 lakh', 'Mere phone ka charger', 'Qist kaise hoti hai?', 'Shop kahan hai?']);
+  botSay(`Hi, I'm the ${DB.settings.shopName} assistant. I can recommend phones, find accessories that fit your phone, and answer questions about PTA, installments, trade-in and delivery.\n\nYou can type in English or Roman Urdu — e.g. "50k tak gaming phone".`, [], ['Best phone under 50k', 'Camera phone under 1.5 lakh', `Charger for ${m ? m.name : 'Galaxy A56'}`, 'How do installments work?', 'Store location']);
 }
+function resetAI() { AI.history = []; Store.del('ai_hist2'); $('#aiMsgs').innerHTML = ''; greet(); }
 function bubble(who, html, save = true) {
   const d = document.createElement('div');
   d.className = 'msg ' + who; d.innerHTML = html;
   $('#aiMsgs').appendChild(d);
   $('#aiMsgs').scrollTop = 1e6;
-  if (save) { AI.history.push({ who, html }); AI.history = AI.history.slice(-30); Store.set('ai_hist', AI.history); }
+  if (save) { AI.history.push({ who, html }); AI.history = AI.history.slice(-30); Store.set('ai_hist2', AI.history); }
   return d;
 }
 function botSay(text, products = [], quick = []) {
@@ -37,24 +37,24 @@ function botSay(text, products = [], quick = []) {
     const html = esc(text).replace(/\*(.+?)\*/g, '<b>$1</b>') + (products.length ? `<div class="mini-cards">${products.map(miniCard).join('')}</div>` : '');
     bubble('bot', html);
     $('#aiQuick').innerHTML = quick.map((q) => `<button onclick="aiQuick(this)">${esc(q)}</button>`).join('');
-  }, 450 + Math.min(900, text.length * 6));
+  }, 400 + Math.min(700, text.length * 4));
 }
 function miniCard(p) {
   const f = fit(p);
-  return `<a class="mini-card" href="#/p/${p.id}" onclick="if(innerWidth<520)closeAI()"><span class="thumb">${productArt(p)}</span><span><b>${esc(p.name)}</b><br><span style="color:var(--gold)">${rs(p.price)}</span>${f.ok === true && p.cat !== 'phone' ? ' <span style="color:var(--info)">✓ fit</span>' : ''}</span>${icon('arrow', 'width="16" height="16"')}</a>`;
+  return `<a class="mini-card" href="#/p/${p.id}" onclick="if(innerWidth<960)closeAI()"><span class="thumb">${productArt(p)}</span><span><b style="color:var(--ink)">${esc(p.name)}</b><br>${rs(p.price)}${f.ok === true && p.cat !== 'phone' ? ' · <span style="color:var(--ok)">fits</span>' : ''}</span>${icon('chevron')}</a>`;
 }
 function aiQuick(b) { $('#aiIn').value = b.textContent; aiSend(); }
 function aiSend(e) {
-  e && e.preventDefault();
+  if (e) e.preventDefault();
   const q = $('#aiIn').value.trim(); if (!q) return;
   $('#aiIn').value = '';
   bubble('me', esc(q));
   const r = brain(q);
   botSay(r.text, r.products || [], r.quick || []);
-  if (r.go) setTimeout(() => (location.hash = r.go), 1400);
+  if (r.go) setTimeout(() => (location.hash = r.go), 1300);
 }
 
-/* ---------- NLU ---------- */
+/* ---------- Understanding ---------- */
 function parseBudget(t) {
   t = t.toLowerCase().replace(/,/g, '');
   let m = t.match(/(\d+(?:\.\d+)?)\s*(lakh|lac|lkh)/); if (m) return +m[1] * 100000;
@@ -69,9 +69,10 @@ const CAT_WORDS = {
 };
 const USE_WORDS = {
   gaming: ['gaming', 'game', 'pubg', 'free fire', 'freefire', 'cod', 'fortnite'], camera: ['camera', 'photo', 'photography', 'video', 'vlog', 'pics'],
-  selfie: ['selfie', 'tiktok', 'front camera', 'snap'], battery: ['battery', 'backup', 'timing', 'charge zyada'], budget: ['sasta', 'cheap', 'budget', 'kam price'],
+  selfie: ['selfie', 'tiktok', 'front camera', 'snap'], battery: ['battery', 'backup', 'timing', 'charge zyada'], budget: ['sasta', 'cheap', 'budget', 'kam price', 'affordable'],
   flagship: ['best', 'top', 'flagship', 'premium', 'mehnga'],
 };
+const USE_LABEL = { gaming: 'gaming', camera: 'camera', selfie: 'selfies', battery: 'battery life', budget: 'value', flagship: 'top performance' };
 function has(t, arr) { return arr.some((w) => new RegExp('(^|[^a-z])' + w.replace(/ /g, '\\s*') + '([^a-z]|$)').test(t)); }
 function detectCat(t) { for (const [c, ws] of Object.entries(CAT_WORDS)) if (c !== 'phone' && has(t, ws)) return c; return has(t, CAT_WORDS.phone) ? 'phone' : null; }
 function detectModel(t) {
@@ -89,51 +90,49 @@ function brain(raw) {
   const budget = parseBudget(t), cat = detectCat(t), model = detectModel(t), brand = detectBrand(t);
   const uses = Object.keys(USE_WORDS).filter((u) => has(t, USE_WORDS[u]));
 
-  // --- service intents ---
-  if (/\b(salam|assalam|hello|hi|hey|aoa)\b/.test(t) && t.length < 25) return { text: `Walaikum Assalam! 😊 Bataiye kya dhoond rahe hain — phone, cover, charger ya kuch aur?`, quick: ['Phone chahiye', 'Cover chahiye', 'Charger chahiye'] };
-  if (/(kahan|location|address|map|shop kidhar|direction)/.test(t)) return { text: `📍 ${s.address}\n🕐 Rozana ${s.openHour}:00 – ${s.closeHour}:00 (${s.note})\n${shopOpen().text}`, quick: ['Delivery charges?', 'WhatsApp number'], go: '#/store' };
-  if (/(timing|time|khuli|band|open|close)/.test(t) && !cat) return { text: `${shopOpen().text}.\nRozana ${s.openHour}:00 se ${s.closeHour}:00 tak. ${s.note}.` };
-  if (/(whatsapp|number|contact|rabta|call)/.test(t) && !cat) return { text: `📞 ${s.phone}\nWhatsApp par seedha order bhi kar sakte hain — har product page par green button hai.` };
-  if (/(delivery|deliver|shipping|courier)/.test(t)) return { text: `🚚 Lahore mein same-day delivery: ${rs(s.deliveryFee)}. ${rs(s.freeDeliveryOver)} se zyada ke order par FREE.\nShop pickup bhi available — order 1 ghante mein ready.` };
+  if (/\b(salam|assalam|hello|hi|hey|aoa)\b/.test(t) && t.length < 25) return { text: 'Hello! What are you looking for today — a phone, a cover, a charger or something else?', quick: ['I need a phone', 'I need a cover', 'I need a charger'] };
+  if (/(kahan|where|location|address|map|kidhar|direction)/.test(t)) return { text: `Our store: ${s.address}\nOpen daily ${hourFmt(s.openHour)} – ${hourFmt(s.closeHour)} (${s.note}).\n${shopOpen().text}.`, quick: ['Delivery charges?', 'Contact number'], go: '#/store' };
+  if (/(timing|time|khuli|band|open|close|hours)/.test(t) && !cat) return { text: `${shopOpen().text}.\nWe're open daily ${hourFmt(s.openHour)} – ${hourFmt(s.closeHour)}. ${s.note}.` };
+  if (/(whatsapp|number|contact|rabta|call)/.test(t) && !cat) return { text: `You can reach us at ${s.phone}.\nYou can also order directly on WhatsApp from any product page.` };
+  if (/(delivery|deliver|shipping|courier)/.test(t)) return { text: `Same-day delivery anywhere in Lahore for ${rs(s.deliveryFee)} — free on orders over ${rs(s.freeDeliveryOver)}.\nStore pickup is also available and ready within 1 hour.` };
   if (/(qist|installment|instalment|emi|kist|monthly)/.test(t)) {
     const ex = DB.products.find((p) => p.cat === 'phone' && p.featured) || DB.products[0];
-    return { text: `💳 Bina credit card qist:\n• 3 mahine — ${s.installments[3]}% markup\n• 6 mahine — ${s.installments[6]}% markup\n• 12 mahine — ${s.installments[12]}% markup\nMisal: ${ex.name} sirf ${rs(emi(ex.price, 12))}/mahina (12 mahine). CNIC aur 1 bill copy chahiye hoti hai — final approval shop par.`, products: [ex] };
+    return { text: `Installments without a credit card:\n• 3 months — ${s.installments[3]}% markup\n• 6 months — ${s.installments[6]}% markup\n• 12 months — ${s.installments[12]}% markup\nFor example, the ${ex.name} is ${rs(emi(ex.price, 12))}/month over 12 months. You'll need your CNIC and a utility bill; final approval happens in store.`, products: [ex] };
   }
+  if (/sirf pta|pta only|only pta|pta phones/.test(t)) return { text: 'Here are our PTA-approved phones:', products: DB.products.filter((p) => p.cat === 'phone' && p.pta && p.stock > 0).slice(0, 5) };
   if (/(pta|tax|non pta|jv|dirbs|approved)/.test(t)) {
     const np = DB.products.filter((p) => p.cat === 'phone' && !p.pta);
-    return { text: `📶 PTA approved phone par SIM foran chalti hai, koi tax nahi.\nNon-PTA phone par PTA/FBR tax dena padta hai — yeh har model ka alag hota hai aur rates badalte rehte hain. Hamare har non-PTA phone ke page par estimated tax likha hai, lekin final amount DIRBS par confirm karein.\nIMEI check: *#06# dial karein aur IMEI 8484 par SMS karein.`, products: np.slice(0, 2), quick: ['Sirf PTA phones dikhao'] };
+    return { text: 'PTA-approved phones work with any Pakistani SIM immediately, with no extra tax.\nNon-PTA phones need to be registered and taxed. The amount depends on the model and changes often, so we show an estimate on each non-PTA product page — please confirm on DIRBS before paying.\nTo check a phone: dial *#06# for the IMEI and SMS it to 8484.', products: np.slice(0, 2), quick: ['Show PTA phones only'] };
   }
-  if (/sirf pta/.test(t)) return { text: 'Yeh rahe PTA approved phones 👇', products: DB.products.filter((p) => p.cat === 'phone' && p.pta && p.stock > 0).slice(0, 5) };
-  if (/(trade|exchange|purana|old phone|bechna|sell)/.test(t)) return { text: `🔁 Purana phone do, naya lo! Trade-in estimator 6 sawal mein value batata hai aur credit seedha cart mein lag jata hai.${model ? `\n${model.name} ki good-condition value takreeban ${rs(model.tradeBase * .93)} – ${rs(model.tradeBase)}.` : ''}`, go: '#/tradein' };
-  if (/(warranty|guarantee|claim|kharab|repair)/.test(t)) return { text: `🛡️ Har order ka digital warranty card aap ke Warranty Vault mein save hota hai — IMEI ke sath aur expiry countdown. Claim WhatsApp par ek tap se.`, go: '#/warranty' };
-  if (/(original|fake|copy|asli|naqli)/.test(t)) return { text: `✅ Hum sirf original ya clearly-labelled shop-brand items bechte hain. Shak ho to shop par free "original vs fake" check karwa sakte hain. Original items par "Official Warranty" likha hota hai.` };
-  if (/(kit|combo|bundle|deal)/.test(t)) return { text: `🎁 Smart Kit Builder: aap ke phone ke hisaab se cover + glass + charger choose karein — 3 ya zyada accessories par ${s.kitDiscount}% OFF automatic.`, go: '#/kit' + (model ? '?model=' + model.id : '') };
+  if (/(trade|exchange|purana|old phone|bechna|sell)/.test(t)) return { text: `Our trade-in estimator gives you a value in six quick questions, and you can apply it as credit in your cart.${model ? `\nA ${model.name} in good condition is worth roughly ${rs(model.tradeBase * .93)} – ${rs(model.tradeBase)}.` : ''}`, go: '#/tradein' };
+  if (/(warranty|guarantee|claim|kharab|repair)/.test(t)) return { text: 'Every order gets a digital warranty card in your Warranty Vault — with IMEI, an expiry countdown and one-tap claims on WhatsApp.', go: '#/warranty' };
+  if (/(original|fake|copy|asli|naqli|genuine)/.test(t)) return { text: 'We sell only genuine products or clearly labelled store-brand accessories. If you are unsure about any charger, bring it in for a free genuine-or-fake check.' };
+  if (/(kit|combo|bundle|deal)/.test(t)) return { text: `Kit Builder matches a cover, screen protector and charger to your phone — and takes ${s.kitDiscount}% off when you bundle three or more accessories.`, go: '#/kit' + (model ? '?model=' + model.id : '') };
   if (/(compare|vs|behtar|better|difference|farq)/.test(t)) {
-    const found = DB.products.filter((p) => t.includes(p.name.toLowerCase()) || (p.model && detectModel(p.name) && t.includes(norm(DB.model(p.model)?.name || '#'))));
+    const found = DB.products.filter((p) => t.includes(p.name.toLowerCase()));
     const ph = found.length >= 2 ? found : S.compare.map((id) => DB.byId(id)).filter(Boolean);
     if (ph.length >= 2) {
       const best = ph.slice().sort((a, b) => (b.rating * 20 - b.price / 10000) - (a.rating * 20 - a.price / 10000))[0];
       const cheap = ph.slice().sort((a, b) => a.price - b.price)[0];
-      return { text: `⚖️ Mera verdict:\n• Overall value: *${best.name}* (rating ${best.rating}★)\n• Sab se sasta: *${cheap.name}* (${rs(cheap.price)})${ph.some((p) => p.cat === 'phone' && !p.pta) ? '\n• Dhyan: non-PTA phone par tax alag se.' : ''}`, products: ph };
+      return { text: `My take:\n• Best overall value: *${best.name}* (${best.rating}★)\n• Lowest price: *${cheap.name}* (${rs(cheap.price)})${ph.some((p) => p.cat === 'phone' && !p.pta) ? '\n• Note: non-PTA phones need PTA tax on top.' : ''}`, products: ph };
     }
-    return { text: 'Compare ke liye product cards par "+ Compare" dabayein (2–3 items), phir mujh se poochein.', go: '#/compare' };
+    return { text: 'Tick “Compare” on two or three products, then ask me again — or open the comparison page.', go: '#/compare' };
   }
 
-  // --- product intents ---
   const target = model || (/(mera|mere|meri|my)\b/.test(t) ? my : null);
   if (cat && cat !== 'phone') {
     let list = DB.products.filter((p) => p.cat === cat && p.stock > 0);
     if (target) list = list.filter((p) => fit(p, target.id).ok);
-    if (brand && !model) list = list.filter((p) => p.brand === brand) .length ? list.filter((p) => p.brand === brand) : list;
+    if (brand && !model && list.some((p) => p.brand === brand)) list = list.filter((p) => p.brand === brand);
     if (budget) list = list.filter((p) => p.price <= budget);
     if (cat === 'charger' && target) list.sort((a, b) => (fit(b, target.id).eff || 0) - (fit(a, target.id).eff || 0));
     else list.sort((a, b) => b.rating - a.rating);
-    if (!target && ['case', 'protector', 'cable'].includes(cat)) return { text: `Kaun se phone ke liye? ${my ? '' : 'Ya "Mera Phone" set kar dein — phir main hamesha sahi fitting dikhaunga.'}`, quick: DB.models.slice(0, 6).map((m) => `${m.name} ke liye ${cat === 'protector' ? 'glass' : cat === 'case' ? 'cover' : 'cable'}`) };
-    if (!list.length) return { text: `Afsos, ${target ? target.name + ' ke liye ' : ''}${catName(cat)} ${budget ? rs(budget) + ' ke andar ' : ''}abhi stock mein nahi. WhatsApp par order par mangwa sakte hain.`, quick: ['WhatsApp number'] };
+    const noun = { case: 'cover', protector: 'screen protector', cable: 'cable' }[cat];
+    if (!target && noun) return { text: `Which phone is it for?${my ? '' : ' You can also set your phone in Phone Match so I always show the right fit.'}`, quick: DB.models.slice(0, 6).map((m) => `${noun[0].toUpperCase() + noun.slice(1)} for ${m.name}`) };
+    if (!list.length) return { text: `We don't have ${catName(cat).toLowerCase()} ${target ? 'for the ' + target.name + ' ' : ''}${budget ? 'under ' + rs(budget) + ' ' : ''}in stock right now. Message us on WhatsApp and we can order one in.`, quick: ['Contact number'] };
     const top = list[0];
-    let why = '';
-    if (cat === 'charger' && target) why = `\n${top.name}: ${fit(top, target.id).note}.`;
-    return { text: `${target ? `*${target.name}* ke liye ` : ''}${catName(cat)} — ${list.length} options. Meri top pick: *${top.name}* (${top.rating}★).${why}`, products: list.slice(0, 4), quick: target ? [`${target.name} ke liye kit banao`] : [] };
+    const why = cat === 'charger' && target ? `\n${top.name}: ${fit(top, target.id).note}.` : '';
+    return { text: `${list.length} ${catName(cat).toLowerCase()} ${target ? `fit the *${target.name}*` : 'available'}. My top pick is *${top.name}* (${top.rating}★).${why}`, products: list.slice(0, 4), quick: target ? [`Build a kit for ${target.name}`] : [] };
   }
 
   if (cat === 'phone' || budget || uses.length || brand) {
@@ -146,42 +145,40 @@ function brain(raw) {
       uses.forEach((u) => { if ((p.tags || []).includes(u)) sc += 15; });
       if (uses.includes('battery')) sc += (parseInt((p.specs || {}).Battery) || 0) / 400;
       if (uses.includes('gaming')) sc += /144|120|90fps|gaming/i.test(JSON.stringify(p.specs)) ? 6 : 0;
-      if (budget) sc += (p.price / budget) * 8; // use budget well
+      if (budget) sc += (p.price / budget) * 8;
       if (p.pta) sc += 3;
       return sc;
     };
     list.sort((a, b) => score(b) - score(a));
     if (!list.length) {
       const alt = DB.products.filter((p) => p.cat === 'phone' && p.stock > 0).sort((a, b) => a.price - b.price)[0];
-      return { text: `${budget ? rs(budget) + ' ke andar ' : ''}is waqt koi phone stock mein nahi. Sab se qareeb option:`, products: alt ? [alt] : [], quick: ['Qist kaise hoti hai?', 'Trade-in value'] };
+      return { text: `We don't have a phone ${budget ? 'under ' + rs(budget) + ' ' : ''}in stock right now. The closest option is:`, products: alt ? [alt] : [], quick: ['How do installments work?', 'Trade-in value'] };
     }
     const top = list[0];
-    const reason = [uses.includes('gaming') && 'gaming ke liye smooth display', uses.includes('camera') && 'camera zabardast', uses.includes('battery') && 'battery strong', uses.includes('selfie') && 'selfie camera acha', top.pta ? 'PTA approved' : 'non-PTA (tax alag)'].filter(Boolean).join(', ');
+    const reason = [uses.includes('gaming') && 'smooth high-refresh display', uses.includes('camera') && 'excellent camera', uses.includes('battery') && 'strong battery', uses.includes('selfie') && 'great front camera', top.pta ? 'PTA approved' : 'non-PTA (tax extra)'].filter(Boolean).join(', ');
     return {
-      text: `${budget ? `*${rs(budget)}* tak ` : ''}${uses.length ? uses.join(' + ') + ' ke liye ' : ''}meri recommendation: *${top.name}* — ${rs(top.price)}.\nKyun: ${reason}.\nQist: ${rs(emi(top.price, 12))}/mahina.`,
-      products: list.slice(0, 4), quick: [`${(top.model && DB.model(top.model)?.name) || top.name} ke liye cover`, 'Trade-in se kitna kam hoga?', 'Qist kaise hoti hai?'],
+      text: `${budget ? `Under *${rs(budget)}*` : 'For you'}${uses.length ? `, for ${uses.map((u) => USE_LABEL[u]).join(' and ')}` : ''}, I'd recommend the *${top.name}* at ${rs(top.price)}.\nWhy: ${reason}.\nInstallments from ${rs(emi(top.price, 12))}/month.`,
+      products: list.slice(0, 4), quick: [`Cover for ${(top.model && DB.model(top.model) && DB.model(top.model).name) || top.name}`, 'What is my old phone worth?', 'How do installments work?'],
     };
   }
 
-  if (model) return { text: `${model.name} ke liye ${DB.products.filter((p) => p.cat !== 'phone' && fit(p, model.id).ok).length} accessories available hain. Kya chahiye?`, quick: [`${model.name} ke liye cover`, `${model.name} ke liye glass`, `${model.name} ke liye charger`, 'Mera phone set karo'] };
-  if (/mera phone set/.test(t)) return { text: 'Chaliye, apna phone select karein 👇', go: '#/myphone' };
-  if (/(shukriya|thanks|thank you|jazakallah)/.test(t)) return { text: 'Khushi hui madad karke! 🌟 Kuch aur chahiye to bata dein.' };
+  if (model) return { text: `We have ${DB.products.filter((p) => p.cat !== 'phone' && fit(p, model.id).ok).length} accessories for the ${model.name}. What do you need?`, quick: [`Cover for ${model.name}`, `Glass for ${model.name}`, `Charger for ${model.name}`] };
+  if (/(shukriya|thanks|thank you|jazakallah)/.test(t)) return { text: "You're welcome! Let me know if there's anything else I can help with." };
 
-  // fallback: search
   const res = DB.products.map((p) => [searchScore(p, raw), p]).filter((x) => x[0] > 0).sort((a, b) => b[0] - a[0]).map((x) => x[1]);
-  if (res.length) return { text: `Yeh mil gaya 👇`, products: res.slice(0, 4) };
-  return { text: `Maaf kijiye, samajh nahi aaya 🙏 Aise try karein:\n• "60k tak camera phone"\n• "iPhone 15 ke liye glass"\n• "Infinix charger"\nYa seedha team se WhatsApp par baat karein.`, quick: ['50k tak best phone', 'WhatsApp number'] };
+  if (res.length) return { text: 'Here is what I found:', products: res.slice(0, 4) };
+  return { text: 'Sorry, I didn\'t catch that. Try something like:\n• "Camera phone under 60k"\n• "Glass for iPhone 15"\n• "Infinix charger"\nOr message our team on WhatsApp.', quick: ['Best phone under 50k', 'Contact number'] };
 }
 
 function aiPanelHTML() {
-  return `<div class="ai-panel" id="aiPanel" role="dialog" aria-label="AI helper">
-    <div class="ai-head"><span class="orb2"><span>${icon('sparkle')}</span></span><div style="flex:1"><b>Lahori AI</b><small>Roman Urdu · English · offline bhi</small></div>
-      <button class="icon-btn" style="background:rgba(255,255,255,.12);border:0;color:#fff" onclick="AI.history=[];Store.del('ai_hist');$('#aiMsgs').innerHTML='';greet()" aria-label="Naya chat">${icon('plus')}</button>
-      <button class="icon-btn" style="background:rgba(255,255,255,.12);border:0;color:#fff" onclick="closeAI()" aria-label="Band">${icon('close')}</button></div>
+  return `<div class="ai-panel" id="aiPanel" role="dialog" aria-label="Shopping assistant">
+    <div class="ai-head"><span class="av">${icon('chat')}</span><div style="flex:1"><b>Shopping assistant</b><small>Online · English & Roman Urdu</small></div>
+      <button class="icon-btn" onclick="resetAI()" aria-label="New chat">${icon('plus')}</button>
+      <button class="icon-btn" onclick="closeAI()" aria-label="Close">${icon('close')}</button></div>
     <div class="ai-msgs" id="aiMsgs"></div>
     <div class="quick" id="aiQuick"></div>
-    <form class="ai-input" onsubmit="aiSend(event)"><input class="input" id="aiIn" placeholder="Poochein… e.g. 50k tak gaming phone" autocomplete="off">
-      <button type="button" class="icon-btn mic" id="aiMic" aria-label="Voice">${icon('mic')}</button>
-      <button class="btn btn-primary" style="padding:0 14px" aria-label="Send">${icon('send')}</button></form>
+    <form class="ai-input" onsubmit="aiSend(event)"><input class="input" id="aiIn" placeholder="Ask anything, e.g. phone under 50k" autocomplete="off">
+      <button type="button" class="icon-btn mic" id="aiMic" aria-label="Voice input">${icon('mic')}</button>
+      <button class="btn btn-primary" aria-label="Send">${icon('send')}</button></form>
   </div>`;
 }

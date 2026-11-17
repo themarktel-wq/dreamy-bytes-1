@@ -4,84 +4,96 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lahore Mobile</title>
-  <meta name="description" content="Lahore Mobile — PTA approved phones, original accessories, easy qist, trade-in and same-day delivery in Lahore.">
-  <meta name="theme-color" content="#07110e">
+  <meta name="description" content="Lahore Mobile — PTA-approved phones, genuine accessories, easy installments, trade-in and same-day delivery in Lahore.">
+  <meta name="theme-color" content="#0b1f44">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Lahore Mobile">
   <meta property="og:title" content="Lahore Mobile">
-  <meta property="og:description" content="Phones · Accessories · Trust — Lahore">
+  <meta property="og:description" content="Phones and accessories in Lahore — PTA approved, genuine, delivered today.">
+  <meta property="og:image" content="assets/img/hero-iphones.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <script>try { const t = localStorage.getItem('lm_theme'); if (t) document.documentElement.dataset.theme = JSON.parse(t); } catch (e) {}</script>
 </head>
 <body>
-  <div id="splash">
-    <div>
-      <div id="splashLogo"></div>
-      <h1>Lahore Mobile</h1>
-      <p class="ur">لاہور موبائل</p>
+  <div class="announce">
+    <div class="wrap">
+      <span id="announceText">Free same-day delivery in Lahore on orders over Rs 5,000</span>
+      <div class="extra"><a href="#/store">Store location</a><a href="#/warranty">Warranty</a><a id="annPhone" href="#/store"></a></div>
     </div>
   </div>
 
   <header class="topbar">
     <div class="wrap">
-      <a href="#/" class="brand" id="brand"></a>
-      <nav class="nav-desk">
-        <a href="#/" data-r="home">Home</a>
-        <a href="#/shop" data-r="shop">Shop</a>
-        <a href="#/kit" data-r="kit">Kit Builder</a>
-        <a href="#/tradein" data-r="tradein">Trade-in</a>
-        <a href="#/community" data-r="community">Community</a>
-      </nav>
+      <a href="#/" class="brand" id="brand" aria-label="Lahore Mobile home"></a>
+      <form class="head-search" onsubmit="event.preventDefault()">
+        <input id="headSearch" placeholder="Search phones, covers, chargers…" readonly aria-label="Search">
+        <button type="button" id="headSearchBtn" aria-label="Search"></button>
+      </form>
       <div class="top-actions">
-        <a href="#/myphone" class="myphone-chip" id="myPhoneChip"></a>
-        <button class="icon-btn" id="searchBtn" aria-label="Search"></button>
-        <a class="icon-btn" href="#/wishlist" id="wishBtn" aria-label="Wishlist"></a>
-        <button class="icon-btn" id="themeBtn" aria-label="Theme"></button>
-        <a class="icon-btn" href="#/cart" id="cartBtn" aria-label="Cart"></a>
+        <button class="icon-btn m-only" id="searchBtn" aria-label="Search"></button>
+        <a class="act" href="#/myphone" id="phoneAct"><span class="icon-btn" id="phoneIc"></span><span class="act-label" id="phoneLabel"></span></a>
+        <a class="act" href="#/wishlist" aria-label="Wishlist"><span class="icon-btn" id="wishBtn"></span><span class="act-label">Saved<b>Wishlist</b></span></a>
+        <a class="act" href="#/cart" aria-label="Cart"><span class="icon-btn" id="cartBtn"></span><span class="act-label">Your cart<b id="cartTotal">Rs 0</b></span></a>
       </div>
     </div>
   </header>
+  <div class="m-search"><button onclick="openSearch()" id="mSearchBtn"></button></div>
+  <nav class="catnav"><div class="wrap" id="catnav"></div></nav>
 
   <main id="view"></main>
 
   <footer>
-    <div class="wrap">
-      <div class="cols">
-        <div><a href="#/" class="brand" id="brandFoot"></a><p class="muted" style="font-size:14px;max-width:320px" id="footAddr"></p><div id="footStatus"></div></div>
-        <div><h6>Shop</h6><a href="#/shop?cat=phone">Phones</a><a href="#/shop?cat=case">Covers</a><a href="#/shop?cat=charger">Chargers</a><a href="#/shop?cat=audio">Earbuds</a></div>
-        <div><h6>Sirf yahan</h6><a href="#/myphone">Mera Phone</a><a href="#/kit">Kit Builder</a><a href="#/tradein">Trade-in</a><a href="#/warranty">Warranty Vault</a></div>
-        <div><h6>Help</h6><a href="#/store">Location & timing</a><a href="#/community">Community</a><a href="javascript:openAI()">AI Helper</a><a href="#/admin">Admin</a></div>
+    <div class="top">
+      <div class="wrap">
+        <div class="cols">
+          <div>
+            <a href="#/" class="brand" id="brandFoot"></a>
+            <p id="footAddr" style="max-width:340px;margin:18px 0 8px"></p>
+            <div id="footStatus"></div>
+            <div class="social" id="footSocial"></div>
+          </div>
+          <div><h6>Shop</h6><a href="#/shop?cat=phone">Phones</a><a href="#/shop?cat=case">Covers &amp; Cases</a><a href="#/shop?cat=protector">Screen Protectors</a><a href="#/shop?cat=charger">Chargers</a><a href="#/shop?cat=audio">Audio</a><a href="#/shop?cat=watch">Smart Watches</a></div>
+          <div><h6>Services</h6><a href="#/myphone">Phone Match</a><a href="#/kit">Kit Builder</a><a href="#/tradein">Trade-in</a><a href="#/warranty">Warranty Vault</a><a href="#/compare">Compare</a></div>
+          <div><h6>Help</h6><a href="#/store">Store &amp; timings</a><a href="#/community">Community</a><a href="javascript:openAI()">Shopping assistant</a><a href="javascript:installApp()">Install the app</a><a href="#/admin">Admin</a></div>
+        </div>
       </div>
-      <div class="copyright">© <span id="yr"></span> Lahore Mobile · Made in Lahore 🇵🇰 · Prices are indicative and may change.</div>
+    </div>
+    <div class="bottom">
+      <div class="wrap">
+        <span>© <span id="yr"></span> Lahore Mobile. All rights reserved. Prices may change without notice.</span>
+        <div class="paybadges"><span>Cash on Delivery</span><span>JazzCash</span><span>Easypaisa</span><span>Visa</span><span>Mastercard</span></div>
+      </div>
     </div>
   </footer>
 
   <nav class="tabbar" id="tabbar">
     <a href="#/" data-r="home"><span data-i="home"></span>Home</a>
     <a href="#/shop" data-r="shop"><span data-i="grid"></span>Shop</a>
-    <a href="javascript:openAI()" class="ai-tab"><span class="orb"><span data-i="sparkle"></span></span>AI</a>
-    <a href="#/cart" data-r="cart" style="position:relative"><span data-i="cart"></span>Cart<i class="badge-dot cart-count" style="top:0;right:calc(50% - 22px)"></i></a>
-    <a href="#/more" data-r="more"><span data-i="user"></span>More</a>
+    <a href="javascript:openAI()"><span data-i="chat"></span>Assistant</a>
+    <a href="#/cart" data-r="cart"><span data-i="cart"></span>Cart<i class="badge-dot cart-count"></i></a>
+    <a href="#/more" data-r="more"><span data-i="menu"></span>More</a>
   </nav>
 
-  <div class="ai-fab"><button onclick="openAI()" aria-label="AI helper"><span id="fabIc"></span></button></div>
+  <div class="ai-fab"><button onclick="openAI()" aria-label="Shopping assistant"><span id="fabIc"></span>Ask our assistant</button></div>
   <div id="aiMount"></div>
 
   <div class="search-ov" id="searchOv" role="dialog" aria-label="Search">
-    <div class="search-bar">
-      <button class="icon-btn" onclick="closeSearch()" aria-label="Back" id="sBack"></button>
-      <input class="input" id="sIn" placeholder="Search phones, covers, chargers…" autocomplete="off" enterkeyhint="search">
-      <button class="icon-btn mic" id="sMic" aria-label="Voice search"></button>
+    <div class="search-panel">
+      <div class="search-bar">
+        <span id="sIc" style="color:var(--muted);display:grid"></span>
+        <input class="input" id="sIn" placeholder="Search phones, covers, chargers…" autocomplete="off" enterkeyhint="search">
+        <button class="icon-btn mic" id="sMic" aria-label="Voice search"></button>
+        <button class="icon-btn" onclick="closeSearch()" aria-label="Close" id="sBack"></button>
+      </div>
+      <div class="search-res" id="sRes"></div>
     </div>
-    <div class="search-res" id="sRes"></div>
   </div>
 
   <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -89,6 +101,7 @@
   <script src="js/data.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/pages.js"></script>
   <script src="js/features.js"></script>
   <script src="js/ai.js"></script>
   <script src="js/admin.js"></script>

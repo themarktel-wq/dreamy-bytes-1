@@ -10,10 +10,10 @@ route('admin', () => {
   if (!isAdmin()) {
     ADM.pin = '';
     return `<div class="wrap"><div class="pin-box">
-      <div style="width:70px;margin:0 auto">${logoSVG()}</div><h2 style="margin:12px 0 4px">Admin Panel</h2><p class="muted">4-digit PIN darj karein</p>
+      <div style="width:70px;margin:0 auto">${logoSVG()}</div><h2 style="margin:12px 0 4px">Admin Panel</h2><p class="muted">Enter your 4-digit PIN</p>
       <div class="pin-dots" id="pinDots">${'<i></i>'.repeat(4)}</div>
       <div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map((k) => `<button ${k === '' ? 'style="visibility:hidden"' : ''} onclick="pinKey('${k}')">${k}</button>`).join('')}</div>
-      <p class="muted" style="font-size:12px;margin-top:14px">Default PIN: 1234 — Settings mein foran badlein.</p></div></div>`;
+      <p class="muted" style="font-size:12px;margin-top:14px">Default PIN is 1234 — change it in Settings.</p></div></div>`;
   }
   const tabs = [['dash', 'Dashboard'], ['products', 'Products'], ['orders', 'Orders'], ['banners', 'Banners'], ['models', 'Phone Models'], ['settings', 'Settings'], ['data', 'Backup']];
   return `<div class="wrap"><div class="page-head" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h1>Admin</h1><p>${esc(DB.settings.shopName)} control center</p></div>
@@ -26,7 +26,7 @@ function pinKey(k) {
   if (k === '⌫') ADM.pin = ADM.pin.slice(0, -1); else if (ADM.pin.length < 4) ADM.pin += k;
   $$('#pinDots i').forEach((d, i) => d.classList.toggle('f', i < ADM.pin.length));
   if (ADM.pin.length === 4) {
-    if (ADM.pin === String(DB.settings.adminPin)) { sessionStorage.setItem('lm_admin', '1'); toast('Welcome back! 👋'); render(); }
+    if (ADM.pin === String(DB.settings.adminPin)) { sessionStorage.setItem('lm_admin', '1'); toast('Signed in'); render(); }
     else { const d = $('#pinDots'); d.classList.add('shake'); setTimeout(() => { d.classList.remove('shake'); ADM.pin = ''; $$('#pinDots i').forEach((x) => x.classList.remove('f')); }, 450); }
   }
 }
@@ -48,10 +48,10 @@ const ADMIN_TABS = {
       <div class="kpi"><span>Stock value</span><b>${rs(stockVal)}</b></div>
       <div class="kpi"><span>Low stock items</span><b style="color:${low.length ? 'var(--danger)' : 'var(--ok)'}">${low.length}</b></div></div>
       <div class="two-col">
-        <div class="box"><b>Last 7 days sales</b><div class="bar-chart">${days.map(([d, v]) => `<div><i style="height:${Math.max(2, (v / mxd) * 100)}%" title="${rs(v)}"></i>${d}</div>`).join('')}</div></div>
-        <div class="box"><b>Stock by category</b><div class="bar-chart">${byCat.map(([n, v]) => `<div><i style="height:${(v / mx) * 100}%;background:linear-gradient(var(--gold),#b37d00)"></i>${n}</div>`).join('')}</div></div>
+        <div class="box"><b style="color:var(--ink)">Sales · last 7 days</b><div class="bar-chart">${days.map(([d, v]) => `<div><i style="height:${Math.max(2, (v / mxd) * 100)}%" title="${rs(v)}"></i>${d}</div>`).join('')}</div></div>
+        <div class="box"><b style="color:var(--ink)">Stock by category</b><div class="bar-chart alt">${byCat.map(([n, v]) => `<div><i style="height:${(v / mx) * 100}%"></i>${n}</div>`).join('')}</div></div>
       </div>
-      <div class="box" style="margin-top:14px"><b>⚠️ Low stock</b>${low.length ? `<div style="display:grid;gap:6px;margin-top:8px">${low.map((p) => `<div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(p.name)}</span><span><b style="color:${p.stock ? 'var(--gold)' : 'var(--danger)'}">${p.stock}</b> <button class="btn btn-ghost btn-sm" onclick="editProduct('${p.id}')">Restock</button></span></div>`).join('')}</div>` : '<p class="muted">Sab theek hai.</p>'}</div>
+      <div class="box" style="margin-top:14px"><b style="color:var(--ink)">Low stock</b>${low.length ? `<div style="display:grid;gap:6px;margin-top:8px">${low.map((p) => `<div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(p.name)}</span><span><b style="color:${p.stock ? 'var(--gold)' : 'var(--danger)'}">${p.stock}</b> <button class="btn btn-ghost btn-sm" onclick="editProduct('${p.id}')">Restock</button></span></div>`).join('')}</div>` : '<p class="muted">All products are well stocked.</p>'}</div>
       <p class="muted" style="font-size:12px;margin-top:12px">Is device par ${alerts} price-drop alerts set hain. Orders WhatsApp par aate hain; yahan sirf woh dikhte hain jo isi browser se kiye gaye.</p>`;
   },
 
@@ -64,7 +64,7 @@ const ADMIN_TABS = {
 
   orders() {
     const orders = Store.get('orders', []);
-    if (!orders.length) return `<div class="empty">${icon('cart')}<p>Abhi koi order nahi (is device par).</p></div>`;
+    if (!orders.length) return `<div class="empty">${icon('cart')}<p>No orders yet on this device.</p></div>`;
     const st = ['New', 'Confirmed', 'Packed', 'Out for delivery', 'Delivered', 'Cancelled'];
     return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>ID</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>
       ${orders.map((o) => `<tr><td><b>${esc(o.id)}</b></td><td>${new Date(o.date).toLocaleString('en-PK', { dateStyle: 'short', timeStyle: 'short' })}</td>
@@ -77,11 +77,12 @@ const ADMIN_TABS = {
 
   banners() {
     return `<div class="toolbar"><span class="count">Home page carousel</span><button class="btn btn-primary btn-sm" onclick="editBanner()">${icon('plus')} New banner</button></div>
-      <div style="display:grid;gap:10px">${DB.banners.map((b, i) => `<div class="box" style="display:flex;gap:12px;align-items:center;background:linear-gradient(120deg,hsl(${b.hue} 65% 28%),hsl(${(b.hue + 50) % 360} 60% 12%));color:#fff">
-        <div style="flex:1"><small style="letter-spacing:1.5px;opacity:.8">${esc(b.tag)}</small><b style="display:block;font-size:18px">${esc(b.title)}</b><span style="opacity:.85;font-size:13px">${esc(b.sub)}</span></div>
-        <div style="display:grid;gap:6px"><button class="btn btn-sm btn-white" onclick="editBanner('${b.id}')">${icon('edit')}</button>
-        <button class="btn btn-sm" style="background:rgba(0,0,0,.3)" onclick="moveBanner(${i},-1)">↑</button>
-        <button class="btn btn-sm" style="background:rgba(0,0,0,.3)" onclick="delBanner('${b.id}')">${icon('trash')}</button></div></div>`).join('')}</div>`;
+      <div style="display:grid;gap:12px">${DB.banners.map((b, i) => `<div class="box" style="display:flex;gap:14px;align-items:center;padding:12px">
+        <div style="width:140px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:var(--navy);flex:none">${b.img ? `<img src="${esc(b.img)}" alt="" style="width:100%;height:100%;object-fit:cover">` : ''}</div>
+        <div style="flex:1;min-width:0"><small class="eyebrow">${esc(b.tag)}</small><b style="display:block;font-size:16px;color:var(--ink)">${esc(b.title)}</b><span class="muted" style="font-size:13px">${esc(b.sub)}</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn btn-sm btn-ghost" onclick="editBanner('${b.id}')" aria-label="Edit">${icon('edit')}</button>
+        <button class="btn btn-sm btn-ghost" onclick="moveBanner(${i},-1)" aria-label="Move up">↑</button>
+        <button class="btn btn-sm btn-danger" onclick="delBanner('${b.id}')" aria-label="Delete">${icon('trash')}</button></div></div>`).join('')}</div>`;
   },
 
   models() {
@@ -146,7 +147,7 @@ function editProduct(id) {
     <div><label class="f">Price (Rs)</label><input class="input" name="price" type="number" required value="${p.price}"></div>
     <div><label class="f">Old price (strike)</label><input class="input" name="oldPrice" type="number" value="${p.oldPrice || ''}"></div>
     <div><label class="f">Stock</label><input class="input" name="stock" type="number" value="${p.stock}"></div>
-    <div><label class="f">Color hue (0–360)</label><input class="input" name="hue" type="range" min="0" max="360" value="${p.hue ?? 160}"></div>
+    <input type="hidden" name="hue" value="${p.hue ?? 220}">
     <div class="pf pf-phone"><label class="f">Phone model ID</label><select class="select" name="model"><option value="">—</option>${DB.models.map((m) => `<option value="${m.id}" ${p.model === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select></div>
     <div class="pf pf-phone"><label class="f">PTA</label><select class="select" name="pta"><option value="1" ${p.pta ? 'selected' : ''}>Approved</option><option value="0" ${p.pta === false ? 'selected' : ''}>Non-PTA</option></select></div>
     <div class="pf pf-phone"><label class="f">Est. PTA tax (Rs)</label><input class="input" name="ptaTax" type="number" value="${p.ptaTax || 0}"></div>
@@ -159,7 +160,7 @@ function editProduct(id) {
     <div class="full"><label class="f">Description</label><textarea class="input" name="desc" rows="2">${esc(p.desc || '')}</textarea></div>
     <div class="full"><label class="f">Specs (one per line — Key: Value)</label><textarea class="input" name="specs" rows="4">${esc(specsTxt)}</textarea></div>
     <div class="full"><label class="f">Tags (comma — gaming, camera, battery, budget…) — AI helper inhe use karta hai</label><input class="input" name="tags" value="${esc((p.tags || []).join(', '))}"></div>
-    <div class="full"><label class="f">Photo (optional — warna auto illustration)</label><div style="display:flex;gap:8px;align-items:center"><input type="file" accept="image/*" id="pfImg" class="input"><input type="hidden" name="img" value="${esc(p.img || '')}">${p.img ? `<button type="button" class="btn btn-ghost btn-sm" onclick="this.form.img.value='';this.remove()">Remove photo</button>` : ''}</div></div>
+    <div class="full"><label class="f">Photo (square images look best)</label><div style="display:flex;gap:8px;align-items:center"><input type="file" accept="image/*" id="pfImg" class="input"><input type="hidden" name="img" value="${esc(p.img || '')}">${p.img ? `<button type="button" class="btn btn-ghost btn-sm" onclick="this.form.img.value='';this.remove()">Remove photo</button>` : ''}</div></div>
     <label class="switch full">Featured on home <input type="checkbox" name="featured" ${p.featured ? 'checked' : ''}></label>
     <label class="switch full">"NEW" badge <input type="checkbox" name="isNew" ${p.isNew ? 'checked' : ''}></label>
   </div>
@@ -209,7 +210,7 @@ function editBanner(id) {
     <div class="full"><label class="f">Subtitle</label><input class="input" name="sub" value="${esc(b.sub)}"></div>
     <div><label class="f">Tag</label><input class="input" name="tag" value="${esc(b.tag)}"></div><div><label class="f">Button text</label><input class="input" name="cta" value="${esc(b.cta)}"></div>
     <div><label class="f">Link (e.g. #/p/p-a56 or #/shop?cat=case)</label><input class="input" name="link" value="${esc(b.link)}"></div>
-    <div><label class="f">Color hue</label><input class="input" type="range" name="hue" min="0" max="360" value="${b.hue}"></div>
+    <input type="hidden" name="hue" value="${b.hue || 220}">
     <div class="full"><label class="f">Image (optional)</label><input class="input" type="file" accept="image/*" id="bImg"><input type="hidden" name="img" value="${esc(b.img || '')}"></div>
   </div><div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary">Save</button><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button></div></form>`);
   $('#bImg').addEventListener('change', async (e) => { const f = e.target.files[0]; if (f) e.target.form.img.value = await compressImg(f, 600); });

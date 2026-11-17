@@ -8,8 +8,8 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#07110e",
-  "theme_color": "#07110e",
+  "background_color": "#ffffff",
+  "theme_color": "#0b1f44",
   "lang": "en-PK",
   "categories": ["shopping", "lifestyle"],
   "icons": [

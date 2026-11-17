@@ -1,7 +1,7 @@
 /* Lahore Mobile service worker: offline app shell + runtime cache. Bump VERSION on every deploy. */
-const VERSION = 'lm-v1';
-const SHELL = ['./', 'index.html', 'css/style.css', 'js/data.js', 'js/ui.js', 'js/app.js', 'js/features.js', 'js/ai.js', 'js/admin.js', 'js/main.js',
-  'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
+const VERSION = 'lm-v2';
+const SHELL = ['./', 'index.html', 'css/style.css', 'js/data.js', 'js/ui.js', 'js/app.js', 'js/pages.js', 'js/features.js', 'js/ai.js', 'js/admin.js', 'js/main.js',
+  'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'assets/img/hero-iphones.jpg'];
 
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {
