@@ -162,7 +162,7 @@ def footer(root):
 <div class="socials"><a href="{BRAND["instagram"]}" aria-label="Instagram">{ICON["ig"]}</a><a href="{BRAND["facebook"]}" aria-label="Facebook">{ICON["fb"]}</a><a href="{BRAND["tiktok"]}" aria-label="TikTok">{ICON["tt"]}</a></div></div>
 <div><h5>Categories</h5><ul>{cats}</ul></div>
 <div><h5>Store</h5><ul><li><a href="{root}shop.html">All products</a></li><li><a href="{root}product/all-access.html">All-Access Pass</a></li><li><a href="{root}cart.html">Cart</a></li><li><a href="{root}about.html">About us</a></li></ul></div>
-<div><h5>Help</h5><ul><li><a href="{root}faq.html">FAQ</a></li><li><a href="{root}contact.html">Contact</a></li><li><a href="{root}refund-policy.html">Refund policy</a></li><li><a href="{root}privacy-policy.html">Privacy policy</a></li><li><a href="{root}terms.html">Terms</a></li></ul></div>
+<div><h5>Help</h5><ul><li><a href="https://wa.me/{BRAND["whatsapp"]}" target="_blank" rel="noopener"><b>WhatsApp: {BRAND["whatsapp_display"]}</b></a></li><li><a href="{root}faq.html">FAQ</a></li><li><a href="{root}contact.html">Contact</a></li><li><a href="{root}refund-policy.html">Refund policy</a></li><li><a href="{root}privacy-policy.html">Privacy policy</a></li><li><a href="{root}terms.html">Terms</a></li></ul></div>
 </div>
 <div class="copy"><span>© 2026 Skillstack · {BRAND["domain"]} · Made in Pakistan 🇵🇰</span><div class="pay-icons">{pays}</div></div>
 </div></footer>
@@ -314,7 +314,8 @@ def build_index():
 <section style="padding-top:0"><div class="container"><div class="cta-band reveal">
 <h2>Stop watching. <span class="hl">Start stacking.</span></h2>
 <p>One skill this month. One more next month. That's how careers are built.</p>
-<a href="shop.html" class="btn btn-dark">Browse the 25 kits {ICON["arrow"]}</a>
+<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><a href="shop.html" class="btn btn-dark">Browse the 25 kits {ICON["arrow"]}</a>
+<a href="https://wa.me/{BRAND["whatsapp"]}?text={quote("Assalam o Alaikum Skillstack! I want to know more about your kits.")}" target="_blank" rel="noopener" class="btn btn-wa">{WA_SVG} WhatsApp {BRAND["whatsapp_display"]}</a></div>
 </div></div></section>
 </main>''' + footer(root)
     write("index.html", html)

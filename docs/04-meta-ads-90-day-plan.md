@@ -20,7 +20,7 @@ Scale only when cost per purchase is below break-even. Lower these numbers if th
 - [ ] **Meta Pixel** installed on website (paste code in the `<head>` placeholder in every page — or add to `head()` in `tools/build_site.py` and rebuild)
 - [ ] Events: `ViewContent` (product pages), `AddToCart` (add buttons), `InitiateCheckout` (place order button). Purchases happen on WhatsApp → mark them manually by uploading offline conversions weekly, or optimise for **InitiateCheckout** early on
 - [ ] Domain verified in Business Settings
-- [ ] WhatsApp Business number connected to the Page (for Click-to-WhatsApp ads)
+- [ ] WhatsApp Business number (+92 314 7352474) connected to the Page (for Click-to-WhatsApp ads)
 - [ ] 9 posts published on Instagram (so the profile looks complete when ad viewers visit)
 - [ ] Custom audiences created: website visitors 30d, Instagram engagers 60d, video viewers 50% 30d, WhatsApp contacts list (customer file)
 

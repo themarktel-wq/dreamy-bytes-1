@@ -10,8 +10,8 @@ BRAND = {
     "tagline": "Stack skills. Stack income.",
     "promise": "Practical toolkits for freelancing, AI & e-commerce — made for Pakistan",
     # ---- CLIENT: replace these before going live ----
-    "whatsapp": "923000000000",          # international format, no +
-    "whatsapp_display": "+92 300 0000000",
+    "whatsapp": "923147352474",          # international format, no +
+    "whatsapp_display": "+92 314 7352474",
     "email": "support@skillstack.pk",
     "instagram": "https://instagram.com/skillstack.pk",
     "facebook": "https://facebook.com/skillstack.pk",

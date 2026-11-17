@@ -122,7 +122,7 @@ A["banners/whatsapp-status-1080x1920"] = (
     f'<div style="position:absolute;right:40px;top:20px">{bigcover(P["meta-ads-playbook"], 400, 9)}</div>'
     f'<div style="position:absolute;left:230px;top:150px">{bigcover(B, 440, -2)}</div></div>'
     f'<div><div class="d" style="font-size:96px">All 25 kits<br><span class="mk">{rs(BUNDLE["price"])}</span></div>'
-    f'<div style="font-size:40px;margin-top:26px;font-weight:600">Reply <b class="v">"ALL"</b> to order</div></div></div>', 1080, 1920)
+    f'<div style="font-size:40px;margin-top:26px;font-weight:600">WhatsApp <b class="v">"ALL"</b> to {BRAND["whatsapp_display"]}</div></div></div>', 1080, 1920)
 
 # =============== 9 POSTS (1080x1350, 4:5) ===============
 # Post 1 — Manifesto / brand intro
@@ -221,7 +221,7 @@ A["posts/post-09-all-access-offer"] = frame(
     f'<div style="position:absolute;right:90px;top:30px">{bigcover(P["daraz-seller-launch-kit"], 290, 9)}</div>'
     f'<div style="position:absolute;left:50%;top:70px;transform:translateX(-50%)">{bigcover(B, 340, -1)}</div></div>'
     f'<div style="text-align:center"><div style="font-size:40px;font-weight:700">All 25 kits · <s class="mu">{rs(BUNDLE["mrp"])}</s></div>'
-    f'<div class="d v" style="font-size:150px">{rs(BUNDLE["price"])}</div><div style="font-size:30px;font-weight:600;margin-top:6px">DM <b>"ALL"</b> or order at {BRAND["domain"]}</div></div>', pad=70)
+    f'<div class="d v" style="font-size:150px">{rs(BUNDLE["price"])}</div><div style="font-size:30px;font-weight:600;margin-top:6px">WhatsApp <b>"ALL"</b> to <span class="v">{BRAND["whatsapp_display"]}</span></div></div>', pad=70)
 
 # =============== 9 ADS (1080x1350) ===============
 def price_cta(p, cta):
