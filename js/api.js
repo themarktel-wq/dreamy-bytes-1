@@ -61,7 +61,20 @@ const API = {
   connectLive() {
     if (this.mode !== 'server') return;
     if (this.es) { this.es.close(); this.es = null; }
-    if (!this.user || !('EventSource' in window)) return;
+    clearInterval(this.pollTimer); this.pollTimer = null;
+    if (!this.user) return;
+    if (this.info && this.info.live === 'poll') {
+      // Hosts without long-lived connections (Netlify): ask for new events every 30 s while the app is open.
+      if (!this.pollSince) this.pollSince = Date.now();
+      const tick = async () => {
+        if (document.visibilityState !== 'visible' || !this.user) return;
+        try { const r = await this.get('/api/poll?since=' + this.pollSince); this.pollSince = r.now; r.events.forEach((e) => this.emit(e)); } catch {}
+      };
+      this.pollTimer = setInterval(tick, 30000);
+      if (!this.pollVis) { this.pollVis = true; document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && this.pollTimer) tick(); }); }
+      return;
+    }
+    if (!('EventSource' in window)) return;
     this.es = new EventSource('api/events');
     this.es.addEventListener('change', (e) => { try { this.emit(JSON.parse(e.data)); } catch {} });
   },

@@ -2,11 +2,17 @@
   "name": "lahore-mobile-wholesale",
   "version": "1.0.0",
   "private": true,
-  "description": "Wholesale ordering, inventory and khata app for a Lahore mobile accessories supplier",
-  "engines": { "node": ">=22.5" },
+  "description": "Wholesale ordering and inventory app for a Lahore mobile accessories supplier",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node --no-warnings server/server.js",
     "demo": "DEMO=1 node --no-warnings server/server.js",
-    "test": "node test/core.test.js && node test/webpush.test.js && node --no-warnings test/server.test.js"
+    "test": "node test/core.test.js && node test/webpush.test.js && node --no-warnings test/server.test.js && node test/netlify.test.js",
+    "build:netlify": "node tools/netlify-build.js"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.9"
   }
 }

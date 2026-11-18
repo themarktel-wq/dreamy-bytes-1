@@ -1,4 +1,6 @@
-data/
-node_modules/
 *.db
 *.db-*
+.netlify/
+data/
+dist/
+node_modules/

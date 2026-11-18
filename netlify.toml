@@ -1,0 +1,30 @@
+# Netlify: static app in dist/ + the backend as one function (netlify/functions/api.mjs) with data in Netlify Blobs.
+[build]
+  command = "node tools/netlify-build.js"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["core/**", "server/webpush.js"]
+
+# App code is always revalidated so a new version reaches every phone on its next open.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "same-origin"
+    X-Frame-Options = "DENY"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

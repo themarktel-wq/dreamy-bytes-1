@@ -68,7 +68,23 @@ Options (environment variables):
 
 **Back up `DATA_DIR`.** It holds all your business data. The server keeps 14 daily copies in `DATA_DIR/backups/`, and **Settings → Backup** downloads a full copy you can keep elsewhere. To go back to a daily copy, stop the server, copy that file over `DATA_DIR/lahore-mobile.db`, and start it again.
 
-## Deploy
+## Deploy on Netlify (recommended, no server to look after)
+
+Netlify serves the app and runs the backend as one function (`netlify/functions/api.mjs`). Data and photos are kept in **Netlify Blobs**, which comes with every Netlify site, so there is no database to set up.
+
+1. On [app.netlify.com](https://app.netlify.com): **Add new site → Import an existing project → GitHub**, and pick this repository and branch. The build settings come from `netlify.toml`; leave them as they are.
+2. Before the first deploy, open **Site configuration → Environment variables** and add:
+   - `ADMIN_PHONE`: the owner's mobile number, e.g. `03036603409`
+   - `ADMIN_PASSWORD`: the owner's first password (6+ characters; change it later from the app)
+   - optional `VAPID_SUBJECT`: `mailto:` + an email address, used for phone notifications
+3. Deploy. Open the site, sign in with that number and password, and edit everything else from the admin panel.
+4. Optional: **Domain management** to connect your own domain (e.g. `lahoremobile.pk`). HTTPS is automatic.
+
+Every later `git push` redeploys the site, and installed apps update themselves.
+
+Differences from the Node server: live updates arrive by checking every 30 seconds instead of instantly, and backups are the **Settings → Backup** download (Netlify Blobs has no daily copies of its own, so save a backup each week). Netlify's free plan has monthly usage limits; a few dozen shops fit comfortably, and the usage page in Netlify shows where you stand.
+
+## Deploy on your own server
 
 Any server that runs Node 22 works: a small VPS (Hostinger, DigitalOcean or a local Pakistani host, roughly Rs 1,500–3,000 per month), Railway, or Fly.io. The hosting must keep a **persistent disk** for `DATA_DIR`; free tiers that wipe the disk on restart will lose your data. Put it behind HTTPS (Caddy or Nginx with Let's Encrypt), set `COOKIE_SECURE=1`, and point a domain such as `lahoremobile.pk` at it. Once it is on HTTPS, shops can install it from Chrome or Safari.
 
@@ -94,9 +110,10 @@ Checks the push encryption against the RFC 8291 test vector and the VAPID signat
 
 ```bash
 node test/server.test.js
+node test/netlify.test.js
 ```
 
-Tests HTTP, cookies, live events, uploads, push delivery (decrypted by a fake push service), the update stamp on `sw.js`, cache revalidation and persistence across restarts.
+The first tests HTTP, cookies, live events, uploads, push delivery (decrypted by a fake push service), the update stamp on `sw.js`, cache revalidation and persistence across restarts. The second runs the Netlify function against an in-memory imitation of Netlify Blobs, including racing writes.
 
 ## Code layout
 
@@ -105,6 +122,8 @@ core/core.js         all business rules and the API (shared by server and demo)
 core/memstore.js     transactional in-memory store
 server/server.js     HTTP server, SQLite persistence, sessions, live updates, uploads, daily backups, update stamp
 server/webpush.js    Web Push (VAPID + aes128gcm), no dependencies
+netlify/functions/api.mjs  the same backend as a Netlify Function, data in Netlify Blobs
+netlify.toml, tools/netlify-build.js   Netlify build: copies the app to dist/ and stamps the version
 js/extras.js         notifications, deals, suppliers, scanning, printing
 js/site-editor.js    app content editor, Excel (CSV) import and export
 js/api.js            client: server mode or in-browser demo mode

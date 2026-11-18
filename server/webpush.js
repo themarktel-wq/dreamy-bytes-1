@@ -10,9 +10,13 @@ const fromB64u = (s) => Buffer.from(String(s), 'base64url');
 function loadVapid(file) {
   let jwk;
   try { jwk = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {
-    jwk = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' }).privateKey.export({ format: 'jwk' });
+    jwk = newVapidJwk();
     fs.writeFileSync(file, JSON.stringify(jwk), { mode: 0o600 });
   }
+  return vapidFromJwk(jwk);
+}
+function newVapidJwk() { return crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' }).privateKey.export({ format: 'jwk' }); }
+function vapidFromJwk(jwk) {
   const privateKey = crypto.createPrivateKey({ key: jwk, format: 'jwk' });
   const publicKey = Buffer.concat([Buffer.from([4]), fromB64u(jwk.x), fromB64u(jwk.y)]); // uncompressed P-256 point
   return { privateKey, publicKey, publicKeyB64: b64u(publicKey) };
@@ -57,4 +61,4 @@ async function send(sub, data, vapid, subject) {
   } catch (e) { return { ok: false, gone: false, error: e.message }; }
 }
 
-module.exports = { loadVapid, encrypt, send, vapidHeader };
+module.exports = { loadVapid, newVapidJwk, vapidFromJwk, encrypt, send, vapidHeader };
