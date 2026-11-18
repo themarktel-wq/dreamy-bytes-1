@@ -48,7 +48,6 @@ const API = {
   get isAdmin() { return !!(this.user && (this.user.role === 'admin' || this.user.role === 'staff')); },
   get isOwner() { return !!(this.user && this.user.role === 'admin'); },
   get isShop() { return !!(this.user && this.user.role === 'shop'); },
-  get isRider() { return !!(this.user && this.user.role === 'rider'); },
   get isActiveShop() { return this.isShop && this.user.status === 'active'; },
 
   async login(phone, password) { const r = await this.post('/api/auth/login', { phone, password }); if (r.token && this.mode === 'demo') Demo.setToken(r.token); await this.refreshMe(); this.emit({ type: 'auth' }); return r; },
@@ -69,7 +68,7 @@ const API = {
 /* ---------- In-browser demo backend ---------- */
 const Demo = {
   core: null, store: null, token: '',
-  KEY: 'lm_wholesale_demo_v3',
+  KEY: 'lm_wholesale_demo_v4',
   start() {
     let initial = {};
     try { initial = JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch {}

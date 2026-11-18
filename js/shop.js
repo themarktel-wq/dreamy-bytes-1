@@ -1,4 +1,4 @@
-/* Lahore Mobile — shop (retailer) app: sign-in, catalogue, cart, orders, khata, messages, account. */
+/* Lahore Mobile — shop (retailer) app: sign-in, catalogue, cart, orders, messages, account. */
 
 let PRODUCTS = null; // cache for the session; refreshed on catalogue visits and live updates
 async function loadProducts(force) { if (!PRODUCTS || force) PRODUCTS = await API.get('/api/products'); return PRODUCTS; }
@@ -19,10 +19,9 @@ function loginView(note) {
       <p class="muted" style="font-size:14px;margin:18px 0 0;text-align:center">New shop? <a class="link" href="#/register">Create a shop account</a></p>
       ${demo ? `<div style="border-top:1px solid var(--line);margin-top:22px;padding-top:18px"><b style="color:var(--ink);font-size:14px">Try the demo</b>
         <div class="demo-pick">
-          <button onclick="demoLogin('03000000000','admin123')">${icon('lock')}<span><b>Owner / admin</b><small>Dashboard, orders, inventory, khata, reports</small></span></button>
-          <button onclick="demoLogin('03011111111','shop123')">${icon('store')}<span><b>Raza Mobiles (shop)</b><small>Hall Road · khata limit Rs 300,000</small></span></button>
-          <button onclick="demoLogin('03033333333','shop123')">${icon('store')}<span><b>Tariq Mobile Zone (shop)</b><small>Johar Town · khata limit Rs 75,000</small></span></button>
-          <button onclick="demoLogin('03066666666','rider123')">${icon('truck')}<span><b>Imran (rider)</b><small>Deliveries and cash collection</small></span></button>
+          <button onclick="demoLogin('03000000000','admin123')">${icon('lock')}<span><b>Owner / admin</b><small>Dashboard, orders, inventory, reports</small></span></button>
+          <button onclick="demoLogin('03011111111','shop123')">${icon('store')}<span><b>Raza Mobiles (shop)</b><small>Hall Road</small></span></button>
+          <button onclick="demoLogin('03033333333','shop123')">${icon('store')}<span><b>Tariq Mobile Zone (shop)</b><small>Johar Town</small></span></button>
         </div></div>` : ''}
     </div></div></div>`;
 }
@@ -32,9 +31,9 @@ async function doLogin(e) {
   const f = formData(e.target);
   await busy(e.target.querySelector('button'), async () => { await API.login(f.phone, f.password); });
   toast(`Welcome, ${esc(API.user.name)}`);
-  go(API.isAdmin ? '#/admin' : API.isRider ? '#/rider' : '#/');
+  go(API.isAdmin ? '#/admin' : '#/');
 }
-async function demoLogin(phone, pw) { await API.login(phone, pw).catch(errBox); go(API.isAdmin ? '#/admin' : API.isRider ? '#/rider' : '#/'); }
+async function demoLogin(phone, pw) { await API.login(phone, pw).catch(errBox); go(API.isAdmin ? '#/admin' : '#/'); }
 
 route('register', () => {
   const markets = (API.info.markets || []).map((m) => `<option>${esc(m)}</option>`).join('');
@@ -68,14 +67,13 @@ function homeSlides(products, u) {
   const s = [
     { img: 'assets/img/hero-iphones.jpg', tag: 'LCD & OLED panels', title: 'Panels for every common model', sub: `${n('panel')} panel models in stock for iPhone, Samsung, Redmi, Infinix and Tecno. Every panel is tested before it leaves the shop.`, cta: 'See panels', link: '#/catalog?cat=panel' },
     { img: 'assets/img/hero-accessories.jpg', tag: 'Accessories', title: 'Glass, covers and chargers by the box', sub: 'Order packs of 10, 20 or 50 from your phone. Stock updates as we sell, so what you see is what we have.', cta: 'See accessories', link: '#/catalog?cat=protector' },
-    { img: 'assets/img/hero-trade.jpg', tag: 'Khata', title: 'Order now, pay on khata', sub: 'Approved shops order on credit and can check their full statement in the app at any time.', cta: 'Open a shop account', link: '#/register' },
+    { img: 'assets/img/hero-trade.jpg', tag: 'Order from your phone', title: 'Order in a minute, collect the same day', sub: 'Place the order from your shop, follow its status in the app, and pay cash or by bank transfer.', cta: 'Open a shop account', link: '#/register' },
     { img: 'assets/img/hero-audio.jpg', tag: 'Audio', title: 'Earbuds and handsfree', sub: `${n('audio')} audio items in stock, each with the suggested retail price and your margin.`, cta: 'See audio', link: '#/catalog?cat=audio' },
   ];
   return u ? s.filter((x) => x.link !== '#/register') : s;
 }
 route('home', async () => {
   if (API.isAdmin) { setTimeout(() => go('#/admin')); return ''; }
-  if (API.isRider) { setTimeout(() => go('#/rider')); return ''; }
   const [products, feed, deals] = await Promise.all([loadProducts(true), API.get('/api/feed'), API.get('/api/deals')]);
   const b = API.info.business, cats = API.info.categories, u = API.user, me = API.me || {};
   const slides = homeSlides(products, u);
@@ -104,22 +102,22 @@ route('home', async () => {
         ${deals.length
           ? `<a class="promo" href="#/p/${deals[0].product.id}"><img src="${esc(deals[0].product.img || 'assets/img/hero-audio.jpg')}" alt="" loading="lazy"><div><small>${icon('bolt', 'width="13" height="13" style="vertical-align:-2px"')} Flash deal · ${countdown(deals[0].endsAt)} left</small><b>${esc(deals[0].product.name)}</b><span>${deals[0].product.price != null ? rs(deals[0].product.price) + ' · ' : ''}View deal ${icon('arrow')}</span></div></a>`
           : `<a class="promo" href="#/catalog?cat=audio"><img src="assets/img/hero-audio.jpg" alt="" loading="lazy"><div><small>Audio</small><b>Earbuds and handsfree</b><span>See audio ${icon('arrow')}</span></div></a>`}
-        ${u ? `<a class="promo" href="#/khata"><img src="assets/img/hero-accessories.jpg" alt="" loading="lazy"><div><small>Your khata</small><b>${u.status === 'active' ? rs(me.balance || 0) + ' balance' : 'Waiting for approval'}</b><span>${u.status === 'active' ? 'View statement' : 'Message the store'} ${icon('arrow')}</span></div></a>`
+        ${u ? `<a class="promo" href="#/orders"><img src="assets/img/hero-accessories.jpg" alt="" loading="lazy"><div><small>Your orders</small><b>${u.status === 'active' ? (open.length ? `${open.length} order${open.length === 1 ? '' : 's'} in progress` : 'No open orders') : 'Waiting for approval'}</b><span>${u.status === 'active' ? 'View orders' : 'Message the store'} ${icon('arrow')}</span></div></a>`
           : `<a class="promo" href="#/register"><img src="assets/img/hero-accessories.jpg" alt="" loading="lazy"><div><small>For shop owners</small><b>Free shop account</b><span>Register in one minute ${icon('arrow')}</span></div></a>`}
       </div>
     </div>
 
     <div class="usp">
       <div>${icon('tag')}<span><b>One price for all shops</b>No hidden rates</span></div>
-      <div>${icon('receipt')}<span><b>Khata credit</b>For approved shops</span></div>
-      <div>${icon('truck')}<span><b>Same-day delivery</b>By our own riders</span></div>
+      <div>${icon('box')}<span><b>Live stock</b>See what is on the shelf</span></div>
+      <div>${icon('truck')}<span><b>Same-day dispatch</b>Across Lahore</span></div>
       <div>${icon('shield')}<span><b>Tested panels</b>Claims from the app</span></div>
     </div>
 
     ${u && u.status !== 'active' ? `<div class="banner-note">${icon('clock')}<div><b>Your shop is waiting for approval.</b><br>You can browse the catalogue now. Prices and ordering open once we approve your shop. <a href="${bizWa(`Assalam o Alaikum, I registered ${u.shop.shopName} (${u.phone}). Please approve my account.`)}" target="_blank" rel="noopener" style="text-decoration:underline">Message us on WhatsApp</a></div></div>` : ''}
     ${API.isActiveShop ? `<section class="section" style="margin-top:32px">${secHead('', `Assalam o Alaikum, ${esc(u.name.split(' ')[0])}`, esc(u.shop.shopName) + (u.shop.market ? ' · ' + esc(u.shop.market) : ''))}
       <div class="summary-cards">
-        <a class="sc dark" href="#/khata"><span>${icon('receipt')} Khata balance</span><b>${rs(me.balance || 0)}</b><small>Limit ${rs(u.creditLimit)}</small></a>
+        <a class="sc dark" href="#/orders"><span>${icon('receipt')} Orders</span><b>${orders.filter((o) => o.status !== 'cancelled').length}</b><small>${rs(orders.filter((o) => o.status !== 'cancelled').reduce((a, o) => a + o.total, 0))} in total</small></a>
         <a class="sc" href="#/orders"><span>${icon('truck')} Open orders</span><b>${open.length}</b><small>${open.length ? badge(open[0].status) + ' ' + esc(open[0].no) : 'Nothing in progress'}</small></a>
         <a class="sc ${me.unread ? 'alert' : ''}" href="#/messages"><span>${icon('chat')} Messages</span><b>${me.unread || 0}</b><small>${me.unread ? 'New replies from us' : 'Chat with us'}</small></a>
         ${last ? `<button class="sc" style="text-align:left" onclick="reorder('${last.id}')"><span>${icon('repeat')} Order again</span><b style="font-size:18px">${esc(last.no)}</b><small>${last.items.length} items · ${rs(last.total)}</small></button>` : `<a class="sc" href="#/saved"><span>${icon('heart')} Saved items</span><b>${(u.favs || []).length}</b><small>Your regular items</small></a>`}
@@ -138,8 +136,8 @@ route('home', async () => {
 
     ${u ? '' : `<section class="section"><div class="steps-line">
       <div><b>1</b><span><strong>Register your shop</strong>Name, shop name and mobile number.</span></div>
-      <div><b>2</b><span><strong>We approve it</strong>Usually the same day, with your khata limit.</span></div>
-      <div><b>3</b><span><strong>Order from your phone</strong>Cash or khata. Our rider delivers.</span></div>
+      <div><b>2</b><span><strong>We approve it</strong>Usually the same day.</span></div>
+      <div><b>3</b><span><strong>Order from your phone</strong>Pay cash or by bank transfer.</span></div>
       <a class="btn btn-primary" href="#/register">Register free</a></div></section>`}
 
     ${feed.length ? `<section class="section">${secHead('', 'Updates from the shop')}<div class="feed-list">${feed.slice(0, 4).map((a) => `<${a.pid ? `a href="#/p/${a.pid}"` : 'div'} class="feed-item"><small>${ago(a.at)}</small><b>${esc(a.title)}</b>${a.body ? `<p>${esc(a.body)}</p>` : ''}</${a.pid ? 'a' : 'div'}>`).join('')}</div></section>` : ''}
@@ -159,7 +157,7 @@ route('home', async () => {
         <div class="visit-info">
           <div class="info-row">${icon('clock')}<span><b>Timings</b>${esc(b.hours)}</span></div>
           <div class="info-row">${icon('phone')}<span><b>Call or WhatsApp</b><span style="user-select:all">${esc(b.phone)}</span></span></div>
-          <div class="info-row">${icon('store')}<span><b>At the shop</b>Collect orders, check panels and pay khata in person.</span></div>
+          <div class="info-row">${icon('store')}<span><b>At the shop</b>Collect orders and check panels in person.</span></div>
           <a class="btn btn-wa" href="${bizWa('Assalam o Alaikum, I have a question about wholesale.')}" target="_blank" rel="noopener">${icon('wa')} WhatsApp us</a>
         </div>
       </div>
@@ -344,7 +342,6 @@ route('cart', async () => {
   const items = Cart.items().map((l) => ({ ...l, p: pById(l.pid) })).filter((l) => l.p);
   if (!API.isActiveShop) return `<div class="wrap"><div class="page-head"><h1>Cart</h1></div><div class="banner-note">${icon('clock')}<div>Ordering unlocks after the store approves your shop.</div></div></div>`;
   if (!items.length) return `<div class="wrap"><div class="page-head"><h1>Cart</h1></div><div class="empty">${icon('cart')}<p>Your cart is empty.</p><a class="btn btn-primary" href="#/catalog">Browse catalogue</a></div></div>`;
-  const u = API.user, bal = API.me.balance || 0;
   return `<div class="wrap"><div class="page-head"><h1>Cart</h1><p>${items.length} item${items.length === 1 ? '' : 's'} · prices confirmed by the store when you place the order</p></div>
   <div class="two-col">
     <div class="list" id="cartList">${items.map((l) => cartLine(l)).join('')}</div>
@@ -353,10 +350,9 @@ route('cart', async () => {
       <div id="cartTotals"></div>
       <label class="f" for="coPay">Payment</label>
       <select class="select" id="coPay" name="payment">
-        <option value="credit" ${u.creditLimit ? '' : 'disabled'}>Add to khata (credit)${u.creditLimit ? '' : ' (not enabled)'}</option>
-        <option value="cash" ${u.creditLimit ? '' : 'selected'}>Cash on delivery</option><option value="bank">Bank / JazzCash / Easypaisa</option></select>
-      <div class="muted" style="font-size:13px;margin-top:6px">Khata balance ${rs(bal)} · limit ${rs(u.creditLimit)} · available ${rs(Math.max(0, u.creditLimit - bal))}</div>
-      <label class="f" for="coNote">Note for the store (optional)</label><textarea class="input" id="coNote" name="note" rows="2" maxlength="300" placeholder="e.g. send with rider by 5 pm"></textarea>
+        <option value="cash" selected>Cash on delivery or pickup</option><option value="bank">Bank / JazzCash / Easypaisa</option></select>
+      ${API.info.business.bank ? `<div class="muted" style="font-size:13px;margin-top:6px">Bank / wallet: ${esc(API.info.business.bank)}</div>` : ''}
+      <label class="f" for="coNote">Note for the store (optional)</label><textarea class="input" id="coNote" name="note" rows="2" maxlength="300" placeholder="e.g. I will collect at 5 pm"></textarea>
       <button class="btn btn-primary btn-block" style="margin-top:16px;height:50px">Place order</button>
       <button type="button" class="btn btn-ghost btn-block btn-sm" style="margin-top:8px" onclick="Cart.clear();render()">Clear cart</button>
     </form></div>
@@ -396,9 +392,9 @@ route('orders', async () => {
   needShop();
   const [orders, claims] = await Promise.all([API.get('/api/orders'), API.get('/api/claims')]);
   return `<div class="wrap"><div class="page-head"><h1>My orders</h1></div>
-    ${orders.length ? `<div class="list">${orders.map((o) => `<a href="#/order/${o.id}"><div class="li-main"><b>${esc(o.no)} · ${o.items.length} item${o.items.length === 1 ? '' : 's'}</b><small>${fmtDateTime(o.createdAt)} · ${o.payment === 'credit' ? 'Khata' : o.payment === 'bank' ? 'Bank' : 'Cash'}${o.source === 'counter' ? ' · counter sale' : ''}</small></div><div class="li-end"><b>${rs(o.total)}</b>${badge(o.status)}</div></a>`).join('')}</div>`
+    ${orders.length ? `<div class="list">${orders.map((o) => `<a href="#/order/${o.id}"><div class="li-main"><b>${esc(o.no)} · ${o.items.length} item${o.items.length === 1 ? '' : 's'}</b><small>${fmtDateTime(o.createdAt)} · ${o.payment === 'bank' ? 'Bank' : 'Cash'}${o.source === 'counter' ? ' · counter sale' : ''}</small></div><div class="li-end"><b>${rs(o.total)}</b>${badge(o.status)}</div></a>`).join('')}</div>`
     : `<div class="empty">${icon('truck')}<p>No orders yet.</p><a class="btn btn-primary" href="#/catalog">Browse catalogue</a></div>`}
-    ${claims.length ? `<section class="section" style="margin-top:36px">${secHead('', 'Warranty claims')}<div class="list">${claims.map((c) => `<div class="li"><div class="li-main"><b>${esc(c.no)} · ${c.qty} × ${esc(c.name)}</b><small>${esc(c.orderNo)} · ${esc(c.reason)}${c.adminNote ? ' · Store: ' + esc(c.adminNote) : ''}</small></div><div class="li-end">${badge(c.status)}<small>${c.resolution ? (c.resolution === 'replaced' ? 'Replaced' : 'Credited to khata') : ago(c.at)}</small></div></div>`).join('')}</div></section>` : ''}
+    ${claims.length ? `<section class="section" style="margin-top:36px">${secHead('', 'Warranty claims')}<div class="list">${claims.map((c) => `<div class="li"><div class="li-main"><b>${esc(c.no)} · ${c.qty} × ${esc(c.name)}</b><small>${esc(c.orderNo)} · ${esc(c.reason)}${c.adminNote ? ' · Store: ' + esc(c.adminNote) : ''}</small></div><div class="li-end">${badge(c.status)}<small>${c.resolution ? (c.resolution === 'replaced' ? 'Replaced' : `Refund ${rs(c.refund || c.qty * c.price)}`) : ago(c.at)}</small></div></div>`).join('')}</div></section>` : ''}
   </div>`;
 });
 route('order', async (r) => {
@@ -427,7 +423,7 @@ route('order', async (r) => {
       <div class="box" style="padding:22px"><h3 style="margin:0 0 16px;font-size:17px">Progress</h3>
         ${o.status === 'cancelled' ? '' : `<div style="display:flex;gap:4px;margin-bottom:18px">${steps.map((s) => `<i style="flex:1;height:5px;border-radius:4px;background:${steps.indexOf(s) <= steps.indexOf(o.status) ? 'var(--navy)' : 'var(--line)'}"></i>`).join('')}</div>`}
         <ul class="timeline">${o.history.slice().reverse().map((h) => `<li><b style="color:var(--ink)">${esc(STATUS_LABEL[h.status] || h.status)}</b>${h.note ? ` · ${esc(h.note)}` : ''}<small>${fmtDateTime(h.at)} · ${esc(h.by)}</small></li>`).join('')}</ul>
-        <div class="muted" style="font-size:13.5px;margin-top:8px">Payment: ${o.payment === 'credit' ? 'Khata (credit)' : o.payment === 'bank' ? 'Bank / mobile wallet' : 'Cash'}${o.riderName ? `<br>Rider: ${esc(o.riderName)} · <span style="user-select:all">${esc(o.riderPhone)}</span>` : ''}</div>
+        <div class="muted" style="font-size:13.5px;margin-top:8px">Payment: ${o.payment === 'bank' ? 'Bank / mobile wallet' : 'Cash'}</div>
       </div>
     </div></div>`;
 });
@@ -438,7 +434,7 @@ async function cancelMyOrder(id) {
 async function openClaim(orderId) {
   const o = await API.get('/api/orders/' + orderId);
   const m = document.createElement('div'); m.className = 'modal on';
-  m.innerHTML = `<form class="sheet" style="max-width:460px"><h3>Report a faulty item</h3><p class="muted" style="margin:4px 0 0">The store checks the item and credits your khata or sends a replacement.</p>
+  m.innerHTML = `<form class="sheet" style="max-width:460px"><h3>Report a faulty item</h3><p class="muted" style="margin:4px 0 0">The store checks the item and sends a replacement or gives a refund.</p>
     <label class="f" for="clItem">Item</label><select class="select" id="clItem">${o.items.map((l) => `<option value="${l.pid}">${esc(l.name)} (bought ${l.qty})</option>`).join('')}</select>
     <label class="f" for="clQty">Faulty quantity</label><input class="input" id="clQty" inputmode="numeric" value="1">
     <label class="f" for="clReason">What's wrong?</label><input class="input" id="clReason" maxlength="300" placeholder="e.g. touch not working, dead pixels" required>
@@ -451,28 +447,6 @@ async function openClaim(orderId) {
   });
   document.body.appendChild(m);
 }
-
-/* ================= KHATA ================= */
-route('khata', async () => {
-  needShop();
-  const k = await API.get('/api/ledger');
-  const TYPE = { invoice: 'Order', payment: 'Payment', adjust: 'Adjustment', return: 'Claim credit' };
-  let run = k.balance;
-  const rows = k.entries.map((e) => { const r = { ...e, after: run }; run -= e.amount * e.dir; return r; });
-  return `<div class="wrap"><div class="page-head"><h1>Khata</h1><p>Your running account with ${esc(API.info.business.name)}.</p></div>
-    <div class="summary-cards">
-      <div class="sc dark"><span>Balance due</span><b>${rs(k.balance)}</b><small>${k.balance > 0 ? 'Payable to the store' : k.balance < 0 ? 'In your favour' : 'All settled'}</small></div>
-      <div class="sc"><span>Credit limit</span><b>${rs(k.creditLimit)}</b><small>Available ${rs(Math.max(0, k.creditLimit - k.balance))}</small></div>
-      <div class="sc ${k.aging.overdue ? 'alert' : ''}"><span>Older than 30 days</span><b>${rs(k.aging.overdue)}</b><small>${k.aging.d90 ? `${rs(k.aging.d90)} over 90 days` : 'Please clear old dues first'}</small></div>
-      <a class="sc" href="#/print/statement/me"><span>${icon('receipt')} Statement</span><b style="font-size:18px">Print / PDF</b><small>Full khata history</small></a>
-    </div>
-    ${API.info.business.bank ? `<div class="notice">${icon('cash', 'width="16" height="16" style="vertical-align:-3px"')} Pay by bank or wallet: ${esc(API.info.business.bank)}</div>` : ''}
-    <section class="section" style="margin-top:28px">${secHead('', 'Statement')}
-      ${rows.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Entry</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th></tr></thead><tbody>
-        ${rows.map((e) => `<tr><td>${fmtDate(e.at)}</td><td><b style="color:var(--ink);font-weight:500">${TYPE[e.type] || e.type}</b> <span class="muted">${esc(e.ref || '')}</span><br><small class="muted">${esc(e.note || '')}${e.method ? ' · ' + esc(e.method) : ''}</small></td><td class="num">${e.dir > 0 ? rs(e.amount) : ''}</td><td class="num">${e.dir < 0 ? rs(e.amount) : ''}</td><td class="num">${rs(e.after)}</td></tr>`).join('')}
-      </tbody></table></div>` : '<p class="muted">No entries yet.</p>'}
-    </section></div>`;
-});
 
 /* ================= MESSAGES ================= */
 function chatHTML(msgs, mine, products) {
@@ -510,7 +484,7 @@ route('saved', async () => {
 route('account', async () => {
   needLogin();
   const u = API.user;
-  return `<div class="wrap" style="max-width:720px"><div class="page-head"><h1>Account</h1><p>${esc(u.phone)} · ${{ shop: 'Shop account', admin: 'Owner', staff: 'Staff', rider: 'Rider' }[u.role]} ${badge(u.status)}</p></div>
+  return `<div class="wrap" style="max-width:720px"><div class="page-head"><h1>Account</h1><p>${esc(u.phone)} · ${{ shop: 'Shop account', admin: 'Owner', staff: 'Staff' }[u.role]} ${badge(u.status)}</p></div>
     ${u.role === 'shop' ? `<form class="box" style="padding:22px" onsubmit="saveProfile(event)"><h3 style="margin:0;font-size:18px">Shop details</h3><div class="form-grid">
       <div><label class="f" for="acShop">Shop name</label><input class="input" id="acShop" name="shopName" value="${esc(u.shop.shopName)}" required></div>
       <div><label class="f" for="acName">Your name</label><input class="input" id="acName" name="name" value="${esc(u.name)}" required></div>
@@ -523,8 +497,7 @@ route('account', async () => {
       <div><label class="f" for="pwNew">New password</label><input class="input" id="pwNew" name="password" type="password" minlength="6" required autocomplete="new-password"></div></div>
       <button class="btn btn-primary" style="margin-top:16px">Update password</button></form>
     <div class="box" style="padding:0 18px;margin-top:16px">
-      ${u.role === 'rider' ? `<a href="#/rider" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('truck', 'width="20" height="20"')}<span style="flex:1">My deliveries</span>${icon('chevron', 'width="18" height="18"')}</a>` : u.role === 'shop' ? `<a href="#/saved" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('heart', 'width="20" height="20"')}<span style="flex:1">Saved items</span>${icon('chevron', 'width="18" height="18"')}</a>
-      <a href="#/khata" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('receipt', 'width="20" height="20"')}<span style="flex:1">Khata statement</span>${icon('chevron', 'width="18" height="18"')}</a>` : `<a href="#/admin" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('dash', 'width="20" height="20"')}<span style="flex:1">Admin panel</span>${icon('chevron', 'width="18" height="18"')}</a>`}
+      ${u.role === 'shop' ? `<a href="#/saved" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('heart', 'width="20" height="20"')}<span style="flex:1">Saved items</span>${icon('chevron', 'width="18" height="18"')}</a>` : `<a href="#/admin" style="display:flex;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)">${icon('dash', 'width="20" height="20"')}<span style="flex:1">Admin panel</span>${icon('chevron', 'width="18" height="18"')}</a>`}
       <button onclick="installApp()" style="display:flex;gap:12px;align-items:center;padding:16px 0;width:100%;text-align:left;border-bottom:1px solid var(--line)">${icon('install', 'width="20" height="20"')}<span style="flex:1">Install the app</span>${icon('chevron', 'width="18" height="18"')}</button>
       <button onclick="signOut()" style="display:flex;gap:12px;align-items:center;padding:16px 0;width:100%;text-align:left;color:var(--danger)">${icon('logout', 'width="20" height="20"')}<span style="flex:1">Sign out</span></button>
     </div>

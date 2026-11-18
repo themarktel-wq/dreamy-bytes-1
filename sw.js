@@ -1,5 +1,5 @@
 /* Lahore Mobile service worker: offline app shell + runtime cache. Bump VERSION on every deploy. */
-const VERSION = 'lm-v4';
+const VERSION = 'lm-v5';
 const SHELL = ['./', 'index.html', 'css/style.css', 'core/memstore.js', 'core/core.js', 'core/seed-images.js', 'js/ui.js', 'js/api.js', 'js/router.js', 'js/shop.js', 'js/admin.js', 'js/main.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
 

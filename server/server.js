@@ -88,9 +88,6 @@ function broadcast(events) {
     pushOut(ev);
   }
 }
-/* Automatic payment reminders: checked every hour; each shop is reminded at most once per interval (Settings). */
-setInterval(() => { try { broadcast(core.runReminders().events); } catch (e) { console.error('reminders', e); } }, 3600e3).unref();
-setTimeout(() => { try { broadcast(core.runReminders().events); } catch (e) { console.error('reminders', e); } }, 30e3).unref();
 setInterval(() => { for (const c of clients) c.res.write(': ping\n\n'); }, 25000).unref();
 
 /* ---------- HTTP ---------- */

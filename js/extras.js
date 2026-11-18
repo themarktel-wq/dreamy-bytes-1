@@ -1,4 +1,4 @@
-/* Lahore Mobile — notifications, flash deals, riders, suppliers, aging & reminders, barcodes, printing. */
+/* Lahore Mobile — notifications, flash deals, suppliers, barcodes, printing. */
 
 /* ================= Countdown timers (flash deals) ================= */
 function fmtLeft(ms) {
@@ -36,7 +36,7 @@ const Push = {
   },
   async box() {
     const st = await this.state().catch(() => 'unsupported');
-    const text = { on: 'On. You get alerts for orders, messages, deals and payments, even when the app is closed.', off: 'Get alerts for new orders, messages, deals and payments, even when the app is closed.', denied: 'Blocked in browser settings. Allow notifications for this site, then come back.', unsupported: API.mode !== 'server' ? 'Available on the live app (not in this demo).' : 'Not supported in this browser. On iPhone, add the app to the Home Screen first.' }[st];
+    const text = { on: 'On. You get alerts for orders, messages and deals, even when the app is closed.', off: 'Get alerts for new orders, messages and deals, even when the app is closed.', denied: 'Blocked in browser settings. Allow notifications for this site, then come back.', unsupported: API.mode !== 'server' ? 'Available on the live app (not in this demo).' : 'Not supported in this browser. On iPhone, add the app to the Home Screen first.' }[st];
     return `<div class="box" style="padding:22px;margin-top:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="service" style="padding:0;border:0"><span class="ic">${icon('bell')}</span></span><div style="flex:1;min-width:200px"><b style="color:var(--ink)">Phone notifications</b><div class="muted" style="font-size:13.5px">${text}</div></div>
       ${st === 'on' ? `<button class="btn btn-ghost btn-sm" onclick="Push.disable().then(()=>{toast('Notifications off');render({quiet:true})})">Turn off</button>` : st === 'off' ? `<button class="btn btn-primary btn-sm" onclick="pushOn(this)">Turn on</button>` : ''}</div>`;
   },
@@ -76,50 +76,6 @@ async function createDeal(e) {
   toast('Deal is live. Shops have been notified.', 'bolt'); render({ quiet: true });
 }
 async function endDeal(id) { if (!(await uiConfirm('End this deal now?', 'Prices go back to normal immediately.', 'End deal'))) return; await API.del('/api/admin/deals/' + id).catch(errBox); render({ quiet: true }); }
-
-/* ================= Riders ================= */
-route('rider', async () => {
-  needLogin(); if (API.user.role !== 'rider') throw new Error('This page is for delivery riders.');
-  const [list] = await Promise.all([API.get('/api/rider/orders'), API.refreshMe()]);
-  const open = list.filter((o) => o.status !== 'delivered'), done = list.filter((o) => o.status === 'delivered');
-  const card = (o) => `<div class="box" style="padding:18px;display:grid;gap:10px">
-    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><b style="color:var(--ink);font-size:17px">${esc(o.shopName)}</b><div class="muted" style="font-size:13.5px">${esc(o.no)} · ${o.items.length} items</div></div>${badge(o.status)}</div>
-    <div class="info-row">${icon('pin')}<span>${esc(o.shopAddress || 'Address not set')}</span></div>
-    <div class="info-row">${icon('phone')}<span style="user-select:all">${esc(o.shopPhone)}</span></div>
-    <div class="info-row">${icon('cash')}<span>Order total <b style="color:var(--ink)">${rs(o.total)}</b> · ${o.payment === 'credit' ? 'on khata (collect only if they pay)' : o.payment === 'bank' ? 'paid by bank' : 'collect cash'} · khata balance ${rs(o.balance)}</span></div>
-    <details><summary class="muted" style="cursor:pointer;font-size:13.5px">Items</summary><div style="font-size:14px;margin-top:6px">${o.items.map((l) => `${l.qty} × ${esc(l.name)}`).join('<br>')}</div></details>
-    ${o.status === 'delivered' ? `<div class="muted" style="font-size:13.5px">Delivered ${fmtTime(o.deliveredAt)}${o.collected ? ` · collected ${rs(o.collected)}` : ''}</div>` : `<div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${o.status !== 'dispatched' ? `<button class="btn btn-ghost" onclick="riderPick('${o.id}')">${icon('truck')} Picked up</button>` : ''}
-      <button class="btn btn-primary" onclick="riderDeliver('${o.id}',${o.payment === 'cash' ? o.total : 0})">${icon('check')} Delivered</button>
-      <a class="btn btn-ghost" href="https://www.google.com/maps/search/${encodeURIComponent((o.shopAddress || '') + ' Lahore')}" target="_blank" rel="noopener">${icon('pin')} Map</a></div>`}
-  </div>`;
-  return `<div class="wrap" style="max-width:720px"><div class="page-head"><h1>My deliveries</h1><p>${esc(API.user.name)}</p></div>
-    <div class="summary-cards" style="grid-template-columns:1fr 1fr"><div class="sc dark"><span>Cash in hand</span><b>${rs(API.me.cashInHand || 0)}</b><small>Hand over to the store</small></div><div class="sc"><span>To deliver</span><b>${open.length}</b><small>${done.length} delivered today</small></div></div>
-    <div style="display:grid;gap:12px;margin-top:20px">${open.map(card).join('') || `<div class="empty">${icon('truck')}<p>No deliveries assigned right now.</p></div>`}</div>
-    ${done.length ? `<h3 style="font-size:18px;margin:28px 0 10px">Delivered today</h3><div style="display:grid;gap:12px">${done.map(card).join('')}</div>` : ''}</div>`;
-});
-async function riderPick(id) { try { await API.post(`/api/rider/orders/${id}/status`, { status: 'dispatched' }); toast('Marked as picked up'); render({ quiet: true }); } catch (e) { errBox(e); } }
-async function riderDeliver(id, due) {
-  const v = await uiDialog({ title: 'Mark delivered', text: 'Enter the cash you collected from the shop (0 if nothing). It is added to your cash in hand and the shop\'s khata.', ok: 'Delivered', fields: [{ label: 'Cash collected (Rs)', value: due || 0, inputmode: 'numeric' }] });
-  if (!v) return;
-  try { await API.post(`/api/rider/orders/${id}/status`, { status: 'delivered', collected: parseInt(String(v[0]).replace(/\D/g, '')) || 0 }); toast('Delivery complete'); render({ quiet: true }); } catch (e) { errBox(e); }
-}
-route('admin/riders', async () => {
-  needAdmin();
-  const riders = await API.get('/api/admin/riders');
-  return adminLayout('riders', `<div class="head-row"><div><h1>Riders</h1><p>Deliveries and the cash each rider is holding.</p></div>${API.isOwner ? `<button class="btn btn-primary" onclick="addStaff('rider')">${icon('plus')} Add rider</button>` : ''}</div>
-    ${riders.length ? `<div style="display:grid;gap:12px">${riders.map((r) => `<div class="box" style="padding:18px"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b style="color:var(--ink);font-size:16px">${esc(r.name)}</b> ${r.status === 'blocked' ? badge('blocked', 'Disabled') : ''}<div class="muted" style="font-size:13.5px"><span style="user-select:all">${esc(r.phone)}</span> · ${r.active} active · ${r.deliveredToday} delivered today</div></div>
-      <div class="right"><div class="muted" style="font-size:12.5px">Cash in hand</div><b class="num" style="font-size:20px;color:${r.cashInHand ? 'var(--warn)' : 'var(--ink)'}">${rs(r.cashInHand)}</b></div>
-      ${r.cashInHand ? `<button class="btn btn-primary btn-sm" onclick="settleRider('${r.id}',${r.cashInHand})">Receive cash</button>` : ''}</div>
-      ${r.cash.length ? `<details style="margin-top:10px"><summary class="muted" style="cursor:pointer;font-size:13.5px">Cash history</summary><div style="margin-top:6px">${r.cash.map((c) => `<div style="display:flex;justify-content:space-between;font-size:13.5px;padding:6px 0;border-bottom:1px solid var(--line)"><span>${esc(c.note)} ${c.ref ? '· ' + esc(c.ref) : ''}<br><small class="muted">${fmtDateTime(c.at)}</small></span><b class="num" style="color:${c.dir > 0 ? 'var(--ink)' : 'var(--ok)'}">${c.dir > 0 ? '+' : '−'}${rs(c.amount)}</b></div>`).join('')}</div></details>` : ''}</div>`).join('')}</div>`
-    : `<div class="empty">${icon('truck')}<p>No riders yet. Add one, then assign orders from the order page.</p></div>`}`);
-});
-async function settleRider(id, held) {
-  const v = await uiDialog({ title: 'Receive cash from rider', fields: [{ label: 'Amount handed over (Rs)', value: held, inputmode: 'numeric' }], ok: 'Received' });
-  if (!v) return;
-  try { await API.post(`/api/admin/riders/${id}/settle`, { amount: parseInt(String(v[0]).replace(/\D/g, '')) || 0 }); toast('Cash received'); render({ quiet: true }); } catch (e) { errBox(e); }
-}
-async function assignRider(orderId, riderId) { try { await API.post(`/api/admin/orders/${orderId}/assign`, { riderId }); toast(riderId ? 'Rider assigned and notified' : 'Rider removed'); render({ quiet: true }); } catch (e) { errBox(e); render({ quiet: true }); } }
 
 /* ================= Suppliers ================= */
 route('admin/suppliers', async () => {
@@ -171,14 +127,6 @@ async function returnToSupplier(id) {
     toast(`${esc(r.ref)}: ${rs(r.value)} credited`); render({ quiet: true });
   });
 }
-
-/* ================= Khata aging & reminders ================= */
-async function runReminders(btn, force) {
-  const r = await busy(btn, () => API.post('/api/admin/reminders/run', { force: !!force }));
-  toast(r.sent ? `Reminder sent to ${r.sent} shop${r.sent === 1 ? '' : 's'} in the app` : 'No shops are due for a reminder right now', 'bell');
-  render({ quiet: true });
-}
-const agingText = (r) => `Assalam o Alaikum ${r.name}, ${API.info.business.name} ka khata balance ${rs(r.balance)} hai${r.aging.overdue ? `, jis mein ${rs(r.aging.overdue)} 30 din se purana hai` : ''}. Meherbani karke payment arrange karein. Shukriya.`;
 
 /* ================= Barcode scanning ================= */
 async function scanBarcode() {
@@ -265,7 +213,7 @@ after('admin/labels', () => {
   });
 });
 
-/* ================= Printing: invoice (A4 / 80 mm thermal), khata statement, labels ================= */
+/* ================= Printing: invoice (A4 / 80 mm thermal) and labels ================= */
 const PRINT = { labels: null };
 route('print', async (r) => {
   needLogin();
@@ -281,7 +229,7 @@ route('print', async (r) => {
       <div>Invoice: <b>${esc(o.no)}</b><br>${fmtDateTime(o.createdAt)}<br>${esc(o.shopName)}</div><hr>
       ${o.items.map((l) => `<div>${esc(l.name)}</div><div class="r">${l.qty} × ${rs(l.price)} = ${rs(l.qty * l.price)}</div>`).join('')}<hr>
       ${o.discount ? `<div class="r">Discount −${rs(o.discount)}</div>` : ''}<div class="r" style="font-size:15px"><b>TOTAL ${rs(o.total)}</b></div>
-      <div>Payment: ${o.payment === 'credit' ? 'Khata' : esc(o.payment)}${o.paid !== undefined ? ` · paid ${rs(o.paid)}` : ''}</div><hr><div class="c">Shukriya! ${esc(b.hours || '')}</div></div>`;
+      <div>Payment: ${esc(o.payment)}${o.paid !== undefined ? ` · paid ${rs(o.paid)}` : ''}</div><hr><div class="c">Shukriya! ${esc(b.hours || '')}</div></div>`;
     return `${bar(back)}<div class="sheet-a4">
       <div style="display:flex;justify-content:space-between;gap:20px;align-items:flex-start"><div style="display:flex;gap:12px;align-items:center"><div style="width:44px">${logoSVG()}</div><div><b style="font-size:20px;color:#0b1f44">${esc(b.name)}</b><br><small>${esc(b.address)} · ${esc(b.phone)}</small></div></div>
         <div style="text-align:right"><b style="font-size:22px;color:#0b1f44">INVOICE</b><br>${esc(o.no)}<br><small>${fmtDate(o.createdAt)}</small></div></div>
@@ -289,20 +237,7 @@ route('print', async (r) => {
       <table class="inv"><thead><tr><th>#</th><th>Item</th><th>SKU</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>
         ${o.items.map((l, i) => `<tr><td>${i + 1}</td><td>${esc(l.name)}</td><td>${esc(l.sku)}</td><td class="num">${l.qty}</td><td class="num">${rs(l.price)}</td><td class="num">${rs(l.qty * l.price)}</td></tr>`).join('')}</tbody></table>
       <div style="display:flex;justify-content:flex-end;margin-top:12px"><table class="inv" style="width:280px"><tr><td>Subtotal</td><td class="num">${rs(o.subtotal)}</td></tr>${o.discount ? `<tr><td>Discount</td><td class="num">−${rs(o.discount)}</td></tr>` : ''}<tr><td><b>Total</b></td><td class="num"><b>${rs(o.total)}</b></td></tr></table></div>
-      <p style="margin-top:28px;font-size:12.5px;color:#667085">Payment: ${o.payment === 'credit' ? 'added to khata' : esc(o.payment)}.${b.bank ? ' Bank / wallet: ' + esc(b.bank) + '.' : ''} Warranty claims can be filed from the app within the warranty period.</p></div>`;
-  }
-  if (kind === 'statement') {
-    const isShop = API.isShop;
-    const d = isShop ? await API.get('/api/ledger') : await API.get('/api/admin/ledger/' + r.arg);
-    const shop = isShop ? API.user : d.shop;
-    setPageSize('A4');
-    const TYPE = { invoice: 'Order', payment: 'Payment', adjust: 'Adjustment', return: 'Claim credit' };
-    let run = d.balance; const rows = d.entries.map((e) => { const x = { ...e, after: run }; run -= e.amount * e.dir; return x; }).reverse();
-    return `${bar(isShop ? '#/khata' : '#/admin/shop/' + r.arg)}<div class="sheet-a4">
-      <div style="display:flex;justify-content:space-between;gap:20px"><div><b style="font-size:20px;color:#0b1f44">${esc(b.name)}</b><br><small>${esc(b.address)} · ${esc(b.phone)}</small></div><div style="text-align:right"><b style="font-size:20px;color:#0b1f44">KHATA STATEMENT</b><br><small>${fmtDate(Date.now())}</small></div></div>
-      <div style="margin:20px 0;padding:12px 14px;background:#f5f7fb;border-radius:8px"><b>${esc(shop.shop.shopName)}</b> · ${esc(shop.name)} · ${esc(shop.phone)}<br>Balance due: <b>${rs(d.balance)}</b></div>
-      <table class="inv"><thead><tr><th>Date</th><th>Entry</th><th class="num">Debit</th><th class="num">Credit</th><th class="num">Balance</th></tr></thead><tbody>
-      ${rows.map((e) => `<tr><td>${fmtDate(e.at)}</td><td>${TYPE[e.type] || esc(e.type)} ${esc(e.ref || '')}</td><td class="num">${e.dir > 0 ? rs(e.amount) : ''}</td><td class="num">${e.dir < 0 ? rs(e.amount) : ''}</td><td class="num">${rs(e.after)}</td></tr>`).join('')}</tbody></table></div>`;
+      <p style="margin-top:28px;font-size:12.5px;color:#667085">Payment: ${esc(o.payment)}.${b.bank ? ' Bank / wallet: ' + esc(b.bank) + '.' : ''} Warranty claims can be filed from the app within the warranty period.</p></div>`;
   }
   if (kind === 'labels') {
     if (!PRINT.labels) { setTimeout(() => go('#/admin/labels')); return ''; }

@@ -1,5 +1,5 @@
 /* Lahore Mobile Wholesale — business core.
-   One implementation of every rule (auth, pricing, orders, stock, khata, claims, messages, reports),
+   One implementation of every rule (auth, pricing, orders, stock, claims, messages, suppliers, reports),
    shared by the Node server (SQLite store) and the in-browser demo (localStorage store).
 
    createCore({ store, deps }) -> { handle(req), seed(opts) }
@@ -73,27 +73,12 @@
     function dealBought(dealId, shopId) {
       return S.all('orders').filter((o) => o.shopId === shopId && o.status !== 'cancelled').reduce((a, o) => a + o.items.filter((l) => l.dealId === dealId).reduce((x, l) => x + l.qty, 0), 0);
     }
-    /* Khata aging: payments and credits settle the oldest invoices first (FIFO). */
-    function agingOf(shopId) {
-      const es = S.all('ledger').filter((e) => e.shopId === shopId).sort((a, b) => a.at - b.at);
-      let credit = es.filter((e) => e.dir < 0).reduce((a, e) => a + e.amount, 0);
-      const open = [];
-      for (const e of es.filter((x) => x.dir > 0)) { const paid = Math.min(credit, e.amount); credit -= paid; if (e.amount - paid > 0) open.push({ at: e.at, ref: e.ref, due: e.amount - paid }); }
-      const b = { d0: 0, d30: 0, d60: 0, d90: 0, oldestAt: open.length ? open[0].at : null };
-      for (const o of open) { const days = (now() - o.at) / DAY; if (days > 90) b.d90 += o.due; else if (days > 60) b.d60 += o.due; else if (days > 30) b.d30 += o.due; else b.d0 += o.due; }
-      b.overdue = b.d30 + b.d60 + b.d90; b.open = open;
-      return b;
-    }
     function supplierBalance(sid) { return S.all('supplierLedger').filter((e) => e.supplierId === sid).reduce((a, e) => a + e.amount * e.dir, 0); }
     function supplierFind(name) {
       const n = String(name || '').trim(); if (!n) return null;
       return S.all('suppliers').find((x) => x.name.toLowerCase() === n.toLowerCase()) || null;
     }
     const shopName = (sid) => (S.get('users', sid) || { shop: { shopName: 'Shop' } }).shop.shopName;
-    function balanceOf(shopId) {
-      return S.all('ledger').filter((e) => e.shopId === shopId).reduce((a, e) => a + e.amount * e.dir, 0);
-    }
-    function ledgerAdd(e) { const doc = { id: id('l'), at: now(), ...e }; S.put('ledger', doc); return doc; }
     function moveStock(p, qty, reason, ref, by) {
       p.stock += qty; p.updatedAt = now();
       if (p.stock < 0) bad(`Not enough stock for ${p.name} (only ${p.stock - qty} left)`);
@@ -103,7 +88,7 @@
     function publicUser(u) {
       if (!u) return null;
       const out = { id: u.id, role: u.role, name: u.name, phone: u.phone, status: u.status, createdAt: u.createdAt };
-      if (u.role === 'shop') Object.assign(out, { shop: u.shop, creditLimit: u.creditLimit || 0, favs: u.favs || [] });
+      if (u.role === 'shop') Object.assign(out, { shop: u.shop, favs: u.favs || [] });
       return out;
     }
     function shopView(p, u) {
@@ -123,8 +108,7 @@
     }
     function orderView(o, u) {
       const shop = o.shopId ? S.get('users', o.shopId) : null;
-      const rider = o.riderId ? S.get('users', o.riderId) : null;
-      const out = { ...o, shopName: shop ? shop.shop.shopName : o.walkInName || 'Walk-in customer', shopPhone: shop ? shop.phone : '', shopAddress: shop ? (shop.shop.address && shop.shop.market && shop.shop.address.includes(shop.shop.market) ? shop.shop.address : [shop.shop.address, shop.shop.market].filter(Boolean).join(', ')) : '', riderName: rider ? rider.name : '', riderPhone: rider ? rider.phone : '' };
+      const out = { ...o, shopName: shop ? shop.shop.shopName : o.walkInName || 'Walk-in customer', shopPhone: shop ? shop.phone : '', shopAddress: shop ? (shop.shop.address && shop.shop.market && shop.shop.address.includes(shop.shop.market) ? shop.shop.address : [shop.shop.address, shop.shop.market].filter(Boolean).join(', ')) : '' };
       if (!u || u.role === 'shop') { out.items = o.items.map(({ cost, ...i }) => i); delete out.profit; }
       return out;
     }
@@ -153,14 +137,7 @@
       const subtotal = lines.reduce((a, l) => a + l.price * l.qty, 0);
       return { lines, subtotal };
     }
-    function creditCheck(shop, extra) {
-      const limit = shop.creditLimit || 0, bal = balanceOf(shop.id);
-      if (bal + extra > limit) return `This takes the khata balance to ${rs(bal + extra)}, above the credit limit of ${rs(limit)}`;
-      return '';
-    }
-    function confirmOrder(o, by, override) {
-      const shop = o.shopId ? S.get('users', o.shopId) : null;
-      if (shop && o.payment === 'credit' && !override) { const msg = creditCheck(shop, o.total); if (msg) bad(msg + '. Confirm with override to proceed.'); }
+    function confirmOrder(o, by) {
       for (const l of o.items) {
         const p = S.get('products', l.pid); if (!p) bad(`${l.name} was deleted`);
         if (l.qty > p.stock) bad(`Only ${p.stock} of ${p.name} in stock`);
@@ -168,25 +145,15 @@
       for (const l of o.items) { const p = S.get('products', l.pid); l.cost = p.cost || 0; moveStock(p, -l.qty, 'sale', o.no, by); }
       o.profit = o.items.reduce((a, l) => a + (l.price - l.cost) * l.qty, 0) - (o.discount || 0);
       o.soldAt = now();
-      if (shop) ledgerAdd({ shopId: shop.id, type: 'invoice', dir: 1, amount: o.total, ref: o.no, note: `Order ${o.no}`, by });
     }
     function reverseOrder(o, by) {
       for (const l of o.items) { const p = S.get('products', l.pid); if (p) moveStock(p, l.qty, 'cancel', o.no, by); }
-      if (o.shopId) ledgerAdd({ shopId: o.shopId, type: 'adjust', dir: -1, amount: o.total, ref: o.no, note: `Order ${o.no} cancelled`, by });
     }
     function setStatus(o, status, user, opts = {}) {
       if (!ORDER_FLOW[o.status] || !ORDER_FLOW[o.status].includes(status)) bad(`Cannot change an order from ${o.status} to ${status}`);
       const wasSold = SOLD.includes(o.status);
-      if (status === 'confirmed' || (!wasSold && SOLD.includes(status))) confirmOrder(o, user.name, opts.override);
+      if (status === 'confirmed' || (!wasSold && SOLD.includes(status))) confirmOrder(o, user.name);
       if (status === 'cancelled' && wasSold) reverseOrder(o, user.name);
-      if (status === 'delivered' && opts.collect && o.shopId) {
-        const amount = opts.collect === true ? o.total : money(opts.collect, 'Amount collected');
-        if (amount > 0) {
-          ledgerAdd({ shopId: o.shopId, type: 'payment', dir: -1, amount, method: user.role === 'rider' ? 'cash (rider)' : o.payment === 'bank' ? 'bank' : 'cash', ref: o.no, note: `Collected on delivery of ${o.no}${user.role === 'rider' ? ' by ' + user.name : ''}`, by: user.name });
-          if (user.role === 'rider') S.put('riderCash', { id: id('rc'), riderId: user.id, dir: 1, amount, ref: o.no, note: `Collected from ${shopName(o.shopId)}`, at: now() });
-          o.collected = (o.collected || 0) + amount;
-        }
-      }
       if (status === 'delivered') o.deliveredAt = now();
       o.status = status;
       o.history.push({ status, at: now(), by: user.name, note: str(opts.note, 200) });
@@ -196,7 +163,6 @@
     function statusEvents(o) {
       const ev = [{ to: 'admin', type: 'orders' }];
       if (o.shopId) ev.push({ to: 'shop:' + o.shopId, type: 'orders', title: `Order ${o.no} ${STATUS_TEXT[o.status] || o.status}`, body: `${o.items.length} items · ${rs(o.total)}`, url: '#/order/' + o.id });
-      if (o.riderId) ev.push({ to: 'rider:' + o.riderId, type: 'orders' });
       return ev;
     }
     const inRange = (t, from, to) => t >= from && t < to;
@@ -223,7 +189,7 @@
       const keys = []; const rx = new RegExp('^' + pattern.replace(/:(\w+)/g, (_, k) => { keys.push(k); return '([^/]+)'; }) + '$');
       routes.push({ method, rx, keys, roles, fn });
     };
-    const ADMIN = ['admin'], STAFF = ['admin', 'staff'], SHOP = ['shop'], RIDER = ['rider'], ANY = null, AUTH = ['admin', 'staff', 'shop', 'rider'];
+    const ADMIN = ['admin'], STAFF = ['admin', 'staff'], SHOP = ['shop'], ANY = null, AUTH = ['admin', 'staff', 'shop'];
 
     // Public
     R('GET', '/api/info', ANY, () => {
@@ -254,7 +220,7 @@
       const u = {
         id: id('u'), role: 'shop', status: 'pending', phone, name: reqStr(body.name, 60, 'Your name'), pass: deps.hashPassword(pw),
         shop: { shopName: reqStr(body.shopName, 80, 'Shop name'), market: str(body.market, 60), address: str(body.address, 200) },
-        creditLimit: 0, favs: [], createdAt: now(),
+        favs: [], createdAt: now(),
       };
       S.put('users', u);
       const token = newSession(u);
@@ -278,11 +244,7 @@
       if (!user) return { user: null };
       const out = { user: publicUser(user) };
       if (user.role === 'shop') {
-        out.balance = balanceOf(user.id);
         out.unread = S.all('messages').filter((m) => m.shopId === user.id && m.from === 'admin' && !m.readShop).length;
-      } else if (user.role === 'rider') {
-        out.deliveries = S.all('orders').filter((o) => o.riderId === user.id && ['confirmed', 'packed', 'dispatched'].includes(o.status)).length;
-        out.cashInHand = S.all('riderCash').filter((c) => c.riderId === user.id).reduce((a, c) => a + c.amount * c.dir, 0);
       } else {
         out.unread = S.all('messages').filter((m) => m.from === 'shop' && !m.readAdmin).length;
         out.pendingOrders = S.all('orders').filter((o) => o.status === 'pending').length;
@@ -310,16 +272,15 @@
     });
     R('POST', '/api/orders', SHOP, ({ user, body }) => {
       activeShop(user);
-      const payment = ['credit', 'cash', 'bank'].includes(body.payment) ? body.payment : 'cash';
+      const payment = body.payment === 'bank' ? 'bank' : 'cash';
       const { lines, subtotal } = priceItems(body.items, user);
-      if (payment === 'credit') { const msg = creditCheck(user, subtotal); if (msg) bad(msg + '. Choose cash, or ask the store to raise your limit.'); }
       const o = { id: id('o'), no: nextNo('order', 'LM-', 1000), shopId: user.id, items: lines, subtotal, discount: 0, total: subtotal, payment, note: str(body.note, 300, 'Note'), source: 'app', status: 'pending', createdAt: now(), history: [{ status: 'pending', at: now(), by: user.name }] };
       S.put('orders', o);
       return { status: 201, body: orderView(o, user), events: [{ to: 'admin', type: 'orders', title: `New order ${o.no}`, body: `${user.shop.shopName} · ${o.items.length} items · ${rs(o.total)}`, url: '#/admin/order/' + o.id }] };
     });
     R('GET', '/api/orders', SHOP, ({ user }) => S.all('orders').filter((o) => o.shopId === user.id).sort((a, b) => b.createdAt - a.createdAt).map((o) => orderView(o, user)));
     R('GET', '/api/orders/:id', AUTH, ({ user, params }) => {
-      const o = S.get('orders', params.id); if (!o || (user.role === 'shop' && o.shopId !== user.id) || (user.role === 'rider' && o.riderId !== user.id)) nf('Order not found');
+      const o = S.get('orders', params.id); if (!o || (user.role === 'shop' && o.shopId !== user.id)) nf('Order not found');
       return orderView(o, user);
     });
     R('POST', '/api/orders/:id/cancel', SHOP, ({ user, params }) => {
@@ -328,10 +289,6 @@
       setStatus(o, 'cancelled', user, { note: 'Cancelled by shop' });
       return { body: orderView(o, user), events: [{ to: 'admin', type: 'orders' }] };
     });
-    R('GET', '/api/ledger', SHOP, ({ user }) => ({
-      balance: balanceOf(user.id), creditLimit: user.creditLimit || 0, aging: (({ open, ...a }) => a)(agingOf(user.id)),
-      entries: S.all('ledger').filter((e) => e.shopId === user.id).sort((a, b) => b.at - a.at).slice(0, 300),
-    }));
     R('GET', '/api/messages', SHOP, ({ user }) => {
       const list = S.all('messages').filter((m) => m.shopId === user.id).sort((a, b) => a.at - b.at);
       list.forEach((m) => { if (m.from === 'admin' && !m.readShop) { m.readShop = true; S.put('messages', m); } });
@@ -370,7 +327,6 @@
       const byP = new Map(), byS = new Map();
       last30.forEach((o) => { o.items.forEach((l) => byP.set(l.pid, { name: l.name, qty: (byP.get(l.pid)?.qty || 0) + l.qty, value: (byP.get(l.pid)?.value || 0) + l.qty * l.price })); if (o.shopId) byS.set(o.shopId, (byS.get(o.shopId) || 0) + o.total); });
       const shops = S.all('users').filter((u) => u.role === 'shop');
-      const receivable = shops.reduce((a, s) => a + Math.max(0, balanceOf(s.id)), 0);
       const out = {
         today: { total: sum(todayO), count: todayO.length }, month: { total: sum(monthO), count: monthO.length },
         pendingOrders: S.all('orders').filter((o) => o.status === 'pending').length,
@@ -378,7 +334,6 @@
         unread: S.all('messages').filter((m) => m.from === 'shop' && !m.readAdmin).length,
         pendingShops: shops.filter((s) => s.status === 'pending').length, activeShops: shops.filter((s) => s.status === 'active').length,
         openClaims: S.all('claims').filter((c) => c.status === 'open').length, openRequests: S.all('requests').filter((r) => r.status === 'open').length,
-        receivable,
         lowStock: S.all('products').filter((p) => p.active && p.stock <= (p.reorderLevel || 0)).map((p) => ({ id: p.id, name: p.name, stock: p.stock, reorderLevel: p.reorderLevel })).slice(0, 20),
         series, topProducts: [...byP.entries()].map(([pid, v]) => ({ pid, ...v })).sort((a, b) => b.value - a.value).slice(0, 6),
         topShops: [...byS.entries()].map(([sid, v]) => ({ id: sid, name: S.get('users', sid)?.shop.shopName || '—', value: v })).sort((a, b) => b.value - a.value).slice(0, 6),
@@ -392,21 +347,19 @@
       const orders = S.all('orders');
       return S.all('users').filter((u) => u.role === 'shop').map((u) => {
         const mine = orders.filter((o) => o.shopId === u.id && SOLD.includes(o.status));
-        const lastPay = S.all('ledger').filter((e) => e.shopId === u.id && e.type === 'payment').sort((a, b) => b.at - a.at)[0];
-        return { ...publicUser(u), balance: balanceOf(u.id), orders: mine.length, sales: mine.reduce((a, o) => a + o.total, 0), lastOrderAt: mine.reduce((a, o) => Math.max(a, o.createdAt), 0) || null, lastPaymentAt: lastPay ? lastPay.at : null };
+        return { ...publicUser(u), orders: mine.length, sales: mine.reduce((a, o) => a + o.total, 0), lastOrderAt: mine.reduce((a, o) => Math.max(a, o.createdAt), 0) || null };
       }).sort((a, b) => (a.status === 'pending' ? -1 : 0) - (b.status === 'pending' ? -1 : 0) || b.createdAt - a.createdAt);
     });
     R('POST', '/api/admin/shops', STAFF, ({ body }) => {
       const phone = normPhone(body.phone);
       if (S.all('users').some((u) => u.phone === phone)) bad('A shop with this number already exists');
       const pw = str(body.password, 100); if (pw.length < 6) bad('Set a password of at least 6 characters for the shop');
-      const u = { id: id('u'), role: 'shop', status: 'active', phone, name: reqStr(body.name, 60, 'Owner name'), pass: deps.hashPassword(pw), shop: { shopName: reqStr(body.shopName, 80, 'Shop name'), market: str(body.market, 60), address: str(body.address, 200) }, creditLimit: money(body.creditLimit || 0, 'Credit limit'), favs: [], createdAt: now() };
+      const u = { id: id('u'), role: 'shop', status: 'active', phone, name: reqStr(body.name, 60, 'Owner name'), pass: deps.hashPassword(pw), shop: { shopName: reqStr(body.shopName, 80, 'Shop name'), market: str(body.market, 60), address: str(body.address, 200) }, favs: [], createdAt: now() };
       S.put('users', u); return { status: 201, body: publicUser(u) };
     });
     R('POST', '/api/admin/shops/:id', STAFF, ({ user, params, body }) => {
       const u = S.get('users', params.id); if (!u || u.role !== 'shop') nf('Shop not found');
       if (body.status) { if (!['active', 'blocked', 'pending'].includes(body.status)) bad('Unknown status'); u.status = body.status; if (body.status === 'blocked') S.all('sessions').filter((s) => s.userId === u.id).forEach((s) => S.del('sessions', s.id)); }
-      if (body.creditLimit !== undefined) { if (user.role !== 'admin') deny('Only the owner can change credit limits'); u.creditLimit = money(body.creditLimit, 'Credit limit'); }
       if (body.shopName) u.shop.shopName = reqStr(body.shopName, 80, 'Shop name');
       if (body.name) u.name = reqStr(body.name, 60, 'Owner name');
       if (body.market !== undefined) u.shop.market = str(body.market, 60);
@@ -424,8 +377,7 @@
     });
     R('POST', '/api/admin/orders/:id/status', STAFF, ({ user, params, body }) => {
       const o = S.get('orders', params.id); if (!o) nf('Order not found');
-      if (body.override && user.role !== 'admin') deny('Only the owner can override the credit limit');
-      setStatus(o, String(body.status), user, { override: !!body.override, collect: !!body.collect, note: body.note });
+      setStatus(o, String(body.status), user, { note: body.note });
       return { body: orderView(o, user), events: statusEvents(o) };
     });
     R('POST', '/api/admin/orders/:id/items', STAFF, ({ user, params, body }) => {
@@ -445,13 +397,10 @@
       const { lines, subtotal } = priceItems(body.items, shop || user, { enforceMoq: false });
       const discount = money(body.discount || 0, 'Discount'); if (discount > subtotal) bad('Discount is larger than the sale');
       const total = subtotal - discount;
-      const paid = body.paid === undefined || body.paid === '' ? total : money(body.paid, 'Amount paid');
-      if (!shop && paid < total) bad('Walk-in sales must be paid in full. Choose a shop to put the balance on khata.');
       const method = ['cash', 'bank', 'jazzcash', 'easypaisa'].includes(body.method) ? body.method : 'cash';
-      const o = { id: id('o'), no: nextNo('order', 'LM-', 1000), shopId: shop ? shop.id : null, walkInName: shop ? '' : str(body.customer, 60) || 'Walk-in customer', items: lines, subtotal, discount, total, payment: paid >= total ? method : 'credit', note: str(body.note, 300), source: 'counter', status: 'delivered', createdAt: now(), history: [{ status: 'delivered', at: now(), by: user.name, note: 'Counter sale' }] };
-      confirmOrder(o, user.name, true);
-      if (shop && paid > 0) ledgerAdd({ shopId: shop.id, type: 'payment', dir: -1, amount: Math.min(paid, total), method, ref: o.no, note: `Paid at counter for ${o.no}`, by: user.name });
-      o.paid = Math.min(paid, total);
+      const o = { id: id('o'), no: nextNo('order', 'LM-', 1000), shopId: shop ? shop.id : null, walkInName: shop ? '' : str(body.customer, 60) || 'Walk-in customer', items: lines, subtotal, discount, total, payment: method, note: str(body.note, 300), source: 'counter', status: 'delivered', createdAt: now(), history: [{ status: 'delivered', at: now(), by: user.name, note: 'Counter sale' }] };
+      confirmOrder(o, user.name);
+      o.paid = total;
       S.put('orders', o);
       return { status: 201, body: orderView(o, user), events: shop ? [{ to: 'shop:' + shop.id, type: 'orders' }] : [] };
     });
@@ -543,27 +492,6 @@
       return { status: 201, body: pu };
     });
 
-    // Khata
-    R('GET', '/api/admin/ledger/:shopId', STAFF, ({ params }) => {
-      const u = S.get('users', params.shopId); if (!u || u.role !== 'shop') nf('Shop not found');
-      return { shop: publicUser(u), balance: balanceOf(u.id), entries: S.all('ledger').filter((e) => e.shopId === u.id).sort((a, b) => b.at - a.at) };
-    });
-    R('POST', '/api/admin/payments', STAFF, ({ user, body }) => {
-      const u = S.get('users', String(body.shopId)); if (!u || u.role !== 'shop') bad('Choose a shop');
-      const amount = money(body.amount, 'Amount'); if (!amount) bad('Enter the amount received');
-      const kind = body.kind === 'adjust' ? 'adjust' : 'payment';
-      if (kind === 'adjust' && user.role !== 'admin') deny('Only the owner can make khata adjustments');
-      const dir = kind === 'adjust' && body.dir === 1 ? 1 : -1;
-      const e = ledgerAdd({ shopId: u.id, type: kind, dir, amount, method: str(body.method, 20) || 'cash', note: str(body.note, 200), ref: '', by: user.name });
-      return { status: 201, body: { entry: e, balance: balanceOf(u.id) }, events: [{ to: 'shop:' + u.id, type: 'ledger', title: kind === 'payment' ? `Payment received: ${rs(amount)}` : 'Khata updated', body: `New khata balance: ${rs(balanceOf(u.id))}`, url: '#/khata' }] };
-    });
-    R('GET', '/api/admin/receivables', STAFF, () => S.all('users').filter((u) => u.role === 'shop').map((u) => {
-      const entries = S.all('ledger').filter((e) => e.shopId === u.id);
-      const lastPay = entries.filter((e) => e.type === 'payment').sort((a, b) => b.at - a.at)[0];
-      const ag = agingOf(u.id); delete ag.open;
-      return { id: u.id, shopName: u.shop.shopName, name: u.name, phone: u.phone, market: u.shop.market, balance: balanceOf(u.id), creditLimit: u.creditLimit || 0, lastPaymentAt: lastPay ? lastPay.at : null, aging: ag, lastReminderAt: u.lastReminderAt || null };
-    }).filter((r) => r.balance !== 0).sort((a, b) => b.balance - a.balance));
-
     // Messages
     R('GET', '/api/admin/threads', STAFF, () => {
       const byShop = new Map();
@@ -599,15 +527,13 @@
       if (body.status === 'approved') {
         const p = S.get('products', c.pid);
         if (p) { if (body.restock) moveStock(p, c.qty, 'return', c.no, user.name); else { p.faulty = (p.faulty || 0) + c.qty; S.put('products', p); } }
-        const credit = body.replace ? 0 : c.qty * c.price;
         if (body.replace) { if (!p || p.stock < c.qty) bad('Not enough stock to send a replacement'); moveStock(p, -c.qty, 'replacement', c.no, user.name); }
-        if (credit) ledgerAdd({ shopId: c.shopId, type: 'return', dir: -1, amount: credit, ref: c.no, note: `Claim ${c.no}: ${c.qty} × ${c.name}`, by: user.name });
-        c.resolution = body.replace ? 'replaced' : 'credited';
+        c.resolution = body.replace ? 'replaced' : 'refunded'; c.refund = body.replace ? 0 : c.qty * c.price;
         c.supplierId = p ? p.supplierId || '' : '';
       } else if (body.status !== 'rejected') bad('Choose approve or reject');
       c.status = body.status; c.closedAt = now(); c.adminNote = str(body.note, 300); c.by = user.name;
       S.put('claims', c);
-      return { body: c, events: [{ to: 'shop:' + c.shopId, type: 'claims', title: `Claim ${c.no} ${c.status}`, body: c.status === 'approved' ? (c.resolution === 'replaced' ? 'A replacement is on its way.' : `${rs(c.qty * c.price)} credited to your khata.`) : c.adminNote || 'Message the store for details.', url: '#/orders' }] };
+      return { body: c, events: [{ to: 'shop:' + c.shopId, type: 'claims', title: `Claim ${c.no} ${c.status}`, body: c.status === 'approved' ? (c.resolution === 'replaced' ? 'A replacement is on its way.' : `${rs(c.qty * c.price)} refund. Collect it at the shop or with your next order.`) : c.adminNote || 'Message the store for details.', url: '#/orders' }] };
     });
 
     // Reports
@@ -647,7 +573,6 @@
       const b = body.business || {};
       s.business = { name: reqStr(b.name, 60, 'Business name'), tagline: str(b.tagline, 120), phone: str(b.phone, 30), whatsapp: str(b.whatsapp, 20).replace(/\D/g, ''), address: str(b.address, 200), mapUrl: /^https:\/\//.test(String(b.mapUrl || '')) ? str(b.mapUrl, 300) : '', hours: str(b.hours, 100), bank: str(b.bank, 300) };
       if (Array.isArray(body.markets)) s.markets = body.markets.map((m) => str(m, 60)).filter(Boolean).slice(0, 40);
-      if (body.reminders) s.reminders = { enabled: !!body.reminders.enabled, minDays: int(body.reminders.minDays || 30, 1, 365, 'Reminder age'), everyDays: int(body.reminders.everyDays || 7, 1, 90, 'Reminder interval') };
       S.put('settings', s); return s;
     });
     R('GET', '/api/admin/staff', ADMIN, () => S.all('users').filter((u) => u.role !== 'shop').map(publicUser));
@@ -655,11 +580,11 @@
       const phone = normPhone(body.phone);
       if (S.all('users').some((u) => u.phone === phone)) bad('This number is already registered');
       const pw = str(body.password, 100); if (pw.length < 6) bad('Password must be at least 6 characters');
-      const u = { id: id('u'), role: body.role === 'rider' ? 'rider' : 'staff', status: 'active', phone, name: reqStr(body.name, 60, 'Name'), pass: deps.hashPassword(pw), createdAt: now() };
+      const u = { id: id('u'), role: 'staff', status: 'active', phone, name: reqStr(body.name, 60, 'Name'), pass: deps.hashPassword(pw), createdAt: now() };
       S.put('users', u); return { status: 201, body: publicUser(u) };
     });
     R('POST', '/api/admin/staff/:id', ADMIN, ({ user, params, body }) => {
-      const u = S.get('users', params.id); if (!u || !['staff', 'rider'].includes(u.role)) nf('Staff member not found');
+      const u = S.get('users', params.id); if (!u || u.role !== 'staff') nf('Staff member not found');
       if (body.status) { u.status = body.status === 'blocked' ? 'blocked' : 'active'; if (u.status === 'blocked') S.all('sessions').filter((s) => s.userId === u.id).forEach((s) => S.del('sessions', s.id)); }
       if (body.password) { if (String(body.password).length < 6) bad('Password must be at least 6 characters'); u.pass = deps.hashPassword(String(body.password)); }
       S.put('users', u); return publicUser(u);
@@ -670,11 +595,11 @@
       if (d.length > 2.8e6) bad('Image is too large (max 2 MB)');
       return { url: deps.saveImage(d) };
     });
-    const BACKUP = ['settings', 'users', 'products', 'orders', 'ledger', 'stockMoves', 'purchases', 'messages', 'announcements', 'requests', 'claims', 'counters', 'deals', 'suppliers', 'supplierLedger', 'riderCash'];
+    const BACKUP = ['settings', 'users', 'products', 'orders', 'stockMoves', 'purchases', 'messages', 'announcements', 'requests', 'claims', 'counters', 'deals', 'suppliers', 'supplierLedger'];
     R('GET', '/api/admin/backup', ADMIN, () => { const out = { app: 'lahore-mobile-wholesale', v: 1, at: now() }; BACKUP.forEach((c) => (out[c] = S.all(c))); return out; });
     R('POST', '/api/admin/restore', ADMIN, ({ body }) => {
       if (!body || body.app !== 'lahore-mobile-wholesale') bad('This file is not a Lahore Mobile backup');
-      ['deals', 'suppliers', 'supplierLedger', 'riderCash'].forEach((c) => { if (!body[c]) body[c] = []; });
+      ['deals', 'suppliers', 'supplierLedger'].forEach((c) => { if (!body[c]) body[c] = []; });
       BACKUP.forEach((c) => { if (!Array.isArray(body[c])) bad(`Backup is missing ${c}`); });
       BACKUP.forEach((c) => { S.all(c).forEach((d) => S.del(c, d.id)); body[c].forEach((d) => S.put(c, d)); });
       return { ok: true };
@@ -730,41 +655,6 @@
       const out = {}; S.all('products').forEach((p) => { const pi = priceInfo(p, u); out[p.id] = { price: pi.price, kind: pi.kind }; }); return out;
     });
 
-    /* ================= Riders ================= */
-    R('GET', '/api/admin/riders', STAFF, () => S.all('users').filter((u) => u.role === 'rider').map((u) => ({
-      ...publicUser(u), cashInHand: S.all('riderCash').filter((c) => c.riderId === u.id).reduce((a, c) => a + c.amount * c.dir, 0),
-      active: S.all('orders').filter((o) => o.riderId === u.id && ['confirmed', 'packed', 'dispatched'].includes(o.status)).length,
-      deliveredToday: S.all('orders').filter((o) => o.riderId === u.id && o.status === 'delivered' && o.deliveredAt > now() - DAY).length,
-      cash: S.all('riderCash').filter((c) => c.riderId === u.id).sort((a, b) => b.at - a.at).slice(0, 30),
-    })));
-    R('POST', '/api/admin/orders/:id/assign', STAFF, ({ user, params, body }) => {
-      const o = S.get('orders', params.id); if (!o) nf('Order not found');
-      if (!o.shopId) bad('Counter sales are not delivered');
-      if (!['confirmed', 'packed', 'dispatched'].includes(o.status)) bad('Confirm the order before assigning a rider');
-      if (body.riderId) { const r = S.get('users', String(body.riderId)); if (!r || r.role !== 'rider' || r.status !== 'active') bad('Choose an active rider'); o.riderId = r.id; o.history.push({ status: o.status, at: now(), by: user.name, note: `Assigned to ${r.name}` }); }
-      else { o.riderId = ''; o.history.push({ status: o.status, at: now(), by: user.name, note: 'Rider removed' }); }
-      S.put('orders', o);
-      const ev = [{ to: 'admin', type: 'orders' }];
-      if (o.riderId) ev.push({ to: 'rider:' + o.riderId, type: 'orders', title: `New delivery ${o.no}`, body: `${shopName(o.shopId)} · ${rs(o.total)}`, url: '#/rider' });
-      return { body: orderView(o, user), events: ev };
-    });
-    R('POST', '/api/admin/riders/:id/settle', STAFF, ({ user, params, body }) => {
-      const r = S.get('users', params.id); if (!r || r.role !== 'rider') nf('Rider not found');
-      const held = S.all('riderCash').filter((c) => c.riderId === r.id).reduce((a, c) => a + c.amount * c.dir, 0);
-      const amount = money(body.amount, 'Amount'); if (!amount) bad('Enter the amount handed over'); if (amount > held) bad(`${r.name} is holding only ${rs(held)}`);
-      S.put('riderCash', { id: id('rc'), riderId: r.id, dir: -1, amount, ref: '', note: `Handed over to ${user.name}`, at: now() });
-      return { cashInHand: held - amount };
-    });
-    R('GET', '/api/rider/orders', RIDER, ({ user }) => S.all('orders').filter((o) => o.riderId === user.id && (['confirmed', 'packed', 'dispatched'].includes(o.status) || (o.status === 'delivered' && o.deliveredAt > now() - DAY)))
-      .sort((a, b) => (a.status === 'delivered') - (b.status === 'delivered') || a.createdAt - b.createdAt).map((o) => ({ ...orderView(o, null), balance: balanceOf(o.shopId) })));
-    R('POST', '/api/rider/orders/:id/status', RIDER, ({ user, params, body }) => {
-      const o = S.get('orders', params.id); if (!o || o.riderId !== user.id) nf('Delivery not found');
-      if (body.status === 'dispatched') { if (o.status === 'dispatched') bad('Already picked up'); setStatus(o, 'dispatched', user, { note: 'Picked up by rider' }); }
-      else if (body.status === 'delivered') setStatus(o, 'delivered', user, { collect: body.collected ? money(body.collected, 'Amount collected') : 0, note: str(body.note, 200) });
-      else bad('Unknown action');
-      return { body: orderView(o, null), events: statusEvents(o) };
-    });
-
     /* ================= Suppliers ================= */
     function supplierStats(sp) {
       const bought = new Map();
@@ -814,33 +704,6 @@
       return { ref, value, balance: supplierBalance(sp.id) };
     });
     R('GET', '/api/admin/reports/faulty', ADMIN, () => S.all('suppliers').map((sp) => ({ id: sp.id, name: sp.name, ...supplierStats(sp) })).sort((a, b) => b.faultyRate - a.faultyRate));
-
-    /* ================= Payment reminders ================= */
-    function dueReminders(force) {
-      const r = settings().reminders || { enabled: false, minDays: 30, everyDays: 7 };
-      return S.all('users').filter((u) => u.role === 'shop' && u.status === 'active').map((u) => {
-        const ag = agingOf(u.id); const bal = balanceOf(u.id);
-        const old = ag.open.filter((o) => (now() - o.at) / DAY > r.minDays).reduce((a, o) => a + o.due, 0);
-        return { u, ag, bal, old };
-      }).filter((x) => x.old > 0 && (force || !x.u.lastReminderAt || now() - x.u.lastReminderAt >= r.everyDays * DAY));
-    }
-    function sendReminders(force, by) {
-      const r = settings().reminders || {}; const biz = settings().business;
-      const due = dueReminders(force); const events = [];
-      for (const { u, bal, old } of due) {
-        const text = `Assalam o Alaikum ${u.name}, a friendly reminder from ${biz.name}: your khata balance is ${rs(bal)}, of which ${rs(old)} is more than ${r.minDays || 30} days old. Please arrange payment.${biz.bank ? ' Bank/wallet: ' + biz.bank : ''} Shukriya.`;
-        S.put('messages', { id: id('g'), shopId: u.id, from: 'admin', by: by || 'Automatic reminder', text, pid: '', at: now(), readAdmin: true, readShop: false, reminder: true });
-        u.lastReminderAt = now(); S.put('users', u);
-        events.push({ to: 'shop:' + u.id, type: 'messages', title: 'Payment reminder', body: `Khata balance ${rs(bal)} · ${rs(old)} overdue`, url: '#/khata' });
-      }
-      return { sent: due.length, shops: due.map((d) => d.u.shop.shopName), events };
-    }
-    R('POST', '/api/admin/reminders/run', STAFF, ({ user, body }) => { const r = sendReminders(!!body.force, user.name); return { body: { sent: r.sent, shops: r.shops }, events: r.events.concat([{ to: 'admin', type: 'messages' }]) }; });
-    function runReminders() {
-      let out = { sent: 0, events: [] };
-      S.tx(() => { const r = settings() && settings().reminders; if (r && r.enabled) out = sendReminders(false, ''); });
-      return out;
-    }
 
     /* ================= Push subscriptions ================= */
     R('POST', '/api/push/subscribe', AUTH, ({ user, body }) => {
@@ -894,7 +757,6 @@
         S.put('settings', {
           id: 'main',
           business: { name: 'Lahore Mobile', tagline: 'Wholesale mobile accessories', phone: '0303 6603409', whatsapp: '923036603409', address: 'Main Butt Chowk, near Gourmet Bakery, Tajpura Housing Scheme, Lahore', mapUrl: 'https://maps.app.goo.gl/ux9cupKioaUZTiwf7', hours: 'Daily 11 am – 10 pm', bank: '' },
-          reminders: { enabled: true, minDays: 30, everyDays: 7 },
           markets: ['Tajpura', 'Harbanspura', 'Shalimar', 'Mughalpura', 'Hafeez Centre', 'Hall Road', 'Mall Road', 'Liberty', 'Johar Town', 'Model Town', 'Ichhra', 'Anarkali', 'Shah Alam', 'Township', 'DHA', 'Other'],
         });
         S.put('users', { id: 'u_admin', role: 'admin', status: 'active', phone: normPhone(adminPhone), name: 'Owner', pass: deps.hashPassword(adminPassword), createdAt: now() });
@@ -944,22 +806,21 @@
             ['Usman Tariq', 'Tariq Mobile Zone', 'Johar Town', '03033333333', 'standard', 75000],
             ['Bilal Ahmed', 'Bilal Accessories', 'Anarkali', '03044444444', 'standard', 50000],
           ];
-          shops.forEach(([name, shopName, market, phone, , limit], i) => S.put('users', { id: 'u_s' + i, role: 'shop', status: 'active', phone, name, pass: deps.hashPassword('shop123'), shop: { shopName, market, address: market + ', Lahore' }, creditLimit: limit, favs: [], createdAt: now() - (60 - i) * DAY }));
-          S.put('users', { id: 'u_s9', role: 'shop', status: 'pending', phone: '03055555555', name: 'Hamza Iqbal', pass: deps.hashPassword('shop123'), shop: { shopName: 'Iqbal Telecom', market: 'Township', address: 'Township, Lahore' }, creditLimit: 0, favs: [], createdAt: now() - DAY / 3 });
+          shops.forEach(([name, shopName, market, phone, , limit], i) => S.put('users', { id: 'u_s' + i, role: 'shop', status: 'active', phone, name, pass: deps.hashPassword('shop123'), shop: { shopName, market, address: market + ', Lahore' }, favs: [], createdAt: now() - (60 - i) * DAY }));
+          S.put('users', { id: 'u_s9', role: 'shop', status: 'pending', phone: '03055555555', name: 'Hamza Iqbal', pass: deps.hashPassword('shop123'), shop: { shopName: 'Iqbal Telecom', market: 'Township', address: 'Township, Lahore' }, favs: [], createdAt: now() - DAY / 3 });
           const admin = S.get('users', 'u_admin');
-          const mk = (shopIdx, daysAgo, items, status, payment = 'credit') => {
+          const mk = (shopIdx, daysAgo, items, status, payment = 'cash') => {
             const shop = S.get('users', 'u_s' + shopIdx);
             const { lines, subtotal } = priceItems(items.map(([sku, qty]) => ({ pid: 'p_' + sku.toLowerCase(), qty })), shop, { checkStock: false, enforceMoq: false });
             const at = now() - daysAgo * DAY - 3600e3 * (shopIdx + 2);
             const o = { id: id('o'), no: nextNo('order', 'LM-', 1000), shopId: shop.id, items: lines, subtotal, discount: 0, total: subtotal, payment, note: '', source: 'app', status: 'pending', createdAt: at, history: [{ status: 'pending', at, by: shop.name }] };
-            if (status !== 'pending') { confirmOrder(o, 'Owner', true); o.soldAt = at + 1800e3; S.all('ledger').filter((e) => e.ref === o.no).forEach((e) => { e.at = o.soldAt; S.put('ledger', e); }); o.status = status; o.history.push({ status, at: at + 1800e3, by: 'Owner' }); }
+            if (status !== 'pending') { confirmOrder(o, 'Owner'); o.soldAt = at + 1800e3; o.status = status; o.history.push({ status, at: at + 1800e3, by: 'Owner' }); }
             S.put('orders', o); return o;
           };
           const plan = [[0, 13, [['PN-IP11-IN', 4], ['GL-9D-IP', 200]]], [1, 12, [['CH-SAM-25', 20], ['CB-CC-1M', 60]]], [2, 11, [['CS-SIL-MIX', 80], ['AU-HF-TC', 40]]], [0, 10, [['PN-A05-TF', 6], ['PN-SP20-TF', 10]]], [3, 9, [['AU-BUD-PRO', 10]]], [1, 8, [['PN-A15-OR', 3], ['GL-PRV-IP', 50]]], [0, 7, [['CH-APL-20', 20], ['CB-CL-1M', 40]]], [2, 6, [['PB-10K', 5], ['CS-ARM-MIX', 60]]], [1, 5, [['PN-IP13-OL', 1], ['GL-9D-IP', 100]]], [0, 4, [['PN-RN13-OL', 2], ['AU-HF-35', 100]]], [3, 3, [['CB-CC-1M', 40], ['CS-MAG-IP', 20]]], [2, 2, [['PN-IP11-IN', 2], ['GL-UV-S', 10]]], [0, 1, [['AU-BUD-PRO', 15], ['CH-SAM-25', 10]]], [1, 0, [['GL-9D-IP', 150], ['CB-CL-1M', 20]]]];
           plan.forEach(([s, d, items], i) => mk(s, d, items, i < 11 ? 'delivered' : i === 11 ? 'dispatched' : 'confirmed'));
           mk(3, 0, [['PN-IP11-IN', 2], ['CB-CC-1M', 20], ['GL-9D-IP', 50]], 'pending');
           mk(2, 0, [['CH-INF-45', 10], ['AU-HF-TC', 20]], 'pending', 'cash');
-          [[0, 50000, 9], [1, 25000, 6], [2, 15000, 4], [0, 30000, 2], [3, 5000, 1]].forEach(([s, amt, d]) => ledgerAdd({ shopId: 'u_s' + s, type: 'payment', dir: -1, amount: amt, method: d % 2 ? 'bank' : 'cash', note: 'Payment received', by: 'Owner', at: now() - d * DAY }));
           const msgs = [[0, 'shop', 'Assalam o Alaikum, iPhone 11 incell panels ka naya stock kab aa raha hai? 20 pcs chahiye.', 2], [0, 'admin', 'Walaikum Assalam Ali bhai, Thursday ko aa jayega. 20 pcs reserve kar deta hoon.', 1.9], [1, 'shop', 'Samsung 25W adapters 50 pcs ka best rate kya hoga?', 0.3], [3, 'shop', 'Order LM-1015 mein 2 panels extra add kar dein please.', 0.1]];
           msgs.forEach(([s, from, text, d]) => S.put('messages', { id: id('g'), shopId: 'u_s' + s, from, by: from === 'admin' ? 'Owner' : S.get('users', 'u_s' + s).name, text, pid: '', at: now() - d * DAY, readAdmin: from === 'admin' || d > 1, readShop: from === 'shop' || d < 1 }));
           S.put('announcements', { id: id('a'), kind: 'stock', title: 'New stock: iPhone 13 OLED panels', body: 'Soft OLED with 6-month warranty. Limited quantity — order early.', pid: 'p_pn-ip13-ol', at: now() - DAY });
@@ -968,7 +829,7 @@
           c.orderNo = S.get('orders', c.orderId)?.no || ''; S.put('claims', c);
           S.put('requests', { id: id('r'), shopId: 'u_s1', pid: 'p_pb-mag-5k', text: 'Need 10 MagSafe power banks when back in stock', qty: 10, status: 'open', at: now() - DAY });
           void admin;
-          // suppliers, rider, deal, special price, barcodes
+          // suppliers, deal, special price, barcodes
           const sups = [['Hall Road Importers', '0321 4440001', 'Lahore'], ['Shenzhen Display Co.', '+86 755 0000 0000', 'Shenzhen']];
           sups.forEach(([name, phone, city], i) => S.put('suppliers', { id: 'sp_' + i, name, phone, city, note: '', createdAt: now() - 90 * DAY }));
           const buy = (si, items, d, paid) => {
@@ -982,24 +843,17 @@
           buy(1, [['PN-A05-TF', 40], ['PN-SP20-TF', 60], ['PN-SP10-TF', 15]], 20, 100000);
           buy(0, [['GL-9D-IP', 2000], ['CS-SIL-MIX', 900], ['CB-CC-1M', 1200], ['CH-SAM-25', 200], ['AU-BUD-PRO', 150]], 25, 150000);
           const pp = S.get('products', 'p_pn-sp20-tf'); pp.faulty = 3; S.put('products', pp);
-          S.put('claims', { id: id('c'), no: nextNo('claim', 'CL-', 100), shopId: 'u_s0', orderId: '', orderNo: '', pid: 'p_pn-sp20-tf', name: pp.name, qty: 3, price: pp.price, reason: 'Lines on display', status: 'approved', resolution: 'credited', supplierId: 'sp_1', at: now() - 5 * DAY, closedAt: now() - 4 * DAY });
-          S.put('users', { id: 'u_r0', role: 'rider', status: 'active', phone: '03066666666', name: 'Imran (rider)', pass: deps.hashPassword('rider123'), createdAt: now() - 30 * DAY });
-          const dispatched = S.all('orders').find((o) => o.status === 'dispatched'); if (dispatched) { dispatched.riderId = 'u_r0'; S.put('orders', dispatched); }
-          const confirmed = S.all('orders').find((o) => o.status === 'confirmed'); if (confirmed) { confirmed.riderId = 'u_r0'; S.put('orders', confirmed); }
-          S.put('riderCash', { id: id('rc'), riderId: 'u_r0', dir: 1, amount: 18500, ref: '', note: 'Collected from Tariq Mobile Zone', at: now() - 3600e3 });
+          S.put('claims', { id: id('c'), no: nextNo('claim', 'CL-', 100), shopId: 'u_s0', orderId: '', orderNo: '', pid: 'p_pn-sp20-tf', name: pp.name, qty: 3, price: pp.price, reason: 'Lines on display', status: 'approved', resolution: 'refunded', refund: 3 * pp.price, supplierId: 'sp_1', at: now() - 5 * DAY, closedAt: now() - 4 * DAY });
           S.put('deals', { id: 'd_demo', pid: 'p_au-bud-pro', price: 1250, startsAt: now() - 3600e3, endsAt: now() + 6 * 3600e3, maxPerShop: 20, title: 'Flash deal: Pro 2 Style Earbuds', createdAt: now() - 3600e3 });
           S.put('announcements', { id: id('a'), kind: 'deal', title: 'Flash deal: Pro 2 Style Earbuds', body: 'Rs 1,250 instead of Rs 1,450 · today only · max 20 per shop', pid: 'p_au-bud-pro', at: now() - 3600e3 });
           const raza = S.get('users', 'u_s0'); raza.special = { 'p_pn-ip11-in': 3150, 'p_gl-9d-ip': 48 }; S.put('users', raza);
           [['p_gl-9d-ip', '8964000000011'], ['p_cb-cc-1m', '8964000000028'], ['p_ch-sam-25', '8964000000035'], ['p_au-hf-tc', '8964000000042']].forEach(([pid, bc]) => { const x = S.get('products', pid); x.barcode = bc; S.put('products', x); });
-          // older unpaid invoice so aging buckets show something
-          ledgerAdd({ shopId: 'u_s3', type: 'invoice', dir: 1, amount: 22000, ref: 'LM-0990', note: 'Opening balance (older order)', by: 'Owner', at: now() - 75 * DAY });
-          ledgerAdd({ shopId: 'u_s1', type: 'invoice', dir: 1, amount: 41000, ref: 'LM-0985', note: 'Opening balance (older order)', by: 'Owner', at: now() - 40 * DAY });
         }
       });
       return true;
     }
 
-    return { handle, seed, runReminders, pushTargets, dropPushSub, CATEGORIES, GRADES };
+    return { handle, seed, pushTargets, dropPushSub, CATEGORIES, GRADES };
   }
 
   const api = { createCore, normPhone, CATEGORIES, GRADES };

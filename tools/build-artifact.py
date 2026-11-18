@@ -13,10 +13,10 @@ scripts = re.findall(r'<script src="([^"]+)"></script>', html)
 js = '\n'.join((root / s).read_text() for s in scripts)
 out = f'''<title>Lahore Mobile</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="PTA-approved phones, genuine accessories, installments, trade-in and same-day delivery in Lahore.">
+<meta name="description" content="Wholesale mobile accessories for Lahore shops: panels, glass, covers, chargers and earbuds.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@500&display=swap">
 <style>
 {css}
 </style>

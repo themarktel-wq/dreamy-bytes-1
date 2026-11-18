@@ -2,8 +2,8 @@
 
 const ADMIN_NAV = [
   ['dash', 'dash', 'Dashboard'], ['orders', 'truck', 'Orders', 'pendingOrders'], ['pos', 'cash', 'Counter sale'], ['messages', 'chat', 'Messages', 'unread'],
-  ['shops', 'store', 'Shops', 'pendingShops'], ['khata', 'receipt', 'Khata'], ['products', 'box', 'Inventory'], ['purchases', 'download', 'Purchases', null, true], ['suppliers', 'users', 'Suppliers', null, true],
-  ['deals', 'bolt', 'Flash deals'], ['riders', 'truck2', 'Riders'], ['claims', 'alert', 'Claims & requests'], ['feed', 'bell', 'Announcements'], ['reports', 'report', 'Reports', null, true], ['settings', 'settings', 'Settings', null, true],
+  ['shops', 'store', 'Shops', 'pendingShops'], ['products', 'box', 'Inventory'], ['purchases', 'download', 'Purchases', null, true], ['suppliers', 'users', 'Suppliers', null, true],
+  ['deals', 'bolt', 'Flash deals'], ['claims', 'alert', 'Claims & requests'], ['feed', 'bell', 'Announcements'], ['reports', 'report', 'Reports', null, true], ['settings', 'settings', 'Settings', null, true],
 ];
 function adminLayout(active, body) {
   const me = API.me || {};
@@ -40,7 +40,7 @@ route('admin/dash', async () => {
     <div class="summary-cards">
       <div class="sc dark"><span>Today's sales</span><b>${rs(d.today.total)}</b><small>${d.today.count} order${d.today.count === 1 ? '' : 's'}${owner ? ` · profit ${rs(d.today.profit)}` : ''}</small></div>
       <div class="sc"><span>This month</span><b>${rs(d.month.total)}</b><small>${d.month.count} orders${owner ? ` · profit ${rs(d.month.profit)}` : ''}</small></div>
-      <a class="sc" href="#/admin/khata"><span>Receivable (khata)</span><b>${rs(d.receivable)}</b><small>Owed by shops</small></a>
+      <div class="sc"><span>Average order</span><b>${rs(d.month.count ? Math.round(d.month.total / d.month.count) : 0)}</b><small>This month</small></div>
       <a class="sc" href="#/admin/shops"><span>Active shops</span><b>${d.activeShops}</b><small>${d.pendingShops ? `${d.pendingShops} waiting for approval` : 'No pending approvals'}</small></a>
     </div>
     <div class="summary-cards" style="margin-top:12px">
@@ -69,18 +69,18 @@ route('admin/orders', async (r) => {
   return adminLayout('orders', `
     <div class="head-row"><div><h1>Orders</h1><p>Orders from shops and counter sales.</p></div><a class="btn btn-primary" href="#/admin/pos">${icon('plus')} New counter sale</a></div>
     <div class="seg" style="margin-bottom:16px">${tabs.map(([k, l]) => `<a href="#/admin/orders${k ? '?status=' + k : ''}" class="${status === k ? 'on' : ''}">${l}</a>`).join('')}</div>
-    ${orders.length ? `<div class="list">${orders.map((o) => `<a href="#/admin/order/${o.id}"><div class="li-main"><b>${esc(o.no)} · ${esc(o.shopName)}</b><small>${fmtDateTime(o.createdAt)} · ${o.items.length} items · ${o.source === 'counter' ? 'Counter' : 'App'} · ${o.payment === 'credit' ? 'Khata' : esc(o.payment)}</small></div><div class="li-end"><b>${rs(o.total)}</b>${badge(o.status)}</div></a>`).join('')}</div>`
+    ${orders.length ? `<div class="list">${orders.map((o) => `<a href="#/admin/order/${o.id}"><div class="li-main"><b>${esc(o.no)} · ${esc(o.shopName)}</b><small>${fmtDateTime(o.createdAt)} · ${o.items.length} items · ${o.source === 'counter' ? 'Counter' : 'App'} · ${esc(o.payment === 'credit' ? 'credit' : o.payment)}</small></div><div class="li-end"><b>${rs(o.total)}</b>${badge(o.status)}</div></a>`).join('')}</div>`
     : `<div class="empty">${icon('inbox')}<p>No ${status ? STATUS_LABEL[status].toLowerCase() + ' ' : ''}orders.</p></div>`}`);
 });
 route('admin/order', async (r) => {
   needAdmin();
-  const [o, riders] = await Promise.all([API.get('/api/orders/' + r.arg), API.get('/api/admin/riders')]);
+  const o = await API.get('/api/orders/' + r.arg);
   const next = { pending: ['confirmed', 'cancelled'], confirmed: ['packed', 'dispatched', 'delivered', 'cancelled'], packed: ['dispatched', 'delivered', 'cancelled'], dispatched: ['delivered'] }[o.status] || [];
   const ACT = { confirmed: ['Confirm order', 'btn-primary'], packed: ['Mark packed', 'btn-ghost'], dispatched: ['Mark dispatched', 'btn-ghost'], delivered: ['Mark delivered', 'btn-ghost'], cancelled: ['Cancel order', 'btn-danger'] };
   const b = API.info.business, showMargin = API.isOwner && o.profit !== undefined;
   const invoiceText = `*${b.name} — Invoice ${o.no}*\n${fmtDate(o.createdAt)}\n${o.shopName}\n\n${o.items.map((l) => `${l.qty} × ${l.name} @ ${rs(l.price)} = ${rs(l.qty * l.price)}`).join('\n')}\n${o.discount ? `Discount: −${rs(o.discount)}\n` : ''}*Total: ${rs(o.total)}*\n${b.phone}`;
   return adminLayout('orders', `${crumb(['Orders', '#/admin/orders'], o.no)}
-    <div class="head-row" style="margin-top:14px"><div><h1>${esc(o.no)} ${badge(o.status)}</h1><p>${o.shopId ? `<a class="link" href="#/admin/shop/${o.shopId}">${esc(o.shopName)}</a> · ${esc(o.shopPhone)}` : esc(o.shopName)} · ${fmtDateTime(o.createdAt)} · ${o.payment === 'credit' ? 'Khata' : esc(o.payment)}</p></div>
+    <div class="head-row" style="margin-top:14px"><div><h1>${esc(o.no)} ${badge(o.status)}</h1><p>${o.shopId ? `<a class="link" href="#/admin/shop/${o.shopId}">${esc(o.shopName)}</a> · ${esc(o.shopPhone)}` : esc(o.shopName)} · ${fmtDateTime(o.createdAt)} · ${esc(o.payment === 'credit' ? 'credit' : o.payment)}</p></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">${next.map((s) => `<button class="btn ${ACT[s][1]}" onclick="orderStatus('${o.id}','${s}')">${ACT[s][0]}</button>`).join('')}</div></div>
     <div class="two-col">
       <div>
@@ -96,26 +96,16 @@ route('admin/order', async (r) => {
           ${o.shopPhone ? `<a class="btn btn-wa" href="${waLink(o.shopPhone, invoiceText)}" target="_blank" rel="noopener">${icon('wa')} Send on WhatsApp</a><a class="btn btn-ghost" href="#/admin/chat/${o.shopId}">${icon('chat')} Message shop</a>` : ''}
         </div>
       </div>
-      <div class="box" style="padding:22px">${o.shopId && ['confirmed', 'packed', 'dispatched'].includes(o.status) ? `<label class="f" style="margin-top:0" for="odRider">Delivery rider</label><select class="select" id="odRider" onchange="assignRider('${o.id}',this.value)"><option value="">Not assigned</option>${riders.filter((x) => x.status === 'active').map((x) => `<option value="${x.id}" ${x.id === o.riderId ? 'selected' : ''}>${esc(x.name)} · ${x.active} active</option>`).join('')}</select>${riders.length ? '' : '<p class="muted" style="font-size:13px">Add riders from the Riders page.</p>'}<hr style="border:0;border-top:1px solid var(--line);margin:16px 0">` : o.riderName ? `<p class="muted" style="font-size:13.5px;margin:0 0 12px">Delivered by ${esc(o.riderName)}${o.collected ? ` · collected ${rs(o.collected)}` : ''}</p>` : ''}<h3 style="margin:0 0 14px;font-size:17px">History</h3>
+      <div class="box" style="padding:22px"><h3 style="margin:0 0 14px;font-size:17px">History</h3>
         <ul class="timeline">${o.history.slice().reverse().map((h) => `<li><b style="color:var(--ink)">${esc(STATUS_LABEL[h.status] || h.status)}</b>${h.note ? ` · ${esc(h.note)}` : ''}<small>${fmtDateTime(h.at)} · ${esc(h.by)}</small></li>`).join('')}</ul>
         ${o.paid !== undefined ? `<div class="muted" style="font-size:13.5px">Paid at counter: ${rs(o.paid)}</div>` : ''}</div>
     </div>`);
 });
 async function orderStatus(id, status) {
   const opts = {};
-  if (status === 'cancelled' && !(await uiConfirm('Cancel this order?', 'Confirmed items go back into stock and the khata entry is reversed.', 'Cancel order'))) return;
-  if (status === 'delivered') {
-    const o = await API.get('/api/orders/' + id);
-    if (o.shopId && o.payment !== 'credit') opts.collect = await uiConfirm('Payment collected?', `Did the rider collect ${rs(o.total)}? Choose "Yes, collected" to record the payment on the shop's khata.`, 'Yes, collected');
-  }
+  if (status === 'cancelled' && !(await uiConfirm('Cancel this order?', 'Confirmed items go back into stock.', 'Cancel order'))) return;
   try { await API.post(`/api/admin/orders/${id}/status`, { status, ...opts }); toast(`Order ${STATUS_LABEL[status].toLowerCase()}`); render({ quiet: true }); }
-  catch (e) {
-    if (/credit limit/.test(e.message) && API.isOwner) {
-      if (await uiConfirm('Over credit limit', e.message.replace(' Confirm with override to proceed.', '') + '. Confirm anyway?', 'Confirm anyway')) {
-        try { await API.post(`/api/admin/orders/${id}/status`, { status, override: true }); toast('Order confirmed'); render({ quiet: true }); } catch (e2) { errBox(e2); }
-      }
-    } else errBox(e);
-  }
+  catch (e) { errBox(e); }
 }
 async function saveOrderItems(id) {
   const items = $$('input[data-pid]').map((i) => ({ pid: i.dataset.pid, qty: parseInt(i.value) || 0 }));
@@ -129,17 +119,16 @@ route('admin/pos', async () => {
   const [products, shops] = await Promise.all([API.get('/api/admin/products'), API.get('/api/admin/shops')]);
   POS.products = products.filter((p) => p.active !== false); POS.shops = shops.filter((s) => s.status === 'active');
   return adminLayout('pos', `
-    <div class="head-row"><div><h1>Counter sale</h1><p>Sell to a walk-in customer or a registered shop. Stock and khata update instantly.</p></div></div>
+    <div class="head-row"><div><h1>Counter sale</h1><p>Sell to a walk-in customer or a registered shop. Stock updates instantly.</p></div></div>
     <div class="pos">
       <div><div style="display:flex;gap:8px;margin-bottom:8px"><input class="input" id="posScan" placeholder="Scan barcode / QR or type SKU, then Enter" autocomplete="off" aria-label="Scan"><button class="btn btn-ghost" id="posCam" aria-label="Scan with camera">${icon('search')} Camera</button></div><input class="input" id="posQ" placeholder="Search product, SKU or model" style="margin-bottom:10px" aria-label="Search products"><div class="pos-grid" id="posGrid"></div></div>
       <div class="box" style="padding:18px;align-self:start;position:sticky;top:100px">
         <label class="f" style="margin-top:0" for="posShop">Customer</label>
-        <select class="select" id="posShop"><option value="">Walk-in customer (paid now)</option>${POS.shops.map((s) => `<option value="${s.id}">${esc(s.shop.shopName)} · khata ${rs(s.balance)}</option>`).join('')}</select>
+        <select class="select" id="posShop"><option value="">Walk-in customer</option>${POS.shops.map((s) => `<option value="${s.id}">${esc(s.shop.shopName)}${s.shop.market ? ' · ' + esc(s.shop.market) : ''}</option>`).join('')}</select>
         <div id="posLines" style="margin-top:12px"></div>
         <div class="form-grid" style="margin-top:4px">
           <div><label class="f" for="posDisc">Discount</label><input class="input" id="posDisc" inputmode="numeric" value="0"></div>
           <div><label class="f" for="posMethod">Paid by</label><select class="select" id="posMethod"><option value="cash">Cash</option><option value="bank">Bank</option><option value="jazzcash">JazzCash</option><option value="easypaisa">Easypaisa</option></select></div>
-          <div class="full" id="posPaidBox"><label class="f" for="posPaid">Amount received now</label><input class="input" id="posPaid" inputmode="numeric" placeholder="Leave empty if paid in full"></div>
         </div>
         <div id="posTotal" style="margin-top:12px"></div>
         <button class="btn btn-primary btn-block" id="posGo" style="margin-top:12px;height:50px">Complete sale</button>
@@ -160,7 +149,7 @@ after('admin/pos', () => {
   $('#posScan').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); scanAdd(e.target.value); e.target.value = ''; } });
   $('#posCam').addEventListener('click', async () => { const c = await scanBarcode(); if (c) scanAdd(c); });
   setTimeout(() => $('#posScan').focus(), 50);
-  ['#posDisc', '#posPaid'].forEach((s) => $(s).addEventListener('input', posDraw));
+  $('#posDisc').addEventListener('input', posDraw);
   $('#posGo').addEventListener('click', posComplete);
   grid(); posDraw();
 });
@@ -171,13 +160,11 @@ function posDraw() {
   const lines = POS.lines.map((l) => ({ ...l, p: POS.products.find((x) => x.id === l.pid) }));
   $('#posLines').innerHTML = lines.length ? lines.map((l) => `<div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span style="flex:1;font-size:13.5px;min-width:0"><b style="color:var(--ink);font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.p.name)}</b><span class="muted">${rs(posPrice(l.p))} each</span></span><div class="stepper sm"><button onclick="posQty('${l.pid}',${l.qty - 1})" aria-label="Less">−</button><input value="${l.qty}" inputmode="numeric" onchange="posQty('${l.pid}',this.value)" aria-label="Quantity"><button onclick="posQty('${l.pid}',${l.qty + 1})" aria-label="More">+</button></div><b class="num" style="min-width:76px;text-align:right">${rs(posPrice(l.p) * l.qty)}</b></div>`).join('') : '<p class="muted" style="font-size:14px">Tap products to add them.</p>';
   const sub = lines.reduce((a, l) => a + posPrice(l.p) * l.qty, 0), disc = Math.min(sub, parseInt($('#posDisc').value) || 0), total = sub - disc;
-  const paidRaw = $('#posPaid').value, paid = paidRaw === '' ? total : parseInt(paidRaw) || 0;
-  $('#posPaidBox').style.display = POS.shopId ? '' : 'none';
-  $('#posTotal').innerHTML = `<div class="summary-row"><span>Subtotal</span><span>${rs(sub)}</span></div>${disc ? `<div class="summary-row"><span>Discount</span><span>−${rs(disc)}</span></div>` : ''}<div class="summary-row total"><span>Total</span><span>${rs(total)}</span></div>${POS.shopId && paid < total ? `<div class="summary-row" style="color:var(--warn)"><span>Goes on khata</span><span>${rs(total - paid)}</span></div>` : ''}`;
+  $('#posTotal').innerHTML = `<div class="summary-row"><span>Subtotal</span><span>${rs(sub)}</span></div>${disc ? `<div class="summary-row"><span>Discount</span><span>−${rs(disc)}</span></div>` : ''}<div class="summary-row total"><span>Total</span><span>${rs(total)}</span></div>`;
   $('#posGo').disabled = !lines.length;
 }
 async function posComplete() {
-  const body = { items: POS.lines, shopId: POS.shopId || undefined, discount: parseInt($('#posDisc').value) || 0, method: $('#posMethod').value, paid: POS.shopId ? $('#posPaid').value : undefined };
+  const body = { items: POS.lines, shopId: POS.shopId || undefined, discount: parseInt($('#posDisc').value) || 0, method: $('#posMethod').value };
   const o = await busy($('#posGo'), () => API.post('/api/admin/sales', body));
   toast(`Sale ${esc(o.no)} recorded`);
   go('#/admin/order/' + o.id);
@@ -338,7 +325,7 @@ route('admin/shops', async (r) => {
   return adminLayout('shops', `
     <div class="head-row"><div><h1>Shops</h1><p>${shops.filter((s) => s.status === 'active').length} active · ${shops.filter((s) => s.status === 'pending').length} waiting for approval</p></div><button class="btn btn-primary" onclick="addShop()">${icon('plus')} Add shop</button></div>
     <div class="seg" style="margin-bottom:14px">${[['', 'All'], ['pending', 'Pending'], ['active', 'Active'], ['blocked', 'Blocked']].map(([k, l]) => `<a href="#/admin/shops${k ? '?f=' + k : ''}" class="${f === k ? 'on' : ''}">${l}</a>`).join('')}</div>
-    ${list.length ? `<div class="list">${list.map((s) => `<a href="#/admin/shop/${s.id}"><div class="li-main"><b>${esc(s.shop.shopName)}</b><small>${esc(s.name)} · ${esc(s.phone)}${s.shop.market ? ' · ' + esc(s.shop.market) : ''}</small></div><div class="li-end">${s.status === 'active' ? `<b style="color:${s.balance > s.creditLimit ? 'var(--danger)' : 'var(--ink)'}">${rs(s.balance)}</b><small>${s.orders} orders</small>` : badge(s.status)}</div></a>`).join('')}</div>` : `<div class="empty">${icon('store')}<p>No shops here yet.</p></div>`}`);
+    ${list.length ? `<div class="list">${list.map((s) => `<a href="#/admin/shop/${s.id}"><div class="li-main"><b>${esc(s.shop.shopName)}</b><small>${esc(s.name)} · ${esc(s.phone)}${s.shop.market ? ' · ' + esc(s.shop.market) : ''}</small></div><div class="li-end">${s.status === 'active' ? `<b>${rs(s.sales)}</b><small>${s.orders} orders</small>` : badge(s.status)}</div></a>`).join('')}</div>` : `<div class="empty">${icon('store')}<p>No shops here yet.</p></div>`}`);
 });
 async function addShop() {
   const v = await uiDialog({ title: 'Add a shop', text: 'Creates an approved account. Share the mobile number and password with the shop owner.', ok: 'Create shop', fields: [{ label: 'Shop name' }, { label: 'Owner name' }, { label: 'Mobile number', inputmode: 'tel', placeholder: '03xx xxxxxxx' }, { label: 'Market / area', value: 'Hall Road' }, { label: 'Password for the shop', value: Math.random().toString(36).slice(2, 8) }] });
@@ -347,30 +334,26 @@ async function addShop() {
 }
 route('admin/shop', async (r) => {
   needAdmin();
-  const [shops, led, orders, special, products] = await Promise.all([API.get('/api/admin/shops'), API.get('/api/admin/ledger/' + r.arg), API.get('/api/admin/orders?shopId=' + r.arg), API.get(`/api/admin/shops/${r.arg}/special`), API.get('/api/admin/products')]);
+  const [shops, orders, special] = await Promise.all([API.get('/api/admin/shops'), API.get('/api/admin/orders?shopId=' + r.arg), API.get(`/api/admin/shops/${r.arg}/special`)]);
   const s = shops.find((x) => x.id === r.arg); if (!s) throw new Error('Shop not found');
-  const TYPE = { invoice: 'Order', payment: 'Payment', adjust: 'Adjustment', return: 'Claim credit' };
   return adminLayout('shops', `${crumb(['Shops', '#/admin/shops'], s.shop.shopName)}
     <div class="head-row" style="margin-top:14px"><div><h1>${esc(s.shop.shopName)} ${badge(s.status)}</h1><p>${esc(s.name)} · <span style="user-select:all">${esc(s.phone)}</span>${s.shop.market ? ' · ' + esc(s.shop.market) : ''}${s.shop.address ? ' · ' + esc(s.shop.address) : ''}</p></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">${s.status === 'pending' ? `<button class="btn btn-primary" onclick="shopUpdate('${s.id}',{status:'active'})">Approve shop</button>` : ''}<a class="btn btn-ghost" href="#/admin/chat/${s.id}">${icon('chat')} Message</a><a class="btn btn-wa" href="${waLink(s.phone, `Assalam o Alaikum ${s.name}, `)}" target="_blank" rel="noopener">${icon('wa')} WhatsApp</a></div></div>
     <div class="summary-cards">
-      <div class="sc dark"><span>Khata balance</span><b>${rs(led.balance)}</b><small>Limit ${rs(s.creditLimit)}</small></div>
+      <div class="sc dark"><span>Orders</span><b>${s.orders}</b><small>${orders.filter((o) => o.status === 'pending').length} waiting for confirmation</small></div>
       <div class="sc"><span>Total purchases</span><b>${rs(s.sales)}</b><small>${s.orders} orders</small></div>
-      <div class="sc"><span>Last order</span><b style="font-size:18px">${s.lastOrderAt ? ago(s.lastOrderAt) : '—'}</b><small>${s.lastPaymentAt ? 'Last payment ' + ago(s.lastPaymentAt) : 'No payments yet'}</small></div>
+      <div class="sc"><span>Last order</span><b style="font-size:18px">${s.lastOrderAt ? ago(s.lastOrderAt) : '—'}</b><small>${esc(s.shop.market || 'Lahore')}</small></div>
       <div class="sc"><span>Special prices</span><b style="font-size:18px">${special.length}</b><small>${special.length ? 'Fixed rates for this shop' : 'Pays the normal price'}</small></div>
     </div>
     <div class="two-col" style="margin-top:20px">
       <div>
-        <div class="head-row" style="margin-bottom:10px"><h3 style="margin:0;font-size:18px">Khata</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="recordPayment('${s.id}')">${icon('cash')} Record payment</button>${API.isOwner ? `<button class="btn btn-ghost btn-sm" onclick="khataAdjust('${s.id}')">Adjustment</button>` : ''}<a class="btn btn-ghost btn-sm" href="${waLink(s.phone, `Assalam o Alaikum ${s.name}, ${API.info.business.name} ka khata balance ${rs(led.balance)} hai. Shukriya.`)}" target="_blank" rel="noopener">${icon('wa')} Send balance</a><a class="btn btn-ghost btn-sm" href="#/print/statement/${s.id}">${icon('receipt')} Statement</a></div></div>
-        ${led.entries.length ? `<div class="tbl-wrap"><table class="tbl" style="min-width:480px"><thead><tr><th>Date</th><th>Entry</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead><tbody>${led.entries.slice(0, 60).map((e) => `<tr><td>${fmtDate(e.at)}</td><td>${TYPE[e.type] || esc(e.type)} <span class="muted">${esc(e.ref || '')}</span><br><small class="muted">${esc(e.note || '')}${e.method ? ' · ' + esc(e.method) : ''} · ${esc(e.by || '')}</small></td><td class="num">${e.dir > 0 ? rs(e.amount) : ''}</td><td class="num">${e.dir < 0 ? rs(e.amount) : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No khata entries yet.</p>'}
-        <div class="head-row" style="margin:28px 0 10px"><h3 style="margin:0;font-size:18px">Special prices</h3>${API.isOwner ? `<button class="btn btn-ghost btn-sm" onclick="addSpecial('${s.id}')">${icon('plus')} Add special price</button>` : ''}</div>
+        <div class="head-row" style="margin:0 0 10px"><h3 style="margin:0;font-size:18px">Special prices</h3>${API.isOwner ? `<button class="btn btn-ghost btn-sm" onclick="addSpecial('${s.id}')">${icon('plus')} Add special price</button>` : ''}</div>
         <p class="muted" style="font-size:13.5px;margin:-4px 0 10px">Fixed rates for this shop only. They replace the normal price; a flash deal still applies if it is lower.</p>
         ${special.length ? `<div class="tbl-wrap"><table class="tbl" style="min-width:460px"><thead><tr><th>Product</th><th class="num">Normal price</th><th class="num">Special</th>${API.isOwner ? '<th class="num">Margin</th><th></th>' : ''}</tr></thead><tbody>${special.map((x) => `<tr><td>${esc(x.name)}</td><td class="num">${rs(x.listPrice)}</td><td class="num"><b>${rs(x.price)}</b></td>${API.isOwner ? `<td class="num" style="color:${x.price < x.cost ? 'var(--danger)' : 'inherit'}">${rs(x.price - x.cost)}</td><td class="num"><button class="btn btn-ghost btn-sm" onclick="removeSpecial('${s.id}','${x.pid}')" aria-label="Remove">${icon('close')}</button></td>` : ''}</tr>`).join('')}</tbody></table></div>` : '<p class="muted">No special prices.</p>'}
         <h3 style="margin:28px 0 10px;font-size:18px">Orders</h3>
         ${orders.length ? `<div class="list">${orders.slice(0, 30).map((o) => `<a href="#/admin/order/${o.id}"><div class="li-main"><b>${esc(o.no)}</b><small>${fmtDateTime(o.createdAt)} · ${o.items.length} items</small></div><div class="li-end"><b>${rs(o.total)}</b>${badge(o.status)}</div></a>`).join('')}</div>` : '<p class="muted">No orders yet.</p>'}
       </div>
       <form class="box" style="padding:22px;align-self:start" onsubmit="saveShopSettings(event,'${s.id}')"><h3 style="margin:0;font-size:17px">Account settings</h3>
-        <label class="f" for="shLimit">Khata credit limit (Rs)</label><input class="input" id="shLimit" name="creditLimit" inputmode="numeric" value="${s.creditLimit}" ${API.isOwner ? '' : 'disabled'}>
         <label class="f" for="shStatus">Status</label><select class="select" id="shStatus" name="status"><option value="active" ${s.status === 'active' ? 'selected' : ''}>Active</option><option value="pending" ${s.status === 'pending' ? 'selected' : ''}>Pending approval</option><option value="blocked" ${s.status === 'blocked' ? 'selected' : ''}>Blocked</option></select>
         <label class="f" for="shPw">Reset password (optional)</label><input class="input" id="shPw" name="password" placeholder="New password for the shop" autocomplete="off">
         <button class="btn btn-primary btn-block" style="margin-top:16px">Save</button></form>
@@ -378,37 +361,9 @@ route('admin/shop', async (r) => {
 });
 async function shopUpdate(id, body) { try { await API.post('/api/admin/shops/' + id, body); toast('Shop updated'); await API.refreshMe(); render({ quiet: true }); } catch (e) { errBox(e); } }
 async function saveShopSettings(e, id) {
-  e.preventDefault(); const d = formData(e.target); if (!d.password) delete d.password; if (!API.isOwner) delete d.creditLimit;
+  e.preventDefault(); const d = formData(e.target); if (!d.password) delete d.password;
   await busy(e.submitter, () => API.post('/api/admin/shops/' + id, d)); toast('Shop updated'); await API.refreshMe(); render({ quiet: true });
 }
-async function recordPayment(shopId) {
-  const v = await uiDialog({ title: 'Record payment', text: 'Money received from this shop. It reduces their khata balance.', ok: 'Record payment', fields: [{ label: 'Amount (Rs)', inputmode: 'numeric' }, { label: 'Method (cash, bank, JazzCash…)', value: 'cash' }, { label: 'Note (optional)' }] });
-  if (!v) return;
-  try { const r = await API.post('/api/admin/payments', { shopId, amount: parseInt(String(v[0]).replace(/\D/g, '')) || 0, method: v[1], note: v[2] }); toast(`Payment recorded · balance ${rs(r.balance)}`); render({ quiet: true }); } catch (e) { errBox(e); }
-}
-async function khataAdjust(shopId) {
-  const v = await uiDialog({ title: 'Khata adjustment', text: 'A positive amount adds to what the shop owes; a negative amount reduces it (for example a discount or write-off).', ok: 'Save adjustment', fields: [{ label: 'Amount (Rs, use a minus to reduce)' }, { label: 'Reason' }] });
-  if (!v) return;
-  const n = parseInt(String(v[0]).replace(/[^\d-]/g, '')) || 0; if (!n) return;
-  try { await API.post('/api/admin/payments', { shopId, kind: 'adjust', dir: n > 0 ? 1 : -1, amount: Math.abs(n), note: v[1] || 'Adjustment' }); toast('Adjustment saved'); render({ quiet: true }); } catch (e) { errBox(e); }
-}
-
-/* ================= KHATA (receivables) ================= */
-route('admin/khata', async () => {
-  needAdmin();
-  const list = await API.get('/api/admin/receivables');
-  const total = list.reduce((a, r) => a + Math.max(0, r.balance), 0);
-  const sum = (k) => list.reduce((a, r) => a + (r.aging[k] || 0), 0);
-  return adminLayout('khata', `<div class="head-row"><div><h1>Khata</h1><p>Total owed by shops: <b style="color:var(--ink)">${rs(total)}</b></p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="runReminders(this)">${icon('bell')} Send due reminders</button></div></div>
-    <div class="summary-cards" style="margin-bottom:16px"><div class="sc"><span>0–30 days</span><b>${rs(sum('d0'))}</b><small>Current</small></div><div class="sc ${sum('d30') ? 'alert' : ''}"><span>31–60 days</span><b>${rs(sum('d30'))}</b><small>Overdue</small></div><div class="sc ${sum('d60') ? 'alert' : ''}"><span>61–90 days</span><b>${rs(sum('d60'))}</b><small>Follow up</small></div><div class="sc ${sum('d90') ? 'alert' : ''}"><span>Over 90 days</span><b>${rs(sum('d90'))}</b><small>At risk</small></div></div>
-    <p class="muted" style="font-size:13.5px;margin:0 0 12px">Payments settle the oldest orders first. "Send due reminders" posts a reminder in each overdue shop's app chat and sends a phone notification${(API.info && API.info.remindersAuto) ? '' : ''}; automatic reminders are set in Settings. WhatsApp reminders open WhatsApp with the message ready to send.</p>
-    ${list.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Shop</th><th class="num">Balance</th><th class="num">0–30</th><th class="num">31–60</th><th class="num">61–90</th><th class="num">90+</th><th>Last payment</th><th></th></tr></thead><tbody>
-      ${list.map((r) => `<tr class="click" onclick="go('#/admin/shop/${r.id}')"><td><b style="color:var(--ink);font-weight:500">${esc(r.shopName)}</b><br><small class="muted">${esc(r.market || '')} · <span style="user-select:all">${esc(r.phone)}</span>${r.lastReminderAt ? ` · reminded ${ago(r.lastReminderAt)}` : ''}</small></td><td class="num"><b style="color:${r.balance > r.creditLimit ? 'var(--danger)' : 'var(--ink)'}">${rs(r.balance)}</b><br><small class="muted">limit ${rs(r.creditLimit)}</small></td>
-        <td class="num">${r.aging.d0 ? rs(r.aging.d0) : '—'}</td><td class="num" style="color:var(--warn)">${r.aging.d30 ? rs(r.aging.d30) : '—'}</td><td class="num" style="color:var(--warn)">${r.aging.d60 ? rs(r.aging.d60) : '—'}</td><td class="num" style="color:var(--danger)">${r.aging.d90 ? rs(r.aging.d90) : '—'}</td>
-        <td>${r.lastPaymentAt ? ago(r.lastPaymentAt) : '<span style="color:var(--warn)">Never</span>'}</td>
-        <td class="num" onclick="event.stopPropagation()"><a class="btn btn-ghost btn-sm" href="${waLink(r.phone, agingText(r))}" target="_blank" rel="noopener">${icon('wa')} Remind</a></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${icon('receipt')}<p>All khata accounts are settled.</p></div>`}`);
-});
-
 /* ================= MESSAGES ================= */
 route('admin/messages', async () => {
   needAdmin();
@@ -423,7 +378,7 @@ route('admin/chat', async (r) => {
   const [msgs, shops] = await Promise.all([API.get('/api/admin/messages/' + r.arg), API.get('/api/admin/shops'), loadProducts()]);
   const s = shops.find((x) => x.id === r.arg); if (!s) throw new Error('Shop not found');
   await API.refreshMe();
-  return adminLayout('messages', `<div class="chat"><div class="chat-head"><a class="icon-btn" href="#/admin/messages" aria-label="Back">${icon('back')}</a><div class="li-main"><b>${esc(s.shop.shopName)}</b><small>${esc(s.name)} · ${esc(s.phone)} · balance ${rs(s.balance)}</small></div><a class="btn btn-ghost btn-sm" href="#/admin/shop/${s.id}">Profile</a></div>
+  return adminLayout('messages', `<div class="chat"><div class="chat-head"><a class="icon-btn" href="#/admin/messages" aria-label="Back">${icon('back')}</a><div class="li-main"><b>${esc(s.shop.shopName)}</b><small>${esc(s.name)} · ${esc(s.phone)}</small></div><a class="btn btn-ghost btn-sm" href="#/admin/shop/${s.id}">Profile</a></div>
     <div class="chat-msgs" id="chatMsgs">${msgs.length ? chatHTML(msgs, 'admin', PRODUCTS) : '<div class="day-sep">No messages yet.</div>'}</div>
     <form class="chat-input" onsubmit="sendAdminMsg(event,'${s.id}')"><textarea class="input" id="chatIn" placeholder="Reply to ${esc(s.shop.shopName)}" maxlength="1000" aria-label="Message"></textarea><button class="btn btn-primary" aria-label="Send">${icon('send')}</button></form></div>`);
 });
@@ -440,14 +395,14 @@ route('admin/claims', async () => {
   const [claims, reqs] = await Promise.all([API.get('/api/admin/claims'), API.get('/api/admin/requests')]);
   return adminLayout('claims', `<div class="head-row"><div><h1>Claims & requests</h1><p>Faulty items reported by shops, and items shops are asking for.</p></div></div>
     <h3 style="font-size:18px;margin:0 0 10px">Warranty claims</h3>
-    ${claims.length ? `<div class="list">${claims.map((c) => `<div class="li"><div class="li-main"><b>${esc(c.no)} · ${c.qty} × ${esc(c.name)}</b><small>${esc(c.shopName)} · ${esc(c.orderNo)} · ${ago(c.at)} · “${esc(c.reason)}”</small>${c.status !== 'open' ? `<small>${c.resolution === 'replaced' ? 'Replacement sent' : c.resolution === 'credited' ? `Credited ${rs(c.qty * c.price)}` : 'Rejected'}${c.adminNote ? ' · ' + esc(c.adminNote) : ''}</small>` : ''}</div>
+    ${claims.length ? `<div class="list">${claims.map((c) => `<div class="li"><div class="li-main"><b>${esc(c.no)} · ${c.qty} × ${esc(c.name)}</b><small>${esc(c.shopName)} · ${esc(c.orderNo)} · ${ago(c.at)} · “${esc(c.reason)}”</small>${c.status !== 'open' ? `<small>${c.resolution === 'replaced' ? 'Replacement sent' : c.resolution === 'refunded' || c.resolution === 'credited' ? `Refund ${rs(c.qty * c.price)}` : 'Rejected'}${c.adminNote ? ' · ' + esc(c.adminNote) : ''}</small>` : ''}</div>
       <div class="li-end">${c.status === 'open' ? `<button class="btn btn-primary btn-sm" onclick="resolveClaim('${c.id}')">Resolve</button>` : badge(c.status)}</div></div>`).join('')}</div>` : '<p class="muted">No claims.</p>'}
     <h3 style="font-size:18px;margin:32px 0 10px">Stock requests</h3>
     ${reqs.length ? `<div class="list">${reqs.map((q) => `<div class="li"><div class="li-main"><b>${esc(q.text)}</b><small>${esc(q.shopName)} · ${ago(q.at)}${q.product ? ' · ' + esc(q.product) : ''}</small></div><div class="li-end">${q.status === 'open' ? `<button class="btn btn-ghost btn-sm" onclick="doneRequest('${q.id}')">Mark done</button>` : badge('done')}</div></div>`).join('')}</div>` : '<p class="muted">No requests.</p>'}`);
 });
 function resolveClaim(id) {
   modalForm(`<h3>Resolve claim</h3>
-    <label class="f" for="rcAct">Decision</label><select class="select" id="rcAct"><option value="credit">Approve: credit the shop's khata</option><option value="replace">Approve: send a replacement from stock</option><option value="reject">Reject</option></select>
+    <label class="f" for="rcAct">Decision</label><select class="select" id="rcAct"><option value="credit">Approve: refund the shop</option><option value="replace">Approve: send a replacement from stock</option><option value="reject">Reject</option></select>
     <label class="switch" style="margin-top:12px">The returned item can be resold (put it back in stock) <input type="checkbox" id="rcRestock"></label>
     <label class="f" for="rcNote">Note to the shop (optional)</label><input class="input" id="rcNote" maxlength="300">${modalButtons('Save')}`, async (m, e) => {
     const act = m.querySelector('#rcAct').value;
@@ -512,30 +467,26 @@ route('admin/settings', async () => {
       <div class="full"><label class="f" for="stMap">Google Maps link</label><input class="input" id="stMap" name="mapUrl" value="${esc(b.mapUrl || '')}" placeholder="https://maps.app.goo.gl/…"></div>
       <div><label class="f" for="stHours">Hours</label><input class="input" id="stHours" name="hours" value="${esc(b.hours)}"></div>
       <div><label class="f" for="stBank">Bank / wallet details for payments</label><input class="input" id="stBank" name="bank" value="${esc(b.bank)}" placeholder="e.g. Meezan 0123… · JazzCash 0300…"></div></div>
-      <h3 style="margin:24px 0 0;font-size:18px">Automatic payment reminders</h3><p class="muted" style="font-size:13.5px;margin:4px 0 0">The server checks every hour and reminds shops with old dues in their app chat plus a phone notification.</p>
-      <div class="form-grid"><label class="switch full">Send automatic reminders <input type="checkbox" name="remOn" ${s.reminders && s.reminders.enabled ? 'checked' : ''}></label>
-        <div><label class="f" for="remMin">Remind when dues are older than (days)</label><input class="input" id="remMin" name="remMin" inputmode="numeric" value="${(s.reminders && s.reminders.minDays) || 30}"></div>
-        <div><label class="f" for="remEvery">Repeat every (days)</label><input class="input" id="remEvery" name="remEvery" inputmode="numeric" value="${(s.reminders && s.reminders.everyDays) || 7}"></div></div>
       <h3 style="margin:24px 0 0;font-size:18px">Markets</h3><label class="f" for="stMk">Markets offered at registration (comma separated)</label><input class="input" id="stMk" name="markets" value="${esc(s.markets.join(', '))}">
       <button class="btn btn-primary" style="margin-top:18px">Save settings</button></form>
 
     ${await Push.box()}
-    <div class="box" style="padding:22px;margin-top:16px"><div class="head-row" style="margin-bottom:8px"><h3 style="margin:0;font-size:18px">Staff & riders</h3><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="addStaff('staff')">${icon('plus')} Add staff</button><button class="btn btn-ghost btn-sm" onclick="addStaff('rider')">${icon('plus')} Add rider</button></div></div>
-      <p class="muted" style="font-size:13.5px;margin:0 0 10px">Staff can handle orders, counter sales, messages, payments and stock counts. They can't see cost, profit or reports, edit products, or change credit limits.</p>
-      <div class="list">${staff.map((u) => `<div class="li"><div class="li-main"><b>${esc(u.name)}</b><small>${esc(u.phone)} · ${{ admin: 'Owner', staff: 'Staff', rider: 'Rider' }[u.role]}</small></div><div class="li-end">${u.role !== 'admin' ? `${u.status === 'blocked' ? badge('blocked', 'Disabled') : ''} <button class="btn btn-ghost btn-sm" onclick="staffToggle('${u.id}','${u.status === 'blocked' ? 'active' : 'blocked'}')">${u.status === 'blocked' ? 'Enable' : 'Disable'}</button>` : badge('active', 'Owner')}</div></div>`).join('')}</div></div>
+    <div class="box" style="padding:22px;margin-top:16px"><div class="head-row" style="margin-bottom:8px"><h3 style="margin:0;font-size:18px">Staff</h3><button class="btn btn-ghost btn-sm" onclick="addStaff()">${icon('plus')} Add staff</button></div>
+      <p class="muted" style="font-size:13.5px;margin:0 0 10px">Staff can handle orders, counter sales, messages and stock counts. They can't see cost, profit or reports, edit products, or change credit limits.</p>
+      <div class="list">${staff.map((u) => `<div class="li"><div class="li-main"><b>${esc(u.name)}</b><small>${esc(u.phone)} · ${{ admin: 'Owner', staff: 'Staff' }[u.role]}</small></div><div class="li-end">${u.role !== 'admin' ? `${u.status === 'blocked' ? badge('blocked', 'Disabled') : ''} <button class="btn btn-ghost btn-sm" onclick="staffToggle('${u.id}','${u.status === 'blocked' ? 'active' : 'blocked'}')">${u.status === 'blocked' ? 'Enable' : 'Disable'}</button>` : badge('active', 'Owner')}</div></div>`).join('')}</div></div>
 
-    <div class="box" style="padding:22px;margin-top:16px"><h3 style="margin:0;font-size:18px">Backup</h3><p class="muted" style="font-size:13.5px">A full copy of every product, shop, order and khata entry. Keep a copy somewhere safe each week.</p>
+    <div class="box" style="padding:22px;margin-top:16px"><h3 style="margin:0;font-size:18px">Backup</h3><p class="muted" style="font-size:13.5px">A full copy of every product, shop, order and supplier record. Keep a copy somewhere safe each week.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="backupCopy()">${icon('download')} Save backup</button><button class="btn btn-ghost" onclick="backupRestore()">${icon('upload')} Restore from backup</button></div></div>`);
 });
 async function saveSettings(e) {
   e.preventDefault(); const d = formData(e.target);
-  await busy(e.submitter, () => API.put('/api/admin/settings', { business: { name: d.name, tagline: d.tagline, phone: d.phone, whatsapp: d.whatsapp, address: d.address, mapUrl: d.mapUrl, hours: d.hours, bank: d.bank }, markets: d.markets.split(','), reminders: { enabled: !!e.target.remOn.checked, minDays: parseInt(d.remMin) || 30, everyDays: parseInt(d.remEvery) || 7 } }));
+  await busy(e.submitter, () => API.put('/api/admin/settings', { business: { name: d.name, tagline: d.tagline, phone: d.phone, whatsapp: d.whatsapp, address: d.address, mapUrl: d.mapUrl, hours: d.hours, bank: d.bank }, markets: d.markets.split(',') }));
   API.info = await API.get('/api/info'); Shell.brand(); toast('Settings saved');
 }
-async function addStaff(role = 'staff') {
-  const v = await uiDialog({ title: role === 'rider' ? 'Add rider' : 'Add staff member', text: role === 'rider' ? 'Riders only see the deliveries you assign to them.' : '', ok: role === 'rider' ? 'Add rider' : 'Add staff', fields: [{ label: 'Name' }, { label: 'Mobile number', inputmode: 'tel' }, { label: 'Password', value: Math.random().toString(36).slice(2, 9) }] });
+async function addStaff() {
+  const v = await uiDialog({ title: 'Add staff member', ok: 'Add staff', fields: [{ label: 'Name' }, { label: 'Mobile number', inputmode: 'tel' }, { label: 'Password', value: Math.random().toString(36).slice(2, 9) }] });
   if (!v) return;
-  try { await API.post('/api/admin/staff', { name: v[0], phone: v[1], password: v[2], role }); toast(`${role === 'rider' ? 'Rider' : 'Staff'} added — share the number and password with them`); render({ quiet: true }); } catch (e) { errBox(e); }
+  try { await API.post('/api/admin/staff', { name: v[0], phone: v[1], password: v[2] }); toast('Staff added. Share the number and password with them.'); render({ quiet: true }); } catch (e) { errBox(e); }
 }
 async function addSpecial(shopId) {
   const products = (await API.get('/api/admin/products')).filter((p) => p.active !== false);

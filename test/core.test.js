@@ -41,8 +41,8 @@ t('shops cannot reach admin routes', () => {
   assert.equal(call('GET', '/api/admin/dashboard', null, shopTok).status, 403);
   assert.equal(call('GET', '/api/admin/dashboard').status, 401);
 });
-t('admin approves shop and sets a credit limit; everyone pays the list price', () => {
-  ok(call('POST', `/api/admin/shops/${shopId}`, { status: 'active', creditLimit: 20000 }, admin));
+t('admin approves shop; everyone pays the list price', () => {
+  ok(call('POST', `/api/admin/shops/${shopId}`, { status: 'active' }, admin));
   const p = call('GET', '/api/products/p_cb-cc-1m', null, shopTok).body;
   assert.equal(p.price, 140);
   assert.equal(p.cost, undefined, 'shops never see cost');
@@ -55,21 +55,28 @@ t('stock is checked when ordering', () => {
   assert.match(call('POST', '/api/orders', { items: [{ pid: 'p_pb-mag-5k', qty: 2 }] }, shopTok).body.error, /out of stock/);
 });
 let order;
-t('credit order within limit is placed with server-side prices', () => {
+t('order is placed with server-side prices; only cash or bank payment', () => {
   order = ok(call('POST', '/api/orders', { items: [{ pid: 'p_cb-cc-1m', qty: 40, price: 1 }, { pid: 'p_pn-ip11-in', qty: 2 }], payment: 'credit' }, shopTok)).body;
   assert.equal(order.total, 40 * 140 + 2 * 3400);
   assert.equal(order.status, 'pending');
+  assert.equal(order.payment, 'cash', 'credit is not a payment option');
   assert.equal(order.items[0].cost, undefined);
 });
-t('credit limit blocks orders above the limit', () => {
-  assert.match(call('POST', '/api/orders', { items: [{ pid: 'p_pn-ip13-ol', qty: 2 }], payment: 'credit' }, shopTok).body.error, /credit limit/);
+t('khata and rider routes are gone', () => {
+  assert.equal(call('GET', '/api/ledger', null, shopTok).status, 404);
+  assert.equal(call('POST', '/api/admin/payments', { shopId, amount: 5 }, admin).status, 404);
+  assert.equal(call('GET', '/api/admin/receivables', null, admin).status, 404);
+  assert.equal(call('GET', '/api/admin/riders', null, admin).status, 404);
+  assert.equal(call('GET', '/api/rider/orders', null, admin).status, 404);
+  assert.equal(call('POST', '/api/admin/reminders/run', {}, admin).status, 404);
+  assert.equal(call('GET', '/api/me', null, shopTok).body.balance, undefined);
 });
-t('confirming deducts stock, writes khata and profit', () => {
+t('confirming deducts stock and records profit', () => {
   const before = store.get('products', 'p_pn-ip11-in').stock;
   const o = ok(call('POST', `/api/admin/orders/${order.id}/status`, { status: 'confirmed' }, admin)).body;
   assert.equal(store.get('products', 'p_pn-ip11-in').stock, before - 2);
-  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, order.total);
   assert.equal(o.profit, 40 * (140 - 88) + 2 * (3400 - 2850));
+  assert.equal(store.all('ledger').length, 0, 'no khata entries are written');
 });
 t('invalid transitions are refused and leave data unchanged', () => {
   const stock = store.get('products', 'p_pn-ip11-in').stock;
@@ -79,35 +86,28 @@ t('invalid transitions are refused and leave data unchanged', () => {
 t('shop cannot cancel a confirmed order', () => {
   assert.equal(call('POST', `/api/orders/${order.id}/cancel`, {}, shopTok).status, 400);
 });
-t('payment reduces khata balance', () => {
-  ok(call('POST', '/api/admin/payments', { shopId, amount: 5000, method: 'cash' }, admin));
-  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, order.total - 5000);
-});
-t('claim approval credits the shop and tracks faulty stock', () => {
+t('claim approval records a refund and tracks faulty stock', () => {
   const c = ok(call('POST', '/api/claims', { orderId: order.id, pid: 'p_pn-ip11-in', qty: 1, reason: 'Dead pixels' }, shopTok)).body;
   assert.equal(call('POST', '/api/claims', { orderId: order.id, pid: 'p_pn-ip11-in', qty: 2, reason: 'x' }, shopTok).status, 400, 'cannot claim more than bought');
-  ok(call('POST', `/api/admin/claims/${c.id}`, { status: 'approved' }, admin));
-  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, order.total - 5000 - 3400);
+  const done = ok(call('POST', `/api/admin/claims/${c.id}`, { status: 'approved' }, admin)).body;
+  assert.equal(done.resolution, 'refunded'); assert.equal(done.refund, 3400);
   assert.equal(store.get('products', 'p_pn-ip11-in').faulty, 1);
 });
-t('cancelling a confirmed order restocks and reverses khata', () => {
-  const stock = store.get('products', 'p_cb-cc-1m').stock, bal = call('GET', '/api/ledger', null, shopTok).body.balance;
+t('cancelling a confirmed order restocks', () => {
+  const stock = store.get('products', 'p_cb-cc-1m').stock;
   ok(call('POST', `/api/admin/orders/${order.id}/status`, { status: 'cancelled' }, admin));
   assert.equal(store.get('products', 'p_cb-cc-1m').stock, stock + 40);
-  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, bal - order.total);
 });
 t('purchase updates stock and average cost', () => {
-  const p0 = store.get('products', 'p_pb-mag-5k');
   ok(call('POST', '/api/admin/purchases', { supplier: 'Shenzhen Co', items: [{ pid: 'p_pb-mag-5k', qty: 10, cost: 2000 }] }, admin));
   const p = store.get('products', 'p_pb-mag-5k');
-  assert.equal(p.stock, 10); assert.equal(p.cost, 2000); void p0;
+  assert.equal(p.stock, 10); assert.equal(p.cost, 2000);
 });
-t('counter sale to walk-in must be fully paid; shop sale can go on khata', () => {
-  assert.equal(call('POST', '/api/admin/sales', { items: [{ pid: 'p_au-hf-tc', qty: 2 }], paid: 100 }, admin).status, 400);
-  ok(call('POST', '/api/admin/sales', { items: [{ pid: 'p_au-hf-tc', qty: 2 }] }, admin));
-  const bal = call('GET', '/api/ledger', null, shopTok).body.balance;
-  ok(call('POST', '/api/admin/sales', { shopId, items: [{ pid: 'p_au-hf-tc', qty: 10 }], paid: 500 }, admin));
-  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, bal + 10 * 165 - 500);
+t('counter sales are paid in full, for walk-ins and shops', () => {
+  const w = ok(call('POST', '/api/admin/sales', { items: [{ pid: 'p_au-hf-tc', qty: 2 }], method: 'jazzcash' }, admin)).body;
+  assert.equal(w.paid, w.total); assert.equal(w.payment, 'jazzcash');
+  const sh = ok(call('POST', '/api/admin/sales', { shopId, items: [{ pid: 'p_au-hf-tc', qty: 10 }], paid: 500 }, admin)).body;
+  assert.equal(sh.paid, 10 * 165); assert.equal(sh.status, 'delivered');
 });
 t('failed request rolls back every change', () => {
   const p = store.get('products', 'p_pn-a15-or'), stock = p.stock;
@@ -125,12 +125,12 @@ t('messages flow both ways with unread counts', () => {
   ok(call('POST', `/api/admin/messages/${shopId}`, { text: 'Rs 3,230' }, admin));
   assert.equal(call('GET', '/api/me', null, shopTok).body.unread, 1);
 });
-t('staff cannot see cost or change credit limits', () => {
+t('staff cannot see cost or reports', () => {
   ok(call('POST', '/api/admin/staff', { name: 'Asif', phone: '03119999999', password: 'staff12' }, admin));
   const staff = ok(call('POST', '/api/auth/login', { phone: '03119999999', password: 'staff12' })).token;
   assert.equal(call('GET', '/api/admin/products', null, staff).body[0].cost, undefined);
-  assert.equal(call('POST', `/api/admin/shops/${shopId}`, { creditLimit: 999999 }, staff).status, 403);
   assert.equal(call('GET', '/api/admin/reports/sales', null, staff).status, 403);
+  assert.equal(call('POST', '/api/admin/staff', { name: 'R', phone: '03118888888', password: 'rider12', role: 'rider' }, admin).body.role, 'staff', 'no rider accounts');
 });
 t('reports add up', () => {
   const r = ok(call('GET', '/api/admin/reports/sales', null, admin)).body;
@@ -147,7 +147,7 @@ t('demo seed builds a consistent dataset', () => {
   const s2 = createMemStore(); const c2 = createCore({ store: s2, deps }); c2.seed({ demo: true });
   const tok = c2.handle({ method: 'POST', path: '/api/auth/login', body: { phone: '03000000000', password: 'admin123' } }).token;
   const d = c2.handle({ method: 'GET', path: '/api/admin/dashboard', token: tok }).body;
-  assert.ok(d.month.total > 0 && d.pendingOrders === 2 && d.pendingShops === 1 && d.openClaims === 1);
+  assert.ok(d.month.total > 0 && d.pendingOrders === 2 && d.pendingShops === 1 && d.openClaims === 1 && d.receivable === undefined);
   assert.ok(s2.all('products').every((p) => p.stock >= 0));
 });
 
@@ -172,7 +172,7 @@ t('flash deal lowers price, respects per-shop limit, and expires', () => {
   clock += 2 * 3600e3;
   assert.equal(call('GET', '/api/products/p_au-hf-tc', null, shopTok).body.price, 165, 'price returns after the deal ends');
 });
-t('purchase creates supplier khata; payment and faulty return reduce it', () => {
+t('purchase creates a supplier account; payment and faulty return reduce it', () => {
   const pu = ok(call('POST', '/api/admin/purchases', { supplier: 'Display House', items: [{ pid: 'p_pn-ip11-in', qty: 10, cost: 2800 }], paid: 8000 }, admin)).body;
   const sups = ok(call('GET', '/api/admin/suppliers', null, admin)).body; const sp = sups.find((x) => x.name === 'Display House');
   assert.equal(sp.balance, 28000 - 8000);
@@ -192,48 +192,6 @@ t('faulty rate per supplier counts approved claims', () => {
   ok(call('POST', `/api/admin/claims/${c.id}`, { status: 'approved' }, admin));
   const rep = ok(call('GET', '/api/admin/reports/faulty', null, admin)).body.find((x) => x.name === 'Display House');
   assert.equal(rep.faultyUnits, 1); assert.equal(rep.units, 10); assert.equal(rep.faultyRate, 10);
-});
-t('rider delivers, collects cash onto khata, and settles with the store', () => {
-  ok(call('POST', '/api/admin/staff', { name: 'Imran', phone: '03127777777', password: 'rider12', role: 'rider' }, admin));
-  const rider = ok(call('POST', '/api/auth/login', { phone: '03127777777', password: 'rider12' })).token;
-  const riderId = call('GET', '/api/me', null, rider).body.user.id;
-  const o = ok(call('POST', '/api/orders', { items: [{ pid: 'p_cb-cl-1m', qty: 40 }], payment: 'cash' }, shopTok)).body;
-  assert.equal(call('POST', `/api/admin/orders/${o.id}/assign`, { riderId }, admin).status, 400, 'must confirm first');
-  ok(call('POST', `/api/admin/orders/${o.id}/status`, { status: 'confirmed' }, admin));
-  ok(call('POST', `/api/admin/orders/${o.id}/assign`, { riderId }, admin));
-  assert.equal(call('GET', '/api/admin/dashboard', null, rider).status, 403, 'riders cannot open admin');
-  assert.equal(call('GET', `/api/orders/${order.id}`, null, rider).status, 404, 'riders cannot read other orders');
-  assert.equal(ok(call('GET', '/api/rider/orders', null, rider)).body.length, 1);
-  ok(call('POST', `/api/rider/orders/${o.id}/status`, { status: 'dispatched' }, rider));
-  const bal = call('GET', '/api/ledger', null, shopTok).body.balance;
-  ok(call('POST', `/api/rider/orders/${o.id}/status`, { status: 'delivered', collected: o.total }, rider));
-  assert.equal(call('GET', '/api/ledger', null, shopTok).body.balance, bal - o.total);
-  assert.equal(call('GET', '/api/me', null, rider).body.cashInHand, o.total);
-  assert.equal(call('POST', `/api/admin/riders/${riderId}/settle`, { amount: o.total + 1 }, admin).status, 400);
-  ok(call('POST', `/api/admin/riders/${riderId}/settle`, { amount: o.total }, admin));
-  assert.equal(call('GET', '/api/me', null, rider).body.cashInHand, 0);
-});
-t('aging puts old unpaid invoices in the right bucket (FIFO)', () => {
-  const s3 = ok(call('POST', '/api/auth/register', { name: 'C', shopName: 'Aging Shop', phone: '03216666666', password: 'secret1' }));
-  const sid = s3.body.user.id;
-  ok(call('POST', `/api/admin/shops/${sid}`, { status: 'active', creditLimit: 100000 }, admin));
-  const o1 = ok(call('POST', '/api/orders', { items: [{ pid: 'p_cs-sil-mix', qty: 40 }], payment: 'credit' }, s3.token)).body;
-  ok(call('POST', `/api/admin/orders/${o1.id}/status`, { status: 'confirmed' }, admin));
-  clock += 45 * 864e5;
-  const o2 = ok(call('POST', '/api/orders', { items: [{ pid: 'p_cs-sil-mix', qty: 40 }], payment: 'credit' }, s3.token)).body;
-  ok(call('POST', `/api/admin/orders/${o2.id}/status`, { status: 'confirmed' }, admin));
-  ok(call('POST', '/api/admin/payments', { shopId: sid, amount: 1000 }, admin));
-  const r = ok(call('GET', '/api/admin/receivables', null, admin)).body.find((x) => x.id === sid);
-  assert.equal(r.aging.d30, o1.total - 1000, 'payment settled the oldest invoice first');
-  assert.equal(r.aging.d0, o2.total);
-});
-t('reminders message overdue shops once per interval', () => {
-  const first = ok(call('POST', '/api/admin/reminders/run', {}, admin)).body;
-  assert.ok(first.shops.includes('Aging Shop'));
-  assert.equal(ok(call('POST', '/api/admin/reminders/run', {}, admin)).body.sent, 0, 'not repeated within the interval');
-  assert.ok(core.runReminders().sent === 0);
-  clock += 8 * 864e5;
-  assert.ok(core.runReminders().sent >= 1, 'automatic run sends again after the interval');
 });
 t('barcodes must be unique', () => {
   const p = store.get('products', 'p_cb-cc-1m');
