@@ -56,6 +56,7 @@ function ago(t) {
 }
 const STATUS_LABEL = { pending: 'Pending', confirmed: 'Confirmed', packed: 'Packed', dispatched: 'Dispatched', delivered: 'Delivered', cancelled: 'Cancelled', open: 'Open', approved: 'Approved', rejected: 'Rejected', active: 'Active', blocked: 'Blocked', done: 'Done' };
 const badge = (s, label) => `<span class="badge ${esc(s)}">${esc(label || STATUS_LABEL[s] || s)}</span>`;
+const signupOpen = () => (API.info && API.info.signup) !== 'closed';
 const visibleCats = () => API.info.categories.filter((c) => !c.hidden);
 const siteCfg = () => API.info.site || {};
 const catName = (id) => ((API.info && API.info.categories.find((c) => c.id === id)) || {}).name || id;

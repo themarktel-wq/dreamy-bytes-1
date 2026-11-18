@@ -73,6 +73,16 @@ const { fakeStore } = require('./fake-blobs.js');
     const a = (await call('GET', '/api/push/key')).body.key, b = (await call('GET', '/api/push/key')).body.key;
     assert.ok(a.length > 80); assert.equal(a, b);
   });
+  await t('owner password can be reset once from OWNER_RESET_PASSWORD', async () => {
+    process.env.OWNER_RESET_PASSWORD = 'rescue99';
+    assert.equal((await call('GET', '/api/me', null, admin)).body.user, null, 'old owner sessions end');
+    assert.equal((await call('POST', '/api/auth/login', { phone: '03000000000', password: 'rescue99' })).status, 200);
+    const again = await call('POST', '/api/auth/login', { phone: '03000000000', password: 'rescue99' });
+    assert.equal((await call('POST', '/api/me/password', { current: 'rescue99', password: 'mynew123' }, again.cookie)).status, 200);
+    await call('GET', '/api/info');
+    assert.equal((await call('POST', '/api/auth/login', { phone: '03000000000', password: 'mynew123' })).status, 200, 'not re-applied while the variable stays');
+    delete process.env.OWNER_RESET_PASSWORD;
+  });
   await t('without owner env vars the setup message explains what to do', async () => {
     const d2 = fakeStore(); fn._setStores({ data: d2, uploads: fakeStore() });
     const keep = process.env.ADMIN_PASSWORD; delete process.env.ADMIN_PASSWORD;

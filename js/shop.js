@@ -16,7 +16,8 @@ function loginView(note) {
         <label class="f" for="lgPass">Password</label><input class="input" id="lgPass" name="password" type="password" autocomplete="current-password" required>
         <button class="btn btn-primary btn-block" style="margin-top:20px">Sign in</button>
       </form>
-      <p class="muted" style="font-size:14px;margin:18px 0 0;text-align:center">New shop? <a class="link" href="#/register">Create a shop account</a></p>
+      <p style="font-size:14px;margin:14px 0 0;text-align:right"><a class="link" href="#" onclick="event.preventDefault();forgotPassword()">Forgot password?</a></p>
+      <p class="muted" style="font-size:14px;margin:14px 0 0;text-align:center">${signupOpen() ? 'New shop? <a class="link" href="#/register">Create a shop account</a>' : `New shop? <a class="link" href="${bizWa('Assalam o Alaikum, I want to open a wholesale account.')}" target="_blank" rel="noopener">Message us on WhatsApp</a> and we will open your account.`}</p>
       ${demo ? `<div style="border-top:1px solid var(--line);margin-top:22px;padding-top:18px"><b style="color:var(--ink);font-size:14px">Try the demo</b>
         <div class="demo-pick">
           <button onclick="demoLogin('03000000000','admin123')">${icon('lock')}<span><b>Owner / admin</b><small>Dashboard, orders, inventory, reports</small></span></button>
@@ -35,7 +36,13 @@ async function doLogin(e) {
 }
 async function demoLogin(phone, pw) { await API.login(phone, pw).catch(errBox); go(API.isAdmin ? '#/admin' : '#/'); }
 
+async function forgotPassword() {
+  const v = await uiDialog({ title: 'Forgot password', text: 'Enter your registered mobile number. The store gets your request and sends you a new password on WhatsApp or by call.', ok: 'Send request', fields: [{ label: 'Mobile number', inputmode: 'tel', value: ($('#lgPhone') || {}).value || '' }] });
+  if (!v) return;
+  try { const r = await API.post('/api/auth/forgot', { phone: v[0] }); uiDialog({ title: 'Request sent', text: r.message, ok: 'OK' }); } catch (e) { errBox(e); }
+}
 route('register', () => {
+  if (!signupOpen()) return `<div class="wrap"><div class="auth"><div class="box"><h1>Open a shop account</h1><p class="muted">New accounts are opened by the store. Send us a message with your name, shop name and market, and we will create your account and send you the password.</p><a class="btn btn-wa btn-block" href="${bizWa('Assalam o Alaikum, I want to open a wholesale account. Name: , Shop: , Market: ')}" target="_blank" rel="noopener">${icon('wa')} WhatsApp the store</a><p class="muted" style="font-size:14px;text-align:center;margin:16px 0 0">Already have an account? <a class="link" href="#/login">Sign in</a></p></div></div></div>`;
   const markets = (API.info.markets || []).map((m) => `<option>${esc(m)}</option>`).join('');
   return `<div class="wrap"><div class="auth" style="max-width:520px">
     <div class="box"><h1>Create a shop account</h1>
@@ -63,7 +70,7 @@ async function doRegister(e) {
 
 /* ================= HOME ================= */
 function homeSlides(u) {
-  const s = (siteCfg().slides || []).filter((x) => !(u && x.guests));
+  const s = (siteCfg().slides || []).filter((x) => !(u && x.guests) && !(!signupOpen() && x.link === '#/register'));
   return s.length ? s : (siteCfg().slides || []).slice(0, 1);
 }
 const linkAttrs = (l) => (/^https:/.test(l) ? `href="${esc(l)}" target="_blank" rel="noopener"` : `href="${esc(l)}"`);
@@ -125,7 +132,7 @@ route('home', async (r) => {
 
     ${on.best ? `<section class="section">${secHead('', 'Best sellers', '', arrowLink('#/catalog', 'All products'))}<div class="rail">${featured.map(pcard).join('')}</div></section>` : ''}
 
-    ${u || !on.steps ? '' : `<section class="section"><div class="steps-line">
+    ${u || !on.steps || !signupOpen() ? '' : `<section class="section"><div class="steps-line">
       <div><b>1</b><span><strong>Register your shop</strong>Name, shop name and mobile number.</span></div>
       <div><b>2</b><span><strong>We approve it</strong>Usually the same day.</span></div>
       <div><b>3</b><span><strong>Order from your phone</strong>Pay cash or by bank transfer.</span></div>

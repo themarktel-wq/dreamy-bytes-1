@@ -95,6 +95,7 @@ async function attempt(data, uploads, req) {
     if (!phone || !pw || pw.length < 6) return { status: 503, body: { error: 'Setup needed: add ADMIN_PHONE and ADMIN_PASSWORD (6+ characters) in Netlify → Site configuration → Environment variables, then redeploy.' } };
     core.seed({ demo: process.env.DEMO === '1', adminPhone: phone, adminPassword: pw, images: SEED_IMAGES });
   }
+  if (process.env.OWNER_RESET_PASSWORD) core.ownerReset(process.env.OWNER_RESET_PASSWORD);
 
   let out;
   if (req.special === 'poll') {

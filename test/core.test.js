@@ -243,4 +243,41 @@ t('spreadsheet import adds and updates products, and is all-or-nothing', () => {
   assert.equal(store.all('products').length, before + 1, 'nothing saved from a bad file');
   assert.equal(call('POST', '/api/admin/products/import', { rows: [{ name: 'x', price: 1 }] }, shopTok).status, 403);
 });
+t('sign-up is controlled by the owner: alerts, approve, reject, forgot password, closed mode', () => {
+  const reg = call('POST', '/api/auth/register', { name: 'Bilal', shopName: 'Bilal Telecom', phone: '03215550001', password: 'pass123', market: 'Tajpura' });
+  assert.equal(reg.status, 201); assert.equal(reg.body.user.status, 'pending');
+  assert.equal(reg.events[0].to, 'admin'); assert.match(reg.events[0].title, /waiting for approval/);
+  const bid = reg.body.user.id;
+  assert.ok(call('GET', '/api/me', null, admin).body.shopAlerts >= 1);
+  const ap = ok(call('POST', `/api/admin/shops/${bid}`, { status: 'active' }, admin));
+  assert.equal(ap.events[0].to, 'shop:' + bid); assert.equal(ap.events[0].title, 'Your shop is approved');
+  assert.equal(call('POST', `/api/admin/shops/${bid}`, { name: 'Bilal A' }, admin).events[0].title, undefined, 'no repeat alert');
+  assert.equal(call('DELETE', `/api/admin/shops/${bid}`, null, admin).status, 400, 'active shops are blocked, not rejected');
+  const r2 = call('POST', '/api/auth/register', { name: 'Spam', shopName: 'X', phone: '03215550002', password: 'pass123' });
+  ok(call('DELETE', `/api/admin/shops/${r2.body.user.id}`, null, admin));
+  assert.equal(store.get('users', r2.body.user.id), undefined);
+  // forgot password
+  const f = ok(call('POST', '/api/auth/forgot', { phone: '0321 5550001' }));
+  assert.match(f.body.message, /Request sent/); assert.equal(f.events[0].title, 'Password reset request');
+  assert.equal(call('POST', '/api/auth/forgot', { phone: '03215550001' }).events.length, 0, 'repeat requests are throttled');
+  assert.deepEqual(call('POST', '/api/auth/forgot', { phone: '03219999999' }).body.ok, true, 'unknown numbers get the same answer');
+  assert.ok(call('GET', '/api/admin/shops', null, admin).body.find((x) => x.id === bid).resetAsked);
+  ok(call('POST', `/api/admin/shops/${bid}`, { password: 'newpass9' }, admin));
+  assert.equal(call('GET', '/api/admin/shops', null, admin).body.find((x) => x.id === bid).resetAsked, null);
+  ok(call('POST', '/api/auth/login', { phone: '03215550001', password: 'newpass9' }));
+  // closed mode
+  const st = call('GET', '/api/admin/settings', null, admin).body;
+  ok(call('PUT', '/api/admin/settings', { business: st.business, signup: 'closed' }, admin));
+  assert.equal(call('GET', '/api/info').body.signup, 'closed');
+  assert.match(call('POST', '/api/auth/register', { name: 'A', shopName: 'B', phone: '03215550003', password: 'pass123' }).body.error, /created by the store/);
+  ok(call('PUT', '/api/admin/settings', { business: st.business, signup: 'approval' }, admin));
+});
+t('sample products can be cleared before going live', () => {
+  const mine = ok(call('POST', '/api/admin/products', { name: 'My own cable', price: 50, cat: 'cable' }, admin)).body;
+  const r = ok(call('POST', '/api/admin/products/clear-samples', {}, admin)).body;
+  assert.ok(r.removed > 10 && r.archived > 0, JSON.stringify(r));
+  const left = store.all('products').filter((p) => p.active !== false);
+  assert.ok(left.some((p) => p.id === mine.id)); assert.ok(left.every((p) => !/^p_/.test(p.id)));
+  assert.equal(call('POST', '/api/admin/products/clear-samples', {}, shopTok).status, 403);
+});
 console.log(`\n${passed} tests passed`);

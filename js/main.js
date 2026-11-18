@@ -19,7 +19,7 @@ const Shell = {
     const act = (href, ic, label, sub, badgeCls) => `<a class="act" href="${href}"><span class="icon-btn">${icon(ic)}${badgeCls ? `<i class="badge-dot ${badgeCls}"></i>` : ''}</span><span class="act-label">${sub}<b>${label}</b></span></a>`;
     $('#tabbar').style.gridTemplateColumns = '';
     $('#actions').innerHTML = !u
-      ? `${act('#/login', 'user', 'Sign in', 'Account')}${act('#/register', 'store', 'Register', 'Free shop account').replace('class="act"', 'class="act hide-sm"')}${act('#/cart', 'cart', 'Rs 0', 'Your cart')}`
+      ? `${act('#/login', 'user', 'Sign in', 'Account')}${signupOpen() ? act('#/register', 'store', 'Register', 'Free shop account').replace('class="act"', 'class="act hide-sm"') : ''}${act('#/cart', 'cart', 'Rs 0', 'Your cart')}`
       : admin
         ? `${act('#/admin/messages', 'chat', 'Messages', 'Shops', 'msg-count')}${act('#/admin', 'dash', 'Admin', esc(u.name), 'adm-count')}`
         : `${act('#/messages', 'chat', 'Messages', 'Chat with store', 'msg-count')}${act('#/saved', 'heart', 'Saved', 'Your items').replace('class="act"', 'class="act hide-sm"')}${act('#/cart', 'cart', '<span id="cartTotal">Rs 0</span>', 'Your cart', 'cart-count')}${act('#/account', 'user', esc(u.shop.shopName.split(' ')[0]), 'Account')}`;
@@ -34,7 +34,7 @@ const Shell = {
       ? tab('#/admin', 'dash', 'Dashboard', 'admin/dash') + tab('#/admin/orders', 'truck', 'Orders', 'admin/orders', 'adm-count') + tab('#/admin/pos', 'cash', 'Sale', 'admin/pos') + tab('#/admin/messages', 'chat', 'Messages', 'admin/messages', 'msg-count') + tab('#/admin/products', 'box', 'Stock', 'admin/products')
       : u
         ? tab('#/', 'home', 'Home', 'home') + tab('#/catalog', 'grid', 'Catalogue', 'catalog') + tab('#/cart', 'cart', 'Cart', 'cart', 'cart-count') + tab('#/orders', 'truck', 'Orders', 'orders') + tab('#/messages', 'chat', 'Messages', 'messages', 'msg-count')
-        : tab('#/', 'home', 'Home', 'home') + tab('#/catalog', 'grid', 'Catalogue', 'catalog') + tab('#/login', 'user', 'Sign in', 'login') + tab('#/register', 'plus', 'Register', 'register');
+        : tab('#/', 'home', 'Home', 'home') + tab('#/catalog', 'grid', 'Catalogue', 'catalog') + tab('#/login', 'user', 'Sign in', 'login') + (signupOpen() ? tab('#/register', 'plus', 'Register', 'register') : tab('#/messages', 'chat', 'Contact', 'contact').replace('href="#/messages"', `href="${bizWa('Assalam o Alaikum, I want to open a wholesale account.')}" target="_blank" rel="noopener"`));
     $('#demoBar').classList.toggle('hidden', API.mode !== 'demo');
     this.badges();
   },
@@ -80,6 +80,7 @@ API.on(async (ev) => {
     const r = parseHash(), key = r.name === 'admin' ? 'admin/' + (r.sub || 'dash') : r.name;
     const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.closest('.chat-input');
     if (ev.type === 'feed') Shell.ticker();
+    if (ev.type === 'shops' && API.isAdmin) Shell.badges();
     if (ev.type === 'site') { API.info = await API.get('/api/info'); Shell.brand(); Shell.render(); if (['home', 'catalog'].includes(key) && !typing) await render({ quiet: true }); }
     const refresh = { messages: ['messages', 'admin/messages', 'admin/chat', 'admin/dash'], orders: ['orders', 'order', 'admin/orders', 'admin/order', 'admin/dash', 'home'], shops: ['admin/shops', 'admin/dash'], claims: ['orders', 'admin/claims', 'admin/dash'], requests: ['admin/claims', 'admin/dash'], feed: ['home'], account: ['home', 'account'] }[ev.type] || [];
     if (API.mode === 'server' && refresh.includes(key) && !typing && !document.querySelector('.modal.on')) {
@@ -89,7 +90,7 @@ API.on(async (ev) => {
     }
     if (API.mode === 'server') {
       if (ev.title && !(ev.type === 'messages' && ['messages', 'admin/chat'].includes(key))) toast(esc(ev.title), 'bell');
-      if (ev.type === 'account') { toast('Your account was updated by the store', 'info'); Shell.render(); }
+      if (ev.type === 'account') { if (!ev.title) toast('Your account was updated by the store', 'info'); Shell.render(); if (key === 'home') render({ quiet: true }); }
     }
   }, 120);
 });

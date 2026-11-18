@@ -76,6 +76,8 @@ function autoBackup() {
 }
 autoBackup(); setInterval(autoBackup, 3600e3).unref();
 
+if (process.env.OWNER_RESET_PASSWORD && core.ownerReset(process.env.OWNER_RESET_PASSWORD)) console.log('Owner password was reset from OWNER_RESET_PASSWORD. Remove it from the environment now.');
+
 /* ---------- push notifications ---------- */
 const VAPID = webpush.loadVapid(path.join(DATA, 'vapid.json'));
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@example.com';

@@ -2,7 +2,7 @@
 
 const ADMIN_NAV = [
   ['dash', 'dash', 'Dashboard'], ['orders', 'truck', 'Orders', 'pendingOrders'], ['pos', 'cash', 'Counter sale'], ['messages', 'chat', 'Messages', 'unread'],
-  ['shops', 'store', 'Shops', 'pendingShops'], ['products', 'box', 'Inventory'], ['purchases', 'download', 'Purchases', null, true], ['suppliers', 'users', 'Suppliers', null, true],
+  ['shops', 'store', 'Shops', 'shopAlerts'], ['products', 'box', 'Inventory'], ['purchases', 'download', 'Purchases', null, true], ['suppliers', 'users', 'Suppliers', null, true],
   ['deals', 'bolt', 'Flash deals'], ['claims', 'alert', 'Claims & requests'], ['feed', 'bell', 'Announcements'], ['reports', 'report', 'Reports', null, true], ['site', 'edit', 'App content', null, true], ['settings', 'settings', 'Settings', null, true],
 ];
 function adminLayout(active, body) {
@@ -34,7 +34,11 @@ route('admin/dash', async () => {
   const [d] = await Promise.all([API.get('/api/admin/dashboard'), API.refreshMe()]);
   const max = Math.max(1, ...d.series.map((s) => s.total));
   const owner = API.isOwner;
+  const pushSt = await Push.state().catch(() => 'unsupported');
+  const me = API.me || {};
   return adminLayout('dash', `
+    ${me.shopAlerts ? `<a class="banner-note" href="#/admin/shops" style="margin:0 0 16px;display:flex">${icon('bell')}<div><b>${me.pendingShops ? `${me.pendingShops} new shop${me.pendingShops === 1 ? '' : 's'} waiting for approval` : ''}${me.pendingShops && me.resetRequests ? ' · ' : ''}${me.resetRequests ? `${me.resetRequests} password request${me.resetRequests === 1 ? '' : 's'}` : ''}</b><br>Open Shops to approve or reply.</div></a>` : ''}
+    ${pushSt === 'off' ? `<div class="banner-note" style="margin:0 0 16px">${icon('bell')}<div><b>Turn on phone alerts</b> for new shops, orders and messages, even when the app is closed. <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="pushOn(this)">Turn on</button></div></div>` : ''}
     <div class="head-row"><div><h1>Dashboard</h1><p>${new Date().toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long' })}</p></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-primary" href="#/admin/pos">${icon('cash')} Counter sale</a>${owner ? `<a class="btn btn-ghost" href="#/admin/product/new">${icon('plus')} Add product</a>` : ''}</div></div>
     <div class="summary-cards">
@@ -179,6 +183,7 @@ route('admin/products', async (r) => {
   return adminLayout('products', `
     <div class="head-row"><div><h1>Inventory</h1><p>${list.filter((p) => p.active !== false).length} active products · ${list.filter((p) => p.active !== false && p.stock <= p.reorderLevel).length} at or below reorder level</p></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost" href="#/admin/count">${icon('search')} Stock count</a><a class="btn btn-ghost" href="#/admin/labels">${icon('receipt')} QR labels</a>${API.isOwner ? `<a class="btn btn-ghost" href="#/admin/purchases/new">${icon('download')} Receive stock</a><button class="btn btn-ghost" onclick="sheetMenu()">${icon('report')} Excel sheet</button><a class="btn btn-primary" href="#/admin/product/new">${icon('plus')} Add product</a>` : ''}</div></div>
+    ${API.isOwner && list.some((p) => /^p_/.test(p.id) && p.active !== false) ? `<div class="banner-note" style="margin-bottom:14px">${icon('info')}<div><b>${list.filter((p) => /^p_/.test(p.id) && p.active !== false).length} sample products</b> came with the app so you could try it. Remove them before shops start ordering, then add your own (one by one or with <b>Excel sheet</b>). <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="clearSamples()">Remove sample products</button></div></div>` : ''}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><input class="input" id="invQ" placeholder="Search name, SKU, brand or model" style="flex:1;min-width:220px" aria-label="Search">
       <select class="select" id="invCat" style="width:auto" aria-label="Category"><option value="">All categories</option>${API.info.categories.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
       <div class="seg" id="invF"><button data-f="" class="${f === '' ? 'on' : ''}">All</button><button data-f="low" class="${f === 'low' ? 'on' : ''}">Low</button><button data-f="out" class="${f === 'out' ? 'on' : ''}">Out</button><button data-f="archived" class="${f === 'archived' ? 'on' : ''}">Archived</button></div></div>
@@ -323,10 +328,17 @@ route('admin/shops', async (r) => {
   const f = r.q.get('f') || '';
   const list = shops.filter((s) => !f || s.status === f);
   return adminLayout('shops', `
-    <div class="head-row"><div><h1>Shops</h1><p>${shops.filter((s) => s.status === 'active').length} active · ${shops.filter((s) => s.status === 'pending').length} waiting for approval</p></div><button class="btn btn-primary" onclick="addShop()">${icon('plus')} Add shop</button></div>
+    <div class="head-row"><div><h1>Shops</h1><p>${shops.filter((s) => s.status === 'active').length} active · ${shops.filter((s) => s.status === 'pending').length} waiting for approval</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost" href="#/print/invite">${icon('share')} Invite shops</a><button class="btn btn-primary" onclick="addShop()">${icon('plus')} Add shop</button></div></div>
     <div class="seg" style="margin-bottom:14px">${[['', 'All'], ['pending', 'Pending'], ['active', 'Active'], ['blocked', 'Blocked']].map(([k, l]) => `<a href="#/admin/shops${k ? '?f=' + k : ''}" class="${f === k ? 'on' : ''}">${l}</a>`).join('')}</div>
+    ${!f && shops.some((s) => s.status === 'pending' || s.resetAsked) ? `<div class="box" style="padding:18px 20px;margin-bottom:16px;border-color:var(--navy)"><h3 style="margin:0 0 6px;font-size:17px">${icon('bell', 'width="18" height="18" style="vertical-align:-3px"')} Needs your action</h3>
+      <div class="list">${shops.filter((s) => s.status === 'pending' || s.resetAsked).map((s) => `<div class="li"><div class="li-main"><b><a href="#/admin/shop/${s.id}">${esc(s.shop.shopName)}</a></b><small>${esc(s.name)} · <span style="user-select:all">${esc(s.phone)}</span>${s.shop.market ? ' · ' + esc(s.shop.market) : ''} · ${s.status === 'pending' ? 'registered ' + ago(s.createdAt) : 'asked for a new password ' + ago(s.resetAsked)}</small></div>
+        <div class="li-end" style="flex-direction:row;gap:6px;flex-wrap:wrap;justify-content:flex-end">${s.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="shopUpdate('${s.id}',{status:'active'})">Approve</button><button class="btn btn-ghost btn-sm" onclick="shopReject('${s.id}','${esc(s.shop.shopName).replace(/'/g, '')}')">Reject</button>` : ''}${s.resetAsked ? `<button class="btn btn-primary btn-sm" onclick="shopNewPassword('${s.id}')">Set new password</button>` : ''}</div></div>`).join('')}</div></div>` : ''}
     ${list.length ? `<div class="list">${list.map((s) => `<a href="#/admin/shop/${s.id}"><div class="li-main"><b>${esc(s.shop.shopName)}</b><small>${esc(s.name)} · ${esc(s.phone)}${s.shop.market ? ' · ' + esc(s.shop.market) : ''}</small></div><div class="li-end">${s.status === 'active' ? `<b>${rs(s.sales)}</b><small>${s.orders} orders</small>` : badge(s.status)}</div></a>`).join('')}</div>` : `<div class="empty">${icon('store')}<p>No shops here yet.</p></div>`}`);
 });
+async function clearSamples() {
+  if (!(await uiConfirm('Remove sample products?', 'All products that came with the app are deleted (or archived if they are already in an order). Products you added stay.', 'Remove samples'))) return;
+  try { const r = await API.post('/api/admin/products/clear-samples'); PRODUCTS = null; toast(`${r.removed} sample products removed${r.archived ? `, ${r.archived} archived` : ''}`); render({ quiet: true }); } catch (e) { errBox(e); }
+}
 async function addShop() {
   const v = await uiDialog({ title: 'Add a shop', text: 'Creates an approved account. Share the mobile number and password with the shop owner.', ok: 'Create shop', fields: [{ label: 'Shop name' }, { label: 'Owner name' }, { label: 'Mobile number', inputmode: 'tel', placeholder: '03xx xxxxxxx' }, { label: 'Market / area', value: 'Hall Road' }, { label: 'Password for the shop', value: Math.random().toString(36).slice(2, 8) }] });
   if (!v) return;
@@ -338,7 +350,8 @@ route('admin/shop', async (r) => {
   const s = shops.find((x) => x.id === r.arg); if (!s) throw new Error('Shop not found');
   return adminLayout('shops', `${crumb(['Shops', '#/admin/shops'], s.shop.shopName)}
     <div class="head-row" style="margin-top:14px"><div><h1>${esc(s.shop.shopName)} ${badge(s.status)}</h1><p>${esc(s.name)} · <span style="user-select:all">${esc(s.phone)}</span>${s.shop.market ? ' · ' + esc(s.shop.market) : ''}${s.shop.address ? ' · ' + esc(s.shop.address) : ''}</p></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">${s.status === 'pending' ? `<button class="btn btn-primary" onclick="shopUpdate('${s.id}',{status:'active'})">Approve shop</button>` : ''}<a class="btn btn-ghost" href="#/admin/chat/${s.id}">${icon('chat')} Message</a><a class="btn btn-wa" href="${waLink(s.phone, `Assalam o Alaikum ${s.name}, `)}" target="_blank" rel="noopener">${icon('wa')} WhatsApp</a></div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${s.status === 'pending' ? `<button class="btn btn-primary" onclick="shopUpdate('${s.id}',{status:'active'})">Approve shop</button><button class="btn btn-ghost" onclick="shopReject('${s.id}','')">Reject</button>` : ''}<a class="btn btn-ghost" href="#/admin/chat/${s.id}">${icon('chat')} Message</a><a class="btn btn-wa" href="${waLink(s.phone, `Assalam o Alaikum ${s.name}, `)}" target="_blank" rel="noopener">${icon('wa')} WhatsApp</a></div></div>
+    ${s.resetAsked ? `<div class="banner-note" style="margin-bottom:16px">${icon('lock')}<div><b>This shop forgot its password</b> (${ago(s.resetAsked)}). Set a new one and send it to them on WhatsApp. <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="shopNewPassword('${s.id}')">Set new password</button></div></div>` : ''}
     <div class="summary-cards">
       <div class="sc dark"><span>Orders</span><b>${s.orders}</b><small>${orders.filter((o) => o.status === 'pending').length} waiting for confirmation</small></div>
       <div class="sc"><span>Total purchases</span><b>${rs(s.sales)}</b><small>${s.orders} orders</small></div>
@@ -359,6 +372,21 @@ route('admin/shop', async (r) => {
         <button class="btn btn-primary btn-block" style="margin-top:16px">Save</button></form>
     </div>`);
 });
+async function shopReject(id, name) {
+  if (!(await uiConfirm('Reject this registration?', `${name ? name + ': ' : ''}the account is deleted and the number can register again later.`, 'Reject'))) return;
+  try { await API.del('/api/admin/shops/' + id); toast('Registration rejected'); await API.refreshMe(); Shell.badges(); go('#/admin/shops'); } catch (e) { errBox(e); }
+}
+async function shopNewPassword(id) {
+  const s = (await API.get('/api/admin/shops')).find((x) => x.id === id); if (!s) return;
+  const pw = String(Math.floor(100000 + Math.random() * 900000));
+  const v = await uiDialog({ title: 'Set a new password', text: `${s.shop.shopName} · ${s.phone}`, ok: 'Save and send on WhatsApp', fields: [{ label: 'New password', value: pw }] });
+  if (!v) return;
+  try {
+    await API.post('/api/admin/shops/' + id, { password: v[0] });
+    window.open(waLink(s.phone, `Assalam o Alaikum ${s.name}, your new ${API.info.business.name} password is: ${v[0]}\nSign in with your number ${s.phone}. ${location.origin + location.pathname}`), '_blank', 'noopener');
+    toast('Password changed'); await API.refreshMe(); render({ quiet: true });
+  } catch (e) { errBox(e); }
+}
 async function shopUpdate(id, body) { try { await API.post('/api/admin/shops/' + id, body); toast('Shop updated'); await API.refreshMe(); render({ quiet: true }); } catch (e) { errBox(e); } }
 async function saveShopSettings(e, id) {
   e.preventDefault(); const d = formData(e.target); if (!d.password) delete d.password;
@@ -467,6 +495,8 @@ route('admin/settings', async () => {
       <div class="full"><label class="f" for="stMap">Google Maps link</label><input class="input" id="stMap" name="mapUrl" value="${esc(b.mapUrl || '')}" placeholder="https://maps.app.goo.gl/…"></div>
       <div><label class="f" for="stHours">Hours</label><input class="input" id="stHours" name="hours" value="${esc(b.hours)}"></div>
       <div><label class="f" for="stBank">Bank / wallet details for payments</label><input class="input" id="stBank" name="bank" value="${esc(b.bank)}" placeholder="e.g. Meezan 0123… · JazzCash 0300…"></div></div>
+      <h3 style="margin:24px 0 0;font-size:18px">Shop sign-up</h3>
+      <label class="f" for="stSignup">How new shops get an account</label><select class="select" id="stSignup" name="signup"><option value="approval" ${s.signup !== 'closed' ? 'selected' : ''}>Shops register themselves, I approve each one</option><option value="closed" ${s.signup === 'closed' ? 'selected' : ''}>Only I create accounts (Shops → Add shop)</option></select>
       <h3 style="margin:24px 0 0;font-size:18px">Markets</h3><label class="f" for="stMk">Markets offered at registration (comma separated)</label><input class="input" id="stMk" name="markets" value="${esc(s.markets.join(', '))}">
       <button class="btn btn-primary" style="margin-top:18px">Save settings</button></form>
 
@@ -480,7 +510,7 @@ route('admin/settings', async () => {
 });
 async function saveSettings(e) {
   e.preventDefault(); const d = formData(e.target);
-  await busy(e.submitter, () => API.put('/api/admin/settings', { business: { name: d.name, tagline: d.tagline, phone: d.phone, whatsapp: d.whatsapp, address: d.address, mapUrl: d.mapUrl, hours: d.hours, bank: d.bank }, markets: d.markets.split(',') }));
+  await busy(e.submitter, () => API.put('/api/admin/settings', { business: { name: d.name, tagline: d.tagline, phone: d.phone, whatsapp: d.whatsapp, address: d.address, mapUrl: d.mapUrl, hours: d.hours, bank: d.bank }, signup: d.signup, markets: d.markets.split(',') }));
   API.info = await API.get('/api/info'); Shell.brand(); toast('Settings saved');
 }
 async function addStaff() {

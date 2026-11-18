@@ -247,6 +247,27 @@ route('print', async (r) => {
     const cells = PRINT.labels.items.flatMap(({ p, n }) => Array.from({ length: n }, () => `<div class="label">${code(p.barcode || p.sku)}<div><b>${esc(p.name)}</b><br><small>${esc(p.barcode || p.sku)}</small>${PRINT.labels.price ? `<br><b>${rs(p.price)}</b>` : ''}</div></div>`));
     return `${bar('#/admin/labels')}${qr ? '' : '<p class="no-print banner-note">The QR library could not load (no internet?). Labels show the code as text instead.</p>'}<div class="label-grid">${cells.join('')}</div>`;
   }
+  if (kind === 'invite') {
+    needAdmin(); setPageSize('A4');
+    const url = location.origin + location.pathname;
+    let qr = null; try { qr = await loadQr(); } catch {}
+    const code = qr ? (() => { const q = qr(0, 'M'); q.addData(url); q.make(); return q.createSvgTag({ cellSize: 8, margin: 0 }); })() : `<div class="qr-fallback">${esc(url)}</div>`;
+    const msg = `Assalam o Alaikum! ${b.name} ka wholesale app ab live hai. Apni shop register karein, rates dekhein aur phone se order karein: ${url}`;
+    return `<div class="no-print print-bar"><a class="btn btn-ghost btn-sm" href="#/admin/shops">${icon('back')} Back</a><a class="btn btn-wa btn-sm" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${icon('wa')} Share link on WhatsApp</a><button class="btn btn-ghost btn-sm" onclick="copyText(${esc(JSON.stringify(msg))}, 'Invite message copied')">Copy message</button><button class="btn btn-primary btn-sm" onclick="doPrint()">${icon('receipt')} Print poster</button></div>
+      <div class="sheet-a4 invite">
+        <div class="inv-head"><div style="width:78px">${logoSVG()}</div><div><b>${esc(b.name.toUpperCase())}</b><span>WHOLESALE ACCESSORIES${siteCfg().urdu ? ` · <i class="ur">${esc(siteCfg().urdu)}</i>` : ''}</span></div></div>
+        <h1>Order wholesale from your phone</h1>
+        <p class="ur big">اپنے فون سے ہول سیل آرڈر کریں</p>
+        <div class="inv-qr">${code}</div>
+        <p class="inv-url">${esc(url.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</p>
+        <ol class="inv-steps">
+          <li><div><b>Scan the code</b> with your phone camera</div><span class="ur">کیمرے سے کوڈ اسکین کریں</span></li>
+          <li><div><b>Register your shop</b> or sign in</div><span class="ur">اپنی دکان رجسٹر کریں</span></li>
+          <li><div><b>Install the app</b> from the Chrome menu</div><span class="ur">ایپ انسٹال کریں</span></li>
+        </ol>
+        <div class="inv-foot"><span>${icon('phone')} ${esc(b.phone)}</span><span>${icon('pin')} ${esc(b.address)}</span></div>
+      </div>`;
+  }
   throw new Error('Nothing to print');
 });
 function setPageSize(size) { let st = $('#pageSize'); if (!st) { st = document.createElement('style'); st.id = 'pageSize'; document.head.appendChild(st); } st.textContent = `@page { size: ${size}; margin: ${size.startsWith('80') ? '3mm' : '12mm'}; }`; }

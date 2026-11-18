@@ -47,6 +47,15 @@ It is an installable web app (PWA) with a small Node.js server. It has no extern
 - **Automatic backups**: the server saves a copy of the database every day to `DATA_DIR/backups/` and keeps the last 14 days.
 - **Logo**: the "L-frame" mark (the L of Lahore holding a phone). Files are in `brand/` (SVG and PNG), with a one-page brand sheet in `brand/brand-sheet.html`.
 
+## Added for go-live
+
+- **Sign-up under the owner's control**: in **Settings → Shop sign-up** choose "shops register, I approve each one" or "only I create accounts". New registrations alert the owner (phone notification + badge) and appear under **Shops → Needs your action** with **Approve** and **Reject**. An approved shop gets a notification.
+- **Forgot password**: the login page sends a request to the owner, who sets a new password from **Shops** and sends it on WhatsApp in one tap.
+- **Invite shops** (**Shops → Invite shops**): a printable A4 poster with a QR code to the site, and a ready WhatsApp invite message.
+- **Remove sample products** (**Inventory**): clears the starter catalogue before real shops start ordering.
+- **Owner password rescue**: set `OWNER_RESET_PASSWORD` in the hosting settings, redeploy or restart, sign in with it, then delete the variable. It is applied once per value.
+- **Go-live guide**: `docs/Lahore-Mobile-Go-Live-Guide.pdf` (Roman Urdu), step by step from deploy to daily use.
+
 ## Run it
 
 ```bash
@@ -77,6 +86,7 @@ Netlify serves the app and runs the backend as one function (`netlify/functions/
    - `ADMIN_PHONE`: the owner's mobile number, e.g. `03036603409`
    - `ADMIN_PASSWORD`: the owner's first password (6+ characters; change it later from the app)
    - optional `VAPID_SUBJECT`: `mailto:` + an email address, used for phone notifications
+   - only if the owner password is lost: `OWNER_RESET_PASSWORD` (see above)
 3. Deploy. Open the site, sign in with that number and password, and edit everything else from the admin panel.
 4. Optional: **Domain management** to connect your own domain (e.g. `lahoremobile.pk`). HTTPS is automatic.
 

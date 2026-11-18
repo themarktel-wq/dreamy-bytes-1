@@ -223,7 +223,7 @@
     // Public
     R('GET', '/api/info', ANY, () => {
       const s = settings();
-      return { business: s.business, categories: cats(), grades: GRADES, markets: s.markets, site: site(), sectionNames: SECTIONS, siteIcons: SITE_ICONS };
+      return { business: s.business, categories: cats(), grades: GRADES, markets: s.markets, signup: s.signup || 'approval', site: site(), sectionNames: SECTIONS, siteIcons: SITE_ICONS };
     });
     R('GET', '/api/products', ANY, ({ user, query }) => {
       let list = S.all('products').filter((p) => p.active);
@@ -243,6 +243,7 @@
     R('GET', '/api/feed', ANY, () => S.all('announcements').sort((a, b) => b.at - a.at).slice(0, 30));
 
     R('POST', '/api/auth/register', ANY, ({ body }) => {
+      if (settings().signup === 'closed') bad('New accounts are created by the store. Please call or WhatsApp us and we will set up your shop.');
       const phone = normPhone(body.phone);
       if (S.all('users').some((u) => u.phone === phone)) bad('An account with this number already exists. Please sign in.');
       const pw = str(body.password, 100); if (pw.length < 6) bad('Password must be at least 6 characters');
@@ -253,7 +254,17 @@
       };
       S.put('users', u);
       const token = newSession(u);
-      return { status: 201, token, body: { user: publicUser(u) }, events: [{ to: 'admin', type: 'shops', title: 'New shop registered', body: `${u.shop.shopName} · ${u.shop.market || ''} — waiting for approval`, url: '#/admin/shop/' + u.id }] };
+      return { status: 201, token, body: { user: publicUser(u) }, events: [{ to: 'admin', type: 'shops', title: 'New shop is waiting for approval', body: `${u.shop.shopName}${u.shop.market ? ' · ' + u.shop.market : ''} · ${u.phone}. Tap to approve.`, url: '#/admin/shop/' + u.id }] };
+    });
+    R('POST', '/api/auth/forgot', ANY, ({ body }) => {
+      // Passwords are reset by the store: the request shows up in the admin panel and on the owner's phone.
+      let phone; try { phone = normPhone(body.phone); } catch { bad('Enter your registered mobile number'); }
+      const u = S.all('users').find((x) => x.phone === phone && x.status !== 'blocked');
+      const ok = { body: { ok: true, message: 'Request sent. The store will contact you with a new password.' } };
+      if (!u || (u.resetAsked && now() - u.resetAsked < 30 * 60e3)) return ok;
+      u.resetAsked = now(); S.put('users', u);
+      const who = u.role === 'shop' ? `${u.shop.shopName} (${u.phone})` : `${u.name} (${u.phone})`;
+      return { ...ok, events: [{ to: 'admin', type: 'shops', title: 'Password reset request', body: `${who} forgot their password. Set a new one and send it to them.`, url: u.role === 'shop' ? '#/admin/shop/' + u.id : '#/admin/settings' }] };
     });
     R('POST', '/api/auth/login', ANY, ({ body }) => {
       const phone = normPhone(body.phone);
@@ -266,6 +277,7 @@
       }
       if (u.status === 'blocked') deny('This account has been blocked. Please contact the store.');
       loginFails.delete(phone);
+      if (u.resetAsked) { delete u.resetAsked; S.put('users', u); }
       return { token: newSession(u), body: { user: publicUser(u) } };
     });
     R('POST', '/api/auth/logout', AUTH, ({ token }) => { S.del('sessions', deps.sha(token)); return { clearToken: true, body: { ok: true } }; });
@@ -278,6 +290,8 @@
         out.unread = S.all('messages').filter((m) => m.from === 'shop' && !m.readAdmin).length;
         out.pendingOrders = S.all('orders').filter((o) => o.status === 'pending').length;
         out.pendingShops = S.all('users').filter((u) => u.role === 'shop' && u.status === 'pending').length;
+        out.resetRequests = S.all('users').filter((u) => u.resetAsked).length;
+        out.shopAlerts = out.pendingShops + out.resetRequests;
       }
       return out;
     });
@@ -376,7 +390,7 @@
       const orders = S.all('orders');
       return S.all('users').filter((u) => u.role === 'shop').map((u) => {
         const mine = orders.filter((o) => o.shopId === u.id && SOLD.includes(o.status));
-        return { ...publicUser(u), orders: mine.length, sales: mine.reduce((a, o) => a + o.total, 0), lastOrderAt: mine.reduce((a, o) => Math.max(a, o.createdAt), 0) || null };
+        return { ...publicUser(u), resetAsked: u.resetAsked || null, orders: mine.length, sales: mine.reduce((a, o) => a + o.total, 0), lastOrderAt: mine.reduce((a, o) => Math.max(a, o.createdAt), 0) || null };
       }).sort((a, b) => (a.status === 'pending' ? -1 : 0) - (b.status === 'pending' ? -1 : 0) || b.createdAt - a.createdAt);
     });
     R('POST', '/api/admin/shops', STAFF, ({ body }) => {
@@ -386,15 +400,28 @@
       const u = { id: id('u'), role: 'shop', status: 'active', phone, name: reqStr(body.name, 60, 'Owner name'), pass: deps.hashPassword(pw), shop: { shopName: reqStr(body.shopName, 80, 'Shop name'), market: str(body.market, 60), address: str(body.address, 200) }, favs: [], createdAt: now() };
       S.put('users', u); return { status: 201, body: publicUser(u) };
     });
+    R('DELETE', '/api/admin/shops/:id', STAFF, ({ params }) => {
+      const u = S.get('users', params.id); if (!u || u.role !== 'shop') nf('Shop not found');
+      if (u.status !== 'pending') bad('Only a shop waiting for approval can be rejected. Block an active shop instead.');
+      if (S.all('orders').some((o) => o.shopId === u.id)) bad('This shop has orders. Block it instead.');
+      S.all('sessions').filter((s) => s.userId === u.id).forEach((s) => S.del('sessions', s.id));
+      S.all('messages').filter((m) => m.shopId === u.id).forEach((m) => S.del('messages', m.id));
+      S.del('users', u.id); return { status: 200, body: { deleted: true }, events: [{ to: 'admin', type: 'shops' }] };
+    });
     R('POST', '/api/admin/shops/:id', STAFF, ({ user, params, body }) => {
       const u = S.get('users', params.id); if (!u || u.role !== 'shop') nf('Shop not found');
+      u.statusBefore = u.status;
       if (body.status) { if (!['active', 'blocked', 'pending'].includes(body.status)) bad('Unknown status'); u.status = body.status; if (body.status === 'blocked') S.all('sessions').filter((s) => s.userId === u.id).forEach((s) => S.del('sessions', s.id)); }
       if (body.shopName) u.shop.shopName = reqStr(body.shopName, 80, 'Shop name');
       if (body.name) u.name = reqStr(body.name, 60, 'Owner name');
       if (body.market !== undefined) u.shop.market = str(body.market, 60);
       if (body.address !== undefined) u.shop.address = str(body.address, 200);
-      if (body.password) { if (String(body.password).length < 6) bad('Password must be at least 6 characters'); u.pass = deps.hashPassword(String(body.password)); }
-      S.put('users', u); return { body: publicUser(u), events: [{ to: 'shop:' + u.id, type: 'account' }] };
+      if (body.password) { if (String(body.password).length < 6) bad('Password must be at least 6 characters'); u.pass = deps.hashPassword(String(body.password)); delete u.resetAsked; }
+      const was = u.statusBefore; delete u.statusBefore;
+      S.put('users', u);
+      const ev = { to: 'shop:' + u.id, type: 'account' };
+      if (body.status === 'active' && was !== 'active') Object.assign(ev, { title: 'Your shop is approved', body: 'You can now see prices and place orders.', url: '#/' });
+      return { body: publicUser(u), events: [ev, { to: 'admin', type: 'shops' }] };
     });
 
     // Orders
@@ -505,6 +532,20 @@
         } catch (e) { if (e instanceof HttpErr) bad(`Row ${i + 2}: ${e.message}`); throw e; }
       });
       return { added, updated };
+    });
+    // Starter catalogue products (ids "p_…") can be cleared in one go before going live.
+    const isSample = (p) => /^p_/.test(p.id);
+    R('POST', '/api/admin/products/clear-samples', ADMIN, () => {
+      const used = new Set(S.all('orders').flatMap((o) => o.items.map((l) => l.pid)).concat(S.all('purchases').flatMap((x) => (x.items || []).map((l) => l.pid))));
+      let removed = 0, archived = 0;
+      for (const p of S.all('products').filter(isSample)) {
+        if (used.has(p.id)) { if (p.active !== false) { p.active = false; S.put('products', p); archived++; } continue; }
+        S.all('stockMoves').filter((m) => m.pid === p.id).forEach((m) => S.del('stockMoves', m.id));
+        S.all('deals').filter((d) => d.pid === p.id).forEach((d) => S.del('deals', d.id));
+        S.del('products', p.id); removed++;
+      }
+      S.all('announcements').filter((x) => x.pid && !S.get('products', x.pid)).forEach((x) => S.del('announcements', x.id));
+      return { removed, archived };
     });
     R('DELETE', '/api/admin/products/:id', ADMIN, ({ params }) => {
       const p = S.get('products', params.id); if (!p) nf('Product not found');
@@ -630,6 +671,7 @@
       const s = settings();
       const b = body.business || {};
       s.business = { name: reqStr(b.name, 60, 'Business name'), tagline: str(b.tagline, 120), phone: str(b.phone, 30), whatsapp: str(b.whatsapp, 20).replace(/\D/g, ''), address: str(b.address, 200), mapUrl: /^https:\/\//.test(String(b.mapUrl || '')) ? str(b.mapUrl, 300) : '', hours: str(b.hours, 100), bank: str(b.bank, 300) };
+      if (body.signup !== undefined) s.signup = body.signup === 'closed' ? 'closed' : 'approval';
       if (Array.isArray(body.markets)) s.markets = body.markets.map((m) => str(m, 60)).filter(Boolean).slice(0, 40);
       S.put('settings', s); return s;
     });
@@ -842,6 +884,20 @@
       }
     }
 
+    /* Emergency owner password reset from hosting settings (OWNER_RESET_PASSWORD). Applied once per new value. */
+    function ownerReset(pw) {
+      pw = String(pw || ''); if (pw.length < 6) return false;
+      const s = settings(); if (!s) return false;
+      const mark = deps.sha('owner-reset:' + pw); if (s.ownerResetMark === mark) return false;
+      S.tx(() => {
+        const owner = S.all('users').find((u) => u.role === 'admin'); if (!owner) return;
+        owner.pass = deps.hashPassword(pw); S.put('users', owner);
+        S.all('sessions').filter((x) => x.userId === owner.id).forEach((x) => S.del('sessions', x.id));
+        s.ownerResetMark = mark; S.put('settings', s);
+      });
+      return true;
+    }
+
     /* ---------- seed ---------- */
     function seed({ demo = false, adminPhone = '03000000000', adminPassword = 'admin123', images = {} } = {}) {
       if (settings()) return false;
@@ -945,7 +1001,7 @@
       return true;
     }
 
-    return { handle, seed, pushTargets, dropPushSub, CATEGORIES, GRADES, DEFAULT_SITE };
+    return { handle, seed, ownerReset, pushTargets, dropPushSub, CATEGORIES, GRADES, DEFAULT_SITE };
   }
 
   const api = { createCore, normPhone, CATEGORIES, GRADES };
