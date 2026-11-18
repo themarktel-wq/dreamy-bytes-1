@@ -3,9 +3,10 @@
 const Shell = {
   brand() {
     const b = API.info.business;
-    const html = (inv) => `${logoSVG('', inv)}<span><span class="t1">${esc(b.name)}</span><span class="t2">${esc(b.tagline || 'Wholesale')}</span></span>`;
+    const html = (inv) => `${logoSVG('', inv)}<span><span class="t1">${esc(b.name)}</span><span class="t2 ur">لاہور موبائل</span></span>`;
     $('#brand').innerHTML = html(false); $('#brandFoot').innerHTML = html(true);
     $('#announceText').textContent = `${b.tagline || 'Wholesale mobile accessories'} · ${b.hours}`;
+    Shell.ticker();
     $('#annPhone').textContent = b.phone;
     $('#footAddr').textContent = b.address;
     $('#footHours').textContent = b.hours;
@@ -42,6 +43,16 @@ const Shell = {
     $('#demoBar').classList.toggle('hidden', API.mode !== 'demo');
     this.badges();
   },
+  async ticker() {
+    const b = API.info.business;
+    const [feed, deals] = await Promise.all([API.get('/api/feed').catch(() => []), API.get('/api/deals').catch(() => [])]);
+    const items = [];
+    deals.forEach((d) => items.push(`<a href="#/p/${d.product.id}"><i class="tk-deal">Deal</i>${esc(d.product.name)}${d.product.price != null ? ' ' + rs(d.product.price) : ''} · until ${new Date(d.endsAt).toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })}</a>`));
+    feed.filter((a) => a.kind !== 'deal').slice(0, 4).forEach((a) => items.push(`<a href="${a.pid ? '#/p/' + a.pid : '#/'}"><i>${a.kind === 'stock' ? 'New stock' : a.kind === 'price' ? 'Price' : 'Notice'}</i>${esc(a.title)}</a>`));
+    items.push(`<span><i>Timings</i>${esc(b.hours)}</span>`, `<span><i>Call / WhatsApp</i>${esc(b.phone)}</span>`, `<span><i>Shop</i>${esc(b.address)}</span>`);
+    const row = items.join('<b class="tk-sep" aria-hidden="true"></b>');
+    $('#announceText').innerHTML = `<div class="ticker"><div class="tk-track">${row}<b class="tk-sep" aria-hidden="true"></b><span aria-hidden="true" class="tk-dup">${row}</span><b class="tk-sep" aria-hidden="true"></b></div></div>`;
+  },
   badges() {
     const me = API.me || {};
     $$('.cart-count').forEach((b) => (b.textContent = Cart.count() || ''));
@@ -71,6 +82,7 @@ API.on(async (ev) => {
     Shell.badges();
     const r = parseHash(), key = r.name === 'admin' ? 'admin/' + (r.sub || 'dash') : r.name;
     const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.activeElement.closest('.chat-input');
+    if (ev.type === 'feed') Shell.ticker();
     const refresh = { messages: ['messages', 'admin/messages', 'admin/chat', 'admin/dash'], orders: ['orders', 'order', 'admin/orders', 'admin/order', 'admin/dash', 'home', 'rider', 'admin/riders'], shops: ['admin/shops', 'admin/dash'], claims: ['orders', 'admin/claims', 'admin/dash'], requests: ['admin/claims', 'admin/dash'], ledger: ['khata', 'home'], feed: ['home'], account: ['home', 'account'] }[ev.type] || [];
     if (API.mode === 'server' && refresh.includes(key) && !typing && !document.querySelector('.modal.on')) {
       const draft = $('#chatIn') ? $('#chatIn').value : '';

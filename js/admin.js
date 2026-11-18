@@ -447,7 +447,7 @@ route('admin/claims', async () => {
 });
 function resolveClaim(id) {
   modalForm(`<h3>Resolve claim</h3>
-    <label class="f" for="rcAct">Decision</label><select class="select" id="rcAct"><option value="credit">Approve — credit the shop's khata</option><option value="replace">Approve — send a replacement from stock</option><option value="reject">Reject</option></select>
+    <label class="f" for="rcAct">Decision</label><select class="select" id="rcAct"><option value="credit">Approve: credit the shop's khata</option><option value="replace">Approve: send a replacement from stock</option><option value="reject">Reject</option></select>
     <label class="switch" style="margin-top:12px">The returned item can be resold (put it back in stock) <input type="checkbox" id="rcRestock"></label>
     <label class="f" for="rcNote">Note to the shop (optional)</label><input class="input" id="rcNote" maxlength="300">${modalButtons('Save')}`, async (m, e) => {
     const act = m.querySelector('#rcAct').value;
@@ -558,7 +558,7 @@ async function backupCopy() {
     if (dl) { try { await dl.save({ filename: name, data: text }); toast('Backup saved'); return; } catch {} }
   }
   if (!window.LM_MEMORY_ROUTER) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast('Backup downloaded'); return; }
-  copyText(text, `Backup copied (${Math.round(text.length / 1024)} KB) — paste it into a note or email`);
+  copyText(text, `Backup copied (${Math.round(text.length / 1024)} KB). Paste it into a note or email.`);
 }
 function backupRestore() {
   modalForm(`<h3>Restore from backup</h3><p class="muted" style="margin:4px 0 0">This replaces all current data with the backup.</p>

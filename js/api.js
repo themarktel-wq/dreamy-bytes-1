@@ -69,7 +69,7 @@ const API = {
 /* ---------- In-browser demo backend ---------- */
 const Demo = {
   core: null, store: null, token: '',
-  KEY: 'lm_wholesale_demo_v2',
+  KEY: 'lm_wholesale_demo_v3',
   start() {
     let initial = {};
     try { initial = JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch {}
@@ -86,7 +86,7 @@ const Demo = {
     });
     if (this.core.seed({ demo: true, images: window.LMSeedImages || {} })) this.save();
   },
-  save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.store.dump())); } catch { toast('Browser storage is full — the demo will reset on reload', 'info'); } },
+  save() { try { localStorage.setItem(this.KEY, JSON.stringify(this.store.dump())); } catch { toast('Browser storage is full. The demo will reset when you reload.', 'info'); } },
   setToken(t) { this.token = t; try { t ? localStorage.setItem(this.KEY + '_tok', t) : localStorage.removeItem(this.KEY + '_tok'); } catch {} },
   reset() { try { localStorage.removeItem(this.KEY); localStorage.removeItem(this.KEY + '_tok'); } catch {} this.token = ''; this.start(); },
   async call(method, path, body) {

@@ -2,7 +2,7 @@
 (function (root) {
   const I = (n) => 'assets/img/' + n + '.jpg';
   const SEED_IMAGES = {
-    panel: I('glass2'), glass1: I('glass1'), glass2: I('glass3'), glass3: I('glass1'), 'case-leather': I('case-leather'), 'case-carbon': I('case-carbon'),
+    'case-leather': I('case-leather'), 'case-carbon': I('case-carbon'),
     charger: I('charger'), cables: I('cables'), airpods: I('airpods'), 'earbuds-blue': I('earbuds-blue'), 'earbuds-dark': I('earbuds-dark'),
     magsafe: I('magsafe'), 'watch-classic': I('watch-classic'),
   };

@@ -36,7 +36,7 @@ const Push = {
   },
   async box() {
     const st = await this.state().catch(() => 'unsupported');
-    const text = { on: 'On — you get alerts for orders, messages, deals and payments, even when the app is closed.', off: 'Get alerts for new orders, messages, deals and payments, even when the app is closed.', denied: 'Blocked in browser settings. Allow notifications for this site, then come back.', unsupported: API.mode !== 'server' ? 'Available on the live app (not in this demo).' : 'Not supported in this browser. On iPhone, add the app to the Home Screen first.' }[st];
+    const text = { on: 'On. You get alerts for orders, messages, deals and payments, even when the app is closed.', off: 'Get alerts for new orders, messages, deals and payments, even when the app is closed.', denied: 'Blocked in browser settings. Allow notifications for this site, then come back.', unsupported: API.mode !== 'server' ? 'Available on the live app (not in this demo).' : 'Not supported in this browser. On iPhone, add the app to the Home Screen first.' }[st];
     return `<div class="box" style="padding:22px;margin-top:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="service" style="padding:0;border:0"><span class="ic">${icon('bell')}</span></span><div style="flex:1;min-width:200px"><b style="color:var(--ink)">Phone notifications</b><div class="muted" style="font-size:13.5px">${text}</div></div>
       ${st === 'on' ? `<button class="btn btn-ghost btn-sm" onclick="Push.disable().then(()=>{toast('Notifications off');render({quiet:true})})">Turn off</button>` : st === 'off' ? `<button class="btn btn-primary btn-sm" onclick="pushOn(this)">Turn on</button>` : ''}</div>`;
   },
@@ -73,7 +73,7 @@ after('admin/deals', () => {
 async function createDeal(e) {
   e.preventDefault(); const d = formData(e.target);
   await busy(e.submitter, () => API.post('/api/admin/deals', { pid: d.pid, price: parseInt(d.price), maxPerShop: d.maxPerShop ? parseInt(d.maxPerShop) : 0, endsAt: +d.endsAt, title: d.title }));
-  toast('Deal is live — shops have been notified', 'bolt'); render({ quiet: true });
+  toast('Deal is live. Shops have been notified.', 'bolt'); render({ quiet: true });
 }
 async function endDeal(id) { if (!(await uiConfirm('End this deal now?', 'Prices go back to normal immediately.', 'End deal'))) return; await API.del('/api/admin/deals/' + id).catch(errBox); render({ quiet: true }); }
 

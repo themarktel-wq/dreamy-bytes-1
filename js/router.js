@@ -32,7 +32,7 @@ async function render(opts = {}) {
   if (seq !== ROUTER.seq) return; // a newer navigation won
   const y = opts.quiet ? window.scrollY : 0;
   view.innerHTML = html || '';
-  if (!opts.quiet) { view.classList.remove('enter'); void view.offsetWidth; view.classList.add('enter'); }
+  if (!opts.quiet) { view.classList.remove('enter'); void view.offsetWidth; view.classList.add('enter'); countUp(view); }
   window.scrollTo(0, y);
   if (afterHooks[key]) afterHooks[key](r);
   else if (afterHooks[r.name]) afterHooks[r.name](r);
@@ -58,7 +58,7 @@ const STATUS_LABEL = { pending: 'Pending', confirmed: 'Confirmed', packed: 'Pack
 const badge = (s, label) => `<span class="badge ${esc(s)}">${esc(label || STATUS_LABEL[s] || s)}</span>`;
 const catName = (id) => ((API.info && API.info.categories.find((c) => c.id === id)) || {}).name || id;
 const crumb = (...parts) => `<div class="crumb"><a href="#/">Home</a>${parts.map((p) => `${icon('chevron', 'width="14" height="14"')}${Array.isArray(p) ? `<a href="${p[1]}">${esc(p[0])}</a>` : `<span>${esc(p)}</span>`}`).join('')}</div>`;
-const secHead = (eyebrow, title, sub, link) => `<div class="sec-head"><div>${eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''}<h3>${title}</h3>${sub ? `<div class="sub">${sub}</div>` : ''}</div>${link || ''}</div>`;
+const secHead = (_label, title, sub, link) => `<div class="sec-head"><div><h3>${title}</h3>${sub ? `<div class="sub">${sub}</div>` : ''}</div>${link || ''}</div>`;
 const arrowLink = (href, text) => `<a href="${href}">${text} ${icon('arrow')}</a>`;
 const waLink = (phone, text) => `https://wa.me/${String(phone || '').replace(/\D/g, '').replace(/^0/, '92')}?text=${encodeURIComponent(text)}`;
 const bizWa = (text) => waLink((API.info && API.info.business.whatsapp) || '', text);
@@ -83,6 +83,7 @@ const Cart = {
     let list = this.items().filter((x) => x.pid !== pid);
     if (qty > 0) list.push({ pid, qty });
     Store.set(this.key(), list); Shell.badges();
+    $$('a[href="#/cart"] .icon-btn, #tabbar a[href="#/cart"]').forEach((el) => { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); });
   },
   clear() { Store.set(this.key(), []); Shell.badges(); },
   count() { return this.items().length; },
@@ -104,3 +105,15 @@ function snapQty(p, v) {
 function needLogin(msg) { if (!API.user) { const e = new Error(msg || 'Please sign in'); e.status = 401; throw e; } }
 function needAdmin() { needLogin(); if (!API.isAdmin) throw new Error(API.isRider ? 'Riders can open My deliveries only.' : 'This page is for the store team only.'); }
 function needShop() { needLogin(); if (!API.isShop) throw new Error('This page is for shop accounts. Open the admin panel instead.'); }
+
+/* Count-up for money and counts in summary cards (runs once per page open). */
+function countUp(root) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  $$('.sc b, .kpi b', root).forEach((el) => {
+    const m = /^(Rs\s)?(-?[\d,]+)$/.exec(el.textContent.trim()); if (!m) return;
+    const end = parseInt(m[2].replace(/,/g, ''), 10); if (!end) return;
+    const pre = m[1] || '', t0 = performance.now(), dur = 700;
+    const step = (t) => { const k = Math.min(1, (t - t0) / dur), v = Math.round(end * (1 - Math.pow(1 - k, 3))); el.textContent = pre + v.toLocaleString('en-PK'); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}

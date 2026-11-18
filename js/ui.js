@@ -97,13 +97,15 @@ const CAT_ICON = { panel: 'phone', protector: 'shield', case: 'case', charger: '
 function productArt(p, cls = 'art') {
   if (p && p.img) return `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy" class="${cls}">`;
   const cat = CAT_ICON[p && p.cat] || 'box';
-  return `<div class="${cls}" style="width:100%;height:100%;display:grid;place-items:center;color:#98a2b3;background:#f5f7fb">${icon(cat, 'width="34%" height="34%" stroke-width="1.2"')}</div>`;
+  const models = ((p && p.models) || []).filter((m) => !/^all\b/i.test(m));
+  const title = models.length ? models.slice(0, 2).join(' · ') + (models.length > 2 ? ` +${models.length - 2}` : '') : (p && p.brand) || '';
+  return `<div class="${cls} ph ph-${esc((p && p.cat) || 'other')}"><span class="ph-ic">${icon(cat, 'stroke-width="1.5"')}</span><b>${esc(title)}</b>${p && p.grade ? `<small>${esc(p.grade)}</small>` : ''}</div>`;
 }
 
 /* ---------- Persistent store (localStorage with safe fallbacks) ---------- */
 const Store = {
   get(k, d) { try { const v = localStorage.getItem('lm_' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('lm_' + k, JSON.stringify(v)); } catch (e) { toast('Storage full — kuch purana data delete karein', 'info'); } },
+  set(k, v) { try { localStorage.setItem('lm_' + k, JSON.stringify(v)); } catch (e) { toast('Storage is full. Delete some old data.', 'info'); } },
   del(k) { try { localStorage.removeItem('lm_' + k); } catch {} },
 };
 

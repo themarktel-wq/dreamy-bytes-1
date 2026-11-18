@@ -704,7 +704,7 @@
       S.put('deals', d);
       const until = new Date(endsAt).toLocaleString('en-PK', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
       S.put('announcements', { id: id('a'), kind: 'deal', title: d.title, body: `${rs(price)} instead of ${rs(p.price)} · until ${until}${d.maxPerShop ? ` · max ${d.maxPerShop} per shop` : ''}`, pid: p.id, at: now() });
-      return { status: 201, body: d, events: [{ to: 'all', type: 'feed', title: `⚡ ${d.title}`, body: `${rs(price)} (list ${rs(p.price)}) until ${until}`, url: '#/p/' + p.id }] };
+      return { status: 201, body: d, events: [{ to: 'all', type: 'feed', title: d.title, body: `${rs(price)} (list ${rs(p.price)}) until ${until}`, url: '#/p/' + p.id }] };
     });
     R('DELETE', '/api/admin/deals/:id', ADMIN, ({ params }) => {
       const d = S.get('deals', params.id); if (!d) nf('Deal not found');
@@ -898,8 +898,10 @@
           markets: ['Tajpura', 'Harbanspura', 'Shalimar', 'Mughalpura', 'Hafeez Centre', 'Hall Road', 'Mall Road', 'Liberty', 'Johar Town', 'Model Town', 'Ichhra', 'Anarkali', 'Shah Alam', 'Township', 'DHA', 'Other'],
         });
         S.put('users', { id: 'u_admin', role: 'admin', status: 'active', phone: normPhone(adminPhone), name: 'Owner', pass: deps.hashPassword(adminPassword), createdAt: now() });
+        const usedImg = new Set();
         const P = (sku, cat, name, brand, grade, models, price, retail, cost, stock, packSize, moq, reorder, img, extra = {}) => {
-          const p = { id: 'p_' + sku.toLowerCase(), sku, cat, name, brand, grade, models, price, retail, cost, stock: 0, packSize, moq, reorderLevel: reorder, img: images[img] || '', desc: '', faulty: 0, featured: false, isNew: false, active: true, createdAt: now(), updatedAt: now(), ...extra };
+          const photo = images[img] && !usedImg.has(img) ? (usedImg.add(img), images[img]) : '';
+          const p = { id: 'p_' + sku.toLowerCase(), sku, cat, name, brand, grade, models, price, retail, cost, stock: 0, packSize, moq, reorderLevel: reorder, img: photo, desc: '', faulty: 0, featured: false, isNew: false, active: true, createdAt: now(), updatedAt: now(), ...extra };
           S.put('products', p); if (stock) moveStock(p, stock, 'opening', '', 'Owner');
         };
         P('PN-IP11-IN', 'panel', 'iPhone 11 LCD Panel (Incell)', 'JK', 'Incell', ['iPhone 11', 'iPhone XR'], 3400, 5500, 2850, 40, 1, 1, 10, 'panel', { featured: true, desc: 'Incell LCD with frame. Tested before dispatch. 3-month warranty against dead pixels and touch faults.' });
