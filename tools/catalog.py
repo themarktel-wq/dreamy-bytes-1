@@ -30,6 +30,7 @@ CATEGORIES = {
     "marketing": "Marketing",
     "career": "Career & Jobs",
     "business": "Business Tools",
+    "workflow": "AI Workflows",
 }
 
 # Palette: Ivory + Violet. Each category gets its own cover colour (bg, text, accent).
@@ -42,6 +43,7 @@ CAT_STYLE = {
     "marketing": ("#FFE27A", "#111018", "#5B2EFF"),
     "career": ("#E9E3FF", "#111018", "#5B2EFF"),
     "business": ("#BFEBD3", "#111018", "#FF6B2C"),
+    "workflow": ("#2B1A80", "#FFFFFF", "#BFEBD3"),
     "bundle": ("#111018", "#F6F3EE", "#FFE27A"),
 }
 
@@ -174,8 +176,65 @@ PRODUCTS = [
          includes=["110+ tools", "Category filters", "Use-case notes", "Free-plan column"]),
 ]
 
+# ---- AI Workflows (No. 26–35): step-by-step automation blueprints ----
+_WF = [
+    (26, "ai-whatsapp-sales-assistant", "AI WhatsApp Sales Assistant", 1999, 4999, "Hot",
+     "Answer every WhatsApp inquiry in under 2 minutes — with your own prices & policies",
+     "Build an AI assistant that drafts WhatsApp replies from your product sheet, handles objections, collects order details and hands angry or complex chats to a human. Start with a free assisted setup, then automate with the WhatsApp Cloud API and Make/n8n.",
+     ["Reply to customers in seconds, day and night", "Stop AI from inventing prices with a knowledge sheet", "Collect order details automatically", "Sell this setup to local businesses"],
+     ["Knowledge-sheet template", "System prompt + 3 sales prompts", "Make/n8n automation blueprint", "Service pricing & pitch"]),
+    (27, "ai-content-calendar-machine", "AI Content Calendar Machine", 1499, 3999, "New",
+     "30 days of designed social posts in about 2 hours",
+     "Plan a month of content with AI, fill a Google Sheet, auto-design every post with Canva Bulk Create and schedule in Meta Business Suite. Includes pillar strategy, prompts and an approval-based automation.",
+     ["Plan a full month in one sitting", "Design 30 posts at once with Canva Bulk Create", "Write captions that sound like you", "Offer monthly content packages"],
+     ["Monthly plan & caption prompts", "Canva Bulk Create walkthrough", "Scheduling & review system", "Automation blueprint"]),
+    (28, "ai-faceless-reels-factory", "AI Faceless Reels Factory", 1499, 3999, None,
+     "Make 10 faceless Reels in one sitting — script, voice, edit, post",
+     "A production line for short videos without showing your face: AI scripts with strong hooks, natural voiceovers, stock or screen visuals, CapCut templates and batch scheduling — plus platform rules to stay safe.",
+     ["Batch-write 10 scripts with hooks", "Create natural voiceovers", "Edit fast with a CapCut template", "Sell short-form video packages"],
+     ["Script & hook prompts", "Batch production SOP", "Voice + caption setup", "Automation blueprint"]),
+    (29, "ai-lead-gen-outreach-system", "AI Lead Gen & Outreach System", 1999, 4999, None,
+     "Find clients outside Fiverr with personalised AI outreach",
+     "Build a lead list from Google Maps and LinkedIn, write personalised first lines with AI, send emails that don't feel like spam, and track every reply in a simple sheet CRM.",
+     ["Build 50 qualified leads a week", "Write personal outreach in seconds", "Follow up without forgetting", "Land direct clients"],
+     ["Lead sheet + pipeline template", "Personal-line & email prompts", "Follow-up sequence", "Draft-only automation blueprint"]),
+    (30, "ai-website-support-chatbot", "AI Website Support Chatbot", 1499, 3999, None,
+     "A 24/7 chatbot trained on your FAQs, policies & products",
+     "Set up a website chatbot with Chatbase, Tidio or Voiceflow, trained only on your content, with lead capture and WhatsApp handoff. Includes the knowledge-doc structure, bot instructions and testing checklist.",
+     ["Answer common questions automatically", "Capture leads while you sleep", "Hand over to WhatsApp cleanly", "Upsell chatbots to web clients"],
+     ["Knowledge-doc template", "Bot instructions prompt", "Lead capture & alerts setup", "Service packages"]),
+    (31, "ai-product-listing-generator", "AI Product Listing Generator", 1499, 3999, None,
+     "Daraz & Shopify listings from a photo in under 5 minutes",
+     "Turn product photos and a few facts into SEO titles, highlights, descriptions and specs with AI vision, then upload in bulk with Daraz Bulk Manager or Shopify CSV import.",
+     ["Write listings 10× faster", "Use the words buyers actually search", "Upload whole catalogues in bulk", "Sell listing services"],
+     ["Photo checklist", "Listing writer prompt (vision)", "Bulk upload walkthrough", "Drive-to-sheet automation"]),
+    (32, "ai-proposal-writer-system", "AI Proposal Writer System", 999, 2999, None,
+     "Personalised Upwork & Fiverr proposals in under 3 minutes",
+     "Load your case studies and best proposals into an AI project once, then turn any job post into a specific, honest proposal, and track what wins. Platform-safe: you always send proposals yourself.",
+     ["Cut proposal time to 3 minutes", "Never invent experience", "Track reply rates by niche", "Improve weekly with AI review"],
+     ["About-me pack template", "Proposal system prompt", "Job analyser prompt", "Proposal tracker"]),
+    (33, "ai-invoice-order-automation", "AI Invoice & Order Automation", 1999, 4999, None,
+     "Automatic branded PDF invoices from Google Forms — free tools only",
+     "Orders from a Google Form create a branded invoice from your Docs template, saved as PDF, emailed to the customer and logged in Sheets. Includes ready-to-paste Google Apps Script code.",
+     ["Never type an invoice again", "Branded PDF invoices automatically", "Everything logged in Sheets", "Sell it to local SMEs"],
+     ["Ready-to-paste Apps Script", "Form + template setup", "Debug guide", "WhatsApp extension blueprint"]),
+    (34, "ai-ad-creative-factory", "AI Ad Creative Factory", 1499, 3999, None,
+     "20+ Meta ad variations a week — and a system to find winners",
+     "Mine customer language, generate angles and hooks with AI, produce statics and videos in Canva/CapCut, and test them with a simple structure that tells you what to kill and what to scale.",
+     ["Find 8 ad angles from real customer words", "Produce 18 ads in 2 hours", "Test and find winners faster", "Sell creative packages"],
+     ["Angle & hook prompts", "Naming & testing system", "Weekly review prompt", "Automation blueprint"]),
+    (35, "ai-voice-notes-to-tasks", "AI Voice Notes → Tasks", 999, 2499, None,
+     "Turn voice notes & meetings into tasks, summaries and follow-ups",
+     "Record ideas, client calls and WhatsApp audio; AI transcribes Urdu/English and turns them into tasks with real due dates, meeting minutes and draft follow-up messages in Notion or Google Tasks.",
+     ["Never forget a promise to a client", "Meeting minutes in 2 minutes", "Urdu + English voice notes", "Automate into Notion"],
+     ["Tasks extractor prompt", "Meeting minutes prompt", "Weekly review system", "Drive-to-Notion automation"]),
+]
+for _id, _slug, _name, _price, _mrp, _badge, _tag, _desc, _out, _inc in _WF:
+    PRODUCTS.append(dict(id=_id, slug=_slug, name=_name, cat="workflow", price=_price, mrp=_mrp, fmt="pdf", badge=_badge,
+                         tagline=_tag, desc=_desc, outcomes=_out, includes=_inc))
+
 BUNDLE = dict(slug="all-access", name="Skillstack All-Access Pass", price=4999, mrp=sum(p["mrp"] for p in PRODUCTS),
-              tagline="All 25 products + every future product — one payment")
+              tagline=f"All {len(PRODUCTS)} products + every future product — one payment")
 
 FMT_LABEL = {"pdf": "PDF Guide", "xlsx": "Excel / Google Sheets", "docx": "Editable Word Templates"}
 

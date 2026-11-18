@@ -1,6 +1,6 @@
 # 01 — Niche Selection & Product Hunting (Pakistan)
 
-> **Khulasa (Roman Urdu):** Humne "Online Earning + AI Skills" niche choose ki hai kyunke Pakistan mein is ki demand sab se zyada hai, buyers sasta aur practical content chahte hain, aur digital products mein na stock lagta hai na courier. 25 products 6 categories mein hain taake har type ka customer (student, freelancer, job seeker, shop owner) kuch na kuch khareede.
+> **Khulasa (Roman Urdu):** Humne "Online Earning + AI Skills" niche choose ki hai kyunke Pakistan mein is ki demand sab se zyada hai, buyers sasta aur practical content chahte hain, aur digital products mein na stock lagta hai na courier. 35 products 7 categories mein hain (10 naye AI Workflows ke sath) taake har type ka customer (student, freelancer, job seeker, shop owner) kuch na kuch khareede.
 
 ## 1. Chosen niche
 
@@ -71,7 +71,7 @@ We scored 8 candidate niches 1–5 on five criteria.
 - [ ] Check our own WhatsApp: what did customers ask for that we don't sell?
 - [ ] Shortlist 3 ideas → pre-sell on Instagram story poll → build the winner
 
-## 5. The 25-product catalog
+## 5. The 35-product catalog
 
 | # | Product | Category | Format | Price | Role in funnel |
 |---|---|---|---|---|---|
@@ -100,7 +100,19 @@ We scored 8 candidate niches 1–5 on five criteria.
 | 23 | Home Baking Business Kit | Business | PDF | Rs 999 | Niche |
 | 24 | Real Estate Agent Lead Kit | Business | PDF | Rs 1,299 | Niche |
 | 25 | AI Tools Directory | AI | Excel | Rs 599 | Entry |
-| ★ | **All-Access Pass** | Bundle | All 25 | **Rs 4,999** | Main offer |
+| 26 | AI WhatsApp Sales Assistant | AI Workflows | PDF | Rs 1,999 | Hero |
+| 27 | AI Content Calendar Machine | AI Workflows | PDF | Rs 1,499 | Hero |
+| 28 | AI Faceless Reels Factory | AI Workflows | PDF | Rs 1,499 | Core |
+| 29 | AI Lead Gen & Outreach System | AI Workflows | PDF | Rs 1,999 | Core |
+| 30 | AI Website Support Chatbot | AI Workflows | PDF | Rs 1,499 | Core |
+| 31 | AI Product Listing Generator | AI Workflows | PDF | Rs 1,499 | Core |
+| 32 | AI Proposal Writer System | AI Workflows | PDF | Rs 999 | Core |
+| 33 | AI Invoice & Order Automation | AI Workflows | PDF | Rs 1,999 | Core |
+| 34 | AI Ad Creative Factory | AI Workflows | PDF | Rs 1,499 | Core |
+| 35 | AI Voice Notes → Tasks | AI Workflows | PDF | Rs 999 | Core |
+| ★ | **All-Access Pass** | Bundle | All 35 | **Rs 4,999** | Main offer |
+
+**Why AI Workflows (No. 26–35):** buyers don't only want to *learn* AI, they want ready systems that save time or that they can sell as a service to local businesses. Each workflow starts free/no-code (Level 1) and includes a Make/n8n blueprint (Level 2), plus service packages and a pitch, so the product pays for itself.
 
 All product files are in `/products`. Edit text in `tools/content/*.py` and rebuild (see `06-launch-guide.md`).
 

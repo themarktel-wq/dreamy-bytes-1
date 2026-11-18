@@ -18,7 +18,7 @@ from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
 from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Table,
-                                TableStyle, PageBreak, ListFlowable, ListItem, KeepTogether, NextPageTemplate)
+                                TableStyle, PageBreak, Preformatted, ListFlowable, ListItem, KeepTogether, NextPageTemplate)
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
@@ -82,7 +82,7 @@ def _inline(t):
     t = _clean(t)
     t = t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t)
-    t = re.sub(r"_(.+?)_", r"<i>\1</i>", t)
+    t = re.sub(r"(?<!\w)_(?!\s)(.+?)(?<!\s)_(?!\w)", r"<i>\1</i>", t)
     return "".join(f'<font name="Sym">{ch}</font>' if (ord(ch) not in _CMAP and ord(ch) in _SYM) else ch for ch in t)
 
 
@@ -244,7 +244,22 @@ def parse(markup):
         if rows:
             story.extend(_table(rows)); rows = []
 
+    code = None
     for raw in markup.strip().splitlines():
+        if raw.strip().startswith("```"):
+            if code is None:
+                flush(); code = []
+            else:
+                pre = Preformatted("\n".join(code), ParagraphStyle("code", fontName="Courier", fontSize=7.6, leading=10, textColor=INK))
+                box = Table([[pre]], colWidths=[W - 36 * mm])
+                box.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F4F0FF")),
+                                         ("BOX", (0, 0), (-1, -1), 0.6, LAVENDER),
+                                         ("LEFTPADDING", (0, 0), (-1, -1), 9), ("TOPPADDING", (0, 0), (-1, -1), 8),
+                                         ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
+                story.extend([Spacer(1, 4), box, Spacer(1, 8)]); code = None
+            continue
+        if code is not None:
+            code.append(raw.rstrip()); continue
         line = raw.strip()
         if not line:
             flush(); continue
@@ -297,8 +312,9 @@ OUTRO = """
 You now have the system. The difference between people who earn online and people who don't is simply **implementation**. Pick one action from this guide and do it in the next 24 hours.
 ## Keep growing with Skillstack
 - **AI Prompt Vault** — 220+ prompts to do any task faster.
+- **AI Workflows (No. 26–35)** — ready-made automations for WhatsApp, content, leads and more.
 - **Meta Ads Playbook (PKR)** — turn your skill or store into sales with ads.
-- **Skillstack All-Access Pass** — all 25 products + every future product for one payment.
+- **Skillstack All-Access Pass** — all 35 products + every future product for one payment.
 ## License
 This product is licensed to the original buyer for personal use or use inside your own business. You may not resell, share, upload or redistribute this file. Thank you for supporting Pakistani creators.
 """

@@ -15,7 +15,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from catalog import PRODUCTS, CATEGORIES, product_file
 from pdf_engine import build_pdf
 from content.p01_prompt_vault import markup as vault_markup
-from content import freelance, ecom, marketing, business
+from content import freelance, ecom, marketing, business, workflows
 from content.sheets_data import CALENDAR, PILLARS, TOOLS, FREELANCE_CONTRACT
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,7 +23,7 @@ OUT = os.path.join(ROOT, "products")
 os.makedirs(OUT, exist_ok=True)
 
 CONTENT = {}
-for m in (freelance, ecom, marketing, business):
+for m in (freelance, ecom, marketing, business, workflows):
     CONTENT.update(m.CONTENT)
 CONTENT["ai-prompt-vault"] = vault_markup()[0]
 

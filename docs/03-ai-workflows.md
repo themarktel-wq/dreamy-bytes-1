@@ -24,8 +24,8 @@ Tips: open on laptop for Excel/Word files. Any issue? Just reply here.
 Please don't share these links — they're licensed to you only.
 ```
 
-**Google Drive setup for "25 product access":**
-- Make a folder `Skillstack Products` with 25 sub-folders (01 … 25) + one `All-Access` folder that contains shortcuts to all 25.
+**Google Drive setup for "35 product access":**
+- Make a folder `Skillstack Products` with 35 sub-folders (01 … 35) + one `All-Access` folder that contains shortcuts to all 35.
 - Share each folder **"Anyone with the link → Viewer"** (simple) OR share by customer email (safer — Drive → Share → add buyer's Gmail as Viewer). Email sharing lets you revoke access for refunds/abuse.
 - For Excel/Word templates, customers can File → Make a copy / Download.
 
@@ -43,7 +43,7 @@ Please don't share these links — they're licensed to you only.
 - Save the scripts from product #14 (WhatsApp Sales Scripts) as quick replies: `/hi /price /order /pay /deliver /review /sorry`.
 - Keep a ChatGPT/Claude **Project** called "Skillstack Support" with this system prompt:
 ```
-You are Skillstack's WhatsApp support assistant. Skillstack sells 25 digital products for Pakistanis (list + prices below) and an All-Access Pass for Rs 4,999.
+You are Skillstack's WhatsApp support assistant. Skillstack sells 35 digital products for Pakistanis (list + prices below) and an All-Access Pass for Rs 4,999.
 Reply in the customer's language (English or Roman Urdu), friendly, under 60 words, with one clear next step.
 Payment: JazzCash, Easypaisa, bank transfer. Delivery: Google Drive links on WhatsApp/email after payment verification.
 Never promise income. Never invent features. If unsure, say a team member will confirm.

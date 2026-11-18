@@ -104,7 +104,7 @@ row3 = (f'<div style="position:absolute;right:90px;top:50%;transform:translateY(
 A["banners/facebook-cover-1640x624"] = (
     f'<div style="position:absolute;left:100px;top:50%;transform:translateY(-50%);max-width:760px">{brandmark(64, 50)}'
     f'<div class="d" style="font-size:86px;margin:26px 0 18px">Skip the course.<br><span class="mk">Get the kit.</span></div>'
-    f'<div class="mu" style="font-size:30px">25 practical kits for freelancing, AI & e-commerce · from Rs 499</div></div>' + row3, 1640, 624)
+    f'<div class="mu" style="font-size:30px">35 practical kits: freelancing, AI workflows & e-commerce · from Rs 499</div></div>' + row3, 1640, 624)
 A["banners/youtube-banner-2560x1440"] = (
     bars_deco("#E9E3FF", 900, "right:-120px;top:120px") +
     f'<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1546px;height:423px;display:flex;align-items:center">'
@@ -113,7 +113,7 @@ A["banners/youtube-banner-2560x1440"] = (
 A["banners/og-website-1200x630"] = (
     f'<div style="padding:70px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;justify-content:space-between;max-width:700px">{brandmark(56, 44)}'
     f'<div><div class="d" style="font-size:76px">Skip the Rs 50,000 course. <span class="mk">Get the kit.</span></div>'
-    f'<div class="mu" style="font-size:26px;margin-top:16px">25 kits from Rs 499 · JazzCash · Easypaisa</div></div></div>'
+    f'<div class="mu" style="font-size:26px;margin-top:16px">35 kits from Rs 499 · JazzCash · Easypaisa</div></div></div>'
     f'<div style="position:absolute;right:80px;top:80px">{bigcover(P["ai-prompt-vault"], 330, 5)}</div>', 1200, 630)
 A["banners/whatsapp-status-1080x1920"] = (
     f'<div style="padding:130px 80px;display:flex;flex-direction:column;height:100%;box-sizing:border-box;justify-content:space-between;align-items:center;text-align:center">{brandmark(80, 64)}'
@@ -121,7 +121,7 @@ A["banners/whatsapp-status-1080x1920"] = (
     f'<div style="position:absolute;left:40px;top:60px">{bigcover(P["fiverr-freelancing-blueprint"], 400, -10)}</div>'
     f'<div style="position:absolute;right:40px;top:20px">{bigcover(P["meta-ads-playbook"], 400, 9)}</div>'
     f'<div style="position:absolute;left:230px;top:150px">{bigcover(B, 440, -2)}</div></div>'
-    f'<div><div class="d" style="font-size:96px">All 25 kits<br><span class="mk">{rs(BUNDLE["price"])}</span></div>'
+    f'<div><div class="d" style="font-size:96px">All 35 kits<br><span class="mk">{rs(BUNDLE["price"])}</span></div>'
     f'<div style="font-size:40px;margin-top:26px;font-weight:600">WhatsApp <b class="v">"ALL"</b> to {BRAND["whatsapp_display"]}</div></div></div>', 1080, 1920)
 
 # =============== 9 POSTS (1080x1350, 4:5) ===============
@@ -220,7 +220,7 @@ A["posts/post-09-all-access-offer"] = frame(
     f'<div style="position:absolute;left:90px;top:50px">{bigcover(P["fiverr-freelancing-blueprint"], 290, -10)}</div>'
     f'<div style="position:absolute;right:90px;top:30px">{bigcover(P["daraz-seller-launch-kit"], 290, 9)}</div>'
     f'<div style="position:absolute;left:50%;top:70px;transform:translateX(-50%)">{bigcover(B, 340, -1)}</div></div>'
-    f'<div style="text-align:center"><div style="font-size:40px;font-weight:700">All 25 kits · <s class="mu">{rs(BUNDLE["mrp"])}</s></div>'
+    f'<div style="text-align:center"><div style="font-size:40px;font-weight:700">All 35 kits · <s class="mu">{rs(BUNDLE["mrp"])}</s></div>'
     f'<div class="d v" style="font-size:150px">{rs(BUNDLE["price"])}</div><div style="font-size:30px;font-weight:600;margin-top:6px">WhatsApp <b>"ALL"</b> to <span class="v">{BRAND["whatsapp_display"]}</span></div></div>', pad=70)
 
 # =============== 9 ADS (1080x1350) ===============
@@ -236,12 +236,12 @@ def head_row(tag):
 # Ad 1 — Bundle stack
 A["ads/ad-01-all-access-stack"] = frame(
     head_row(f"Save {off(BUNDLE)}%") +
-    f'<div class="d" style="font-size:98px">25 kits for less than <span class="mk">the price of 3.</span></div>'
+    f'<div class="d" style="font-size:98px">35 kits for less than <span class="mk">the price of 3.</span></div>'
     f'<div style="position:relative;flex:1">'
     f'<div style="position:absolute;left:40px;top:50px">{bigcover(P["ai-prompt-vault"], 280, -11)}</div>'
     f'<div style="position:absolute;right:40px;top:40px">{bigcover(P["meta-ads-playbook"], 280, 10)}</div>'
     f'<div style="position:absolute;left:50%;top:70px;transform:translateX(-50%)">{bigcover(B, 330, -1)}</div></div>'
-    + price_cta(BUNDLE, "Get all 25"))
+    + price_cta(BUNDLE, "Get all 35"))
 
 # Ad 2 — Prompt Vault (notes app)
 A["ads/ad-02-prompt-vault-notes"] = frame(
@@ -330,7 +330,7 @@ A["ads/ad-09-course-vs-kit"] = frame(
     f'<div style="font-size:32px;line-height:1.6;color:#6B6878">✕ Weeks of lectures<br>✕ Foreign examples<br>✕ Card payments<br>✕ Theory first</div></div>'
     f'<div class="sk" style="padding:36px;background:#111018;color:#F6F3EE"><div style="font-size:30px;font-weight:800;color:#FFE27A">SKILLSTACK KIT</div><div class="d" style="font-size:76px;margin:12px 0;color:#FFE27A">Rs 499+</div>'
     f'<div style="font-size:32px;line-height:1.6">✓ Act the same day<br>✓ Pakistani examples<br>✓ JazzCash / Easypaisa<br>✓ Templates & scripts</div></div></div>'
-    f'<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:32px;font-weight:700">25 kits · freelancing, AI,<br>e-commerce & careers</div>'
+    f'<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:32px;font-weight:700">35 kits · freelancing, AI,<br>e-commerce & careers</div>'
     f'<div class="cta" style="font-size:36px;padding:28px 44px">Browse kits →</div></div>')
 
 

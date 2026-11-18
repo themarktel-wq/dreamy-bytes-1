@@ -28,6 +28,7 @@ ICON = {
     "marketing": f'<svg {S}><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
     "career": f'<svg {S}><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
     "business": f'<svg {S}><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/></svg>',
+    "workflow": f'<svg {S}><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/><path d="M10 6.5h4.5a2.5 2.5 0 0 1 2.5 2.5v5"/><circle cx="17.5" cy="6.5" r="3"/></svg>',
     "bundle": f'<svg {S}><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>',
     "cart": f'<svg {S}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>',
     "plus": f'<svg {S} stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>',
@@ -70,8 +71,8 @@ def cover(p, cls=""):
     key = p.get("cat", "bundle")
     bg, fg, ac = CAT_STYLE[key]
     cat = CATEGORIES.get(key, "All-Access")
-    fmt = FMT_LABEL.get(p.get("fmt"), "All 25 products")
-    num = f"No. {p['id']:02d}" if "id" in p else "All 25"
+    fmt = FMT_LABEL.get(p.get("fmt"), f"All {len(PRODUCTS)} products")
+    num = f"No. {p['id']:02d}" if "id" in p else f"All {len(PRODUCTS)}"
     return (f'<div class="cover {cls}" style="--bg:{bg};--fg:{fg};--ac:{ac}"><div class="cv-top"><span>{num}</span><span class="cv-cat">{escape(cat)}</span></div>'
             f'{bars(fg, ac)}<div><div class="cv-title">{escape(p["name"])}</div><div class="cv-bar"></div>'
             f'<div class="cv-fmt">{fmt} · skillstack</div></div></div>')
@@ -135,7 +136,7 @@ def head(title, desc, root, canonical=""):
 def header(root, active=""):
     links = [("index.html", "Home"), ("shop.html", "Shop"), ("product/all-access.html", "All-Access"), ("faq.html", "FAQ"), ("contact.html", "Contact")]
     nav = "".join(f'<a href="{root}{h}" class="{"active" if active == t else ""}">{t}</a>' for h, t in links)
-    return f'''<div class="announce">Launch offer: <b>all 25 kits for {rs(BUNDLE["price"])}</b> — <a href="{root}product/all-access.html">Get All-Access</a></div>
+    return f'''<div class="announce">Launch offer: <b>all 35 kits for {rs(BUNDLE["price"])}</b> — <a href="{root}product/all-access.html">Get All-Access</a></div>
 <header class="header"><div class="container nav">
 <a href="{root}index.html" class="logo">{LOGO}<span>skillstack</span></a>
 <nav class="nav-links">{nav}</nav>
@@ -152,7 +153,7 @@ def footer(root):
             "bundle": {"slug": BUNDLE["slug"], "price": BUNDLE["price"]},
             "products": [dict(slug=p["slug"], name=p["name"], price=p["price"], mrp=p["mrp"], fmt=FMT_LABEL[p["fmt"]],
                               bg=CAT_STYLE[p["cat"]][0], icon=bars(CAT_STYLE[p["cat"]][1], CAT_STYLE[p["cat"]][2])) for p in PRODUCTS]
-            + [dict(slug=BUNDLE["slug"], name=BUNDLE["name"], price=BUNDLE["price"], mrp=BUNDLE["mrp"], fmt="All 25 products + future updates",
+            + [dict(slug=BUNDLE["slug"], name=BUNDLE["name"], price=BUNDLE["price"], mrp=BUNDLE["mrp"], fmt="All 35 products + future updates",
                     bg=CAT_STYLE["bundle"][0], icon=bars(CAT_STYLE["bundle"][1], CAT_STYLE["bundle"][2]))]}
     pays = "".join(f"<span>{p['method'].split(' ')[0]}</span>" for p in BRAND["payments"])
     return f'''<footer><div class="container">
@@ -201,10 +202,10 @@ def bundle_section(root):
     rows = "".join(f"<tr><td>{escape(p['name'])}</td><td>{rs(p['mrp'])}</td></tr>" for p in PRODUCTS[:6])
     return f'''<section id="all-access"><div class="container"><div class="bundle reveal">
 <div style="position:relative;z-index:1"><span class="pill"><b>BEST VALUE</b> Save {rs(BUNDLE["mrp"]-BUNDLE["price"])}</span>
-<h2>The whole stack.<br>25 kits. One payment.</h2>
+<h2>The whole stack.<br>35 kits. One payment.</h2>
 <p class="muted" style="font-size:17px">Less than the price of 3 kits. Lifetime access to every product in the store — plus every new product we launch.</p>
 <ul class="check-list">
-<li>{ICON["check"]}<span>All 25 premium products (PDF guides, Excel tools & Word templates)</span></li>
+<li>{ICON["check"]}<span>All 35 premium products: guides, AI workflows, Excel tools & Word templates</span></li>
 <li>{ICON["check"]}<span>Every <b>future product</b> added free</span></li>
 <li>{ICON["check"]}<span>Free updates to every product, forever</span></li>
 <li>{ICON["check"]}<span>Priority WhatsApp support</span></li>
@@ -234,24 +235,26 @@ def build_index():
     cat_count = {k: sum(1 for p in PRODUCTS if p["cat"] == k) for k in CATEGORIES}
     cat_desc = {"ai": "Prompts, tools & AI writing workflows", "freelance": "Fiverr, Upwork, contracts & proposals",
                 "ecom": "Daraz & Shopify store playbooks", "marketing": "Meta ads, Instagram, YouTube & content",
-                "career": "CVs, cover letters, interviews & study", "business": "Sheets, scripts & small-business kits"}
+                "career": "CVs, cover letters, interviews & study", "business": "Sheets, scripts & small-business kits", "workflow": "Ready-made AI automations you can use or sell as a service"}
     cats = "".join(f'''<a href="shop.html?cat={k}" class="cat-tile reveal">
 <div class="ic" style="background:{CAT_STYLE[k][0]};color:{CAT_STYLE[k][1]}">{ICON[k]}</div>
-<h3>{v}</h3><p>{cat_desc[k]} · {cat_count[k]} kits</p><span class="arrow">{ICON["arrow"]}</span></a>''' for k, v in CATEGORIES.items())
+<h3>{v}{' <span class="new-tag">NEW</span>' if k == "workflow" else ""}</h3><p>{cat_desc[k]} · {cat_count[k]} kits</p><span class="arrow">{ICON["arrow"]}</span></a>''' for k, v in [("workflow", CATEGORIES["workflow"])] + [(a, b) for a, b in CATEGORIES.items() if a != "workflow"])
+    cats = cats.replace('class="cat-tile reveal">', 'class="cat-tile reveal">', 1).replace('<a href="shop.html?cat=workflow" class="cat-tile reveal">', '<a href="shop.html?cat=workflow" class="cat-tile cat-feature reveal">', 1)
+    wf_cards = "".join(product_card(p, root, i) for i, p in enumerate([x for x in PRODUCTS if x["cat"] == "workflow"]))
     marquee = "".join(f"<span>{escape(p['name'])}</span>" for p in PRODUCTS * 2)
     testi = ""
     if TESTIMONIALS:
         testi = '<section style="padding-top:0"><div class="container"><div class="sec-head"><span class="eyebrow">Reviews</span><h2>What buyers say</h2></div><div class="features">' + "".join(
             f'<div class="feature reveal"><p style="color:var(--ink)">“{escape(t["text"])}”</p><h4 style="margin-top:12px">{escape(t["name"])}</h4><p>{escape(t["city"])}</p></div>' for t in TESTIMONIALS) + "</div></div></section>"
     p1, p2, p3 = PRODUCTS[1], PRODUCTS[0], PRODUCTS[5]
-    html = head(f"Skillstack — {BRAND['promise']}", "Skip the Rs 50,000 course. 25 practical kits for freelancing, AI, e-commerce and careers — from Rs 499, delivered on WhatsApp.", root) + header(root, "Home") + f'''
+    html = head(f"Skillstack — {BRAND['promise']}", "Skip the Rs 50,000 course. 35 practical kits for freelancing, AI, e-commerce and careers — from Rs 499, delivered on WhatsApp.", root) + header(root, "Home") + f'''
 <main>
 <section class="hero"><div class="container hero-grid">
 <div>
-<span class="pill reveal"><b>NEW</b> 25 kits for Pakistani freelancers & sellers</span>
+<span class="pill reveal"><b>NEW</b> 10 AI workflows just added · 35 kits</span>
 <h1 class="reveal d1">Skip the Rs 50,000 course.<br><span class="mark">Get the kit.</span></h1>
 <p class="lead reveal d2">Step-by-step guides, templates and AI toolkits for freelancing, e-commerce and careers — <b>from Rs 499</b>, paid by JazzCash or Easypaisa, delivered on WhatsApp.</p>
-<div class="hero-ctas reveal d3"><a href="shop.html" class="btn btn-primary">Browse the 25 kits {ICON["arrow"]}</a><a href="product/all-access.html" class="btn btn-ghost">Get all 25 · {rs(BUNDLE["price"])}</a></div>
+<div class="hero-ctas reveal d3"><a href="shop.html" class="btn btn-primary">Browse the 35 kits {ICON["arrow"]}</a><a href="product/all-access.html" class="btn btn-ghost">Get all 35 · {rs(BUNDLE["price"])}</a></div>
 <div class="trust-row reveal d3"><span>{ICON["wallet"]} JazzCash · Easypaisa · Bank</span><span>{ICON["chat"]} Delivered on WhatsApp</span><span>{ICON["refresh"]} Free updates</span></div>
 </div>
 <div class="hero-visual" aria-hidden="true">
@@ -286,10 +289,15 @@ def build_index():
 <div class="sec-head reveal"><span class="eyebrow">Shop by goal</span><h2>What are you trying to do?</h2><p>Every kit is built around one outcome: your first order, your first sale, or your next job.</p></div>
 <div class="cats">{cats}</div></div></section>
 
+<section style="padding-top:0" id="workflows"><div class="container">
+<div class="sec-head reveal"><span class="eyebrow">New · AI Workflows</span><h2>10 AI workflows you can <span class="mark">use today</span>, or sell as a service.</h2><p>Step-by-step automations for WhatsApp sales, content, Reels, leads, chatbots, listings, proposals, invoices, ads and voice notes. Each one starts free and no-code, and comes with a Make/n8n blueprint for when you're ready to automate.</p></div>
+<div class="grid">{wf_cards}</div>
+</div></section>
+
 <section style="padding-top:0"><div class="container">
 <div class="sec-head reveal"><span class="eyebrow">Start here</span><h2>The kits people pick first</h2></div>
 <div class="grid">{cards}</div>
-<div class="center" style="margin-top:36px"><a href="shop.html" class="btn btn-ghost">See all 25 kits {ICON["arrow"]}</a></div>
+<div class="center" style="margin-top:36px"><a href="shop.html" class="btn btn-ghost">See all 35 kits {ICON["arrow"]}</a></div>
 </div></section>
 
 {bundle_section(root)}
@@ -314,7 +322,7 @@ def build_index():
 <section style="padding-top:0"><div class="container"><div class="cta-band reveal">
 <h2>Stop watching. <span class="hl">Start stacking.</span></h2>
 <p>One skill this month. One more next month. That's how careers are built.</p>
-<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><a href="shop.html" class="btn btn-dark">Browse the 25 kits {ICON["arrow"]}</a>
+<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><a href="shop.html" class="btn btn-dark">Browse the 35 kits {ICON["arrow"]}</a>
 <a href="https://wa.me/{BRAND["whatsapp"]}?text={quote("Assalam o Alaikum Skillstack! I want to know more about your kits.")}" target="_blank" rel="noopener" class="btn btn-wa">{WA_SVG} WhatsApp {BRAND["whatsapp_display"]}</a></div>
 </div></div></section>
 </main>''' + footer(root)
@@ -325,9 +333,9 @@ def build_shop():
     root = ""
     chips = '<button class="chip" data-cat="all">All</button>' + "".join(f'<button class="chip" data-cat="{k}">{v}</button>' for k, v in CATEGORIES.items())
     cards = "".join(product_card(p, root, i) for i, p in enumerate(PRODUCTS))
-    html = head("Shop all products — Skillstack", "Browse 25 premium digital products for freelancing, AI, e-commerce, marketing, careers and business in Pakistan.", root, "shop.html") + header(root, "Shop") + f'''
+    html = head("Shop all products — Skillstack", "Browse 35 premium digital products for freelancing, AI, e-commerce, marketing, careers and business in Pakistan.", root, "shop.html") + header(root, "Shop") + f'''
 <main><section style="padding-top:60px"><div class="container">
-<div class="sec-head"><span class="eyebrow">The store</span><h2>All <span class="hl">25 products</span></h2><p>Filter by goal, search, or get everything with All-Access.</p></div>
+<div class="sec-head"><span class="eyebrow">The store</span><h2>All <span class="hl">35 products</span></h2><p>Filter by goal, search, or get everything with All-Access.</p></div>
 <div class="search"><input id="q" type="search" placeholder="Search e.g. Fiverr, CV, Daraz, ChatGPT…" aria-label="Search products">
 <select id="sort" class="chip" aria-label="Sort" style="padding:0 14px"><option value="pop">Popular</option><option value="low">Price: low → high</option><option value="high">Price: high → low</option></select></div>
 <div class="filters">{chips}</div>
@@ -373,7 +381,7 @@ def build_product(p):
 <div class="box"><h3>What you'll be able to do</h3><ul class="check-list" style="margin:0">{outcomes}</ul></div>
 <div class="box"><h3>What's included</h3><ul class="check-list" style="margin:0">{includes}</ul></div>
 <div class="box"><h3>What's inside</h3><ol class="toc">{toc_html}</ol></div>
-<div class="upsell"><div style="flex:1"><b>Want all 25 products?</b><br><span class="muted" style="font-size:14.5px">Get this + 24 more with All-Access for {rs(BUNDLE["price"])} (worth {rs(BUNDLE["mrp"])}).</span></div><a href="all-access.html" class="btn btn-gold btn-sm">See deal</a></div>
+<div class="upsell"><div style="flex:1"><b>Want all 35 products?</b><br><span class="muted" style="font-size:14.5px">Get this + 34 more with All-Access for {rs(BUNDLE["price"])} (worth {rs(BUNDLE["mrp"])}).</span></div><a href="all-access.html" class="btn btn-gold btn-sm">See deal</a></div>
 <div class="box"><h3>Who is this for?</h3><p class="muted">Students, freelancers, job seekers, small-business owners and anyone in Pakistan who wants practical, step-by-step help with <b style="color:var(--ink)">{escape(CATEGORIES[p["cat"]].lower())}</b> — no experience needed.</p></div>
 </div></div>
 <section style="padding-top:0"><div class="sec-head"><h2>Frequently asked</h2></div>{faq_html(faqs)}</section>
@@ -388,11 +396,11 @@ def build_bundle():
     root = "../"
     b = dict(BUNDLE, cat="bundle")
     items = "".join(f'<li>{ICON["check"]}<span><a href="{x["slug"]}.html"><b>{escape(x["name"])}</b></a> <span class="muted">— {FMT_LABEL[x["fmt"]]} · worth {rs(x["mrp"])}</span></span></li>' for x in PRODUCTS)
-    html = head(f"{BUNDLE['name']} — Skillstack", f"All 25 Skillstack products for {rs(BUNDLE['price'])}. " + BUNDLE["tagline"], root, "product/all-access.html") + header(root, "All-Access") + f'''
+    html = head(f"{BUNDLE['name']} — Skillstack", f"All 35 Skillstack products for {rs(BUNDLE['price'])}. " + BUNDLE["tagline"], root, "product/all-access.html") + header(root, "All-Access") + f'''
 <main><div class="container">
 <div class="crumbs"><a href="../index.html">Home</a> / All-Access Pass</div>
 <div class="pdp">
-<div><div class="pdp-media reveal">{cover(b, "lg").replace('25 products', 'All 25 products')}</div></div>
+<div><div class="pdp-media reveal">{cover(b, "lg")}</div></div>
 <div>
 <span class="pill"><b>BEST VALUE</b> {off(BUNDLE)}% off total value</span>
 <h1>{BUNDLE["name"]}</h1>
@@ -402,7 +410,7 @@ def build_bundle():
 <div class="pdp-buy"><button class="btn btn-primary btn-block" data-buy="{BUNDLE["slug"]}">Get All-Access — {rs(BUNDLE["price"])} {ICON["arrow"]}</button>
 <a class="btn btn-wa btn-block" href="https://wa.me/{BRAND["whatsapp"]}?text=Assalam%20o%20Alaikum!%20I%20want%20the%20Skillstack%20All-Access%20Pass." target="_blank" rel="noopener">{WA_SVG} Order on WhatsApp</a></div>
 <div class="mini-trust"><div>{ICON["infinity"]}Future products free</div><div>{ICON["wallet"]}JazzCash / Easypaisa</div><div>{ICON["chat"]}Priority support</div></div>
-<div class="box"><h3>Everything included (25 products)</h3><ul class="check-list" style="margin:0">{items}</ul></div>
+<div class="box"><h3>Everything included (35 products)</h3><ul class="check-list" style="margin:0">{items}</ul></div>
 </div></div>
 <section style="padding-top:0"><div class="sec-head"><h2>Frequently asked</h2></div>{faq_html(FAQ_COMMON)}</section>
 </div></main>
@@ -421,7 +429,7 @@ def build_cart():
 <div class="checkout">
 <div>
 <div class="box" style="margin-top:0"><div id="cart-lines"></div></div>
-<div class="upsell" id="bundle-upsell" style="display:none"><div style="flex:1"><b>Upgrade to All-Access?</b><br><span class="muted" style="font-size:14.5px">Get all 25 products for {rs(BUNDLE["price"])} instead.</span></div><button class="btn btn-gold btn-sm" data-add="{BUNDLE["slug"]}">Upgrade</button></div>
+<div class="upsell" id="bundle-upsell" style="display:none"><div style="flex:1"><b>Upgrade to All-Access?</b><br><span class="muted" style="font-size:14.5px">Get all 35 products for {rs(BUNDLE["price"])} instead.</span></div><button class="btn btn-gold btn-sm" data-add="{BUNDLE["slug"]}">Upgrade</button></div>
 </div>
 <form id="checkout-form" class="summary box" style="margin-top:0">
 <h3>Order summary</h3>

@@ -16,14 +16,14 @@ Optional: product prices/text in `PRODUCTS`, real reviews in `TESTIMONIALS` (`to
 pip install reportlab openpyxl python-docx
 python3 tools/build_all.py           # products + website (+ brand if Playwright is installed)
 ```
-Outputs: `products/` (25 files), `website/` (the site), `brand/` (PNG assets).
+Outputs: `products/` (35 files), `website/` (the site), `brand/` (PNG assets).
 
 ## Step 3 — Host the website (free)
 **Netlify (easiest):** netlify.com → Add new site → Deploy manually → drag the `website` folder. Then Domain settings → add `skillstack.pk`.
 **Vercel / GitHub Pages:** set the publish directory to `website/`.
 **Domain:** buy `.pk` from PKNIC-accredited registrars or `.com` from Namecheap/Cloudflare; point DNS to the host.
 
-## Step 4 — Product delivery (25 product access)
+## Step 4 — Product delivery (35 product access)
 1. Upload `products/` files to Google Drive (one folder per product + an All-Access folder) — see `03-ai-workflows.md` Workflow 1.
 2. Create a **Links** Google Sheet: product name → Drive link.
 3. Save the `/deliver` quick reply in WhatsApp Business.

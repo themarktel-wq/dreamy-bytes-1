@@ -65,6 +65,10 @@ async function desktop(browser) {
   await moveTo(page, '.hero-ctas .btn-primary', 30); await wait(page, 900);
   const H = await page.evaluate(() => document.body.scrollHeight);
   for (const y of [700, 1500, 2300, 3100]) { await smoothScroll(page, y, 2200); await wait(page, 1300); }
+  await smoothScroll(page, '#workflows', 2000); await wait(page, 1800);
+  await smoothScroll(page, '#workflows .grid', 1500); await wait(page, 1500);
+  await moveTo(page, '#workflows .card:nth-child(1) .card-media', 30); await wait(page, 1000);
+  await moveTo(page, '#workflows .card:nth-child(2) .card-media', 20); await wait(page, 1000);
   await moveTo(page, '.grid .card:nth-child(2) .card-media', 30); await wait(page, 1200);
   await moveTo(page, '.grid .card:nth-child(3) .card-media', 20); await wait(page, 1000);
   await smoothScroll(page, '#all-access', 2200); await wait(page, 2200);
@@ -76,7 +80,7 @@ async function desktop(browser) {
   await page.waitForLoadState('networkidle'); await wait(page, 1500);
   await smoothScroll(page, '.search', 1200); await wait(page, 600);
   await click(page, '.chip[data-cat="freelance"]'); await wait(page, 1500);
-  await click(page, '.chip[data-cat="ai"]'); await wait(page, 1500);
+  await click(page, '.chip[data-cat="workflow"]'); await wait(page, 1800);
   await click(page, '.chip[data-cat="all"]'); await wait(page, 800);
   await click(page, '#q'); await page.keyboard.type('Daraz', { delay: 120 }); await wait(page, 1500);
   await page.fill('#q', ''); await page.dispatchEvent('#q', 'input'); await wait(page, 600);

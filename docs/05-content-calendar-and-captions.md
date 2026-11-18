@@ -40,7 +40,7 @@ Instagram shows the newest post first, so **publish in reverse order (Post 9 fir
 | 6 | `post-06-getting-paid.png` | Education (saves) | PayPal Pakistan mein available nahi, to freelancers paise kaise lete hain? 💸 1) Payoneer 2) Apne naam ka bank account (CNIC wala naam) 3) Tax records (filer status ke liye tax advisor se poochein). Save karein aur us dost ko bhejein jo abhi start kar raha hai. |
 | 7 | `post-07-course-vs-kit.png` | Comparison (positioning) | 40 ghante ki video vs ek shaam ka kaam 🤷 Courses ka apna faida hai, lekin zyada tar beginners ko sirf agla practical step chahiye hota hai. Skillstack kits Rs 499 se shuru hain. JazzCash / Easypaisa se payment, WhatsApp par delivery. |
 | 8 | `post-08-fiverr-or-upwork.png` | Poll / this-or-that (comments) | Fiverr ya Upwork? 🤔 Comment mein **F** ya **U** likhein, hum aap ke choice ke hisaab se sahi kit suggest karenge 💬 |
-| 9 | `post-09-all-access-offer.png` | Offer (sales) | 🚀 LAUNCH OFFER: poora stack, 25 kits + aage aane wali har kit, sirf **Rs 4,999** mein. Ek payment, lifetime updates. DM **"ALL"** karein ya skillstack.pk se order karein. |
+| 9 | `post-09-all-access-offer.png` | Offer (sales) | 🚀 LAUNCH OFFER: poora stack, 35 kits + aage aane wali har kit, sirf **Rs 4,999** mein. Ek payment, lifetime updates. DM **"ALL"** karein ya skillstack.pk se order karein. |
 
 **Hashtags (3–6, not 30):** #freelancingpakistan #fiverrpakistan #onlineearningpakistan #digitalskills #chatgptpakistan #darazseller, plus one brand tag #skillstack.
 
@@ -54,11 +54,11 @@ Instagram shows the newest post first, so **publish in reverse order (Post 9 fir
 | 5 | Scroll through the Notes list, voiceover in Roman Urdu |
 | 6 | Talking head: "PayPal nahi chalta? 3 cheezein set karo" |
 | 7 | Split screen "Course vs Kit" with quick cuts |
-| 9 | "Unboxing" all 25 files on a laptop (fast scroll through PDFs/sheets) |
+| 9 | "Unboxing" all 35 files on a laptop (fast scroll through PDFs/sheets) |
 
 ## 5. Profile setup
 - **DP:** `brand/logo/profile-picture.png` · **Facebook cover:** `brand/banners/facebook-cover-1640x624.png` · **YouTube:** `brand/banners/youtube-banner-2560x1440.png`
-- **Bio:** `Practical skill kits for 🇵🇰 freelancers & sellers | Fiverr · AI · Daraz · CVs | From Rs 499 · JazzCash/Easypaisa | 👇 25 kits`
+- **Bio:** `Practical skill kits for 🇵🇰 freelancers & sellers | Fiverr · AI · Daraz · CVs | From Rs 499 · JazzCash/Easypaisa | 👇 35 kits`
 - **Highlights (lavender covers with the logo bars):** Kits · How to order · Buyer reviews · Free prompts · FAQ
 - **Pinned posts:** Post 9 (offer), Post 4 (chat), Post 2 (data)
 

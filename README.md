@@ -8,8 +8,8 @@
 |---|---|
 | Niche selection + product hunting research | `docs/01-niche-selection-and-product-hunting.md` |
 | Brand identity (name, logo, colours, fonts, voice) | `docs/02-brand-guidelines.md`, `brand/logo/` |
-| Premium animated, high-converting website (home, shop, 25 product pages, All-Access page, cart + WhatsApp/JazzCash/Easypaisa checkout, policies) | `website/` |
-| 25 finished digital products (18 PDF guides, 4 Excel tools, 3 Word template packs) | `products/` |
+| Premium animated, high-converting website (home, shop, 35 product pages, All-Access page, cart + WhatsApp/JazzCash/Easypaisa checkout, policies) | `website/` |
+| 35 finished digital products (18 PDF guides, 10 AI workflow guides, 4 Excel tools, 3 Word template packs) | `products/` |
 | All-Access Pass bundle (Rs 4,999) | website + `docs/01` |
 | AI workflows (delivery, WhatsApp AI replies, content, ads, new products, reviews, reporting) | `docs/03-ai-workflows.md` |
 | 90-day Meta ads plan + copy for every ad | `docs/04-meta-ads-90-day-plan.md` |

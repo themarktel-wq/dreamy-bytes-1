@@ -72,8 +72,8 @@ Because the bundle is the most profitable sale, **every campaign's goal is ultim
 3. **Video is king:** make 15–30s Reels:
    - "Inside the AI Prompt Vault" screen recording scroll
    - "I tried 5 prompts from this pack" talking head
-   - "What you get for Rs 4,999" — fast unboxing of all 25 files
-4. **Bundle push:** retargeting copy focuses on All-Access ("You were looking at 1 product — get all 25 for Rs 4,999").
+   - "What you get for Rs 4,999" — fast unboxing of all 35 files
+4. **Bundle push:** retargeting copy focuses on All-Access ("You were looking at 1 product — get all 35 for Rs 4,999").
 5. **Lookalike / Advantage+ seeds:** upload customer list (phone numbers) as a custom audience → use as signal.
 6. **Seasonal hook:** plan 11.11 / 12.12 / Ramadan / Eid creatives 10 days before the date.
 
@@ -115,7 +115,7 @@ Each creative uses a different *angle*, so Phase 1 tests angles, not just produc
 
 | Ad | Angle | Primary text | Headline | CTA |
 |---|---|---|---|---|
-| **01 — All-Access stack** | Value / bundle | Poora stack, 25 kits: AI prompts, Fiverr & Upwork guides, Daraz & Shopify playbooks, CV templates, budget & business sheets. Har nayi kit bhi free milegi. JazzCash ya Easypaisa se payment, WhatsApp par delivery. | 25 kits for less than the price of 3 | Send Message |
+| **01 — All-Access stack** | Value / bundle | Poora stack, 35 kits (10 naye AI workflows ke sath): AI prompts, Fiverr & Upwork guides, Daraz & Shopify playbooks, CV templates, budget & business sheets. Har nayi kit bhi free milegi. JazzCash ya Easypaisa se payment, WhatsApp par delivery. | 35 kits for less than the price of 3 | Send Message |
 | **02 — Prompt Vault (notes)** | Curiosity / utility | ChatGPT sirf "hi" likhne ke liye nahi hai 😄 220+ copy-paste prompts for captions, CVs, Fiverr gigs, Excel and client emails. Roman Urdu prompts bhi included hain. | 220+ prompts you'll actually use | Shop Now |
 | **03 — Fiverr chat** | Pain → relief | 3 mahine ho gaye, ek bhi order nahi aaya? Aksar skill nahi, gig ka niche, title aur pricing problem hoti hai. Fiverr Freelancing Blueprint mein step-by-step system aur 30-day plan hai. | Your Fiverr gig, fixed step by step | Learn More |
 | **04 — Boost vs ads** | Myth-busting | Boost karte ho, sales nahi aati? Boost aur campaign mein farq hai. Seekhein ke Rs 1,000–5,000/day budget par campaigns kaise banate hain, creatives kaise test karte hain, aur ad kab band ya scale karna hai. | Run ads that sell, not boosts | Shop Now |

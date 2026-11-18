@@ -385,3 +385,11 @@ footer{border-top:1px solid var(--line);padding:60px 0 30px;margin-top:40px;back
 .bundle::before{display:none}
 @media (max-width:760px){.stack-card.s1{transform:translateX(-100%) rotate(-10deg)}.stack-card.s2{transform:translateX(0) rotate(9deg)}}
 .mobile-nav.open{background:var(--ivory)}
+/* AI workflows category */
+.cat-feature{grid-column:1/-1;background:#2B1A80;color:#fff;border-color:#2B1A80;display:grid;grid-template-columns:auto 1fr;column-gap:22px;align-items:center}
+.cat-feature .ic{margin:0;grid-row:span 2}
+.cat-feature p{color:#D9D0FF}
+.cat-feature .arrow{border-color:#fff}
+.cat-feature:hover .arrow{background:#BFEBD3;color:#111018;border-color:#BFEBD3}
+.new-tag{font-family:Inter,sans-serif;font-size:11px;font-weight:800;letter-spacing:.08em;background:#BFEBD3;color:#111018;padding:3px 9px;border-radius:99px;vertical-align:middle;margin-left:6px}
+@media (max-width:760px){.cat-feature{grid-template-columns:1fr}.cat-feature .ic{margin-bottom:14px}}
