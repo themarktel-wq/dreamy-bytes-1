@@ -27,6 +27,12 @@ async function api(method, url, body, cookie) {
     const home = await fetch(base + '/');
     assert.equal(home.status, 200); assert.match(await home.text(), /<title>/);
     assert.equal((await fetch(base + '/server/server.js')).headers.get('content-type'), 'text/html; charset=utf-8', 'server code is not exposed');
+    const sw = await fetch(base + '/sw.js'), build = (await (await fetch(base + '/api/version')).json()).build;
+    assert.match(await sw.text(), new RegExp(`const VERSION = 'lm-${build}'`), 'sw.js carries the app build');
+    assert.equal(sw.headers.get('cache-control'), 'no-cache');
+    const js = await fetch(base + '/js/main.js'); assert.equal(js.headers.get('cache-control'), 'no-cache');
+    assert.equal((await fetch(base + '/js/main.js', { headers: { 'If-None-Match': js.headers.get('etag') } })).status, 304, 'unchanged files answer 304');
+    assert.equal((await fetch(base + '/api/info')).headers.get('x-app-build'), build);
     assert.equal((await fetch(base + '/data/lahore-mobile.db')).headers.get('content-type'), 'text/html; charset=utf-8', 'database is not exposed');
 
     const login = await api('POST', '/api/auth/login', { phone: '03000000000', password: 'admin123' });

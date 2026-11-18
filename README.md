@@ -33,11 +33,19 @@ It is an installable web app (PWA) with a small Node.js server. It has no extern
 
 - **Phone notifications** (Web Push, no third-party service): new orders, messages, order status, flash deals and claims reach phones even when the app is closed. Each user turns them on under **Account**. They need HTTPS. On iPhone, the app must first be added to the Home Screen (iOS 16.4+).
 - **Barcode / QR**: products have a barcode field. **Counter sale** and **Inventory → Stock count** accept USB or Bluetooth scanners (type and press Enter), or the camera on Chrome for Android. **Inventory → QR labels** prints shelf labels; the QR library loads from cdnjs, and without internet the labels show the code as text.
-- **Printing**: invoices in A4 or 80 mm thermal format, Use the browser's print dialog, or choose "Save as PDF". Bluetooth thermal printers work through the phone's print service (for example the RawBT app on Android).
+- **Printing**: invoices in A4 or 80 mm thermal format. Use the browser's print dialog, or choose "Save as PDF". Bluetooth thermal printers work through the phone's print service (for example the RawBT app on Android).
 - **Supplier khata**: purchases are added to what you owe each supplier, and payments to suppliers are recorded. Faulty stock you return to a supplier is credited at cost.
 - **Special prices**: set fixed rates per shop per product on the shop's page.
 - **Flash deals**: a deal price with a countdown and an optional limit per shop. Starting a deal notifies every shop.
 - **Faulty rate by supplier**: the share of units that came back as warranty claims, per supplier and per product, in **Reports** and on each supplier's page.
+
+## Added in version 3
+
+- **App content editor** (**Admin → App content**, owner only): edit the home banner slides (photo, label, heading, text, button and link), the highlights strip, categories (rename, reorder, photo, hide, add), which home sections show, the featured category, ticker lines, a home-page notice, the Urdu name, the "At the shop" note and the footer line. Saved changes reach every open app at once.
+- **Products from Excel** (**Inventory → Excel sheet**): download all products as a CSV sheet, edit it in Excel or Google Sheets, and import it back. Rows match by SKU; new SKUs become new products; empty cells keep the current value; a bad row stops the whole import and names the row.
+- **Automatic updates**: the server stamps `sw.js` with a hash of the app files. When you deploy new files, every installed app picks up the new version the next time it is opened (or within 10 minutes while open) and reloads itself when nothing is being typed. Nobody reinstalls anything. Products, prices and content are live data and never need an update.
+- **Automatic backups**: the server saves a copy of the database every day to `DATA_DIR/backups/` and keeps the last 14 days.
+- **Logo**: the "L-frame" mark (the L of Lahore holding a phone). Files are in `brand/` (SVG and PNG), with a one-page brand sheet in `brand/brand-sheet.html`.
 
 ## Run it
 
@@ -58,11 +66,13 @@ Options (environment variables):
 | `COOKIE_SECURE` | off | Set to `1` when served over HTTPS |
 | `VAPID_SUBJECT` | `mailto:admin@example.com` | Contact for push services; set it to your own email, e.g. `mailto:you@yourdomain.pk` |
 
-**Back up `DATA_DIR`.** It holds all your business data. The app also has **Settings → Backup**.
+**Back up `DATA_DIR`.** It holds all your business data. The server keeps 14 daily copies in `DATA_DIR/backups/`, and **Settings → Backup** downloads a full copy you can keep elsewhere. To go back to a daily copy, stop the server, copy that file over `DATA_DIR/lahore-mobile.db`, and start it again.
 
 ## Deploy
 
 Any server that runs Node 22 works: a small VPS (Hostinger, DigitalOcean or a local Pakistani host, roughly Rs 1,500–3,000 per month), Railway, or Fly.io. The hosting must keep a **persistent disk** for `DATA_DIR`; free tiers that wipe the disk on restart will lose your data. Put it behind HTTPS (Caddy or Nginx with Let's Encrypt), set `COOKIE_SECURE=1`, and point a domain such as `lahoremobile.pk` at it. Once it is on HTTPS, shops can install it from Chrome or Safari.
+
+**Updating the app later:** copy the new files over the old ones (or `git pull`) and restart the server. That is all: installed apps update themselves. Do not delete `DATA_DIR`.
 
 ## Demo mode
 
@@ -74,7 +84,7 @@ If no server is reachable (for example on static hosting, or in the claude.ai ar
 node test/core.test.js
 ```
 
-Runs 32 business-rule tests: pricing, MOQ, stock, credit limits, khata, claims, rollback, permissions, lockout, special prices, flash deals, suppliers, riders, aging, reminders, barcodes and push targeting.
+Runs 30 business-rule tests: pricing, MOQ, stock, payments, claims, rollback, permissions, lockout, special prices, flash deals, suppliers, barcodes, push targeting, app content editing and spreadsheet import.
 
 ```bash
 node test/webpush.test.js
@@ -86,21 +96,24 @@ Checks the push encryption against the RFC 8291 test vector and the VAPID signat
 node test/server.test.js
 ```
 
-Tests HTTP, cookies, live events, uploads, push delivery (decrypted by a fake push service) and persistence across restarts.
+Tests HTTP, cookies, live events, uploads, push delivery (decrypted by a fake push service), the update stamp on `sw.js`, cache revalidation and persistence across restarts.
 
 ## Code layout
 
 ```
 core/core.js         all business rules and the API (shared by server and demo)
 core/memstore.js     transactional in-memory store
-server/server.js     HTTP server, SQLite persistence, sessions, live updates, uploads
+server/server.js     HTTP server, SQLite persistence, sessions, live updates, uploads, daily backups, update stamp
 server/webpush.js    Web Push (VAPID + aes128gcm), no dependencies
-js/extras.js         notifications, deals, riders, suppliers, aging, scanning, printing
+js/extras.js         notifications, deals, suppliers, scanning, printing
+js/site-editor.js    app content editor, Excel (CSV) import and export
 js/api.js            client: server mode or in-browser demo mode
 js/router.js         navigation, cart, helpers
 js/shop.js           shop-facing screens
 js/admin.js          admin panel
-js/main.js           header, tabs, live refresh, install prompt
+js/main.js           header, tabs, live refresh, install prompt, automatic updates
+sw.js                offline cache; its version changes with every deploy
+brand/               logo files and brand sheet
 tools/build-artifact.py   single-page demo build for claude.ai artifacts
 ```
 

@@ -8,7 +8,8 @@
   <meta name="theme-color" content="#0b1f44">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Lahore Mobile">
@@ -50,7 +51,7 @@
             <p id="footAddr" style="max-width:340px;margin:18px 0 4px"></p>
             <p id="footHours" style="margin:0"></p>
           </div>
-          <div><h6>Catalogue</h6><a href="#/catalog?cat=panel">LCD &amp; OLED panels</a><a href="#/catalog?cat=protector">Glass &amp; protectors</a><a href="#/catalog?cat=case">Covers &amp; cases</a><a href="#/catalog?cat=charger">Chargers</a><a href="#/catalog?cat=audio">Earbuds</a></div>
+          <div id="footCats"></div>
           <div><h6>For shops</h6><a href="#/register">Open an account</a><a href="#/orders">My orders</a><a href="#/messages">Messages</a></div>
           <div><h6>Help</h6><a href="#/login">Sign in</a><a href="#" onclick="event.preventDefault();installApp()">Install the app</a><a href="#/admin">Store admin</a></div>
         </div>
@@ -58,7 +59,7 @@
     </div>
     <div class="bottom">
       <div class="wrap">
-        <span>© <span id="yr"></span> Lahore Mobile. Trade prices are for registered shops only.</span>
+        <span>© <span id="yr"></span> <span id="footNote"></span></span>
         <div class="paybadges"><span>Cash</span><span>Bank transfer</span><span>JazzCash</span><span>Easypaisa</span></div>
       </div>
     </div>
@@ -77,6 +78,7 @@
   <script src="js/shop.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/extras.js"></script>
+  <script src="js/site-editor.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

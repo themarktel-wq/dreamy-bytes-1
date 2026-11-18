@@ -27,6 +27,8 @@ const API = {
     try {
       r = await fetch(path.replace(/^\//, ''), { method, credentials: 'same-origin', headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
     } catch { throw Object.assign(new Error('No internet connection. Check your connection and try again.'), { status: 0 }); }
+    const build = r.headers.get('X-App-Build');
+    if (build) { if (!this.build) this.build = build; else if (build !== this.build) { this.build = build; this.emit({ type: 'newBuild' }); } }
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
       if (r.status === 401 && this.me && this.me.user) { this.me = { user: null }; this.emit({ type: 'auth' }); }

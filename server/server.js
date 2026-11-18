@@ -63,6 +63,19 @@ if (core.seed({ demo: process.env.DEMO === '1', adminPhone: process.env.ADMIN_PH
   console.log(`\n  First run: created the owner account\n  Mobile:   ${process.env.ADMIN_PHONE || '03000000000'}\n  Password: ${adminPassword}\n  Sign in and change the password from Admin → Settings.\n`);
 }
 
+/* ---------- automatic daily backups: DATA_DIR/backups, last 14 days kept ---------- */
+const BACKUPS = path.join(DATA, 'backups');
+function autoBackup() {
+  try {
+    fs.mkdirSync(BACKUPS, { recursive: true });
+    const name = `lahore-mobile-${new Date().toISOString().slice(0, 10)}.db`, file = path.join(BACKUPS, name);
+    if (!fs.existsSync(file)) { db.exec(`VACUUM INTO '${file.replace(/'/g, "''")}'`); console.log('Backup saved', name); }
+    const old = fs.readdirSync(BACKUPS).filter((n) => n.endsWith('.db')).sort().slice(0, -14);
+    for (const n of old) fs.unlinkSync(path.join(BACKUPS, n));
+  } catch (e) { console.error('Backup failed', e.message); }
+}
+autoBackup(); setInterval(autoBackup, 3600e3).unref();
+
 /* ---------- push notifications ---------- */
 const VAPID = webpush.loadVapid(path.join(DATA, 'vapid.json'));
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@example.com';
@@ -89,6 +102,21 @@ function broadcast(events) {
   }
 }
 setInterval(() => { for (const c of clients) c.res.write(': ping\n\n'); }, 25000).unref();
+
+/* ---------- app build id: changes whenever any app file changes, so installed apps update themselves ---------- */
+let BUILD = '', buildAt = 0;
+function appBuild() {
+  if (Date.now() - buildAt < 15000 && BUILD) return BUILD;
+  const h = crypto.createHash('sha1');
+  const walk = (rel) => {
+    const abs = path.join(ROOT, rel); let st; try { st = fs.statSync(abs); } catch { return; }
+    if (st.isDirectory()) { for (const n of fs.readdirSync(abs).sort()) walk(path.join(rel, n)); return; }
+    h.update(rel + ':' + st.size + ':' + st.mtimeMs + ';');
+  };
+  ['index.html', 'manifest.webmanifest', 'sw.js', 'css', 'js', 'core', 'icons'].forEach(walk);
+  BUILD = h.digest('hex').slice(0, 12); buildAt = Date.now();
+  return BUILD;
+}
 
 /* ---------- HTTP ---------- */
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon' };
@@ -117,11 +145,15 @@ function readBody(req, limit = 4e6) {
     req.on('error', reject);
   });
 }
-function serveFile(res, file, cache) {
+function serveFile(req, res, file, cache, transform) {
   fs.readFile(file, (err, buf) => {
     if (err) return send(res, 404, 'Not found', { 'Content-Type': 'text/plain' });
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream', 'Cache-Control': cache, 'X-Content-Type-Options': 'nosniff' });
-    res.end(buf);
+    if (transform) buf = Buffer.from(transform(buf.toString('utf8')));
+    const etag = '"' + crypto.createHash('sha1').update(buf).digest('base64url').slice(0, 20) + '"';
+    const head = { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream', 'Cache-Control': cache, ETag: etag, 'X-Content-Type-Options': 'nosniff' };
+    if (req.headers['if-none-match'] === etag) { res.writeHead(304, head); return res.end(); }
+    res.writeHead(200, head);
+    res.end(req.method === 'HEAD' ? undefined : buf);
   });
 }
 
@@ -141,13 +173,14 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     if (url.pathname === '/api/push/key') return send(res, 200, { key: VAPID.publicKeyB64 });
+    if (url.pathname === '/api/version') return send(res, 200, { build: appBuild() }, { 'X-App-Build': appBuild() });
     if (url.pathname.startsWith('/api/')) {
       if (rateLimited(ip)) return send(res, 429, { error: 'Too many requests. Please wait a minute.' });
       if (req.method !== 'GET' && req.headers['content-type'] && !req.headers['content-type'].includes('application/json')) return send(res, 415, { error: 'Send JSON' });
       const body = ['POST', 'PUT', 'PATCH'].includes(req.method) ? await readBody(req) : {};
       const r = core.handle({ method: req.method, path: url.pathname, query: Object.fromEntries(url.searchParams), body, token: tokenOf(req) });
       if (r.crash) console.error(new Date().toISOString(), req.method, url.pathname, r.crash);
-      const headers = {};
+      const headers = { 'X-App-Build': appBuild() };
       if (r.token) headers['Set-Cookie'] = `lm_s=${r.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 86400}${SECURE ? '; Secure' : ''}`;
       if (r.clearToken) headers['Set-Cookie'] = `lm_s=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${SECURE ? '; Secure' : ''}`;
       send(res, r.status, r.body, headers);
@@ -157,11 +190,14 @@ const server = http.createServer(async (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, { error: 'Method not allowed' });
     if (url.pathname.startsWith('/uploads/')) {
       const name = path.basename(url.pathname);
-      return serveFile(res, path.join(UPLOADS, name), 'public, max-age=31536000, immutable');
+      return serveFile(req, res, path.join(UPLOADS, name), 'public, max-age=31536000, immutable');
     }
     let rel = decodeURIComponent(url.pathname).replace(/^\/+/, '') || 'index.html';
     if (rel.includes('..') || !PUBLIC.some((p) => rel === p || (p.endsWith('/') && rel.startsWith(p)))) rel = 'index.html';
-    serveFile(res, path.join(ROOT, rel), rel === 'index.html' || rel === 'sw.js' ? 'no-cache' : 'public, max-age=3600');
+    // App code is always revalidated (cheap 304s), so a new version reaches every phone on its next open.
+    const code = /\.(html|js|css|webmanifest|json)$/.test(rel);
+    serveFile(req, res, path.join(ROOT, rel), code ? 'no-cache' : 'public, max-age=86400',
+      rel === 'sw.js' ? (t) => t.replace(/const VERSION = '[^']*';/, `const VERSION = 'lm-${appBuild()}';`) : null);
   } catch (e) {
     if (!res.headersSent) send(res, e.status || 500, { error: e.status === 413 ? 'Upload is too large' : e.status === 400 ? 'Invalid request' : 'Server error' });
     if (!e.status) console.error(e);

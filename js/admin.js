@@ -3,7 +3,7 @@
 const ADMIN_NAV = [
   ['dash', 'dash', 'Dashboard'], ['orders', 'truck', 'Orders', 'pendingOrders'], ['pos', 'cash', 'Counter sale'], ['messages', 'chat', 'Messages', 'unread'],
   ['shops', 'store', 'Shops', 'pendingShops'], ['products', 'box', 'Inventory'], ['purchases', 'download', 'Purchases', null, true], ['suppliers', 'users', 'Suppliers', null, true],
-  ['deals', 'bolt', 'Flash deals'], ['claims', 'alert', 'Claims & requests'], ['feed', 'bell', 'Announcements'], ['reports', 'report', 'Reports', null, true], ['settings', 'settings', 'Settings', null, true],
+  ['deals', 'bolt', 'Flash deals'], ['claims', 'alert', 'Claims & requests'], ['feed', 'bell', 'Announcements'], ['reports', 'report', 'Reports', null, true], ['site', 'edit', 'App content', null, true], ['settings', 'settings', 'Settings', null, true],
 ];
 function adminLayout(active, body) {
   const me = API.me || {};
@@ -178,7 +178,7 @@ route('admin/products', async (r) => {
   INV.list = list;
   return adminLayout('products', `
     <div class="head-row"><div><h1>Inventory</h1><p>${list.filter((p) => p.active !== false).length} active products · ${list.filter((p) => p.active !== false && p.stock <= p.reorderLevel).length} at or below reorder level</p></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost" href="#/admin/count">${icon('search')} Stock count</a><a class="btn btn-ghost" href="#/admin/labels">${icon('receipt')} QR labels</a>${API.isOwner ? `<a class="btn btn-ghost" href="#/admin/purchases/new">${icon('download')} Receive stock</a><a class="btn btn-primary" href="#/admin/product/new">${icon('plus')} Add product</a>` : ''}</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-ghost" href="#/admin/count">${icon('search')} Stock count</a><a class="btn btn-ghost" href="#/admin/labels">${icon('receipt')} QR labels</a>${API.isOwner ? `<a class="btn btn-ghost" href="#/admin/purchases/new">${icon('download')} Receive stock</a><button class="btn btn-ghost" onclick="sheetMenu()">${icon('report')} Excel sheet</button><a class="btn btn-primary" href="#/admin/product/new">${icon('plus')} Add product</a>` : ''}</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><input class="input" id="invQ" placeholder="Search name, SKU, brand or model" style="flex:1;min-width:220px" aria-label="Search">
       <select class="select" id="invCat" style="width:auto" aria-label="Category"><option value="">All categories</option>${API.info.categories.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
       <div class="seg" id="invF"><button data-f="" class="${f === '' ? 'on' : ''}">All</button><button data-f="low" class="${f === 'low' ? 'on' : ''}">Low</button><button data-f="out" class="${f === 'out' ? 'on' : ''}">Out</button><button data-f="archived" class="${f === 'archived' ? 'on' : ''}">Archived</button></div></div>

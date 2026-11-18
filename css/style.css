@@ -1006,3 +1006,34 @@ footer .brand .t2.ur { color: #9db3e3; }
 @container (max-width: 110px) { .ph b, .ph small { display: none; } .ph-ic { top: 22%; left: 22%; width: 56%; } .ph::after { display: none; } }
 .ph-ic { top: 36%; width: 18%; }
 @container (max-width: 110px) { .ph-ic { top: 22%; width: 56%; } }
+
+/* ===== Admin: app content editor ===== */
+.se-box { padding: 22px; margin-bottom: 16px; }
+.se-box h3 { margin: 0; font-size: 18px; }
+.se-box > p.muted { font-size: 13.5px; margin: 4px 0 14px; }
+.se-item { display: grid; grid-template-columns: 220px minmax(0, 1fr) auto; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); align-items: start; }
+.se-img { position: relative; display: block; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; background: var(--bg-2, #f2f4f7); cursor: pointer; }
+.se-img img { width: 100%; height: 100%; object-fit: cover; }
+.se-img span { position: absolute; inset: auto 8px 8px 8px; display: flex; gap: 6px; align-items: center; justify-content: center; padding: 6px; border-radius: 8px; background: rgba(11, 31, 68, .82); color: #fff; font-size: 12.5px; font-weight: 600; }
+.se-img span svg { width: 15px; height: 15px; }
+.se-move { display: flex; flex-direction: column; gap: 6px; }
+.se-move .icon-btn { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 10px; }
+.se-move .icon-btn[disabled] { opacity: .35; pointer-events: none; }
+.se-move svg { width: 17px; height: 17px; }
+.se-row { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.se-row > .input { flex: 1; min-width: 0; }
+.se-row .se-move { flex-direction: row; }
+.se-ic { color: var(--navy); display: grid; place-items: center; flex: none; }
+.se-ic svg { width: 22px; height: 22px; }
+.se-thumb { width: 52px; height: 52px; border-radius: 10px; overflow: hidden; flex: none; display: grid; place-items: center; background: var(--bg-2, #f2f4f7); border: 1px dashed var(--line-2); cursor: pointer; color: var(--muted); }
+.se-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.se-thumb svg { width: 24px; height: 24px; }
+.se-sections { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); column-gap: 28px; }
+.se-save { position: sticky; bottom: 12px; z-index: 5; display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 14px 12px 18px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-md, 0 8px 24px rgba(16, 24, 40, .12)); }
+@media (max-width: 860px) {
+  .se-item { grid-template-columns: minmax(0, 1fr); }
+  .se-item .se-move { flex-direction: row; }
+  .se-row { flex-wrap: wrap; }
+  .se-row > .input { flex-basis: 100%; order: 5; }
+  .se-save { bottom: calc(76px + env(safe-area-inset-bottom)); }
+}

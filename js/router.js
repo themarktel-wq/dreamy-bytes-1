@@ -56,6 +56,8 @@ function ago(t) {
 }
 const STATUS_LABEL = { pending: 'Pending', confirmed: 'Confirmed', packed: 'Packed', dispatched: 'Dispatched', delivered: 'Delivered', cancelled: 'Cancelled', open: 'Open', approved: 'Approved', rejected: 'Rejected', active: 'Active', blocked: 'Blocked', done: 'Done' };
 const badge = (s, label) => `<span class="badge ${esc(s)}">${esc(label || STATUS_LABEL[s] || s)}</span>`;
+const visibleCats = () => API.info.categories.filter((c) => !c.hidden);
+const siteCfg = () => API.info.site || {};
 const catName = (id) => ((API.info && API.info.categories.find((c) => c.id === id)) || {}).name || id;
 const crumb = (...parts) => `<div class="crumb"><a href="#/">Home</a>${parts.map((p) => `${icon('chevron', 'width="14" height="14"')}${Array.isArray(p) ? `<a href="${p[1]}">${esc(p[0])}</a>` : `<span>${esc(p)}</span>`}`).join('')}</div>`;
 const secHead = (_label, title, sub, link) => `<div class="sec-head"><div><h3>${title}</h3>${sub ? `<div class="sub">${sub}</div>` : ''}</div>${link || ''}</div>`;

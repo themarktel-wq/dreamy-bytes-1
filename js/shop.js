@@ -62,26 +62,21 @@ async function doRegister(e) {
 }
 
 /* ================= HOME ================= */
-function homeSlides(products, u) {
-  const n = (cat) => products.filter((p) => p.cat === cat && p.inStock).length;
-  const s = [
-    { img: 'assets/img/hero-iphones.jpg', tag: 'LCD & OLED panels', title: 'Panels for every common model', sub: `${n('panel')} panel models in stock for iPhone, Samsung, Redmi, Infinix and Tecno. Every panel is tested before it leaves the shop.`, cta: 'See panels', link: '#/catalog?cat=panel' },
-    { img: 'assets/img/hero-accessories.jpg', tag: 'Accessories', title: 'Glass, covers and chargers by the box', sub: 'Order packs of 10, 20 or 50 from your phone. Stock updates as we sell, so what you see is what we have.', cta: 'See accessories', link: '#/catalog?cat=protector' },
-    { img: 'assets/img/hero-trade.jpg', tag: 'Order from your phone', title: 'Order in a minute, collect the same day', sub: 'Place the order from your shop, follow its status in the app, and pay cash or by bank transfer.', cta: 'Open a shop account', link: '#/register' },
-    { img: 'assets/img/hero-audio.jpg', tag: 'Audio', title: 'Earbuds and handsfree', sub: `${n('audio')} audio items in stock, each with the suggested retail price and your margin.`, cta: 'See audio', link: '#/catalog?cat=audio' },
-  ];
-  return u ? s.filter((x) => x.link !== '#/register') : s;
+function homeSlides(u) {
+  const s = (siteCfg().slides || []).filter((x) => !(u && x.guests));
+  return s.length ? s : (siteCfg().slides || []).slice(0, 1);
 }
-route('home', async () => {
-  if (API.isAdmin) { setTimeout(() => go('#/admin')); return ''; }
+const linkAttrs = (l) => (/^https:/.test(l) ? `href="${esc(l)}" target="_blank" rel="noopener"` : `href="${esc(l)}"`);
+route('home', async (r) => {
+  if (API.isAdmin && !(r && r.q && r.q.get('view'))) { setTimeout(() => go('#/admin')); return ''; }
   const [products, feed, deals] = await Promise.all([loadProducts(true), API.get('/api/feed'), API.get('/api/deals')]);
-  const b = API.info.business, cats = API.info.categories, u = API.user, me = API.me || {};
-  const slides = homeSlides(products, u);
+  const b = API.info.business, cats = visibleCats(), u = API.user, me = API.me || {}, site = siteCfg(), on = site.sections || {};
+  const slides = homeSlides(u);
+  const fcat = cats.find((c) => c.id === site.featureCat) || cats[0] || { id: 'panel', name: 'Panels' };
   const featured = products.filter((p) => p.featured).concat(products.filter((p) => !p.featured)).slice(0, 8);
   const fresh = products.filter((p) => p.isNew).concat(products.filter((p) => !p.isNew && !p.featured)).slice(0, 8);
-  const panels = products.filter((p) => p.cat === 'panel').slice(0, 8);
-  const CAT_PHOTO = { panel: 'cat-phone', protector: 'cat-protector', case: 'cat-case', charger: 'cat-charger', cable: 'cat-cable', audio: 'cat-audio', powerbank: 'cat-powerbank', other: 'cat-watch' };
-  const catTiles = cats.map((c) => { const img = CAT_PHOTO[c.id] ? `assets/img/${CAT_PHOTO[c.id]}.jpg` : (products.find((p) => p.cat === c.id && p.img) || {}).img; return `<a class="cat" href="#/catalog?cat=${c.id}">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<div style="width:100%;height:100%;display:grid;place-items:center;color:#98a2b3">${icon(CAT_ICON[c.id] || 'box', 'width="40%" height="40%" stroke-width="1.2"')}</div>`}<span><span>${esc(c.name)}<small>${products.filter((p) => p.cat === c.id).length} products</small></span>${icon('arrow')}</span></a>`; }).join('');
+  const panels = products.filter((p) => p.cat === fcat.id).slice(0, 8);
+  const catTiles = cats.map((c) => { const img = c.img || (products.find((p) => p.cat === c.id && p.img) || {}).img; return `<a class="cat" href="#/catalog?cat=${c.id}">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<div style="width:100%;height:100%;display:grid;place-items:center;color:#98a2b3">${icon(CAT_ICON[c.id] || 'box', 'width="40%" height="40%" stroke-width="1.2"')}</div>`}<span><span>${esc(c.name)}<small>${products.filter((p) => p.cat === c.id).length} products</small></span>${icon('arrow')}</span></a>`; }).join('');
   const brands = [...new Set(products.map((p) => p.brand).filter((x) => x && x !== b.name))].slice(0, 6);
   const orders = API.isActiveShop ? await API.get('/api/orders') : [];
   const open = orders.filter((o) => !['delivered', 'cancelled'].includes(o.status));
@@ -93,8 +88,8 @@ route('home', async () => {
     <div class="hero-grid">
       <section class="hero" id="hero" aria-roledescription="carousel">
         ${slides.map((s, i) => `<div class="slide ${i === 0 ? 'on' : ''}"><img src="${esc(s.img)}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}>
-          <div class="copy"><span class="tag">${esc(s.tag)}</span><h2>${esc(s.title)}</h2><p>${esc(s.sub)}</p>
-            <a class="btn btn-white" href="${s.link}">${esc(s.cta)} ${icon('arrow')}</a></div></div>`).join('')}
+          <div class="copy">${s.tag ? `<span class="tag">${esc(s.tag)}</span>` : ''}<h2>${esc(s.title)}</h2><p>${esc(s.sub)}</p>
+            ${s.cta ? `<a class="btn btn-white" ${linkAttrs(s.link)}>${esc(s.cta)} ${icon('arrow')}</a>` : ''}</div></div>`).join('')}
         <div class="hero-ctrl">${slides.map((_, i) => `<button class="dot ${i === 0 ? 'on' : ''}" aria-label="Slide ${i + 1}" data-i="${i}"></button>`).join('')}</div>
         <div class="hero-arrows"><button id="heroPrev" aria-label="Previous">${icon('back')}</button><button id="heroNext" aria-label="Next">${icon('arrow')}</button></div>
       </section>
@@ -107,12 +102,8 @@ route('home', async () => {
       </div>
     </div>
 
-    <div class="usp">
-      <div>${icon('tag')}<span><b>One price for all shops</b>No hidden rates</span></div>
-      <div>${icon('box')}<span><b>Live stock</b>See what is on the shelf</span></div>
-      <div>${icon('truck')}<span><b>Same-day dispatch</b>Across Lahore</span></div>
-      <div>${icon('shield')}<span><b>Tested panels</b>Claims from the app</span></div>
-    </div>
+    ${(site.usp || []).length ? `<div class="usp">${site.usp.map((x) => `<div>${icon(x.icon)}<span><b>${esc(x.title)}</b>${esc(x.sub)}</span></div>`).join('')}</div>` : ''}
+    ${site.notice ? `<div class="banner-note">${icon('info')}<div>${esc(site.notice)}</div></div>` : ''}
 
     ${u && u.status !== 'active' ? `<div class="banner-note">${icon('clock')}<div><b>Your shop is waiting for approval.</b><br>You can browse the catalogue now. Prices and ordering open once we approve your shop. <a href="${bizWa(`Assalam o Alaikum, I registered ${u.shop.shopName} (${u.phone}). Please approve my account.`)}" target="_blank" rel="noopener" style="text-decoration:underline">Message us on WhatsApp</a></div></div>` : ''}
     ${API.isActiveShop ? `<section class="section" style="margin-top:32px">${secHead('', `Assalam o Alaikum, ${esc(u.name.split(' ')[0])}`, esc(u.shop.shopName) + (u.shop.market ? ' · ' + esc(u.shop.market) : ''))}
@@ -128,28 +119,28 @@ route('home', async () => {
       <div class="cats">${catTiles}</div>
     </section>
 
-    ${deals.length ? `<section class="section">${secHead('', `<span class="h-ic">${icon('bolt')}</span>Flash deals`, 'Deal prices end when the timer runs out.')}<div class="rail">${deals.map((d) => pcard(d.product)).join('')}</div></section>` : ''}
+    ${on.deals && deals.length ? `<section class="section">${secHead('', `<span class="h-ic">${icon('bolt')}</span>Flash deals`, 'Deal prices end when the timer runs out.')}<div class="rail">${deals.map((d) => pcard(d.product)).join('')}</div></section>` : ''}
 
-    ${panels.length ? `<section class="section">${secHead('', 'LCD and OLED panels', '', arrowLink('#/catalog?cat=panel', 'All panels'))}<div class="grid">${panels.map(pcard).join('')}</div></section>` : ''}
+    ${on.feature && panels.length ? `<section class="section">${secHead('', esc(fcat.name), '', arrowLink('#/catalog?cat=' + fcat.id, 'See all'))}<div class="grid">${panels.map(pcard).join('')}</div></section>` : ''}
 
-    <section class="section">${secHead('', 'Best sellers', '', arrowLink('#/catalog', 'All products'))}<div class="rail">${featured.map(pcard).join('')}</div></section>
+    ${on.best ? `<section class="section">${secHead('', 'Best sellers', '', arrowLink('#/catalog', 'All products'))}<div class="rail">${featured.map(pcard).join('')}</div></section>` : ''}
 
-    ${u ? '' : `<section class="section"><div class="steps-line">
+    ${u || !on.steps ? '' : `<section class="section"><div class="steps-line">
       <div><b>1</b><span><strong>Register your shop</strong>Name, shop name and mobile number.</span></div>
       <div><b>2</b><span><strong>We approve it</strong>Usually the same day.</span></div>
       <div><b>3</b><span><strong>Order from your phone</strong>Pay cash or by bank transfer.</span></div>
       <a class="btn btn-primary" href="#/register">Register free</a></div></section>`}
 
-    ${feed.length ? `<section class="section">${secHead('', 'Updates from the shop')}<div class="feed-list">${feed.slice(0, 4).map((a) => `<${a.pid ? `a href="#/p/${a.pid}"` : 'div'} class="feed-item"><small>${ago(a.at)}</small><b>${esc(a.title)}</b>${a.body ? `<p>${esc(a.body)}</p>` : ''}</${a.pid ? 'a' : 'div'}>`).join('')}</div></section>` : ''}
+    ${on.updates && feed.length ? `<section class="section">${secHead('', 'Updates from the shop')}<div class="feed-list">${feed.slice(0, 4).map((a) => `<${a.pid ? `a href="#/p/${a.pid}"` : 'div'} class="feed-item"><small>${ago(a.at)}</small><b>${esc(a.title)}</b>${a.body ? `<p>${esc(a.body)}</p>` : ''}</${a.pid ? 'a' : 'div'}>`).join('')}</div></section>` : ''}
 
-    <section class="section">${secHead('', 'New stock')}<div class="grid">${fresh.map(pcard).join('')}</div></section>
+    ${on.fresh ? `<section class="section">${secHead('', 'New stock')}<div class="grid">${fresh.map(pcard).join('')}</div></section>` : ''}
 
-    ${brands.length ? `<section class="section">${secHead('', 'Brands we stock')}<div class="brands">${brands.map((x) => `<a href="#/catalog?q=${encodeURIComponent(x)}">${esc(x)}</a>`).join('')}</div></section>` : ''}
+    ${on.brands && brands.length ? `<section class="section">${secHead('', 'Brands we stock')}<div class="brands">${brands.map((x) => `<a href="#/catalog?q=${encodeURIComponent(x)}">${esc(x)}</a>`).join('')}</div></section>` : ''}
 
-    <section class="section">
+    ${on.visit ? `<section class="section">
       <div class="visit">
         <div class="visit-where">
-          <span class="ur">لاہور موبائل</span>
+          ${site.urdu ? `<span class="ur">${esc(site.urdu)}</span>` : ''}
           <h3>${esc(addr[0] || b.name)}</h3>
           <p>${addr.slice(1).map(esc).join('<br>')}</p>
           <a class="btn btn-white" href="${esc(mapLink)}" target="_blank" rel="noopener">${icon('pin')} Open in Google Maps</a>
@@ -157,11 +148,11 @@ route('home', async () => {
         <div class="visit-info">
           <div class="info-row">${icon('clock')}<span><b>Timings</b>${esc(b.hours)}</span></div>
           <div class="info-row">${icon('phone')}<span><b>Call or WhatsApp</b><span style="user-select:all">${esc(b.phone)}</span></span></div>
-          <div class="info-row">${icon('store')}<span><b>At the shop</b>Collect orders and check panels in person.</span></div>
+          <div class="info-row">${icon('store')}<span><b>At the shop</b>${esc(site.visitNote || '')}</span></div>
           <a class="btn btn-wa" href="${bizWa('Assalam o Alaikum, I have a question about wholesale.')}" target="_blank" rel="noopener">${icon('wa')} WhatsApp us</a>
         </div>
       </div>
-    </section>
+    </section>` : ''}
   </div>`;
 });
 
@@ -235,7 +226,7 @@ const CF = { q: '', cat: '', grade: '', brand: '', stock: false, sort: 'featured
 route('catalog', async (r) => {
   await loadProducts(true);
   CF.q = r.q.get('q') || ''; CF.cat = r.q.get('cat') || ''; CF.grade = ''; CF.brand = '';
-  const cats = API.info.categories;
+  const cats = visibleCats();
   return `<div class="wrap">${crumb('Catalogue')}
     <div class="page-head" style="padding-top:12px"><h1 id="catTitle">Catalogue</h1><p>${API.isActiveShop ? 'Wholesale prices, live stock, and the margin you make at the suggested retail price.' : API.user ? 'Prices unlock after your shop is approved.' : 'Sign in with your shop account to see trade prices.'}</p></div>
     <div class="box" style="display:grid;gap:12px;padding:14px">

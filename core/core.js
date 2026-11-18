@@ -21,6 +21,31 @@
     { id: 'battery', name: 'Batteries', unit: 'pc' },
     { id: 'other', name: 'Other Accessories', unit: 'pc' },
   ];
+  const CAT_IMG = { panel: 'assets/img/cat-phone.jpg', protector: 'assets/img/cat-protector.jpg', case: 'assets/img/cat-case.jpg', charger: 'assets/img/cat-charger.jpg', cable: 'assets/img/cat-cable.jpg', audio: 'assets/img/cat-audio.jpg', powerbank: 'assets/img/cat-powerbank.jpg', other: 'assets/img/cat-watch.jpg' };
+  const SITE_ICONS = ['tag', 'box', 'truck', 'shield', 'clock', 'cash', 'phone', 'store', 'star', 'bolt', 'check', 'chat', 'heart', 'repeat'];
+  const SECTIONS = { deals: 'Flash deals', feature: 'Featured category', best: 'Best sellers', steps: 'How to register (guests only)', updates: 'Updates from the shop', fresh: 'New stock', brands: 'Brands we stock', visit: 'Visit the shop' };
+  const DEFAULT_SITE = {
+    urdu: 'لاہور موبائل',
+    notice: '',
+    slides: [
+      { img: 'assets/img/hero-iphones.jpg', tag: 'LCD & OLED panels', title: 'Panels for every common model', sub: 'Panels in stock for iPhone, Samsung, Redmi, Infinix and Tecno. Every panel is tested before it leaves the shop.', cta: 'See panels', link: '#/catalog?cat=panel', guests: false },
+      { img: 'assets/img/hero-accessories.jpg', tag: 'Accessories', title: 'Glass, covers and chargers by the box', sub: 'Order packs of 10, 20 or 50 from your phone. Stock updates as we sell, so what you see is what we have.', cta: 'See accessories', link: '#/catalog?cat=protector', guests: false },
+      { img: 'assets/img/hero-trade.jpg', tag: 'Order from your phone', title: 'Order in a minute, collect the same day', sub: 'Place the order from your shop, follow its status in the app, and pay cash or by bank transfer.', cta: 'Open a shop account', link: '#/register', guests: true },
+      { img: 'assets/img/hero-audio.jpg', tag: 'Audio', title: 'Earbuds and handsfree', sub: 'Earbuds and handsfree in stock, each with the suggested retail price and your margin.', cta: 'See audio', link: '#/catalog?cat=audio', guests: false },
+    ],
+    usp: [
+      { icon: 'tag', title: 'One price for all shops', sub: 'No hidden rates' },
+      { icon: 'box', title: 'Live stock', sub: 'See what is on the shelf' },
+      { icon: 'truck', title: 'Same-day dispatch', sub: 'Across Lahore' },
+      { icon: 'shield', title: 'Tested panels', sub: 'Claims from the app' },
+    ],
+    sections: { deals: true, feature: true, best: true, steps: true, updates: true, fresh: true, brands: true, visit: true },
+    featureCat: 'panel',
+    ticker: [],
+    tickerAuto: true,
+    visitNote: 'Collect orders and check panels in person.',
+    footer: 'Trade prices are for registered shops only.',
+  };
   const GRADES = ['Original', 'OLED', 'Incell', 'TFT', 'A+ Copy', 'Standard'];
   const ORDER_FLOW = { pending: ['confirmed', 'cancelled'], confirmed: ['packed', 'dispatched', 'delivered', 'cancelled'], packed: ['dispatched', 'delivered', 'cancelled'], dispatched: ['delivered'], delivered: [], cancelled: [] };
   const SOLD = ['confirmed', 'packed', 'dispatched', 'delivered'];
@@ -49,6 +74,10 @@
     const S = store, now = () => deps.now();
     const id = (p) => p + deps.rid(6);
     const settings = () => S.get('settings', 'main');
+    const site = () => ({ ...DEFAULT_SITE, ...((settings() || {}).site || {}), sections: { ...DEFAULT_SITE.sections, ...(((settings() || {}).site || {}).sections || {}) } });
+    const cats = () => { const s = settings(); return (s && s.categories) || CATEGORIES.map((c) => ({ ...c, img: CAT_IMG[c.id] || '', hidden: false })); };
+    const imgUrl = (v) => { v = String(v || '').trim(); if (!v) return ''; if (/^(assets\/img\/[\w.-]+|\/uploads\/[\w.-]+|https:\/\/[^\s"'<>]+|data:image\/(jpeg|png|webp);base64,[\w+/=]+)$/.test(v) && v.length < 900000) return v; bad('Image must be an uploaded photo'); };
+    const linkUrl = (v) => { v = String(v || '').trim(); if (!v) return '#/catalog'; if (/^#\/[\w/?=&%.-]*$/.test(v) || /^https:\/\/[^\s"'<>]+$/.test(v)) return v.slice(0, 300); bad('Button link must start with #/ (a page in the app) or https://'); };
     const loginFails = new Map();
 
     /* ---------- helpers ---------- */
@@ -194,7 +223,7 @@
     // Public
     R('GET', '/api/info', ANY, () => {
       const s = settings();
-      return { business: s.business, categories: CATEGORIES, grades: GRADES, markets: s.markets };
+      return { business: s.business, categories: cats(), grades: GRADES, markets: s.markets, site: site(), sectionNames: SECTIONS, siteIcons: SITE_ICONS };
     });
     R('GET', '/api/products', ANY, ({ user, query }) => {
       let list = S.all('products').filter((p) => p.active);
@@ -411,7 +440,7 @@
       p.name = reqStr(body.name, 120, 'Product name');
       p.sku = str(body.sku, 40) || p.sku;
       if (S.all('products').some((x) => x.id !== p.id && x.sku.toLowerCase() === p.sku.toLowerCase())) bad(`SKU ${p.sku} is already used`);
-      p.brand = str(body.brand, 40); p.cat = CATEGORIES.some((c) => c.id === body.cat) ? body.cat : 'other';
+      p.brand = str(body.brand, 40); p.cat = cats().some((c) => c.id === body.cat) ? body.cat : 'other';
       p.grade = str(body.grade, 30); p.desc = str(body.desc, 1000, 'Description');
       p.models = (Array.isArray(body.models) ? body.models : String(body.models || '').split(',')).map((m) => str(m, 60)).filter(Boolean).slice(0, 60);
       p.price = money(body.price, 'Wholesale price'); if (!p.price) bad('Wholesale price is required');
@@ -447,6 +476,35 @@
         ev.push({ to: 'all', type: 'feed' });
       }
       return { body: shopView(p, user), events: ev };
+    });
+    // Bulk import from a spreadsheet (CSV rows already parsed by the app). Matches existing products by SKU.
+    // All rows are checked first; if any row is wrong nothing is saved and the row number is reported.
+    R('POST', '/api/admin/products/import', ADMIN, ({ user, body }) => {
+      const rows = Array.isArray(body.rows) ? body.rows : bad('No rows to import');
+      if (!rows.length) bad('The file has no product rows'); if (rows.length > 2000) bad('Import up to 2000 rows at a time');
+      const catBy = (v) => { v = String(v || '').trim().toLowerCase(); const c = cats().find((x) => x.id === v || x.name.toLowerCase() === v); return c ? c.id : 'other'; };
+      let added = 0, updated = 0;
+      rows.forEach((r, i) => {
+        try {
+          const sku = str(r.sku, 40);
+          const old = sku && S.all('products').find((x) => x.sku.toLowerCase() === sku.toLowerCase());
+          const has = (k) => r[k] !== undefined && String(r[k]).trim() !== '';
+          const num = (k) => String(r[k]).replace(/[,\s]|rs/gi, '');
+          const base = old ? { ...old, models: (old.models || []).join(',') } : {};
+          const merged = { ...base, sku: sku || undefined, cat: has('category') ? catBy(r.category) : (old ? old.cat : 'other'), active: true };
+          for (const k of ['name', 'brand', 'grade', 'models', 'desc', 'barcode']) if (has(k)) merged[k] = String(r[k]);
+          for (const k of ['price', 'retail', 'cost', 'packSize', 'moq', 'reorderLevel']) if (has(k)) merged[k] = Number(num(k));
+          if (old) { productFrom(merged, old); S.put('products', old); updated++;
+            if (has('stock')) { const target = int(Number(num('stock')), 0, 1e6, 'Stock'); if (target !== old.stock) moveStock(old, target - old.stock, 'count', 'Spreadsheet import', user.name); }
+          } else {
+            const p = productFrom(merged, { id: id('p'), sku: '', cost: 0, stock: 0, faulty: 0, createdAt: now() });
+            if (!p.sku) p.sku = 'LM' + nextNo('sku', '', 10000);
+            S.put('products', p); added++;
+            const st = has('stock') ? int(Number(num('stock')), 0, 1e6, 'Stock') : 0; if (st) moveStock(p, st, 'opening', 'Spreadsheet import', user.name);
+          }
+        } catch (e) { if (e instanceof HttpErr) bad(`Row ${i + 2}: ${e.message}`); throw e; }
+      });
+      return { added, updated };
     });
     R('DELETE', '/api/admin/products/:id', ADMIN, ({ params }) => {
       const p = S.get('products', params.id); if (!p) nf('Product not found');
@@ -548,7 +606,7 @@
         for (const l of o.items) {
           const p = S.get('products', l.pid); const cat = p ? p.cat : 'other';
           const pr = byP.get(l.pid) || { pid: l.pid, name: l.name, qty: 0, total: 0, profit: 0 }; pr.qty += l.qty; pr.total += l.qty * l.price; pr.profit += l.qty * (l.price - (l.cost || 0)); byP.set(l.pid, pr);
-          const c = byC.get(cat) || { cat, name: (CATEGORIES.find((x) => x.id === cat) || {}).name || cat, total: 0, qty: 0 }; c.total += l.qty * l.price; c.qty += l.qty; byC.set(cat, c);
+          const c = byC.get(cat) || { cat, name: (cats().find((x) => x.id === cat) || {}).name || cat, total: 0, qty: 0 }; c.total += l.qty * l.price; c.qty += l.qty; byC.set(cat, c);
         }
       }
       return {
@@ -574,6 +632,40 @@
       s.business = { name: reqStr(b.name, 60, 'Business name'), tagline: str(b.tagline, 120), phone: str(b.phone, 30), whatsapp: str(b.whatsapp, 20).replace(/\D/g, ''), address: str(b.address, 200), mapUrl: /^https:\/\//.test(String(b.mapUrl || '')) ? str(b.mapUrl, 300) : '', hours: str(b.hours, 100), bank: str(b.bank, 300) };
       if (Array.isArray(body.markets)) s.markets = body.markets.map((m) => str(m, 60)).filter(Boolean).slice(0, 40);
       S.put('settings', s); return s;
+    });
+    R('PUT', '/api/admin/site', ADMIN, ({ body }) => {
+      const s = settings(), cur = site(), b = body || {};
+      const next = { ...cur };
+      if (b.urdu !== undefined) next.urdu = str(b.urdu, 40, 'Urdu name');
+      if (b.notice !== undefined) next.notice = str(b.notice, 200, 'Notice');
+      if (b.visitNote !== undefined) next.visitNote = str(b.visitNote, 120, 'Shop note');
+      if (b.footer !== undefined) next.footer = str(b.footer, 160, 'Footer text');
+      if (b.tickerAuto !== undefined) next.tickerAuto = !!b.tickerAuto;
+      if (Array.isArray(b.ticker)) next.ticker = b.ticker.map((t) => str(t, 140, 'Ticker line')).filter(Boolean).slice(0, 10);
+      if (Array.isArray(b.slides)) {
+        if (b.slides.length > 8) bad('Up to 8 slides');
+        next.slides = b.slides.map((x, i) => ({ img: imgUrl(x.img) || 'assets/img/hero-accessories.jpg', tag: str(x.tag, 40, 'Slide label'), title: reqStr(x.title, 80, `Slide ${i + 1} heading`), sub: str(x.sub, 220, 'Slide text'), cta: str(x.cta, 30, 'Button text') || 'View', link: linkUrl(x.link), guests: !!x.guests }));
+        if (!next.slides.length) bad('Keep at least one slide');
+      }
+      if (Array.isArray(b.usp)) next.usp = b.usp.slice(0, 4).map((x) => ({ icon: SITE_ICONS.includes(x.icon) ? x.icon : 'check', title: reqStr(x.title, 40, 'Highlight'), sub: str(x.sub, 60, 'Highlight text') }));
+      if (b.sections && typeof b.sections === 'object') next.sections = Object.fromEntries(Object.keys(SECTIONS).map((k) => [k, b.sections[k] !== false]));
+      if (b.featureCat !== undefined) next.featureCat = cats().some((c) => c.id === b.featureCat) ? b.featureCat : 'panel';
+      if (Array.isArray(b.categories)) {
+        const old = cats(), seen = new Set();
+        const list = b.categories.slice(0, 30).map((c) => {
+          const name = reqStr(c.name, 40, 'Category name');
+          let cid = String(c.id || '').trim();
+          if (!old.some((o) => o.id === cid)) { cid = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'cat'; while (seen.has(cid) || old.some((o) => o.id === cid)) cid += '1'; }
+          if (seen.has(cid)) bad('A category is listed twice'); seen.add(cid);
+          return { id: cid, name, unit: 'pc', img: imgUrl(c.img), hidden: !!c.hidden };
+        });
+        const used = new Set(S.all('products').filter((x) => x.active !== false).map((x) => x.cat));
+        for (const o of old) if (!seen.has(o.id) && used.has(o.id)) bad(`"${o.name}" still has products. Move them or hide the category instead.`);
+        if (!list.some((c) => c.id === 'other')) list.push({ id: 'other', name: 'Other Accessories', unit: 'pc', img: '', hidden: true });
+        s.categories = list;
+      }
+      s.site = next; S.put('settings', s);
+      return { status: 200, body: { site: site(), categories: cats() }, events: [{ to: 'all', type: 'site' }, { to: 'admin', type: 'site' }] };
     });
     R('GET', '/api/admin/staff', ADMIN, () => S.all('users').filter((u) => u.role !== 'shop').map(publicUser));
     R('POST', '/api/admin/staff', ADMIN, ({ body }) => {
@@ -853,7 +945,7 @@
       return true;
     }
 
-    return { handle, seed, pushTargets, dropPushSub, CATEGORIES, GRADES };
+    return { handle, seed, pushTargets, dropPushSub, CATEGORIES, GRADES, DEFAULT_SITE };
   }
 
   const api = { createCore, normPhone, CATEGORIES, GRADES };

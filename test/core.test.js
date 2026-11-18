@@ -205,4 +205,42 @@ t('push subscriptions are stored per user and targeted', () => {
   assert.equal(core.pushTargets('admin').length, 0);
   assert.equal(core.pushTargets('all').length, 1);
 });
+t('owner edits app content; shops get it live and bad input is refused', () => {
+  const info0 = call('GET', '/api/info').body;
+  assert.equal(info0.site.slides.length, 4); assert.equal(info0.categories.length, 9);
+  const cats = info0.categories.map((c) => (c.id === 'battery' ? { ...c, hidden: true } : c.id === 'panel' ? { ...c, name: 'Panels' } : c));
+  cats.push({ name: 'Smart Watches', img: '' });
+  const r = call('PUT', '/api/admin/site', { slides: [{ title: 'Eid stock is in', img: 'assets/img/store.jpg', link: '#/catalog?cat=audio', cta: 'See' }], categories: cats, notice: 'Closed Friday till 3 pm', sections: { brands: false }, ticker: ['Line one', ''] }, admin);
+  ok(r); assert.deepEqual(r.events.map((e) => e.type), ['site', 'site']);
+  const info = call('GET', '/api/info').body;
+  assert.equal(info.site.slides[0].title, 'Eid stock is in'); assert.equal(info.site.notice, 'Closed Friday till 3 pm');
+  assert.equal(info.site.sections.brands, false); assert.equal(info.site.sections.deals, true);
+  assert.deepEqual(info.site.ticker, ['Line one']);
+  assert.equal(info.categories.find((c) => c.id === 'panel').name, 'Panels');
+  assert.ok(info.categories.find((c) => c.id === 'battery').hidden);
+  assert.ok(info.categories.some((c) => c.id === 'smart-watches'), 'new category gets an id');
+  assert.equal(call('PUT', '/api/admin/site', { categories: cats.filter((c) => c.id !== 'panel') }, admin).status, 400, 'cannot delete a category that has products');
+  assert.equal(call('PUT', '/api/admin/site', { slides: [{ title: 'x', link: 'javascript:alert(1)' }] }, admin).status, 400);
+  assert.equal(call('PUT', '/api/admin/site', { slides: [{ title: 'x', img: 'http://evil/x.jpg' }] }, admin).status, 400);
+  assert.equal(call('PUT', '/api/admin/site', { slides: [] }, admin).status, 400);
+  assert.equal(call('PUT', '/api/admin/site', { notice: 'x' }, shopTok).status, 403);
+  ok(call('PUT', '/api/admin/products/p_cb-cc-1m', { ...store.get('products', 'p_cb-cc-1m'), cat: 'smart-watches' }, admin));
+  assert.equal(store.get('products', 'p_cb-cc-1m').cat, 'smart-watches', 'products can move to a new category');
+});
+t('spreadsheet import adds and updates products, and is all-or-nothing', () => {
+  const before = store.all('products').length;
+  const r = ok(call('POST', '/api/admin/products/import', { rows: [
+    { sku: 'p-new-1', name: 'Type-C OTG Adapter', category: 'Data Cables', price: '45', retail: '120', cost: '25', stock: '300', packSize: '10', moq: '20' },
+    { sku: 'AU-HF-35', price: '1,99', stock: '77' },
+  ] }, admin)).body;
+  assert.deepEqual(r, { added: 1, updated: 1 });
+  const n = store.all('products').find((p) => p.sku === 'p-new-1');
+  assert.equal(n.cat, 'cable'); assert.equal(n.stock, 300); assert.equal(n.price, 45);
+  const u = store.all('products').find((p) => p.sku === 'AU-HF-35');
+  assert.equal(u.price, 199); assert.equal(u.stock, 77); assert.ok(u.name.includes('Handsfree'), 'empty cells keep values');
+  const bad = call('POST', '/api/admin/products/import', { rows: [{ sku: 'p-new-2', name: 'Fine', price: '10' }, { sku: 'p-new-3', name: 'No price' }] }, admin);
+  assert.equal(bad.status, 400); assert.match(bad.body.error, /^Row 3:/);
+  assert.equal(store.all('products').length, before + 1, 'nothing saved from a bad file');
+  assert.equal(call('POST', '/api/admin/products/import', { rows: [{ name: 'x', price: 1 }] }, shopTok).status, 403);
+});
 console.log(`\n${passed} tests passed`);

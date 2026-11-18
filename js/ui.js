@@ -83,13 +83,12 @@ function icon(name, extra = '') {
 
 /* ---------- Logo: flat navy mark (phone outline + Minar silhouette) ---------- */
 function logoSVG(cls = '', inverted = false) {
-  const bg = inverted ? '#ffffff' : '#0b1f44', fg = inverted ? '#0b1f44' : '#ffffff';
-  return `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true">
-    <rect width="64" height="64" rx="14" fill="${bg}"/>
-    <rect x="19" y="10" width="26" height="44" rx="6" fill="none" stroke="${fg}" stroke-width="3"/>
-    <path d="M32 16 L33.5 22 L35 37 L37.5 37 L38.5 45 L25.5 45 L26.5 37 L29 37 L30.5 22 Z" fill="${fg}"/>
-    <path d="M28 49.5h8" stroke="${fg}" stroke-width="2.6" stroke-linecap="round"/>
-  </svg>`;
+  // "L-frame": the L of Lahore holding a phone.
+  const bg = inverted ? '#ffffff' : '#0b1f44', fg = inverted ? '#0b1f44' : '#ffffff', ac = inverted ? '#2f6fe4' : '#8db4ff';
+  return `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="${bg}"/>
+    <path d="M17 11V44a8 8 0 0 0 8 8H47" fill="none" stroke="${fg}" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="28.5" y="11.5" width="18" height="31" rx="5" fill="none" stroke="${ac}" stroke-width="3.4"/>
+    <path d="M34.5 37.5h6" stroke="${ac}" stroke-width="2.6" stroke-linecap="round"/></svg>`;
 }
 
 /* ---------- Product illustration (used when no photo uploaded) ---------- */
