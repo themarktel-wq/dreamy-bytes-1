@@ -431,3 +431,9 @@ code{background:var(--lavender);padding:2px 7px;border-radius:6px;font-size:.92e
   .lib-search{min-width:0;width:100%}
   .admin .nav .muted{display:none}
 }
+@media (max-width:760px){
+  #lib-grid .card-media .cover{padding:9px}
+  #lib-grid .card-media .cover .cv-cat,#lib-grid .card-media .cover .cv-fmt,#lib-grid .card-media .cover .cv-bar{display:none}
+  #lib-grid .card-media .cover .cv-top{font-size:9px}
+  #lib-grid .card-media .cover .cv-title{font-size:12.5px}
+}

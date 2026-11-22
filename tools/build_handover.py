@@ -38,7 +38,14 @@ th{background:#111018;color:#fff;text-align:left;padding:6pt 7pt}
 td{border-bottom:1px solid #E4DED4;padding:6pt 7pt;vertical-align:top}
 tr:nth-child(even) td{background:#FBF9F5}
 code{background:#F4F0FF;padding:1px 4px;border-radius:4px;font-size:9pt}
-pre{background:#F4F0FF;padding:10pt;border-radius:8px;white-space:pre-wrap;font-size:8.5pt}
+pre{background:#111018;color:#F6F3EE;padding:10pt 12pt;border-radius:8px;white-space:pre-wrap;font-size:9.5pt;line-height:1.6}
+pre code{background:none;color:inherit;padding:0}
+figure{margin:10pt 0 14pt;page-break-inside:avoid;text-align:center}
+figure img,p>img{max-width:100%;max-height:118mm;border:1px solid #E4DED4;border-radius:8px}
+figcaption{font-size:8.5pt;color:#6B6878;margin-top:4pt}
+img[alt*="phone"]{max-height:150mm}
+hr{border:0;border-top:1px solid #E4DED4;margin:16pt 0}
+h2{page-break-after:avoid}
 ul{padding-left:18pt}
 .brandbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16pt;color:#6B6878;font-size:9pt}
 .brandbar b{font-family:'Bricolage Grotesque';font-size:15pt;color:#111018;letter-spacing:-.04em;display:flex;align-items:center;gap:6px}
@@ -53,6 +60,7 @@ def docs_to_pdf(dest):
     for md, name in DOC_NAMES.items():
         body = subprocess.run(["pandoc", os.path.join(ROOT, "docs", md), "-f", "gfm", "-t", "html"], capture_output=True, text=True, check=True).stdout
         body = body.replace("[ ] ", "☐ ").replace("[x] ", "☑ ")
+        body = body.replace('src="guide-img/', 'src="file://' + os.path.join(ROOT, "docs", "guide-img") + "/")
         html = (f'<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700..800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">'
                 f'<style>{CSS}</style></head><body><div class="brandbar"><b>{LOGO}skillstack</b><span>Client handover · skillstack.pk</span></div>{body}</body></html>')
         src = os.path.join(TMP, name + ".html")
@@ -110,10 +118,11 @@ def main():
     for f in glob.glob(os.path.join(ROOT, "preview", "*.mp4")):
         shutil.copy(f, d("07-Videos"))
     os.makedirs(d("08-Source-Files"))
-    for item in ("tools", "docs", "README.md"):
+    # A complete, rebuildable and deployable copy of the project.
+    for item in ("tools", "docs", "website", "netlify", "products", "brand", "README.md", "netlify.toml", "package.json", ".gitignore"):
         src = os.path.join(ROOT, item)
         if os.path.isdir(src):
-            copytree(item, d("08-Source-Files/" + item), ignore=shutil.ignore_patterns("__pycache__", "_src"))
+            copytree(item, d("08-Source-Files/" + item), ignore=shutil.ignore_patterns("__pycache__", "_src", "node_modules", ".local-store"))
         else:
             shutil.copy(src, d("08-Source-Files"))
     shutil.rmtree(TMP, ignore_errors=True)
