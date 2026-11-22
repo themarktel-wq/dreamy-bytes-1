@@ -18,6 +18,9 @@ os.makedirs(os.path.join(SITE, "product"), exist_ok=True)
 # The section stays hidden while this list is empty — never publish made-up reviews.
 TESTIMONIALS = []
 
+# Until real payment accounts are filled in catalog.py, never show placeholder numbers to customers.
+PAY_PLACEHOLDER = any("0000000" in p["number"] or "Here" in p["title"] for p in BRAND["payments"])
+
 
 
 S = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"'
@@ -422,7 +425,7 @@ def build_bundle():
 def build_cart():
     root = ""
     pays = "".join(f'''<label class="pay-opt"><input type="radio" name="payment" value="{escape(p["method"])}" {"checked" if i == 0 else ""} required>
-<span><b>{escape(p["method"])}</b><small>{escape(p["title"])} · {escape(p["number"])}</small></span></label>''' for i, p in enumerate(BRAND["payments"]))
+<span><b>{escape(p["method"])}</b><small>{(escape(p["title"]) + " · " + escape(p["number"])) if not PAY_PLACEHOLDER else "Account details sent on WhatsApp after you place the order"}</small></span></label>''' for i, p in enumerate(BRAND["payments"]))
     html = head("Cart & Checkout — Skillstack", "Complete your Skillstack order with JazzCash, Easypaisa or bank transfer.", root, "cart.html") + header(root) + f'''
 <main><div class="container">
 <div class="sec-head" style="margin:50px auto 10px"><h2>Your cart</h2></div>
@@ -443,7 +446,7 @@ def build_cart():
 <div class="field"><label for="city">City</label><input id="city" name="city" required></div>
 <h3>Payment method</h3>
 <div class="pay-opts">{pays}</div>
-<p class="notice">Send the total to the account above, then tap the button. WhatsApp opens with your order — send your payment screenshot there and we'll deliver your products.</p>
+<p class="notice">{"Send the total to the account above, then tap the button. WhatsApp opens with your order — send your payment screenshot there and we'll deliver your products." if not PAY_PLACEHOLDER else "Tap the button — WhatsApp opens with your order. We'll reply with the payment account details; send your payment screenshot there and we'll deliver your products."}</p>
 <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px">{WA_SVG} Place order on WhatsApp</button>
 </form>
 </div></div></main>''' + footer(root)

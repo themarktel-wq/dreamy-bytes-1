@@ -3,6 +3,7 @@
 > **Khulasa:** 90 din ko 3 phases mein divide kiya hai — **Test (Day 1–30)**, **Optimise (Day 31–60)**, **Scale (Day 61–90)**. Shuru mein Rs 1,500–2,000/day, winners milne par barhayein. 9 ad creatives `brand/ads/` mein ready hain aur un ki copy neeche di hai. Rule: 3 din ke data par faisla, ghante ghante ka nahi.
 
 **Budget summary (PKR, approximate):**
+
 | Phase | Days | Daily budget | Phase total |
 |---|---|---|---|
 | 1 — Test | 1–30 | Rs 1,500 → 2,500 | ~Rs 55,000 |
@@ -25,6 +26,7 @@ Scale only when cost per purchase is below break-even. Lower these numbers if th
 - [ ] Custom audiences created: website visitors 30d, Instagram engagers 60d, video viewers 50% 30d, WhatsApp contacts list (customer file)
 
 ### Break-even math (example)
+
 | | Single product (avg Rs 1,100) | All-Access (Rs 4,999) |
 |---|---|---|
 | Revenue per sale | 1,100 | 4,999 |
@@ -54,6 +56,7 @@ Because the bundle is the most profitable sale, **every campaign's goal is ultim
 - Destination: the matching product page.
 
 ### Weekly schedule
+
 | Week | Actions |
 |---|---|
 | 1 | Launch A + B with all 9 creatives. Don't touch for 72 hours. |
@@ -78,6 +81,7 @@ Because the bundle is the most profitable sale, **every campaign's goal is ultim
 6. **Seasonal hook:** plan 11.11 / 12.12 / Ramadan / Eid creatives 10 days before the date.
 
 **Kill / scale rules (apply every 3 days):**
+
 | Situation | Action |
 |---|---|
 | Spend 2× target CPA, 0 purchases/conversations | Turn off |
@@ -99,6 +103,7 @@ Because the bundle is the most profitable sale, **every campaign's goal is ultim
 6. Monthly **offer event** (e.g. "Payday Week: All-Access + free 1-on-1 Q&A call") — never a fake countdown.
 
 **Day-90 targets (realistic, adjust to budget):**
+
 | Metric | Target |
 |---|---|
 | Cost per WhatsApp conversation | Rs 40–120 |

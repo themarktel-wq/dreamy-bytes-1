@@ -30,6 +30,7 @@
 **Rules:** clear space = height of one bar on all sides · minimum width 24 px (mark) / 90 px (full logo) · on violet backgrounds use the butter/white version (`logo-on-violet.png`) · never rotate, outline, add shadows, or change bar order.
 
 ## 3. Colour
+
 | Name | Hex | Role |
 |---|---|---|
 | Ivory | `#F6F3EE` | Main background (60%) |
@@ -45,6 +46,7 @@
 **Why this palette:** Pakistani "online earning" feeds are full of black/neon-green, crypto-style creatives. A light ivory feed with violet and a yellow highlighter is instantly different in the scroll, reads as premium/editorial, and still feels energetic. Violet is rare among local competitors and owns the brand.
 
 **Product cover colours (one per category — a collectible "series" look):**
+
 | Category | Cover | Text | Accent |
 |---|---|---|---|
 | AI & ChatGPT | Violet | White | Butter |
