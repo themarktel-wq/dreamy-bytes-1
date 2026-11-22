@@ -1,0 +1,423 @@
+{
+  "name": "Skillstack 26 · AI WhatsApp Sales Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🤖 AI WhatsApp Sales Assistant\nReplies to every WhatsApp message in seconds using ONLY your product sheet (no invented prices), logs every chat, and emails you when a human is needed.\n\n**Needs:** WhatsApp Business Cloud API (Meta), OpenAI key, Google Sheets, Gmail.\n**Sheet tabs:** `Knowledge`, `Chats`.\n\n**Setup (once)**\n1. Import this file: n8n → *Workflows* → *⋯* → **Import from File**.\n2. Open **Settings** and fill in your details.\n3. Connect credentials on the nodes with a ⚠️ (OpenAI, Google Sheets, Gmail…).\n4. In every Google Sheets node pick your sheet + tab (template: *Skillstack-AI-Workflows-Sheets.xlsx*).\n5. **Test workflow**, then switch **Active** on.",
+        "height": 420,
+        "width": 560,
+        "color": 4
+      },
+      "id": "9404bbee-ad80-4253-b73a-d27f6e1d8fb0",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "0cff91c4-3905-47be-9ebd-1cd3bfd3f617",
+      "name": "WhatsApp message received",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "b4347550-6145-4409-b14f-7fe9257be3fb"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Keep only real text messages from customers (skip delivery/read receipts).\nconst out = [];\nfor (const item of $input.all()) {\n  const v = item.json;\n  const msg = (v.messages || [])[0];\n  if (!msg || msg.type !== 'text') continue;\n  const contact = (v.contacts || [])[0] || {};\n  out.push({ json: { from: msg.from, name: (contact.profile || {}).name || '', text: msg.text.body,\n                     phoneNumberId: (v.metadata || {}).phone_number_id, time: new Date().toISOString() } });\n}\nreturn out;"
+      },
+      "id": "6a4e229f-6bb6-4e07-9e7f-9b4ebacb12ba",
+      "name": "Get text message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ⚙️ SETTINGS — edit these values once.\nconst config = {\n  model: 'gpt-4.1-mini',            // any current OpenAI chat model\n  businessName: 'Your Business',\n  ownerEmail: 'you@example.com',     // where alerts / summaries are sent\n  // WhatsApp phone number ID is read from the incoming message automatically.\n};\nreturn $input.all().map(item => ({ json: { ...item.json, config }, pairedItem: item.pairedItem }));"
+      },
+      "id": "98244ef7-c909-41c4-8f4a-330fe8b74f5a",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Knowledge"
+        },
+        "options": {}
+      },
+      "id": "0562a8dc-cf68-4acb-8894-59d0309b5b65",
+      "name": "Load knowledge",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Chats"
+        },
+        "options": {}
+      },
+      "id": "73e2c28b-ed00-4c2b-8e2a-fe22d2827cb0",
+      "name": "Load chat history",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        960,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Builds the prompt from your Knowledge tab + this customer's last messages.\nconst cfg = $('Settings').first().json.config;\nconst knowledge = $('Load knowledge').all().map(i => i.json).filter(r => Object.keys(r).length)\n  .map(r => `- ${r.Type || ''}: ${r.Item || ''} | ${r.Details || ''} | ${r['Price (Rs)'] ? 'Rs ' + r['Price (Rs)'] : ''}`).join('\\n');\nconst history = $('Load chat history').all().map(i => i.json);\nreturn $('Settings').all().map((item, i) => {\n  const c = item.json;\n  const past = history.filter(h => String(h.Phone) === String(c.from)).slice(-8)\n    .flatMap(h => [{ role: 'user', content: String(h['Customer message'] || '') }, { role: 'assistant', content: String(h['AI reply'] || '') }]);\n  const system = `You are the WhatsApp sales assistant for ${cfg.businessName} in Pakistan.\nUse ONLY this knowledge (products, prices, policies, FAQs):\n${knowledge}\nRules: never invent prices, stock or delivery dates; if the answer is not in the knowledge, say a team member will confirm.\nReply in the customer's language (English, Roman Urdu or Urdu), under 60 words, friendly, max 1 emoji, end with one clear next step.\nTo take an order collect: name, full address with city, phone, item + variant + quantity, then show a summary with total and ask them to reply YES.\nIf the customer is angry, asks for a refund, reports a problem, or asks for a human, set needs_human true.\nReturn JSON: {\"reply\": string, \"needs_human\": boolean, \"order_confirmed\": boolean, \"order_summary\": string}`;\n  return { json: { ...c, body: { model: cfg.model, response_format: { type: 'json_object' }, temperature: 0.4,\n    messages: [{ role: 'system', content: system }, ...past, { role: 'user', content: c.text }] } }, pairedItem: { item: i } };\n});"
+      },
+      "id": "dbfaae70-c362-403d-b280-b32572950e2d",
+      "name": "Build AI request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "061ab72c-b297-482b-94f0-ea902cb068df",
+      "name": "AI writes reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine the AI answer with the customer details.\nreturn $input.all().map((item, i) => {\n  const c = $('Build AI request').all()[i].json;\n  let ai = {};\n  try { ai = JSON.parse(item.json.choices[0].message.content); } catch (e) { ai = { reply: 'Thank you! A team member will reply shortly.', needs_human: true }; }\n  return { json: { to: c.from, name: c.name, phoneNumberId: c.phoneNumberId, text: c.text, reply: ai.reply,\n                   needs_human: !!ai.needs_human, order_confirmed: !!ai.order_confirmed, order_summary: ai.order_summary || '' }, pairedItem: { item: i } };\n});"
+      },
+      "id": "ca421b8c-9b46-4ce8-a7b5-6254c0d20bde",
+      "name": "Read AI reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "={{ $json.phoneNumberId }}",
+        "recipientPhoneNumber": "={{ $json.to }}",
+        "textBody": "={{ $json.reply }}",
+        "additionalFields": {}
+      },
+      "id": "9ab6281e-c3ec-41af-bc10-c49869b9ac9b",
+      "name": "Send WhatsApp reply",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('Read AI reply').all().map((item, i) => ({ json: {\n  Time: new Date().toLocaleString('en-PK', { timeZone: 'Asia/Karachi' }), Phone: item.json.to, Name: item.json.name,\n  'Customer message': item.json.text, 'AI reply': item.json.reply, 'Needs human': item.json.needs_human ? 'YES' : '',\n  'Order confirmed': item.json.order_confirmed ? 'YES' : '', 'Order summary': item.json.order_summary }, pairedItem: { item: i } }));"
+      },
+      "id": "c802a36a-a4b6-4c22-bed7-f24ab96b380f",
+      "name": "Prepare chat log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Chats"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "348e850f-1d3c-4a83-a822-f9d24b5de155",
+      "name": "Log chat",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7f6c6ed8-20ea-40f7-b9b3-893c3fa78d0d",
+              "leftValue": "={{ $json.needs_human }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a4e53534-70f7-4831-9075-9be248078a86",
+      "name": "Needs a human?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Settings').first().json.config.ownerEmail }}",
+        "subject": "=⚠️ WhatsApp chat needs you: {{ $json.name || $json.to }}",
+        "message": "=Customer: {{ $json.name }} ({{ $json.to }})\nMessage: {{ $json.text }}\nAI replied: {{ $json.reply }}\n\nOpen WhatsApp Business to take over.",
+        "options": {
+          "appendAttribution": false
+        },
+        "emailType": "text"
+      },
+      "id": "56072f80-a875-4056-8c70-7583bb71d61e",
+      "name": "Alert owner",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2160,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "content": "**Tip:** run in *shadow mode* first: disable **Send WhatsApp reply** (right-click → Deactivate) for a few days and read the `Chats` tab. Switch it on when replies are consistently right.",
+        "height": 200,
+        "width": 380,
+        "color": 6
+      },
+      "id": "dc5b49bd-7185-40c6-b2b7-3d14e84412e9",
+      "name": "Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "WhatsApp message received": {
+      "main": [
+        [
+          {
+            "node": "Get text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get text message": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Load knowledge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load knowledge": {
+      "main": [
+        [
+          {
+            "node": "Load chat history",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load chat history": {
+      "main": [
+        [
+          {
+            "node": "Build AI request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI request": {
+      "main": [
+        [
+          {
+            "node": "AI writes reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes reply": {
+      "main": [
+        [
+          {
+            "node": "Read AI reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read AI reply": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp reply",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare chat log",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Needs a human?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare chat log": {
+      "main": [
+        [
+          {
+            "node": "Log chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs a human?": {
+      "main": [
+        [
+          {
+            "node": "Alert owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

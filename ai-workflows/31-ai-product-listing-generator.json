@@ -1,0 +1,244 @@
+{
+  "name": "Skillstack 31 · AI Product Listing Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🛍️ AI Product Listing Generator (Daraz / Shopify)\nAdd products to the `Products` tab (SKU, facts, public **Photo URL**, Status **To-do**) → AI looks at the photo and writes an SEO title, 5 highlights, description, specs and keywords → row updated to **Review**.\n\n**Needs:** OpenAI (vision model), Google Sheets.\n\n**Setup (once)**\n1. Import this file: n8n → *Workflows* → *⋯* → **Import from File**.\n2. Open **Settings** and fill in your details.\n3. Connect credentials on the nodes with a ⚠️ (OpenAI, Google Sheets, Gmail…).\n4. In every Google Sheets node pick your sheet + tab (template: *Skillstack-AI-Workflows-Sheets.xlsx*).\n5. **Test workflow**, then switch **Active** on.",
+        "height": 420,
+        "width": 600,
+        "color": 4
+      },
+      "id": "bb9b5c7e-9ad5-4d8f-9194-d4eb293fdbce",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -460
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "35bf5e3e-e6b0-448d-bfc9-2e80e2233984",
+      "name": "Run manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ⚙️ SETTINGS — edit these values once.\nconst config = {\n  model: 'gpt-4.1-mini',            // any current OpenAI chat model\n  businessName: 'Your Business',\n  ownerEmail: 'you@example.com',     // where alerts / summaries are sent\n  platform: 'Daraz',  // or 'Shopify'\n  titleMaxChars: 120,\n  maxPerRun: 20,\n};\nreturn $input.all().map(item => ({ json: { ...item.json, config }, pairedItem: item.pairedItem }));"
+      },
+      "id": "eec73274-56cb-4b2c-8e18-681ff9c233cd",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Products"
+        },
+        "options": {}
+      },
+      "id": "9d090cce-5ac1-4c14-a925-c0128b0a113d",
+      "name": "Read Products tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Settings').first().json.config;\nreturn $input.all().filter(i => String(i.json.Status || '').trim().toLowerCase() === 'to-do' && i.json.SKU).slice(0, cfg.maxPerRun).map(i => {\n  const p = i.json; const content = [{ type: 'text', text: `Facts: ${JSON.stringify(p)}.\nWrite a ${cfg.platform} listing for Pakistani buyers. Title max ${cfg.titleMaxChars} characters (brand + product type + key feature + size/variant + use case).\nDo NOT invent materials, sizes or claims not in the facts or clearly visible in the photo; write [CHECK] where unsure.\nReturn JSON {\"title\":\"\",\"highlights\":[\"5 bullets\"],\"description\":\"120-180 words\",\"specs\":\"key: value; key: value\",\"keywords\":\"10 comma-separated\"}` }];\n  if (p['Photo URL']) content.push({ type: 'image_url', image_url: { url: p['Photo URL'] } });\n  return { json: { SKU: p.SKU, body: { model: cfg.model, response_format: { type: 'json_object' }, temperature: 0.4,\n    messages: [{ role: 'system', content: 'You are an e-commerce copywriter for Pakistani marketplaces.' }, { role: 'user', content }] } } };\n});"
+      },
+      "id": "4dda2340-073d-4b06-9691-169042a93e45",
+      "name": "Pick To-do products",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "05437e6b-9549-4bfa-ad68-da24e0fd7b96",
+      "name": "AI writes listing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item, i) => {\n  const sku = $('Pick To-do products').all()[i].json.SKU; let ai = {};\n  try { ai = JSON.parse(item.json.choices[0].message.content); } catch (e) {}\n  return { json: { SKU: sku, Title: ai.title, Highlights: (ai.highlights || []).map(h => '• ' + h).join('\\n'), Description: ai.description,\n    Specs: ai.specs, Keywords: ai.keywords, Status: 'Review' }, pairedItem: { item: i } };\n});"
+      },
+      "id": "6ffed665-4879-4d5a-8e92-6ba024958ded",
+      "name": "Row update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Products"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "SKU"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "0686637f-4f72-48a0-a3f3-3729182bb913",
+      "name": "Update Products tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "**Bulk upload:** copy the reviewed columns into the Daraz Bulk Manager template or Shopify product CSV. Always check specs against the real product.",
+        "height": 150,
+        "width": 400,
+        "color": 6
+      },
+      "id": "527770cc-8e2c-46e1-99cb-95f30eaa61ff",
+      "name": "Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Run manually": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Read Products tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Products tab": {
+      "main": [
+        [
+          {
+            "node": "Pick To-do products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick To-do products": {
+      "main": [
+        [
+          {
+            "node": "AI writes listing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes listing": {
+      "main": [
+        [
+          {
+            "node": "Row update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row update": {
+      "main": [
+        [
+          {
+            "node": "Update Products tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

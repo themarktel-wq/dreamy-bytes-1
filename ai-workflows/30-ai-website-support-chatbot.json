@@ -1,0 +1,332 @@
+{
+  "name": "Skillstack 30 · AI Website Support Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 💬 AI Website Support Chatbot\nA chat API for your website: answers from your `FAQ` tab only, captures leads (name + WhatsApp/email) into `Chatbot Leads`, and offers WhatsApp handoff.\n\nPaste **chat-widget.html** (in this folder) into your website and put this workflow's **Production URL** in it.\n\n**Needs:** OpenAI, Google Sheets.\n\n**Setup (once)**\n1. Import this file: n8n → *Workflows* → *⋯* → **Import from File**.\n2. Open **Settings** and fill in your details.\n3. Connect credentials on the nodes with a ⚠️ (OpenAI, Google Sheets, Gmail…).\n4. In every Google Sheets node pick your sheet + tab (template: *Skillstack-AI-Workflows-Sheets.xlsx*).\n5. **Test workflow**, then switch **Active** on.",
+        "height": 440,
+        "width": 600,
+        "color": 4
+      },
+      "id": "18b43794-d877-468c-8f07-3bef3202f043",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "skillstack-chat",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "abf9ffd8-36da-42f7-8aa6-7b94bc79a61f",
+      "name": "Chat message (webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "d2c8198e-d493-443e-bf90-672993262757"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ⚙️ SETTINGS — edit these values once.\nconst config = {\n  model: 'gpt-4.1-mini',            // any current OpenAI chat model\n  businessName: 'Your Business',\n  ownerEmail: 'you@example.com',     // where alerts / summaries are sent\n  whatsappNumber: '923000000000',  // for the 'talk to a human' link\n};\nreturn $input.all().map(item => ({ json: { ...item.json, config }, pairedItem: item.pairedItem }));"
+      },
+      "id": "eefa427c-44da-4abc-958b-9cb2c83587cf",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "FAQ"
+        },
+        "options": {}
+      },
+      "id": "433663ad-74fe-4e0b-aecb-6f6d1b70e9a1",
+      "name": "Load FAQ",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('Settings').first().json; const cfg = s.config; const body = s.body || {};\nconst faq = $('Load FAQ').all().map(i => i.json).filter(r => r.Question).map(r => `Q: ${r.Question}\\nA: ${r.Answer}`).join('\\n');\nconst history = Array.isArray(body.history) ? body.history.slice(-8) : [];\nreturn [{ json: { sessionId: body.sessionId || '', message: String(body.message || '').slice(0, 1000), body: { model: cfg.model, response_format: { type: 'json_object' }, temperature: 0.3,\n  messages: [{ role: 'system', content: `You are the website assistant for ${cfg.businessName}. Answer ONLY from this FAQ:\\n${faq}\\n\nIf unsure, say you'll connect them with the team on WhatsApp. Max 3 short sentences. Reply in the user's language.\nIf the user shares a name and phone/email or asks for a quote/callback, fill \"lead\". Return JSON {\"reply\":\"\", \"show_whatsapp\": boolean, \"lead\": {\"name\":\"\",\"phone\":\"\",\"email\":\"\"} or null}` },\n    ...history, { role: 'user', content: String(body.message || '') }] } } }];"
+      },
+      "id": "181c7539-5496-4c56-ad85-4f49f19a9a75",
+      "name": "Build AI request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "1c668648-2917-4c9a-9f4c-25271ce67ae5",
+      "name": "AI answers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Settings').first().json.config; const src = $('Build AI request').first().json; let ai = {};\ntry { ai = JSON.parse($input.first().json.choices[0].message.content); } catch (e) { ai = { reply: 'Sorry, something went wrong. Please message us on WhatsApp.', show_whatsapp: true }; }\nconst lead = ai.lead && (ai.lead.phone || ai.lead.email) ? ai.lead : null;\nreturn [{ json: { reply: ai.reply, whatsapp: ai.show_whatsapp ? `https://wa.me/${cfg.whatsappNumber}` : null, hasLead: !!lead,\n  lead: lead ? { Time: new Date().toLocaleString('en-PK', { timeZone: 'Asia/Karachi' }), Name: lead.name || '', Phone: lead.phone || '', Email: lead.email || '', 'Last message': src.message } : null } }];"
+      },
+      "id": "ee1573c4-c117-456f-a5b1-3c9f16fa91be",
+      "name": "Read answer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ reply: $json.reply, whatsapp: $json.whatsapp }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "bef733b1-e367-4198-b708-dbb21f030668",
+      "name": "Reply to website",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4b27863b-bbcb-4313-9f5f-a6864bd3c9eb",
+              "leftValue": "={{ $json.hasLead }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "76db23da-5753-4dba-8833-c18d4aec93ef",
+      "name": "Lead shared?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json.lead }];"
+      },
+      "id": "1769abff-fa1d-4046-8ca8-6301ff5da88f",
+      "name": "Lead row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Chatbot Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "83cdd3e5-7496-4ac2-9b09-d57764033ca9",
+      "name": "Save lead",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1920,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "Chat message (webhook)": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Load FAQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load FAQ": {
+      "main": [
+        [
+          {
+            "node": "Build AI request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI request": {
+      "main": [
+        [
+          {
+            "node": "AI answers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI answers": {
+      "main": [
+        [
+          {
+            "node": "Read answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read answer": {
+      "main": [
+        [
+          {
+            "node": "Reply to website",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lead shared?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead shared?": {
+      "main": [
+        [
+          {
+            "node": "Lead row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead row": {
+      "main": [
+        [
+          {
+            "node": "Save lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

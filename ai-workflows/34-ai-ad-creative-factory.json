@@ -1,0 +1,276 @@
+{
+  "name": "Skillstack 34 · AI Ad Creative Factory",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 📣 AI Ad Creative Factory\nForm with your product + real customer words → AI creates **6 ad angles**, each with 3 hooks, an on-image headline, primary text and an image prompt → saved to `Ad Ideas`.\n\nOptional: enable the two grey nodes to also generate draft images to Google Drive.\n\n**Needs:** OpenAI, Google Sheets (+ Google Drive for images).\n\n**Setup (once)**\n1. Import this file: n8n → *Workflows* → *⋯* → **Import from File**.\n2. Open **Settings** and fill in your details.\n3. Connect credentials on the nodes with a ⚠️ (OpenAI, Google Sheets, Gmail…).\n4. In every Google Sheets node pick your sheet + tab (template: *Skillstack-AI-Workflows-Sheets.xlsx*).\n5. **Test workflow**, then switch **Active** on.",
+        "height": 440,
+        "width": 600,
+        "color": 4
+      },
+      "id": "b59d8cbd-3207-4c1e-ba75-345058535bd5",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Generate ad angles",
+        "formDescription": "The more real customer words you paste, the better the ads.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Product",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Price (Rs)"
+            },
+            {
+              "fieldLabel": "Target customer",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Current offer"
+            },
+            {
+              "fieldLabel": "Customer reviews / DMs / comments",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "Competitor ads notes",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {
+          "path": "ad-ideas"
+        }
+      },
+      "id": "2ca9f035-8004-4ba9-8c5d-e960c031c64f",
+      "name": "Ad brief form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "42cbe11e-1e94-47ed-9251-3d8ce182c5cb"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ⚙️ SETTINGS — edit these values once.\nconst config = {\n  model: 'gpt-4.1-mini',            // any current OpenAI chat model\n  businessName: 'Your Business',\n  ownerEmail: 'you@example.com',     // where alerts / summaries are sent\n};\nreturn $input.all().map(item => ({ json: { ...item.json, config }, pairedItem: item.pairedItem }));"
+      },
+      "id": "68bc7016-783b-44a5-b7ab-cacf334a4447",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const f = $json; const cfg = f.config;\nreturn { json: { product: f.Product, body: { model: cfg.model, response_format: { type: 'json_object' }, temperature: 0.9, messages: [\n  { role: 'system', content: 'You are a direct-response Meta ads strategist for Pakistan. Follow Meta ad policies: no income or health guarantees, no before/after promises, no personal-attribute callouts.' },\n  { role: 'user', content: `Product: ${f.Product} (Rs ${f['Price (Rs)'] || '?'}). Customer: ${f['Target customer']}. Offer: ${f['Current offer'] || 'none'}.\nCustomer words: ${f['Customer reviews / DMs / comments'] || 'n/a'}. Competitors: ${f['Competitor ads notes'] || 'n/a'}.\nReturn JSON {\"angles\":[{\"angle\":\"\",\"core_message\":\"\",\"format\":\"static|carousel|video\",\"hook_1\":\"\",\"hook_2\":\"\",\"hook_3\":\"\",\"image_headline\":\"max 6 words\",\"primary_text\":\"50-90 words, English + light Roman Urdu, CTA\",\"image_prompt\":\"for an AI image tool, 4:5, real-looking, product on clean background\"}]} with 6 truly different angles.` }] } } };"
+      },
+      "id": "eb89bd46-0d68-452e-8b7c-e70889c24002",
+      "name": "Build AI request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "8b3cac1d-0cdb-49e6-b1af-3406ad154975",
+      "name": "AI creates angles",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let a = []; try { a = JSON.parse($json.choices[0].message.content).angles || []; } catch (e) {}\nconst product = $('Build AI request').first().json.product; const date = new Date().toISOString().slice(0, 10);\nreturn a.map((x, i) => ({ json: { Date: date, Product: product, 'Ad name': `${product}_${(x.angle || 'angle').replace(/\\s+/g, '-')}_${i + 1}`, Angle: x.angle,\n  'Core message': x.core_message, Format: x.format, 'Hook 1': x.hook_1, 'Hook 2': x.hook_2, 'Hook 3': x.hook_3, 'Image headline': x.image_headline,\n  'Primary text': x.primary_text, 'Image prompt': x.image_prompt, Status: 'Idea' } }));"
+      },
+      "id": "7a3676c2-6083-452d-981f-1bd49746b9c4",
+      "name": "One row per angle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Ad Ideas"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "b9f36310-f3e6-4c51-9994-0136af302b19",
+      "name": "Save to Ad Ideas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-image-1', prompt: $json['Image prompt'], size: '1024x1536' }) }}",
+        "options": {}
+      },
+      "id": "fe5c2e46-9d78-4b3e-8f14-59d33a129f1c",
+      "name": "Generate draft image (optional)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        140
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Converts the generated image (base64) into a file for Google Drive.\nreturn $input.all().map((item, i) => {\n  const b64 = (item.json.data || [])[0]?.b64_json || '';\n  const name = $('One row per angle').all()[i].json['Ad name'];\n  return { json: { name }, binary: { data: { data: b64, mimeType: 'image/png', fileName: name + '.png' } }, pairedItem: { item: i } };\n});"
+      },
+      "id": "451b95f6-95a5-4112-ba15-68cb3fa49dac",
+      "name": "Image to file",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        140
+      ],
+      "disabled": true
+    }
+  ],
+  "connections": {
+    "Ad brief form": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Build AI request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI request": {
+      "main": [
+        [
+          {
+            "node": "AI creates angles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI creates angles": {
+      "main": [
+        [
+          {
+            "node": "One row per angle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One row per angle": {
+      "main": [
+        [
+          {
+            "node": "Save to Ad Ideas",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate draft image (optional)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate draft image (optional)": {
+      "main": [
+        [
+          {
+            "node": "Image to file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

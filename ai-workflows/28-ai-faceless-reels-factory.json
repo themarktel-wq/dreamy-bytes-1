@@ -1,0 +1,355 @@
+{
+  "name": "Skillstack 28 · AI Faceless Reels Factory",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🎬 AI Faceless Reels Factory\nAdd topics to the `Reels` tab with Status **Ready** → every hour the AI writes a 30-second script, hook & caption, ElevenLabs creates the voiceover, the MP3 is saved to Google Drive and the row is updated. You just edit in CapCut.\n\n**Needs:** OpenAI, ElevenLabs (Header Auth credential: name `xi-api-key`, value = your key), Google Drive, Google Sheets.\n\n**Setup (once)**\n1. Import this file: n8n → *Workflows* → *⋯* → **Import from File**.\n2. Open **Settings** and fill in your details.\n3. Connect credentials on the nodes with a ⚠️ (OpenAI, Google Sheets, Gmail…).\n4. In every Google Sheets node pick your sheet + tab (template: *Skillstack-AI-Workflows-Sheets.xlsx*).\n5. **Test workflow**, then switch **Active** on.",
+        "height": 440,
+        "width": 600,
+        "color": 4
+      },
+      "id": "c938cfc5-e114-4ed8-b6bc-b352eb55fb52",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "4e9e6771-0dad-4a7c-a87b-40a9052c13a8",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "06f7f7aa-9cce-4ac6-b672-dd8c7381d66b",
+      "name": "Run manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ⚙️ SETTINGS — edit these values once.\nconst config = {\n  model: 'gpt-4.1-mini',            // any current OpenAI chat model\n  businessName: 'Your Business',\n  ownerEmail: 'you@example.com',     // where alerts / summaries are sent\n  niche: 'AI tools for students in Pakistan',\n  elevenLabsVoiceId: 'PASTE_VOICE_ID',  // ElevenLabs → Voices → copy ID\n  maxPerRun: 5,\n};\nreturn $input.all().map(item => ({ json: { ...item.json, config }, pairedItem: item.pairedItem }));"
+      },
+      "id": "3f64c9df-a110-4e89-ac61-f198b05f88cf",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Reels"
+        },
+        "options": {}
+      },
+      "id": "c38fcba9-a1c8-48cd-82df-4e5e39a27226",
+      "name": "Read Reels tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Settings').first().json.config;\nreturn $input.all().filter(i => String(i.json.Status || '').trim().toLowerCase() === 'ready' && i.json.Topic).slice(0, cfg.maxPerRun)\n  .map(i => ({ json: { ID: i.json.ID, Topic: i.json.Topic, body: { model: cfg.model, response_format: { type: 'json_object' }, temperature: 0.8,\n    messages: [{ role: 'system', content: `You write faceless short-video scripts for a ${cfg.niche} page. Simple English with light Roman Urdu. No made-up statistics; mark facts to check with [VERIFY].` },\n      { role: 'user', content: `Topic: ${i.json.Topic}. Return JSON {\"hook\":\"under 8 words\",\"script\":\"25-35 seconds spoken, short lines\",\"on_screen_text\":\"one line per script line, separated by |\",\"caption\":\"max 40 words with CTA\",\"hashtags\":\"4 hashtags\"}` }] } } }));"
+      },
+      "id": "4f1e17e0-1eeb-4454-811f-e7e957557381",
+      "name": "Pick Ready topics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "9bbbcefe-1fee-4fa3-9148-1247808eb954",
+      "name": "AI writes script",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item, i) => {\n  const src = $('Pick Ready topics').all()[i].json; let ai = {};\n  try { ai = JSON.parse(item.json.choices[0].message.content); } catch (e) {}\n  return { json: { ID: src.ID, Topic: src.Topic, ...ai, voiceText: `${ai.hook || ''}. ${ai.script || ''}` }, pairedItem: { item: i } };\n});"
+      },
+      "id": "b6d1c272-6db3-4ee6-9701-c27550db731e",
+      "name": "Read script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.elevenlabs.io/v1/text-to-speech/{{ $('Settings').first().json.config.elevenLabsVoiceId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.voiceText, model_id: 'eleven_multilingual_v2' }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "0e11497e-3565-4268-87d9-0578959d050b",
+      "name": "ElevenLabs voiceover",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Read script').item.json.ID }} - {{ $('Read script').item.json.Topic }}.mp3",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {}
+      },
+      "id": "5afdbaa1-229f-40fa-9389-eef7dfd8a3bd",
+      "name": "Save MP3 to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item, i) => {\n  const s = $('Read script').all()[i].json;\n  return { json: { ID: s.ID, Hook: s.hook, Script: s.script, 'On-screen text': s.on_screen_text, Caption: s.caption, Hashtags: s.hashtags,\n    'Voice file': item.json.webViewLink || item.json.id, Status: 'Voice ready' }, pairedItem: { item: i } };\n});"
+      },
+      "id": "f349bc76-aa9e-4b0b-aca5-128af3e03573",
+      "name": "Row update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Reels"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "9800890b-ee50-4a28-b007-b0cfb4853f92",
+      "name": "Update Reels tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run manually": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Read Reels tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Reels tab": {
+      "main": [
+        [
+          {
+            "node": "Pick Ready topics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Ready topics": {
+      "main": [
+        [
+          {
+            "node": "AI writes script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes script": {
+      "main": [
+        [
+          {
+            "node": "Read script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read script": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs voiceover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs voiceover": {
+      "main": [
+        [
+          {
+            "node": "Save MP3 to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save MP3 to Drive": {
+      "main": [
+        [
+          {
+            "node": "Row update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row update": {
+      "main": [
+        [
+          {
+            "node": "Update Reels tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

@@ -1,0 +1,36 @@
+<!-- Skillstack AI chat widget — paste before </body> on your website.
+     1) In n8n open workflow 30, click the "Chat message (webhook)" node, copy the PRODUCTION URL and paste it below.
+     2) Activate the workflow. -->
+<script>
+(function () {
+  var WEBHOOK_URL = "PASTE_N8N_PRODUCTION_WEBHOOK_URL_HERE";
+  var COLOR = "#5B2EFF", TITLE = "Ask us anything", HELLO = "Assalam o Alaikum! 👋 How can we help you today?";
+  var css = "#skc-btn{position:fixed;right:20px;bottom:20px;width:58px;height:58px;border-radius:50%;background:" + COLOR + ";color:#fff;border:0;font-size:26px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:99998}" +
+    "#skc-box{position:fixed;right:20px;bottom:90px;width:340px;max-width:calc(100vw - 40px);height:460px;max-height:70vh;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden;z-index:99999;font-family:system-ui,sans-serif}" +
+    "#skc-box.open{display:flex}#skc-head{background:" + COLOR + ";color:#fff;padding:14px 16px;font-weight:700}#skc-log{flex:1;overflow:auto;padding:12px;background:#f7f7f9}" +
+    ".skc-m{max-width:82%;padding:9px 12px;border-radius:14px;margin:6px 0;font-size:14px;line-height:1.4;white-space:pre-wrap}.skc-u{background:" + COLOR + ";color:#fff;margin-left:auto}.skc-a{background:#fff;border:1px solid #eee}" +
+    ".skc-wa{display:inline-block;margin-top:6px;background:#25D366;color:#06210F;padding:6px 10px;border-radius:99px;text-decoration:none;font-weight:700;font-size:13px}" +
+    "#skc-form{display:flex;border-top:1px solid #eee}#skc-in{flex:1;border:0;padding:12px;font-size:14px;outline:none}#skc-send{border:0;background:#fff;color:" + COLOR + ";font-weight:700;padding:0 14px;cursor:pointer}";
+  var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
+  var btn = document.createElement("button"); btn.id = "skc-btn"; btn.setAttribute("aria-label", "Chat"); btn.textContent = "💬";
+  var box = document.createElement("div"); box.id = "skc-box";
+  box.innerHTML = '<div id="skc-head">' + TITLE + '</div><div id="skc-log"></div><form id="skc-form"><input id="skc-in" placeholder="Type your question…" autocomplete="off"><button id="skc-send">Send</button></form>';
+  document.body.appendChild(btn); document.body.appendChild(box);
+  var log = box.querySelector("#skc-log"), input = box.querySelector("#skc-in"), history = [];
+  var sid = "s" + Math.random().toString(36).slice(2);
+  function add(text, who, wa) {
+    var d = document.createElement("div"); d.className = "skc-m " + (who === "u" ? "skc-u" : "skc-a"); d.textContent = text;
+    if (wa) { var a = document.createElement("a"); a.href = wa; a.target = "_blank"; a.className = "skc-wa"; a.textContent = "Chat on WhatsApp"; d.appendChild(document.createElement("br")); d.appendChild(a); }
+    log.appendChild(d); log.scrollTop = log.scrollHeight;
+  }
+  btn.onclick = function () { box.classList.toggle("open"); if (!log.children.length) add(HELLO, "a"); input.focus(); };
+  box.querySelector("#skc-form").onsubmit = function (e) {
+    e.preventDefault(); var msg = input.value.trim(); if (!msg) return; input.value = ""; add(msg, "u");
+    var typing = document.createElement("div"); typing.className = "skc-m skc-a"; typing.textContent = "…"; log.appendChild(typing);
+    fetch(WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: msg, history: history, sessionId: sid }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { typing.remove(); add(d.reply || "Sorry, please try again.", "a", d.whatsapp); history.push({ role: "user", content: msg }, { role: "assistant", content: d.reply || "" }); history = history.slice(-8); })
+      .catch(function () { typing.remove(); add("Sorry, something went wrong. Please try again.", "a"); });
+  };
+})();
+</script>

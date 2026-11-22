@@ -1,0 +1,290 @@
+{
+  "name": "Skillstack 32 · AI Proposal Writer System",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ✍️ AI Proposal Writer (Upwork / Fiverr)\nPaste a job post into the form → AI scores the job, flags red flags and writes a proposal using ONLY your `About Me` tab (skills, case studies, rates) → emailed to you + logged in `Proposal Tracker`. You send it yourself (platform-safe).\n\n**Needs:** OpenAI, Google Sheets, Gmail.\n\n**Setup (once)**\n1. Import this file: n8n → *Workflows* → *⋯* → **Import from File**.\n2. Open **Settings** and fill in your details.\n3. Connect credentials on the nodes with a ⚠️ (OpenAI, Google Sheets, Gmail…).\n4. In every Google Sheets node pick your sheet + tab (template: *Skillstack-AI-Workflows-Sheets.xlsx*).\n5. **Test workflow**, then switch **Active** on.",
+        "height": 420,
+        "width": 600,
+        "color": 4
+      },
+      "id": "862e6efc-323d-4adf-a832-d3a73fa2b8c8",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Write my proposal",
+        "formDescription": "Paste the job post. Your proposal arrives by email in under a minute.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Platform",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Upwork"
+                  },
+                  {
+                    "option": "Fiverr"
+                  },
+                  {
+                    "option": "LinkedIn / direct"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Job post",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Client budget"
+            },
+            {
+              "fieldLabel": "My extra notes",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {
+          "path": "proposal"
+        }
+      },
+      "id": "215f38bc-c9f6-4d8a-8d91-92a46b16750c",
+      "name": "Job post form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "50c508d6-6f67-4351-b647-0bbed83edeac"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ⚙️ SETTINGS — edit these values once.\nconst config = {\n  model: 'gpt-4.1-mini',            // any current OpenAI chat model\n  businessName: 'Your Business',\n  ownerEmail: 'you@example.com',     // where alerts / summaries are sent\n  maxWords: 150,\n};\nreturn $input.all().map(item => ({ json: { ...item.json, config }, pairedItem: item.pairedItem }));"
+      },
+      "id": "98e05ae7-cf64-4196-9c91-d331572ab4a4",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "About Me"
+        },
+        "options": {}
+      },
+      "id": "280cf169-8b92-4dd6-8589-53a5955fba1a",
+      "name": "Load About Me",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('Settings').first().json; const cfg = s.config;\nconst me = $('Load About Me').all().map(i => i.json).filter(r => r.Item).map(r => `- ${r.Section}: ${r.Item} — ${r.Details || ''}`).join('\\n');\nreturn [{ json: { job: s['Job post'], platform: s.Platform, body: { model: cfg.model, response_format: { type: 'json_object' }, temperature: 0.6, messages: [\n  { role: 'system', content: `You write freelance proposals. Use ONLY these facts about me, never invent clients, numbers or skills:\\n${me}` },\n  { role: 'user', content: `Platform: ${s.Platform}. Budget: ${s['Client budget'] || 'n/a'}. Notes: ${s['My extra notes'] || ''}.\\nJob post:\\n${s['Job post']}\nReturn JSON {\"score\":1-10,\"client_goal\":\"\",\"red_flags\":\"\",\"proposal\":\"max ${cfg.maxWords} words: hook about THEIR problem quoting a detail, one relevant proof, 3-step plan, question CTA\",\"portfolio_to_attach\":\"\",\"screening_answers\":\"\"}` }] } } }];"
+      },
+      "id": "c56c5748-3e02-4db1-8f55-aa3373de7e27",
+      "name": "Build AI request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "cf982698-2abd-4520-b5ef-a0912281493a",
+      "name": "AI writes proposal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let ai = {}; try { ai = JSON.parse($json.choices[0].message.content); } catch (e) {}\nconst src = $('Build AI request').first().json;\nreturn [{ json: { Date: new Date().toISOString().slice(0, 10), Platform: src.platform, Score: ai.score, 'Client goal': ai.client_goal, 'Red flags': ai.red_flags,\n  Proposal: ai.proposal, 'Portfolio to attach': ai.portfolio_to_attach, 'Screening answers': ai.screening_answers, 'Job post': String(src.job).slice(0, 1500),\n  Reply: '', Hired: '' } }];"
+      },
+      "id": "e63374c5-4df0-4178-9eb1-35fa98c2a4b5",
+      "name": "Read proposal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Proposal Tracker"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "cc7b57d9-6004-4c14-98bd-7b1ecbe8d942",
+      "name": "Log in tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Settings').first().json.config.ownerEmail }}",
+        "subject": "=Proposal ready ({{ $json.Platform }}) · fit {{ $json.Score }}/10",
+        "message": "=FIT SCORE: {{ $json.Score }}/10\nRED FLAGS: {{ $json['Red flags'] }}\nATTACH: {{ $json['Portfolio to attach'] }}\n\n--- PROPOSAL ---\n{{ $json.Proposal }}\n\n--- SCREENING ---\n{{ $json['Screening answers'] }}",
+        "options": {
+          "appendAttribution": false
+        },
+        "emailType": "text"
+      },
+      "id": "d35be5d9-2813-4c6d-9b3d-e9d64e8174af",
+      "name": "Email me the proposal",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1440,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Job post form": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Load About Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load About Me": {
+      "main": [
+        [
+          {
+            "node": "Build AI request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI request": {
+      "main": [
+        [
+          {
+            "node": "AI writes proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes proposal": {
+      "main": [
+        [
+          {
+            "node": "Read proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read proposal": {
+      "main": [
+        [
+          {
+            "node": "Log in tracker",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email me the proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

@@ -1,0 +1,276 @@
+{
+  "name": "Skillstack 27 · AI Content Calendar Machine",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🗓️ AI Content Calendar Machine\nFill a short form → AI plans **30 days of posts** (pillars, hooks, captions, hashtags, Reel ideas) → rows land in your `Content Calendar` tab, ready for Canva **Bulk Create** (Headline / Subtext / CTA columns).\n\n**Needs:** OpenAI, Google Sheets.\n\n**Setup (once)**\n1. Import this file: n8n → *Workflows* → *⋯* → **Import from File**.\n2. Open **Settings** and fill in your details.\n3. Connect credentials on the nodes with a ⚠️ (OpenAI, Google Sheets, Gmail…).\n4. In every Google Sheets node pick your sheet + tab (template: *Skillstack-AI-Workflows-Sheets.xlsx*).\n5. **Test workflow**, then switch **Active** on.",
+        "height": 400,
+        "width": 560,
+        "color": 4
+      },
+      "id": "bb323491-616c-4bd4-a71c-ab1a7f9f4400",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -460
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "30-day content plan",
+        "formDescription": "Tell the AI about your brand. The plan appears in your Google Sheet in about a minute.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Brand name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "What you sell",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "City / country",
+              "placeholder": "Lahore, Pakistan"
+            },
+            {
+              "fieldLabel": "Target audience",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Occasions this month",
+              "placeholder": "e.g. 11.11 sale, winter launch"
+            },
+            {
+              "fieldLabel": "Tone",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Friendly & fun"
+                  },
+                  {
+                    "option": "Premium & elegant"
+                  },
+                  {
+                    "option": "Bold & energetic"
+                  },
+                  {
+                    "option": "Professional"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Language mix",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "English + Roman Urdu"
+                  },
+                  {
+                    "option": "English only"
+                  },
+                  {
+                    "option": "Roman Urdu"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {
+          "path": "content-plan"
+        }
+      },
+      "id": "37877e00-fb0d-444d-bfa1-0387ab172d4e",
+      "name": "Content brief form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "aa4891a9-b5fa-46a5-babb-a325f5d00935"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ⚙️ SETTINGS — edit these values once.\nconst config = {\n  model: 'gpt-4.1-mini',            // any current OpenAI chat model\n  businessName: 'Your Business',\n  ownerEmail: 'you@example.com',     // where alerts / summaries are sent\n};\nreturn $input.all().map(item => ({ json: { ...item.json, config }, pairedItem: item.pairedItem }));"
+      },
+      "id": "d4a1e981-7c90-43b5-9da8-6ecabfedf32c",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const f = $json; const cfg = f.config;\nconst prompt = `Create a 30-day social media plan for ${f['Brand name']}, which sells ${f['What you sell']} in ${f['City / country'] || 'Pakistan'}.\nAudience: ${f['Target audience']}. Occasions: ${f['Occasions this month'] || 'none'}. Tone: ${f['Tone']}. Language: ${f['Language mix']}.\nPillar mix: Teach 35%, Relate 25%, Prove 20%, Sell 20%. Formats: static, carousel, Reel. No made-up statistics, no income claims.\nReturn JSON {\"posts\":[{\"day\":1,\"pillar\":\"\",\"format\":\"\",\"headline\":\"max 8 words\",\"subtext\":\"max 15 words\",\"highlight\":\"1-3 words from headline\",\"cta\":\"\",\"caption\":\"40-80 words, hook first line\",\"hashtags\":\"4 hashtags\",\"reel_idea\":\"one line\"}]} with exactly 30 posts.`;\nreturn { json: { body: { model: cfg.model, response_format: { type: 'json_object' }, temperature: 0.8,\n  messages: [{ role: 'system', content: 'You are an expert social media strategist for Pakistani small businesses.' }, { role: 'user', content: prompt }] } } };"
+      },
+      "id": "874bb6e8-2e32-462c-b186-3fd9c24164bd",
+      "name": "Build AI request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "637c0c64-6720-47f0-8cd5-8b478b881ab0",
+      "name": "AI plans the month",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let posts = [];\ntry { posts = JSON.parse($json.choices[0].message.content).posts || []; } catch (e) {}\nconst start = new Date();\nreturn posts.map((p, i) => {\n  const d = new Date(start); d.setDate(d.getDate() + i);\n  return { json: { Day: p.day || i + 1, Date: d.toISOString().slice(0, 10), Pillar: p.pillar, Format: p.format, Headline: p.headline,\n    Subtext: p.subtext, Highlight: p.highlight, CTA: p.cta, Caption: p.caption, Hashtags: p.hashtags, 'Reel idea': p.reel_idea, Status: 'Draft' } };\n});"
+      },
+      "id": "61c575f3-b11c-42a9-9d5e-743682f85ddd",
+      "name": "One row per post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Content Calendar"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "a2f866f6-7c56-45dc-b8be-a9e1e0ff7c29",
+      "name": "Save to Content Calendar",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "**Next:** Canva → Apps → **Bulk Create** → upload the sheet (CSV) → connect Headline / Subtext / CTA to your template → generate 30 designs.",
+        "height": 160,
+        "width": 420,
+        "color": 6
+      },
+      "id": "18c43945-7195-4edb-a544-628b3387bb74",
+      "name": "Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        900,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Content brief form": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Build AI request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI request": {
+      "main": [
+        [
+          {
+            "node": "AI plans the month",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI plans the month": {
+      "main": [
+        [
+          {
+            "node": "One row per post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One row per post": {
+      "main": [
+        [
+          {
+            "node": "Save to Content Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

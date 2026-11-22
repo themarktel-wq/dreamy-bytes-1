@@ -1,0 +1,316 @@
+{
+  "name": "Skillstack 35 · AI Voice Notes → Tasks",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🎙️ AI Voice Notes → Tasks\nSave a voice note / meeting recording into your Google Drive **VoiceNotes** folder (from your phone) → AI transcribes it (Urdu + English), extracts tasks with real due dates → creates **Google Tasks** → emails you a summary + a ready follow-up message.\n\n**Needs:** OpenAI, Google Drive, Google Tasks, Gmail.\n\n**Setup (once)**\n1. Import this file: n8n → *Workflows* → *⋯* → **Import from File**.\n2. Open **Settings** and fill in your details.\n3. Connect credentials on the nodes with a ⚠️ (OpenAI, Google Sheets, Gmail…).\n4. In every Google Sheets node pick your sheet + tab (template: *Skillstack-AI-Workflows-Sheets.xlsx*).\n5. **Test workflow**, then switch **Active** on.",
+        "height": 440,
+        "width": 600,
+        "color": 4
+      },
+      "id": "eadc61b4-77da-414d-bfd5-53db6a2f2a58",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "id": "8f0363a4-2e03-4cc0-8919-e31e8a883911",
+      "name": "New voice note in Drive",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ⚙️ SETTINGS — edit these values once.\nconst config = {\n  model: 'gpt-4.1-mini',            // any current OpenAI chat model\n  businessName: 'Your Business',\n  ownerEmail: 'you@example.com',     // where alerts / summaries are sent\n  taskListId: '@default',  // your default Google Tasks list\n};\nreturn $input.all().map(item => ({ json: { ...item.json, config }, pairedItem: item.pairedItem }));"
+      },
+      "id": "a71bf3df-ff5e-41f0-95dc-6eda20ffe3bd",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "options": {}
+      },
+      "id": "0a9d330f-0311-4e2b-81dc-ce325400af12",
+      "name": "Download audio",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "model",
+              "value": "whisper-1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2990bb13-3685-4864-b2a0-d2351a200854",
+      "name": "Transcribe (Whisper)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Settings').first().json.config; const today = new Date().toISOString().slice(0, 10);\nreturn { json: { file: $('New voice note in Drive').item.json.name, transcript: $json.text, body: { model: cfg.model, response_format: { type: 'json_object' }, temperature: 0.2, messages: [\n  { role: 'system', content: 'You turn voice notes and meeting transcripts (English, Urdu, Roman Urdu mixed) into clear actions.' },\n  { role: 'user', content: `Today is ${today}. Convert words like \"kal\", \"parson\", \"next Monday\" into real dates (YYYY-MM-DD).\nTranscript: ${$json.text}\nReturn JSON {\"summary\":\"3 lines\",\"tasks\":[{\"title\":\"\",\"due_date\":\"YYYY-MM-DD or empty\",\"priority\":\"High|Medium|Low\",\"owner\":\"\"}],\"decisions\":\"\",\"followup_message\":\"Roman Urdu WhatsApp message under 60 words, or empty\"} with max 7 tasks.` }] } } };"
+      },
+      "id": "a95cdbc7-f5c9-4c24-876f-3f2d92d298cc",
+      "name": "Build AI request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "06768fe0-83d1-4309-b5ea-2e8e6024bd48",
+      "name": "AI extracts tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item, i) => {\n  let ai = {}; try { ai = JSON.parse(item.json.choices[0].message.content); } catch (e) {}\n  const src = $('Build AI request').all()[i].json;\n  return { json: { file: src.file, transcript: src.transcript, ...ai }, pairedItem: { item: i } };\n});"
+      },
+      "id": "c18b120c-20df-4daa-8091-a2bb35de03c6",
+      "name": "Read result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const item of $input.all()) for (const t of (item.json.tasks || [])) out.push({ json: { title: `[${t.priority || 'Medium'}] ${t.title}`,\n  due: new Date((t.due_date || new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)) + 'T09:00:00+05:00').toISOString(), notes: `Owner: ${t.owner || 'me'} · From: ${item.json.file}` } });\nreturn out;"
+      },
+      "id": "831eb72f-ffef-4b52-aa29-c0292011d73e",
+      "name": "One item per task",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "task": "={{ $('Settings').first().json.config.taskListId }}",
+        "title": "={{ $json.title }}",
+        "additionalFields": {
+          "dueDate": "={{ $json.due }}",
+          "notes": "={{ $json.notes }}"
+        }
+      },
+      "id": "e307f69e-609d-46c6-b9ba-191d34a18281",
+      "name": "Create Google Task",
+      "type": "n8n-nodes-base.googleTasks",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Settings').first().json.config.ownerEmail }}",
+        "subject": "=🎙️ Voice note processed: {{ $json.file }}",
+        "message": "=SUMMARY\n{{ $json.summary }}\n\nDECISIONS\n{{ $json.decisions }}\n\nTASKS\n{{ ($json.tasks || []).map(t => '- ' + t.title + (t.due_date ? ' (due ' + t.due_date + ')' : '')).join('\\n') }}\n\nFOLLOW-UP MESSAGE\n{{ $json.followup_message }}\n\nTRANSCRIPT\n{{ $json.transcript }}",
+        "options": {
+          "appendAttribution": false
+        },
+        "emailType": "text"
+      },
+      "id": "70e8a570-fb8b-478c-a1a4-68373f314f0b",
+      "name": "Email me the summary",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1680,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "New voice note in Drive": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Download audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download audio": {
+      "main": [
+        [
+          {
+            "node": "Transcribe (Whisper)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe (Whisper)": {
+      "main": [
+        [
+          {
+            "node": "Build AI request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI request": {
+      "main": [
+        [
+          {
+            "node": "AI extracts tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI extracts tasks": {
+      "main": [
+        [
+          {
+            "node": "Read result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read result": {
+      "main": [
+        [
+          {
+            "node": "One item per task",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email me the summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per task": {
+      "main": [
+        [
+          {
+            "node": "Create Google Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

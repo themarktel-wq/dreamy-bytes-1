@@ -1,0 +1,385 @@
+{
+  "name": "Skillstack 29 · AI Lead Gen & Outreach System",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🎯 AI Lead Gen & Outreach\nAdd businesses to the `Leads` tab (Status **New**, with Website) → the workflow reads each website, writes a **personal first line**, a short cold email + 2 follow-ups, and saves a **Gmail draft** for you to review and send. Nothing is sent automatically.\n\n**Needs:** OpenAI, Google Sheets, Gmail.\n\n**Setup (once)**\n1. Import this file: n8n → *Workflows* → *⋯* → **Import from File**.\n2. Open **Settings** and fill in your details.\n3. Connect credentials on the nodes with a ⚠️ (OpenAI, Google Sheets, Gmail…).\n4. In every Google Sheets node pick your sheet + tab (template: *Skillstack-AI-Workflows-Sheets.xlsx*).\n5. **Test workflow**, then switch **Active** on.",
+        "height": 420,
+        "width": 600,
+        "color": 4
+      },
+      "id": "af2881d8-c890-4813-8ac2-8d8b7683b919",
+      "name": "Note 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "id": "41ba8e32-7e6a-4f28-932c-039b7630767a",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -100
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "18a896f8-b212-4b9e-b9a2-bfb2440adb4d",
+      "name": "Run manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ⚙️ SETTINGS — edit these values once.\nconst config = {\n  model: 'gpt-4.1-mini',            // any current OpenAI chat model\n  businessName: 'Your Business',\n  ownerEmail: 'you@example.com',     // where alerts / summaries are sent\n  myService: 'Instagram Reels editing for restaurants',\n  myResult: 'helped a Lahore cafe grow reach 3x in 2 months',  // a REAL result\n  myName: 'Your Name',\n  maxPerRun: 15,\n};\nreturn $input.all().map(item => ({ json: { ...item.json, config }, pairedItem: item.pairedItem }));"
+      },
+      "id": "888e7e74-bddc-4042-bd08-307a73e87a92",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "options": {}
+      },
+      "id": "75c9cfc5-02e2-47b1-99ff-b342478cdd97",
+      "name": "Read Leads tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $('Settings').first().json.config;\nreturn $input.all().filter(i => String(i.json.Status || '').trim().toLowerCase() === 'new' && i.json.Website).slice(0, cfg.maxPerRun)\n  .map(i => ({ json: i.json }));"
+      },
+      "id": "d0bb4a30-6aab-48c5-aa40-2e34707aab28",
+      "name": "Pick new leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Website.startsWith('http') ? $json.Website : 'https://' + $json.Website }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "64ff9652-66ca-4149-9af7-54ed0a6a73c4",
+      "name": "Fetch website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const cfg = $('Settings').first().json.config;\nconst lead = $('Pick new leads').item.json;\nconst html = String($json.data || '');\nconst text = html.replace(/<script[\\s\\S]*?<\\/script>|<style[\\s\\S]*?<\\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').slice(0, 3500);\nreturn { json: { lead, body: { model: cfg.model, response_format: { type: 'json_object' }, temperature: 0.6, messages: [\n  { role: 'system', content: 'You write short, honest, personalised B2B cold emails. No flattery cliches, no fake claims.' },\n  { role: 'user', content: `Business: ${lead.Business}. Notes: ${lead.Notes || ''}. Website text: ${text || '(not available)'}\nMy service: ${cfg.myService}. My real result: ${cfg.myResult}. Sign as ${cfg.myName}.\nReturn JSON {\"personal_line\":\"one specific sentence max 25 words\",\"subject\":\"under 6 words\",\"email\":\"under 90 words: personal line, opportunity, my result, low-pressure CTA, opt-out line\",\"followup_day3\":\"under 50 words\",\"followup_day7\":\"under 50 words\"}` }] } } };"
+      },
+      "id": "afe0cdf3-eb9e-483b-9c32-10f0a747e441",
+      "name": "Build AI request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "da5047f7-3668-4c01-92e9-a2effa8ac5c7",
+      "name": "AI writes outreach",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item, i) => {\n  const lead = $('Build AI request').all()[i].json.lead; let ai = {};\n  try { ai = JSON.parse(item.json.choices[0].message.content); } catch (e) {}\n  return { json: { ...lead, ai }, pairedItem: { item: i } };\n});"
+      },
+      "id": "e0a8b8fd-520b-48da-a805-ea605a28a829",
+      "name": "Read outreach",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.ai.subject }}",
+        "message": "={{ $json.ai.email }}",
+        "options": {
+          "sendTo": "={{ $json.Email }}"
+        }
+      },
+      "id": "1c0bd3f5-615f-48e8-bd0c-ca75064f4080",
+      "name": "Create Gmail draft",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1920,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fmt = d => d.toISOString().slice(0, 10);\nreturn $('Read outreach').all().map((item, i) => {\n  const l = item.json; const d3 = new Date(); d3.setDate(d3.getDate() + 3); const d7 = new Date(); d7.setDate(d7.getDate() + 7);\n  return { json: { ID: l.ID, 'Personal line': l.ai.personal_line, Subject: l.ai.subject, 'Follow-up day 3': l.ai.followup_day3,\n    'Follow-up day 7': l.ai.followup_day7, 'Follow-up 1 date': fmt(d3), 'Follow-up 2 date': fmt(d7), Status: 'Draft ready' }, pairedItem: { item: i } };\n});"
+      },
+      "id": "a0c4be1b-e810-49a8-8724-25fc0aa28f5c",
+      "name": "Row update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "19e86ce3-45ba-4191-afac-3b2fb4dc45df",
+      "name": "Update Leads tab",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "Only collect **publicly listed business** contacts. Send 10–20 emails a day from your own Gmail, and never bulk-message on WhatsApp (numbers get banned).",
+        "height": 150,
+        "width": 420,
+        "color": 3
+      },
+      "id": "fe344a24-3d3d-47e5-ada0-10abe5441097",
+      "name": "Note 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run manually": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Read Leads tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Leads tab": {
+      "main": [
+        [
+          {
+            "node": "Pick new leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick new leads": {
+      "main": [
+        [
+          {
+            "node": "Fetch website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch website": {
+      "main": [
+        [
+          {
+            "node": "Build AI request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI request": {
+      "main": [
+        [
+          {
+            "node": "AI writes outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes outreach": {
+      "main": [
+        [
+          {
+            "node": "Read outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read outreach": {
+      "main": [
+        [
+          {
+            "node": "Create Gmail draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Gmail draft": {
+      "main": [
+        [
+          {
+            "node": "Row update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row update": {
+      "main": [
+        [
+          {
+            "node": "Update Leads tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Karachi"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
