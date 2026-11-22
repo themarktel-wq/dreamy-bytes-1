@@ -126,9 +126,40 @@ def main():
         else:
             shutil.copy(src, d("08-Source-Files"))
     shutil.rmtree(TMP, ignore_errors=True)
-    zip_base = os.path.join(ROOT, "handover", "Skillstack-Final-Handover")
-    shutil.make_archive(zip_base, "zip", os.path.join(ROOT, "handover"), "Skillstack-Final-Handover")
-    print("built", zip_base + ".zip")
+    # Small, separately downloadable parts (each well under 10 MB) instead of one huge zip.
+    parts_dir = os.path.join(ROOT, "handover", "parts")
+    os.makedirs(parts_dir, exist_ok=True)
+    parts = {
+        "Skillstack-Part1-Guide-and-Website": ["00-START-HERE.pdf", "01-Website-Store"],
+        "Skillstack-Part2-Products-Branding-Social-Docs": ["00-START-HERE.pdf", "02-Products", "03-Branding", "04-Social-Posts", "05-Ad-Creatives", "06-Strategy-Docs"],
+        "Skillstack-Part3-Source-Files": ["08-Source-Files"],
+    }
+    import zipfile
+    for name, items in parts.items():
+        zp = os.path.join(parts_dir, name + ".zip")
+        with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+            for it in items:
+                full = os.path.join(OUT, it)
+                if os.path.isfile(full):
+                    z.write(full, os.path.join("Skillstack-Final-Handover", it))
+                else:
+                    for dp, _, fs in os.walk(full):
+                        for f in fs:
+                            fp = os.path.join(dp, f)
+                            z.write(fp, os.path.join("Skillstack-Final-Handover", os.path.relpath(fp, OUT)))
+        print("part", os.path.basename(zp), round(os.path.getsize(zp) / 1e6, 1), "MB")
+    # Compressed videos (720p) for easy sharing on WhatsApp
+    vdir = os.path.join(parts_dir, "videos")
+    os.makedirs(vdir, exist_ok=True)
+    names = {"skillstack-website-desktop.mp4": "Skillstack-Website-Desktop.mp4", "skillstack-website-mobile.mp4": "Skillstack-Website-Mobile.mp4",
+             "skillstack-access-system-demo.mp4": "Skillstack-Access-System-Demo.mp4"}
+    for src, dst in names.items():
+        sp = os.path.join(ROOT, "preview", src)
+        if os.path.exists(sp):
+            scale = "scale=-2:720" if "mobile" not in src else "scale=-2:960"
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", sp, "-vf", scale + ",fps=24,format=yuv420p", "-c:v", "libx264",
+                            "-crf", "30", "-preset", "slow", "-movflags", "+faststart", os.path.join(vdir, dst)], check=True)
+            print("video", dst, round(os.path.getsize(os.path.join(vdir, dst)) / 1e6, 1), "MB")
 
 
 if __name__ == "__main__":

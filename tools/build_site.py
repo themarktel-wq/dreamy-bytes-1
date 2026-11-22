@@ -217,7 +217,7 @@ def bundle_section(root):
 <a href="{root}product/all-access.html" class="btn btn-ghost">See everything included</a></div>
 </div>
 <div class="bundle-price"><span class="eyebrow">What you get</span>
-<table class="value-table">{rows}<tr><td>+ 19 more products</td><td>…</td></tr></table>
+<table class="value-table">{rows}<tr><td>+ {len(PRODUCTS) - 6} more products</td><td>…</td></tr></table>
 <div class="was">{rs(BUNDLE["mrp"])}</div><div class="big">{rs(BUNDLE["price"])}</div>
 <p class="muted" style="font-size:13.5px;margin-top:8px">One-time payment · JazzCash / Easypaisa / Bank</p></div>
 </div></div></section>'''
