@@ -3,3 +3,5 @@ __pycache__/
 brand/_src/
 *-Complete-Setup.zip
 preview/*.mp4
+client-preview/_src/
+client-preview/*.mp4
