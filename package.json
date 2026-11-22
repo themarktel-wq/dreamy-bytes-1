@@ -1,0 +1,8 @@
+{
+  "name": "skillstack-store",
+  "private": true,
+  "description": "Skillstack digital products store with access-code delivery (Netlify).",
+  "dependencies": {
+    "@netlify/blobs": "11.1.6"
+  }
+}

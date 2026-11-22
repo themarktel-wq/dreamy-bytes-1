@@ -19,8 +19,8 @@ python3 tools/build_all.py           # products + website (+ brand if Playwright
 Outputs: `products/` (35 files), `website/` (the site), `brand/` (PNG assets).
 
 ## Step 3 — Host the website (free)
-**Netlify (easiest):** netlify.com → Add new site → Deploy manually → drag the `website` folder. Then Domain settings → add `skillstack.pk`.
-**Vercel / GitHub Pages:** set the publish directory to `website/`.
+**Netlify (required for the access system):** from the repository root run `npm install`, then `netlify deploy --prod` (Netlify CLI). Set the `ADMIN_PASSWORD` environment variable in Netlify and deploy again. `netlify.toml` already configures the publish folder (`website/`), the functions (`netlify/functions/`) and the private product files (`products/`, not public). Drag-and-drop deploys do **not** include functions.
+**Local testing:** `ADMIN_PASSWORD=testpass123 node tools/dev_server.mjs` → open http://localhost:8888 and http://localhost:8888/admin.
 **Domain:** buy `.pk` from PKNIC-accredited registrars or `.com` from Namecheap/Cloudflare; point DNS to the host.
 
 ## Step 4 — Product delivery (35 product access)

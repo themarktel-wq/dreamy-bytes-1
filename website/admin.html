@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Admin — Skillstack</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css"></head><body class="admin">
+<header class="header"><div class="container nav"><a href="index.html" class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="8" width="40" height="14" rx="7" fill="#5B2EFF"/><rect x="18" y="25" width="40" height="14" rx="7" fill="#FF6B2C"/><rect x="6" y="42" width="40" height="14" rx="7" fill="#111018"/></svg><span>skillstack</span></a><span class="muted" style="font-weight:600">Admin</span><a href="#" id="logout" class="btn btn-ghost btn-sm">Log out</a></div></header>
+<main class="container" style="padding:40px 20px 80px">
+<section id="login" class="sk-gate"><h1 class="display" style="font-size:44px;margin-bottom:10px">Admin login</h1>
+<p class="muted" style="margin-bottom:20px">Use the admin password set in Netlify (environment variable <code>ADMIN_PASSWORD</code>).</p>
+<form id="login-form" class="search" style="max-width:none;margin:0"><input id="pw" type="password" placeholder="Admin password" autocomplete="current-password"><button class="btn btn-primary">Log in</button></form>
+<p id="login-msg" class="err" style="margin-top:10px"></p></section>
+<section id="panel" hidden>
+<div class="stats" style="margin-bottom:22px"><div class="stat"><b id="stat-codes">0</b><span>Access codes created</span></div><div class="stat"><b id="stat-active">0</b><span>Active customers</span></div><div class="stat"><b id="stat-dl">0</b><span>Total downloads</span></div><div class="stat"><b>35</b><span>Products in store</span></div></div>
+<div class="admin-grid">
+<form id="create" class="box" style="margin:0"><h3>1. Payment verified? Give access</h3>
+<div class="field"><label for="c-name">Customer name</label><input id="c-name" required></div>
+<div class="field"><label for="c-contact">WhatsApp number</label><input id="c-contact" placeholder="03XX XXXXXXX"></div>
+<div class="field"><label for="c-note">Note (order ID, amount, payment method)</label><input id="c-note" placeholder="HN-XXXX · Rs 1,499 · JazzCash"></div>
+<label class="pick all"><input type="checkbox" id="all"> <b>All-Access Pass</b> (all 35 products + future products)</label>
+<p class="muted" style="font-size:13px;margin:10px 0 6px">or choose products:</p>
+<div id="prod-list" class="prod-list"></div>
+<button class="btn btn-primary btn-block" style="margin-top:14px">Create access code</button>
+<div id="result" class="result" hidden></div></form>
+<div class="box" style="margin:0;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px"><h3 style="margin:0">2. Customers</h3><input id="search" class="lib-search" placeholder="Search name, number, code…"></div>
+<table class="codes"><thead><tr><th>Customer</th><th>Code</th><th>Access</th><th>Date</th><th>Downloads</th><th></th></tr></thead><tbody id="codes"></tbody></table></div>
+</div></section></main>
+<script src="assets/admin.js" defer></script></body></html>

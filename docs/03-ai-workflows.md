@@ -6,37 +6,17 @@
 
 ---
 
-## Workflow 1 — Order → Payment check → Delivery (most important)
+## Workflow 1 — Order → Payment check → Access code (built into the website)
 
-**Stage A: Manual (0–20 orders/day)**
-1. Customer checks out on website → WhatsApp opens with order ID, items, total, payment method.
-2. Customer sends payment screenshot.
-3. Admin checks JazzCash/Easypaisa/bank app for the amount.
-4. Admin sends delivery message (saved as WhatsApp quick reply `/deliver`) with Google Drive link(s).
-5. Admin logs the order in the **Orders** Google Sheet.
+1. Customer checks out on the website → WhatsApp opens with order ID, items, total and payment method.
+2. Customer sends the payment screenshot.
+3. Admin checks the JazzCash / Easypaisa / bank app for the amount.
+4. Admin opens **/admin** → name + WhatsApp number + products (or All-Access) + note (order ID, amount) → **Create access code**.
+5. **Send on WhatsApp** → the customer receives the library link and code, and downloads from **My Library**.
 
-**Delivery message template (`/deliver`):**
-```
-Shukriya [Name]! 💚 Payment received for order [ID].
-Your download links:
-[Product name]: [Drive link]
-Tips: open on laptop for Excel/Word files. Any issue? Just reply here.
-Please don't share these links — they're licensed to you only.
-```
+The admin list is your orders log: customer, code, products, date and downloads. Use **Revoke** for refunds or if a code is shared publicly (high download counts are a warning sign).
 
-**Google Drive setup for "35 product access":**
-- Make a folder `Skillstack Products` with 35 sub-folders (01 … 35) + one `All-Access` folder that contains shortcuts to all 35.
-- Share each folder **"Anyone with the link → Viewer"** (simple) OR share by customer email (safer — Drive → Share → add buyer's Gmail as Viewer). Email sharing lets you revoke access for refunds/abuse.
-- For Excel/Word templates, customers can File → Make a copy / Download.
-
-**Orders sheet columns:** Date · Order ID · Name · WhatsApp · Email · City · Products · Total · Payment method · Txn ID · Verified (Y/N) · Delivered (Y/N) · Source (ad/organic) · Notes
-
-**Stage B: Automated (20+ orders/day) — Make.com / n8n**
-1. Add a payment gateway (e.g. Safepay, PayFast, or a JazzCash/Easypaisa merchant account) or a Gumroad/Payhip checkout.
-2. Gateway webhook → Make scenario: *Add row to Orders sheet* → *Find product links in "Links" sheet* → *Send Gmail with links* → *Send WhatsApp template via WhatsApp Cloud API / WATI*.
-3. For All-Access: Drive module "Share folder" with buyer email.
-
----
+**Automating later (20+ orders/day):** add a payment gateway (e.g. Safepay, PayFast or a JazzCash/Easypaisa merchant account). Its "payment successful" webhook can call a small function that creates the access code (same logic as `/api/admin` → `create`) and sends the WhatsApp template through the WhatsApp Cloud API, so no human step is needed.
 
 ## Workflow 2 — WhatsApp AI reply assistant
 **Goal:** reply in under 5 minutes, 10am–10pm, consistent tone.

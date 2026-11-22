@@ -6,3 +6,5 @@ preview/*.mp4
 client-preview/_src/
 client-preview/*.mp4
 handover/
+.local-store/
+node_modules/

@@ -1,0 +1,26 @@
+# Skillstack — Netlify config. Deploy the whole repository (not only /website) so the access system works.
+[build]
+  publish = "website"
+  functions = "netlify/functions"
+  command = "echo 'static site - no build step'"
+
+[functions]
+  node_bundler = "esbuild"
+  # Product files live outside the public site and are only served through /api/download with a valid access code.
+  included_files = ["products/**"]
+
+[[headers]]
+  for = "/admin.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/access"
+  to = "/access.html"
+  status = 200

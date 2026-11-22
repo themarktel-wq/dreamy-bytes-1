@@ -78,7 +78,25 @@ def main():
     shutil.rmtree(os.path.join(ROOT, "handover"), ignore_errors=True)
     os.makedirs(OUT)
     d = lambda n: os.path.join(OUT, n)
-    copytree("website", d("01-Website"))
+    store = d("01-Website-Store")
+    copytree("website", os.path.join(store, "website"))
+    copytree("netlify", os.path.join(store, "netlify"))
+    copytree("products", os.path.join(store, "products"))
+    for f in ("netlify.toml", "package.json"):
+        shutil.copy(os.path.join(ROOT, f), store)
+    os.makedirs(os.path.join(store, "tools"))
+    shutil.copy(os.path.join(ROOT, "tools", "dev_server.mjs"), os.path.join(store, "tools"))
+    open(os.path.join(store, "DEPLOY-README.txt"), "w").write(
+        "SKILLSTACK STORE - DEPLOY\n\n"
+        "1. Install Node.js (LTS) from nodejs.org\n"
+        "2. Open a terminal in THIS folder and run:\n"
+        "     npm install\n     npm install -g netlify-cli\n     netlify login\n     netlify deploy --prod\n"
+        "3. Netlify dashboard > Project configuration > Environment variables:\n"
+        "     ADMIN_PASSWORD = <a strong password, 8+ characters>\n"
+        "   then run  netlify deploy --prod  again.\n"
+        "4. Open https://<your-site>/admin to create access codes after each payment.\n\n"
+        "Do NOT use drag-and-drop deploy: it skips the access functions.\n"
+        "Local test: set ADMIN_PASSWORD=testpass123 and run  node tools/dev_server.mjs  then open http://localhost:8888\n")
     copytree("products", d("02-Products"))
     os.makedirs(d("03-Branding"))
     copytree("brand/logo", d("03-Branding/logo"))

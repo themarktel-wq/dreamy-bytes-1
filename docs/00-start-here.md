@@ -1,19 +1,26 @@
 # Skillstack — Final Handover (Start Here)
 
-> **Khulasa:** Is package mein aap ka poora digital products business hai: website, 35 products, branding, 9 posts, 9 ads, AI workflows aur 90 din ka Meta ads plan. Neeche 7 steps follow karein aur business live ho jayega. Sab se pehle **apni JazzCash / Easypaisa / bank details** bhejein, taake checkout par woh lag sakein.
+> **Khulasa:** Is package mein aap ka poora digital products business hai: website, 35 products, branding, 9 posts, 9 ads, AI workflows aur 90 din ka Meta ads plan. Website mein customer **My Library** aur aap ka **Admin panel** built-in hai: payment ke baad admin se code banayein, WhatsApp par bhejein, customer khud download kar lega. Neeche 7 steps follow karein aur business live ho jayega. Sab se pehle **apni JazzCash / Easypaisa / bank details** bhejein, taake checkout par woh lag sakein.
 
 ## What's in this package
 
 | Folder | What's inside | Use it for |
 |---|---|---|
-| `01-Website` | The complete website (35 product pages, shop, cart, WhatsApp checkout) | Upload to hosting (Step 2) |
-| `02-Products` | 35 finished products: 28 PDF guides (incl. 10 AI workflows), 4 Excel tools, 3 Word template packs | Upload to Google Drive for delivery (Step 3) |
+| `01-Website-Store` | The complete store, ready to deploy: website, **customer library + admin panel**, secure download functions and all 35 product files | Put the business live (Step 2) |
+| `02-Products` | The same 35 products as plain files (28 PDF guides incl. 10 AI workflows, 4 Excel tools, 3 Word packs) | Backup / manual sending |
 | `03-Branding` | Logo (SVG + PNG), profile picture, Facebook cover, YouTube banner, WhatsApp status, website link preview | Social profiles (Step 4) |
 | `04-Social-Posts` | 9 launch posts (1080×1350) | Instagram & Facebook launch grid (Step 5) |
 | `05-Ad-Creatives` | 9 ad creatives (1080×1350) | Meta ads (Step 6) |
 | `06-Strategy-Docs` | Niche research, brand guidelines, AI workflows, 90-day Meta ads plan, content calendar & captions, launch guide (PDF) | Running the business |
 | `07-Videos` | Website preview videos (desktop, mobile, full) | Showing the site, promo |
 | `08-Source-Files` | Editable source (prices, text, designs regenerate from here) | For a developer if you want changes |
+
+## How customers get their products (built in)
+1. Customer orders on the website → WhatsApp opens with the order → customer pays (JazzCash / Easypaisa / bank) and sends the screenshot.
+2. You open **yourwebsite.com/admin**, log in, type the customer's name + WhatsApp number, tick the products (or **All-Access**) and press **Create access code**.
+3. Press **Send on WhatsApp**: the customer gets their personal library link + code (e.g. `SK-4H5N-QJX8`).
+4. The customer opens **My Library**, sees only what they bought, and downloads anytime on phone or laptop.
+5. Product files are never public. Downloads only work with an active code. You can **Revoke** a code (refund, sharing) or **Restore** it, and you can see how many times each customer downloaded.
 
 ## Step 1 — Send the details only you have
 Send these to your developer (or edit `08-Source-Files/tools/catalog.py`, then run `python3 tools/build_all.py`):
@@ -27,17 +34,31 @@ Send these to your developer (or edit `08-Source-Files/tools/catalog.py`, then r
 
 WhatsApp for all buttons is already set to **+92 314 7352474**.
 
-## Step 2 — Put the website live (free hosting, ~10 minutes)
-1. Buy the domain: `skillstack.pk` from a PKNIC-accredited registrar, or `skillstack.com.pk` / a `.com`. Check the name in the IPO-Pakistan trademark search first.
-2. Go to **netlify.com** → sign up → *Add new site* → *Deploy manually* → drag the **01-Website** folder onto the page.
-3. *Domain settings* → *Add a domain* → follow the DNS instructions at your registrar. HTTPS is added automatically.
-4. Test on your phone: open a product → *Buy Now* → fill the form → *Place order on WhatsApp*. WhatsApp should open with the order message to +92 314 7352474.
+## Step 2 — Put the store live on Netlify (free, ~15 minutes)
+The access system uses small server functions, so the store is deployed with the **Netlify CLI** (drag-and-drop uploads only the pages, not the functions).
 
-## Step 3 — Set up product delivery (Google Drive)
-1. Create a Google Drive folder **Skillstack Products** and upload the 35 files from `02-Products`.
-2. Make one folder per product (01 … 35) and an **All-Access** folder containing shortcuts to all 35.
-3. Share each folder as *Viewer*: either "anyone with the link" (simple) or add the buyer's Gmail (safer, because you can remove access).
-4. Make a **Links** sheet: Product → Drive link. Save the delivery message as a WhatsApp quick reply `/deliver` (template in *AI Workflows* doc, Workflow 1).
+1. Install **Node.js (LTS)** from nodejs.org on your laptop.
+2. Open a terminal / command prompt **inside the `01-Website-Store` folder** and run these one by one:
+
+```
+npm install
+npm install -g netlify-cli
+netlify login
+netlify deploy --prod
+```
+
+3. When asked, choose **Create & configure a new project** and give it a name (e.g. `skillstack`). Netlify prints your live link.
+4. In the Netlify dashboard → your site → **Project configuration → Environment variables → Add a variable**: key `ADMIN_PASSWORD`, value = a strong password (at least 8 characters; the admin panel refuses to work without it). Then run `netlify deploy --prod` once more.
+5. **Domain:** buy `skillstack.pk` (PKNIC-accredited registrar) or a `.com.pk` / `.com`, check the name in the IPO-Pakistan trademark search, then Netlify → **Domain management → Add a domain** and follow the DNS steps. HTTPS is automatic.
+6. **Test the full flow on your phone:** place an order → open `/admin` → create a code for yourself → open the WhatsApp link → download one PDF, one Excel and one Word file. Then revoke the code and check the download stops.
+
+> To update the site later (new prices, real payment accounts, new products): change the source, rebuild, copy the new files into `01-Website-Store`, and run `netlify deploy --prod` again. Access codes you created are kept.
+
+## Step 3 — Delivering orders every day
+- Keep **/admin** bookmarked on your phone. It takes about 20 seconds per order.
+- Write the order ID, amount and payment method in the *Note* field. It's your sales record.
+- Buyer lost their code? Search their name or number in the admin list and press **WhatsApp** again.
+- Optional backup: keep the files from `02-Products` in Google Drive in case you ever need to send something manually.
 
 ## Step 4 — Social profiles
 - Profile picture on all platforms: `03-Branding/logo/profile-picture.png`
@@ -56,9 +77,9 @@ Follow `04-Meta-Ads-90-Day-Plan.pdf`: Week 0 setup checklist → Phase 1 testing
 
 ## Launch-day checklist
 - [ ] Real payment accounts added and website rebuilt
-- [ ] Website live on your domain with HTTPS
-- [ ] Test order completed end to end on a phone
-- [ ] All 35 Drive links open in an incognito window
+- [ ] Store live on your domain with HTTPS, `ADMIN_PASSWORD` set
+- [ ] Test order → admin code → library download completed on a phone
+- [ ] A PDF, an Excel and a Word file downloaded successfully; revoke tested
 - [ ] Profiles set up, 9 posts published
 - [ ] WhatsApp Business quick replies saved
 - [ ] Meta Pixel added (see ads plan) and Phase 1 ads launched
