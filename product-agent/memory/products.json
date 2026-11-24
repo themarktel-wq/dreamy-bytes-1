@@ -208,5 +208,135 @@
   "status": "built, untested in market",
   "market_results": null,
   "notes": ""
+ },
+ {
+  "id": "d20261124-01",
+  "type": "html tool",
+  "niche": "home-cleaning: QuoteSweep: Margin-Safe Cleaning Quote Calculator",
+  "price_usd": 39,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261124-02",
+  "type": "html tool / micro-CRM",
+  "niche": "home-cleaning: First-90-Days Client Keeper (Cleaning Retention Tracker)",
+  "price_usd": 35,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261124-03",
+  "type": "docx + printable",
+  "niche": "home-cleaning: Room-by-Room QC Inspection Pack",
+  "price_usd": 19,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261124-04",
+  "type": "xlsx",
+  "niche": "home-cleaning: Cleaning Business Profit & Capacity Sheet",
+  "price_usd": 24,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261124-05",
+  "type": "html tool",
+  "niche": "pet-grooming-walking: GroomQuote: Matting-Proof Grooming Price Calculator",
+  "price_usd": 29,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261124-06",
+  "type": "n8n",
+  "niche": "pet-grooming-walking: No-Show Shield: Grooming Reminder + Deposit + Waitlist n8n Flow",
+  "price_usd": 45,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (simulator only; not run on live n8n/Twilio/Stripe/Google)"
+ },
+ {
+  "id": "d20261124-07",
+  "type": "docx",
+  "niche": "pet-grooming-walking: Groomer & Sitter Policy and Intake Pack",
+  "price_usd": 19,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (files open, PDFs render; not legal-reviewed; score 23/40 flagged marginal in plan)"
+ },
+ {
+  "id": "d20261124-08",
+  "type": "html tool",
+  "niche": "pet-grooming-walking: WalkWise: Dog Walker Package & Profit Planner",
+  "price_usd": 29,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (12 unit + 16 browser checks, Chromium only)"
+ },
+ {
+  "id": "d20261124-09",
+  "type": "html tool",
+  "niche": "pet-grooming-walking: PawReport: Client Visit Report Card Generator",
+  "price_usd": 25,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (21 checks, Chromium only)"
+ },
+ {
+  "id": "d20261124-10",
+  "type": "html tool",
+  "niche": "photographers: Delivery Promise Tracker for Photographers",
+  "price_usd": 39,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass"
+ },
+ {
+  "id": "d20261124-11",
+  "type": "docx",
+  "niche": "photographers: Wedding Photography Contract + Client Guide Pack",
+  "price_usd": 29,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass"
+ },
+ {
+  "id": "d20261124-12",
+  "type": "xlsx",
+  "niche": "photographers: True Hourly Rate Calculator for Wedding Photographers",
+  "price_usd": 24,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass"
+ },
+ {
+  "id": "d20261124-13",
+  "type": "html tool",
+  "niche": "photographers: Shot List & Day Timeline Builder",
+  "price_usd": 29,
+  "built": "2026-11-24",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass"
  }
 ]
