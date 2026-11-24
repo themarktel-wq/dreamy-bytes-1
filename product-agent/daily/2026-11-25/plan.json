@@ -1,0 +1,436 @@
+{
+ "date": "2026-11-25",
+ "timezone": "Asia/Karachi",
+ "niches": [
+  "auto-detailing",
+  "private-tutors",
+  "small-landlords"
+ ],
+ "total": 11,
+ "software_count": 7,
+ "software_share": 0.64,
+ "products": [
+  {
+   "id": "d20261125-01",
+   "niche": "auto-detailing",
+   "name": "DetailQuote: Size x Condition x Add-On Quote Builder",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 35,
+   "unique_concept": "Quote builder that sets an 'assessment required' flag for coatings/correction instead of a fake fixed price, adds deposit and a printable quote with the add-ons as separate upgrades.",
+   "persona": "Solo mobile detailer",
+   "pain_points": "Guesswork quoting; coatings depend on paint condition; scope creep",
+   "pitch_points": "Quote in a minute; upsell add-ons cleanly; deposit shown on the quote",
+   "features": [
+    "Vehicle size tiers (user-editable)",
+    "Condition surcharge (light/normal/heavy)",
+    "Package tiers + add-on list with default price ranges shown as reference only",
+    "Assessment-required flag for correction/coating with price range input",
+    "Deposit % and cancellation window printed on quote",
+    "Print/PDF quote, localStorage, JSON export"
+   ],
+   "build_spec": "Single-file HTML (tools/builders style). price = package(size) x (1+condition_surcharge) + sum(addons); deposit = pct x total; flagged items excluded from total and listed as 'quoted after inspection' with range. Reference ranges from D4 shown as 'market reference (marketing guides)' not as advice. Unit tests + phone-width check.",
+   "evidence_refs": [
+    "D4",
+    "D2",
+    "D5"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "DetailProPOS",
+     "Urable",
+     "Jobber"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "self-scored from evidence cards"
+  },
+  {
+   "id": "d20261125-02",
+   "niche": "auto-detailing",
+   "name": "Booking Guard: Detailer Deposit + Access-Check n8n Flow",
+   "type": "n8n",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 45,
+   "unique_concept": "n8n flow built for MOBILE jobs: deposit link, 48h/24h reminders that ask the customer to confirm water, power, keys and parking, weather-reschedule branch that moves (not forfeits) the deposit.",
+   "persona": "Solo mobile detailer",
+   "pain_points": "Wasted trips; no access to water/power; locked vehicle",
+   "pitch_points": "Fewer wasted trips; consistent policy; works with Google Sheets/Calendar",
+   "features": [
+    "New booking row trigger",
+    "Deposit payment-link step (Stripe link placeholder)",
+    "Reminder with access checklist (YES/NO reply)",
+    "Weather reschedule branch transferring deposit",
+    "Repeat no-show flag -> deposit-required note",
+    "Weekly summary row"
+   ],
+   "build_spec": "tools/n8n: workflow JSON validated with sim.js; Sheets Bookings(date,time,client,phone,address,vehicle,package,deposit_status,access_confirmed,status). Credentials as placeholders. QA must state: simulator only, not run on live Twilio/Stripe/Google.",
+   "evidence_refs": [
+    "D5"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "DetailProPOS reminders",
+     "Urable",
+     "generic booking apps"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence for cancellation-policy patterns is real shop pages (Med) but no no-show rate (Low)"
+  },
+  {
+   "id": "d20261125-03",
+   "niche": "auto-detailing",
+   "name": "Detailer Profit-Per-Job Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build1",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that computes true profit per hour for each package after travel, chemicals/consumables per job and payment fees; flags packages that lose money.",
+   "persona": "Solo/small shop detailer",
+   "pain_points": "Unknown profit per package; travel eats margin",
+   "pitch_points": "See which packages pay; reprice with target margin",
+   "features": [
+    "Settings (wage target, vehicle cost/mile, fee %)",
+    "Packages sheet (price, hours, consumables cost)",
+    "Job log with auto profit/hour",
+    "Reprice column to hit target",
+    "Monthly summary"
+   ],
+   "build_spec": "tools/sheets openpyxl + LibreOffice recalc. profit = price - consumables - miles x cost_mile - price x fee_pct - hours x wage; reprice = (cost)/(1-margin). Expected-value tests in Python.",
+   "evidence_refs": [
+    "D4",
+    "D2"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "generic Etsy small-biz sheets",
+     "DetailProPOS reports",
+     "Jobber reports"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards"
+  },
+  {
+   "id": "d20261125-04",
+   "niche": "private-tutors",
+   "name": "TutorLedger: Lesson Log, Invoices and Late-Cancel Fees (Any Payment Method)",
+   "type": "html tool / micro-CRM",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 35,
+   "unique_concept": "Payment-neutral tutor ledger: records lessons, generates monthly family statements and applies your written late-cancel rule, and logs payments received by Zelle/Venmo/cash/bank transfer so no processing fee is baked in.",
+   "persona": "Solo tutor, direct billing",
+   "pain_points": "Chasing payments; online-payment fees; awkward cancellation fees",
+   "pitch_points": "No processing fees; clear statements; policy applied consistently",
+   "features": [
+    "Students/families, rates, packages (prepaid lessons balance)",
+    "Lesson log (date, minutes, status: done/late-cancel/no-show)",
+    "Late-cancel rule: notice hours + fee % (user-set)",
+    "Monthly statement per family (print/PDF)",
+    "Payments received log with method, outstanding balance",
+    "localStorage + CSV export"
+   ],
+   "build_spec": "Single-file HTML. balance = sum(charges) - sum(payments); package balance = lessons_bought - lessons_used; fee = fee_pct x lesson_price when notice < threshold. Unit tests with 3 families; phone-width.",
+   "evidence_refs": [
+    "T4",
+    "T5",
+    "T6",
+    "T7"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "TutorBird",
+     "Teachworks",
+     "Wyzant (marketplace)"
+    ]
+   },
+   "score_out_of_40": 27,
+   "score_note": "self-scored from evidence cards"
+  },
+  {
+   "id": "d20261125-05",
+   "niche": "private-tutors",
+   "name": "ProgressNote: Parent Progress Report Generator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 29,
+   "unique_concept": "Turns 60-second post-lesson notes into a clean monthly progress report with goals, topics covered and next steps - a parent-facing page that does not require a full tutoring platform.",
+   "persona": "Solo tutor / small pod",
+   "pain_points": "Parents want updates; reports take time",
+   "pitch_points": "Professional monthly reports in minutes; printable",
+   "features": [
+    "Student profile and goals",
+    "Per-lesson note (topic, win, struggle, homework)",
+    "Auto monthly summary (topics list, attendance count)",
+    "Print/PDF report with logo/colours",
+    "localStorage, export"
+   ],
+   "build_spec": "Single-file HTML; report assembled from notes arrays; attendance computed from lesson statuses; no scoring claims. Unit tests + print check.",
+   "evidence_refs": [
+    "T5"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "TutorBird reports",
+     "Teachworks",
+     "ClassDojo tutor tools"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence for willingness to pay is Low (single reviewer wishes); lowest-confidence software"
+  },
+  {
+   "id": "d20261125-06",
+   "niche": "private-tutors",
+   "name": "Tutor Income and Package Pricing Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build2",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet comparing per-lesson vs prepaid package pricing, prep/admin time and software/payment fee assumptions (user-entered) to show the true hourly rate.",
+   "persona": "Solo tutor",
+   "pain_points": "Unpaid prep/admin time; unclear package discount impact",
+   "pitch_points": "See true hourly rate; test package discounts",
+   "features": [
+    "Inputs (rate, lessons/week, prep minutes, admin minutes, fee %)",
+    "True hourly rate",
+    "Package discount impact (cancellations assumed by user)",
+    "Annual income projection",
+    "Break-even students for a target"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests. No assumed platform commission figures.",
+   "evidence_refs": [
+    "T4",
+    "T5"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "generic tutor sheets",
+     "TutorBird reports",
+     "Teachworks reports"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards"
+  },
+  {
+   "id": "d20261125-07",
+   "niche": "small-landlords",
+   "name": "MoveOut Ledger: Itemized Deposit Statement Builder",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 35,
+   "unique_concept": "Compares move-in vs move-out condition room by room, prorates repair items by user-entered useful life to separate wear from damage, and prints an itemized statement with a state-deadline reminder field.",
+   "persona": "Accidental landlord (1-5 units)",
+   "pain_points": "Deposit disputes; no consistent itemization",
+   "pitch_points": "Consistent itemized statements; evidence checklist; faster turnover",
+   "features": [
+    "Room/item checklist with move-in vs move-out condition",
+    "Photo reference field (filename/note, no upload)",
+    "Cost per item with receipt ref and optional useful-life proration (user-entered, no legal assumption)",
+    "Deposit, deductions, refund due calculation",
+    "Deadline reminder (user enters state days)",
+    "Printable itemized statement; 'not legal advice' footer"
+   ],
+   "build_spec": "Single-file HTML. refund = deposit - sum(deductions); prorated = cost x (1 - age/useful_life) clamped 0-1 (label as optional method). Unit tests + phone width. No state law claims.",
+   "evidence_refs": [
+    "L8",
+    "L6"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "TurboTenant",
+     "Avail",
+     "Landlord Studio"
+    ]
+   },
+   "score_out_of_40": 26,
+   "score_note": "self-scored from evidence cards"
+  },
+  {
+   "id": "d20261125-08",
+   "niche": "small-landlords",
+   "name": "FixLog: Maintenance Request Tracker + Tenant Request Link",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build3",
+   "price_usd": 35,
+   "unique_concept": "A lightweight maintenance tracker with a shareable request form (mailto/WhatsApp-ready text) and status timeline, aimed at the 83.8% of landlords who (per one vendor survey) do not track maintenance digitally.",
+   "persona": "Accidental landlord",
+   "pain_points": "Requests lost in texts; no repair history",
+   "pitch_points": "One place for requests, vendors, costs and tenant updates",
+   "features": [
+    "Properties/units and tenants",
+    "Request log with priority, status, vendor, cost, dates",
+    "Tenant-facing request message generator (copy link/text template)",
+    "Status update message templates",
+    "Per-unit repair history and annual cost summary",
+    "CSV export, localStorage"
+   ],
+   "build_spec": "Single-file HTML. Note: no server, so 'tenant link' is a pre-filled mailto/WhatsApp text, not a hosted form (state in README). Unit tests + phone width.",
+   "evidence_refs": [
+    "L3",
+    "L4"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "Avail",
+     "TenantCloud",
+     "Landlord Studio"
+    ]
+   },
+   "score_out_of_40": 26,
+   "score_note": "L4 percentage is a vendor figure seen via snippet; do not cite as fact in marketing"
+  },
+  {
+   "id": "d20261125-09",
+   "niche": "small-landlords",
+   "name": "RentRadar: Rent Reminder + Late Fee n8n Flow",
+   "type": "n8n",
+   "is_software": true,
+   "assigned_stage": "build3",
+   "price_usd": 45,
+   "unique_concept": "n8n flow reading a Google Sheet rent roll: due-date reminders, late notice with a fee you configure per lease, and a monthly owner summary; no per-unit subscription.",
+   "persona": "Accidental landlord / small investor",
+   "pain_points": "Chasing rent manually; per-unit software fees",
+   "pitch_points": "Automated reminders; consistent late notices; owner dashboard row",
+   "features": [
+    "Rent roll sheet (unit, tenant, due day, rent, grace days, late fee rule, contact)",
+    "Reminder at -3 days and due date",
+    "Late notice after grace with computed fee (flat or %, user-set)",
+    "Paid/unpaid status column and monthly summary",
+    "Credentials as placeholders; email-first, SMS optional"
+   ],
+   "build_spec": "tools/n8n; validated with simulator; QA states not run live. Fee limits vary by law: README warns to check local rules.",
+   "evidence_refs": [
+    "L6",
+    "L7"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "TenantCloud",
+     "Avail (free tier)",
+     "RentRedi"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "L6 survey identity is unclear (Low)"
+  },
+  {
+   "id": "d20261125-10",
+   "niche": "small-landlords",
+   "name": "Small Landlord Notice + Addendum Pack",
+   "type": "docx",
+   "is_software": false,
+   "assigned_stage": "build2",
+   "price_usd": 29,
+   "unique_concept": "Notice and addendum templates for small landlords: late-rent reminder, maintenance procedure addendum, move-out instructions, deposit itemization cover letter. Templates only, not legal advice; state rules differ.",
+   "persona": "Accidental landlord",
+   "pain_points": "Ad hoc messages and no standard process",
+   "pitch_points": "Consistent paperwork; fewer disputes; one pack",
+   "features": [
+    "Late-rent reminder/notice (fields for local rules)",
+    "Maintenance request procedure addendum",
+    "Move-in/move-out condition form",
+    "Move-out instructions letter",
+    "Deposit itemization cover letter",
+    "Rent increase notice template"
+   ],
+   "build_spec": "python-docx + PDF; bracketed fields; prominent 'not legal advice; laws vary by state' notice.",
+   "evidence_refs": [
+    "L8",
+    "L3"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products",
+    "competitors": [
+     "TurboTenant forms (free tier)",
+     "Avail lease tools",
+     "generic Etsy landlord forms"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Competitive: free forms exist in landlord apps"
+  },
+  {
+   "id": "d20261125-11",
+   "niche": "small-landlords",
+   "name": "Rent vs Cost Reality Planner",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build3",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet projecting each unit's break-even rent when taxes/insurance/maintenance rise, with a rent-increase scenario table; operating-cost focus, not an investment analyzer.",
+   "persona": "Growing small investor",
+   "pain_points": "Rising costs (74.4% report increases per Avail survey), unclear break-even",
+   "pitch_points": "Know which units need a rent review; scenario test",
+   "features": [
+    "Units sheet (rent, mortgage/PI, tax, insurance, maintenance reserve %, vacancy %)",
+    "Break-even rent per unit",
+    "Cost increase scenarios (user %)",
+    "Rent increase needed table",
+    "Portfolio summary"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests. Differs from memory xlsx-06 (rental property analyzer + portfolio): operating break-even planner, no purchase/ROI analysis.",
+   "evidence_refs": [
+    "L5",
+    "L7"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or 2026-11-24 products ; Near-neighbour of xlsx-06; keep scope strictly operating costs",
+    "competitors": [
+     "Landlord Studio reports",
+     "Baselane",
+     "generic rental sheets"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Near-neighbour of xlsx-06; keep scope strictly operating costs"
+  }
+ ],
+ "stage_counts": {
+  "build1": 4,
+  "build2": 4,
+  "build3": 3
+ },
+ "stage_software": {
+  "build1": 3,
+  "build2": 2,
+  "build3": 2
+ },
+ "blocked_or_missing": [
+  "Reddit/Facebook group threads not returned by WebSearch",
+  "Meta Ad Library not reachable",
+  "No direct WebFetch tool: research used search-result summaries only",
+  "IBISWorld/Zillow/Avail reports not read in full",
+  "No detailing no-show rate; no deposit-dispute statistics"
+ ],
+ "dropped_below_gate": [
+  {
+   "name": "Detailing Agreement + Vehicle Condition Report Pack",
+   "score": 23,
+   "reason": "below 24/40 gate (common template type, weak differentiation)"
+  },
+  {
+   "name": "Tutor Policy + Parent Welcome Pack",
+   "score": 23,
+   "reason": "below 24/40 gate (common template type, weak differentiation)"
+  }
+ ],
+ "stage_note": "Only 11 products pass the 24/40 gate; stages hold 4/4/3 (one stage has 3, below the 4-5 target) rather than padding with weak ideas."
+}

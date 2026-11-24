@@ -1,0 +1,20 @@
+# Research: small/independent landlords, 2026-11-25
+| # | Claim | URL | Type | Conf. |
+|---|---|---|---|---|
+| L1 | Federal survey data (via HousingWire): individual investors own ~59% of rental properties but ~32% of rental units; entities ~43% of units. NBER/Yale paper: individuals own ~61% of units across 11 large metros. Definitions differ; do not combine. | https://www.housingwire.com/articles/small-investors-housing-supply/ ; https://cowles.yale.edu/sites/default/files/2026-06/d2531.pdf | quant | Med |
+| L2 | Realtor.com: small investors ~63% of investor home purchases in 2025, highest in 15+ years. | https://www.hawaiitribune-herald.com/syndicated/the-rise-of-the-five-house-landlord-wall-street-blinked-small-investors-kept-buying | quant | Med |
+| L3 | Zillow survey (>1,000 owners, seen only via summaries): 92% rank maintenance/repairs in top 3 most taxing tasks, 40% rank it #1; 71% rank tenant screening in top 3. | https://rentalhousingjournal.com/?p=11431 ; https://au.finance.yahoo.com/news/landlords-sound-off-maintaining-properties-120000201.html | quant | Med |
+| L4 | Avail analysis of independent landlords: 65.2% use digital tools for tenant screening vs only 16.2% for maintenance/repairs tracking. | https://www.avail.com/education/articles/2026-independent-landlord-survey (summary via search) | quant | Low-Med (vendor survey, figure seen via snippet) |
+| L5 | Avail 2026 survey (4,055 active Avail users, Dec 26-29 2025): 74.4% say ownership costs rose (taxes, insurance); 18% have strict no-rent-increase policy; 32.9% plan to buy more, 6.6% to exit. | https://www.avail.com/education/articles/2026-independent-landlord-survey | quant | Med (vendor, self-selected sample) |
+| L6 | One survey: rent late 25.1% of the time on average; 40.6% had a tenant suddenly stop paying; 63.9% of renters got some or all deposit back. Survey identity/date unclear (SlideShare EZ Lease). | https://www.slideshare.net/slideshow/final-ez-lease-survey-data-9-2311/9419363 | quant | Low |
+| L7 | Software: Avail free tier, Unlimited Plus ~$9/unit/mo (TenantCloud says $7); TenantCloud $15.60-29.30/mo + 3.5% + $0.30 card fee; Landlord Studio free tier, PRO from $12/mo billed annually; Baselane free core, Smart $20/mo. | https://www.capterra.com/p/181119/Avail/pricing/ ; https://www.tenantcloud.com/review/avail-vs-tenantcloud ; https://www.turbotenant.com/property-management-software/best-property-management-software-for-small-landlords/ | quant | Med-Low |
+| L8 | Move-out: landlords generally may deduct for damage beyond normal wear and tear, must itemize (often with receipts); deadlines vary by state (e.g. California 21 days); move-in/out inspection reports used in disputes; photos recommended. No dispute statistics found. | https://www.findlaw.com/realestate/landlord-tenant-law/what-can-a-landlord-deduct-from-a-security-deposit-for-cleaning.html ; https://www.rentcafe.com/blog/renting/security-deposit-deductions/ | qual | Med |
+
+## Gaps (honest)
+- No Reddit threads (BiggerPockets thread existed in results but was not opened); no Meta Ad Library; no deposit-dispute statistics; Zillow report only via summaries. Software market is crowded with free tiers (Avail, Landlord Studio, Baselane), so differentiation must be narrow workflows, not general property management. Legal rules vary by state: all legal-adjacent products are templates with "not legal advice".
+- Gate: strongest of the three niches (sources 5+, quantitative L3/L5, gap: maintenance tracking digitised by only 16.2% (L4), deposit itemization, cost-driven rent planning). Competitor prices >=5: Avail, TenantCloud, Landlord Studio, Baselane, TurboTenant listed.
+- Overlap with memory: `xlsx-06 Rental property analyzer + portfolio` exists; product 13 is an operating-cost/break-even rent planner, flagged as near-neighbour (differentiated, not a duplicate).
+
+## Personas
+1. **Accidental landlord (1-5 units):** self-manages with texts and a spreadsheet; trigger: a repair request lost in text history, or a deposit dispute.
+2. **Growing small investor (6-20 units):** wants cheap, narrow tools instead of $9/unit software.
