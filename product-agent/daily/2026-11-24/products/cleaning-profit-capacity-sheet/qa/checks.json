@@ -1,0 +1,356 @@
+{
+ "file": "/home/user/dreamy-bytes-1/product-agent/daily/2026-11-24/products/cleaning-profit-capacity-sheet/Cleaning-Profit-and-Capacity-Sheet.xlsx",
+ "checks": [
+  [
+   "Clients",
+   "J6",
+   5.5,
+   1e-06,
+   "labor hours"
+  ],
+  [
+   "Clients",
+   "K6",
+   160.58,
+   1e-06,
+   "cost per visit"
+  ],
+  [
+   "Clients",
+   "L6",
+   29.419999999999987,
+   1e-06,
+   "profit"
+  ],
+  [
+   "Clients",
+   "M6",
+   0.15484210526315784,
+   1e-06,
+   "margin"
+  ],
+  [
+   "Clients",
+   "N6",
+   5.349090909090907,
+   1e-06,
+   "profit/labor hr"
+  ],
+  [
+   "Clients",
+   "P6",
+   232.43076923076927,
+   1e-06,
+   "reprice price"
+  ],
+  [
+   "Clients",
+   "J7",
+   1.8333333333333333,
+   1e-06,
+   "labor hours"
+  ],
+  [
+   "Clients",
+   "K7",
+   57.56000000000001,
+   1e-06,
+   "cost per visit"
+  ],
+  [
+   "Clients",
+   "L7",
+   62.43999999999999,
+   1e-06,
+   "profit"
+  ],
+  [
+   "Clients",
+   "M7",
+   0.5203333333333332,
+   1e-06,
+   "margin"
+  ],
+  [
+   "Clients",
+   "N7",
+   34.058181818181815,
+   1e-06,
+   "profit/labor hr"
+  ],
+  [
+   "Clients",
+   "P7",
+   79.32307692307695,
+   1e-06,
+   "reprice price"
+  ],
+  [
+   "Clients",
+   "J8",
+   4.666666666666667,
+   1e-06,
+   "labor hours"
+  ],
+  [
+   "Clients",
+   "K8",
+   137.58000000000004,
+   1e-06,
+   "cost per visit"
+  ],
+  [
+   "Clients",
+   "L8",
+   -7.580000000000041,
+   1e-06,
+   "profit"
+  ],
+  [
+   "Clients",
+   "M8",
+   -0.05830769230769262,
+   1e-06,
+   "margin"
+  ],
+  [
+   "Clients",
+   "N8",
+   -1.624285714285723,
+   1e-06,
+   "profit/labor hr"
+  ],
+  [
+   "Clients",
+   "P8",
+   201.66153846153856,
+   1e-06,
+   "reprice price"
+  ],
+  [
+   "Settings",
+   "C8",
+   26.160000000000004,
+   1e-09,
+   "loaded rate"
+  ],
+  [
+   "Dashboard",
+   "B6",
+   3882.058,
+   1e-06,
+   "monthly revenue"
+  ],
+  [
+   "Dashboard",
+   "D6",
+   1184.2089259999996,
+   1e-06,
+   "monthly profit"
+  ],
+  [
+   "Dashboard",
+   "F6",
+   0.30504668554668674,
+   1e-06,
+   "overall margin"
+  ],
+  [
+   "Dashboard",
+   "H6",
+   13.202983481622349,
+   1e-06,
+   "profit per labor hour"
+  ],
+  [
+   "Capacity",
+   "B17",
+   20.714209006928407,
+   1e-06,
+   "booked hours/week"
+  ],
+  [
+   "Dashboard",
+   "D9",
+   556.9844215384622,
+   1e-06,
+   "extra revenue if repriced"
+  ],
+  [
+   "Capacity",
+   "C6",
+   7.770015396458814,
+   1e-06,
+   "Maria booked"
+  ],
+  [
+   "Capacity",
+   "B21",
+   2,
+   0,
+   "more clients that fit (rounded down)"
+  ],
+  [
+   "Clients",
+   "O6",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Clients",
+   "O7",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Clients",
+   "O8",
+   "Losing money",
+   0,
+   "status"
+  ],
+  [
+   "Clients",
+   "O9",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Clients",
+   "O10",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Clients",
+   "O11",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Clients",
+   "O12",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Clients",
+   "O13",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Clients",
+   "O14",
+   "On target",
+   0,
+   "status"
+  ]
+ ],
+ "sample": [
+  [
+   "Harper Residence (sample)",
+   "Maria",
+   "Weekly",
+   190,
+   2.5,
+   2,
+   30,
+   12
+  ],
+  [
+   "Okafor Condo (sample)",
+   "Dev",
+   "Bi-weekly",
+   120,
+   1.5,
+   1,
+   20,
+   6
+  ],
+  [
+   "Larkin Family (sample)",
+   "Ana",
+   "Weekly",
+   130,
+   2,
+   2,
+   40,
+   15
+  ],
+  [
+   "Nguyen Townhouse (sample)",
+   "Maria",
+   "Bi-weekly",
+   175,
+   2.5,
+   1,
+   25,
+   9
+  ],
+  [
+   "Brooks Apartment (sample)",
+   "Dev",
+   "Weekly",
+   95,
+   1.5,
+   1,
+   15,
+   4
+  ],
+  [
+   "Castillo Home (sample)",
+   "Ana",
+   "Every 4 weeks",
+   260,
+   3.5,
+   2,
+   35,
+   14
+  ],
+  [
+   "Patel Duplex (sample)",
+   "Maria",
+   "Monthly",
+   210,
+   3,
+   1,
+   30,
+   11
+  ],
+  [
+   "Simmons Loft (sample)",
+   "Dev",
+   "Bi-weekly",
+   140,
+   2,
+   1,
+   45,
+   18
+  ],
+  [
+   "Reyes Family (sample)",
+   "Ana",
+   "Weekly",
+   150,
+   2,
+   1,
+   20,
+   7
+  ]
+ ],
+ "settings": {
+  "loaded": 26.160000000000004,
+  "cpm": 0.6,
+  "sup": 0.05,
+  "target": 0.3,
+  "wpm": 4.33
+ }
+}
