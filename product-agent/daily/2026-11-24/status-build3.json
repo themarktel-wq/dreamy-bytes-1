@@ -1,1 +1,30 @@
-{"stage":"build3","date":"2026-11-24","products":{"d20261124-10":{"slug":"delivery-promise-tracker","name":"Delivery Promise Tracker for Photographers","status":"built","qa":"pass","price_usd":39,"files":["index.html","README.md","cover.png"]}}}
+{
+ "stage": "build3",
+ "date": "2026-11-24",
+ "products": {
+  "d20261124-10": {
+   "slug": "delivery-promise-tracker",
+   "name": "Delivery Promise Tracker for Photographers",
+   "status": "built",
+   "qa": "pass",
+   "price_usd": 39,
+   "files": [
+    "index.html",
+    "README.md",
+    "cover.png"
+   ]
+  },
+  "d20261124-13": {
+   "slug": "shot-list-day-timeline-builder",
+   "name": "Shot List & Day Timeline Builder",
+   "status": "built",
+   "qa": "pass",
+   "price_usd": 29,
+   "files": [
+    "index.html",
+    "README.md",
+    "cover.png"
+   ]
+  }
+ }
+}

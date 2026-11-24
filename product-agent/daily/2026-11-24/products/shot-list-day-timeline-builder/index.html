@@ -1,0 +1,123 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shot List & Day Timeline Builder</title>
+<style>
+:root{--bg:#f7f4f0;--card:#fff;--ink:#222a33;--mut:#6b7280;--acc:#7a4b5c;--line:#e6dfd8;--gold:#b7791f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:var(--acc);color:#fff;padding:16px}header h1{margin:0;font-size:20px}header p{margin:4px 0 0;opacity:.88;font-size:13px}
+main{max-width:1050px;margin:0 auto;padding:10px 12px 60px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}h2{font-size:16px;margin:0 0 8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.row>label{flex:1 1 130px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+input,select,textarea,button{font:inherit}input,select{border:1px solid var(--line);border-radius:6px;padding:7px 8px;background:#fff;color:var(--ink);width:100%}
+button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer}button.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.del{background:#fff;color:#b42318;border:1px solid #b42318;padding:4px 8px;font-size:12px}
+.li{display:grid;grid-template-columns:1fr 80px 34px;gap:6px;margin:5px 0;align-items:center}.li3{display:grid;grid-template-columns:1fr 64px 80px 34px;gap:6px;margin:5px 0;align-items:center}
+.note{font-size:12px;color:var(--mut)}.warn{background:#fff4e5;border:1px solid #f0c27b;border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0}.err{background:#fdecea;border-color:#f1a9a0}
+.tl{width:100%;border-collapse:collapse}.tl td{border-bottom:1px solid var(--line);padding:7px 6px;font-size:14px;vertical-align:top}.tl td.t{white-space:nowrap;width:1%;font-variant-numeric:tabular-nums;color:var(--mut)}.tl td.m{white-space:nowrap;width:1%;color:var(--mut);text-align:right}
+.tl tr.ceremony td{font-weight:700;background:#f6eef1}.tl tr.golden td{background:#fff7e0;font-weight:600}.tl tr.travel td,.tl tr.buffer td,.tl tr.gap td{color:var(--mut);font-style:italic}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:760px){.cols{grid-template-columns:1fr}.li{grid-template-columns:1fr 64px 34px}.li3{grid-template-columns:1fr 54px 64px 34px}}
+.pr{display:none}@media print{header,.card.noprint,.banner,.noprint{display:none!important}body{background:#fff}.card{border:0;padding:0}.pr{display:block}main{padding:0}}
+.banner{background:#fff8e1;border:1px solid #f0d98a;border-radius:8px;padding:8px 10px;font-size:13px;margin:10px 0}
+</style></head><body>
+<header><h1>Shot List &amp; Day Timeline Builder</h1><p>Builds the wedding-day schedule backwards from the ceremony time, and checks that your family group shots actually fit. Data stays in this browser.</p></header>
+<main>
+<div class="banner noprint" id="ex">The values loaded are <b>editable examples</b>, not industry standards. Change every duration to match your own pace and the venue.</div>
+<section class="card noprint"><h2>1. The day</h2><div class="row">
+<label>Couple<input id="couple"></label><label>Wedding date<input id="date" type="date"></label>
+<label>Ceremony start<input id="cs" type="time"></label><label>Ceremony length (min)<input id="cm" type="number" min="0"></label>
+<label>Sunset time (type it in)<input id="sun" type="time"></label><label>Golden hour starts (min before sunset)<input id="gl" type="number" min="0"></label><label>Golden portraits (min)<input id="gm" type="number" min="0"></label></div>
+<div class="row" style="margin-top:8px"><label>Travel: prep venue to ceremony (min)<input id="ta" type="number" min="0"></label><label>Travel: ceremony to reception (min)<input id="tb" type="number" min="0"></label>
+<label>Buffer added to each travel and before ceremony (min)<input id="bf" type="number" min="0"></label><label>Formals setup time (min)<input id="fs" type="number" min="0"></label><label>Warn if group shots exceed (min)<input id="fw" type="number" min="0"></label></div>
+<p class="note">Sunset is typed in by you (look it up for the venue and date); this tool makes no network requests.</p></section>
+<div class="cols noprint"><section class="card"><h2>2. Before the ceremony</h2><div id="before"></div><button class="sec" data-add="before">+ Add block</button><p class="note">In time order. Travel and the arrival buffer are added automatically right before the ceremony.</p></section>
+<section class="card"><h2>3. After the ceremony</h2><div id="after"></div><button class="sec" data-add="after">+ Add block</button><p class="note">The "Family formals" block length is calculated from your group shot list. The golden-hour slot is pinned to sunset.</p></section></div>
+<section class="card noprint"><h2>4. Family group shot list</h2><div class="note" style="margin-bottom:6px">Name &nbsp;|&nbsp; how many of this shot &nbsp;|&nbsp; minutes each</div><div id="groups"></div><button class="sec" data-add="groups">+ Add group shot</button>
+<p id="gtot" style="font-weight:600;margin:10px 0 0"></p></section>
+<div id="warns"></div>
+<section class="card"><h2>5. Timeline</h2><div id="err"></div><table class="tl"><tbody id="tl"></tbody></table><p class="note" id="tlnote"></p>
+<div class="row noprint" style="margin-top:8px"><button id="print">Print timeline and shot list</button><button class="sec" id="copy">Copy as text</button><button class="sec" id="export">Export JSON</button><button class="sec" id="importBtn">Import JSON</button><input type="file" id="importFile" accept=".json" style="display:none"><button class="sec" id="reset">Reset examples</button></div><span class="note" id="copied"></span></section>
+<section class="card pr"><h2>Family group shot list</h2><table class="tl"><tbody id="prGroups"></tbody></table></section>
+</main>
+<script>
+// ---- CORE (pure functions, unit-tested in Node) ----
+function parseTime(s) { var m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '')); if (!m) return NaN; var h = +m[1], mi = +m[2]; if (h > 23 || mi > 59) return NaN; return h * 60 + mi; }
+function fmtTime(n) { // minutes since midnight (may be <0 or >=1440) -> 'h:mm AM/PM' with day marker
+  if (!isFinite(n)) return '--'; var day = Math.floor(n / 1440), m = ((n % 1440) + 1440) % 1440, h = Math.floor(m / 60), mi = m % 60;
+  var s = ((h % 12) || 12) + ':' + String(mi).padStart(2, '0') + ' ' + (h < 12 ? 'AM' : 'PM'); return s + (day > 0 ? ' (+1 day)' : day < 0 ? ' (-1 day)' : ''); }
+function groupTotal(groups) { return groups.reduce(function (t, g) { var c = Math.max(0, Number(g.count) || 0), m = Math.max(0, Number(g.minutes) || 0); return t + c * m; }, 0); }
+// Build the day. Blocks BEFORE the ceremony are laid out backwards from the ceremony start; blocks AFTER run forward from ceremony end.
+// cfg: {ceremonyStart,ceremonyMin,sunset,goldenLead,goldenMin,travelA,travelB,buffer,formalsSetup,formalsWarn,groups,
+//       before:[{name,min}] in time order, after:[{name,min,kind}] kind 'formals' | 'travel' | undefined}
+function buildSchedule(cfg) {
+  var cs = parseTime(cfg.ceremonyStart), cMin = Math.max(0, Number(cfg.ceremonyMin) || 0), buf = Math.max(0, Number(cfg.buffer) || 0), warnings = [];
+  if (isNaN(cs)) return { error: 'Enter a valid ceremony start time (hh:mm).' };
+  var travelA = Math.max(0, Number(cfg.travelA) || 0), travelB = Math.max(0, Number(cfg.travelB) || 0);
+  var chain = [], cursor = cs;
+  function back(name, min, kind) { if (min <= 0) return; cursor -= min; chain.unshift({ name: name, start: cursor, end: cursor + min, min: min, kind: kind }); }
+  back('Arrival buffer (setup, early guests)', buf, 'buffer');
+  back('Travel to ceremony venue', travelA, 'travel');
+  (cfg.before || []).slice().reverse().forEach(function (b) { back(b.name, Math.max(0, Number(b.min) || 0), 'block'); });
+  var rows = chain.slice(), startOfDay = rows.length ? rows[0].start : cs;
+  rows.push({ name: 'Ceremony', start: cs, end: cs + cMin, min: cMin, kind: 'ceremony' }); cursor = cs + cMin;
+  var gt = groupTotal(cfg.groups || []), sunset = parseTime(cfg.sunset), gl = Number(cfg.goldenLead); if (!isFinite(gl)) gl = 30;
+  var gm = Math.max(0, Number(cfg.goldenMin) || 0), goldenStart = isNaN(sunset) ? NaN : sunset - gl;
+  var goldenWanted = !isNaN(goldenStart) && gm > 0, goldenPlaced = !goldenWanted, goldenFit = goldenWanted ? 'ok' : 'none';
+  function placeGolden() {
+    var st = Math.max(cursor, goldenStart); if (cursor > goldenStart) goldenFit = 'late';
+    if (st > cursor) rows.push({ name: 'Free time / reception warm-up', start: cursor, end: st, min: st - cursor, kind: 'gap' });
+    rows.push({ name: 'Golden-hour couple portraits', start: st, end: st + gm, min: gm, kind: 'golden' }); cursor = st + gm; goldenPlaced = true; }
+  (cfg.after || []).forEach(function (b) {
+    var m = Math.max(0, Number(b.min) || 0);
+    if (b.kind === 'formals') m = gt + Math.max(0, Number(cfg.formalsSetup) || 0);
+    if (b.kind === 'travel') m = travelB + buf;
+    if (!goldenPlaced && cursor + m > goldenStart) placeGolden();
+    rows.push({ name: b.name, start: cursor, end: cursor + m, min: m, kind: b.kind || 'block' }); cursor += m;
+  });
+  if (!goldenPlaced) placeGolden();
+  if (goldenFit === 'late') warnings.push('Golden-hour portraits cannot start at ' + fmtTime(goldenStart) + ' because earlier blocks run later. They start when the schedule reaches them. Shorten earlier blocks or move the ceremony earlier.');
+  if (startOfDay < 0) warnings.push('The first block starts before midnight. Shorten the pre-ceremony blocks.');
+  var wa = Number(cfg.formalsWarn) || 0; if (wa > 0 && gt > wa) warnings.push('Family group shots total ' + gt + ' min, above your own limit of ' + wa + ' min. Trim the list or agree a longer formals block.');
+  return { rows: rows, startOfDay: startOfDay, endOfDay: cursor, groupMinutes: gt, goldenStart: goldenStart, goldenFit: goldenFit, warnings: warnings };
+}
+if (typeof module !== 'undefined') module.exports = { parseTime: parseTime, fmtTime: fmtTime, groupTotal: groupTotal, buildSchedule: buildSchedule };
+
+(function(){
+var KEY='stb.v1',$=function(i){return document.getElementById(i)};
+function ex(){return {couple:'Example Couple',date:'',cs:'16:00',cm:30,sun:'18:30',gl:30,gm:20,ta:20,tb:15,bf:10,fs:4,fw:30,
+ before:[{name:'Getting-ready details and portraits',min:60},{name:'First look + couple portraits',min:40}],
+ after:[{name:'Family formals',kind:'formals'},{name:'Travel to reception',kind:'travel'},{name:'Cocktail hour (couple has a break)',min:60},{name:'Dinner, toasts and first dance',min:90}],
+ groups:[{name:'Couple + both sets of parents',count:1,minutes:4},{name:'Couple + each parent pair',count:2,minutes:3},{name:'Couple + siblings',count:2,minutes:3},{name:'Couple + grandparents',count:2,minutes:3},{name:'Couple + wedding party',count:1,minutes:5}]}}
+var S;function load(){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}if(!S||!S.before)S=ex()}function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var F=['couple','date','cs','cm','sun','gl','gm','ta','tb','bf','fs','fw'];
+function cfg(){return {ceremonyStart:S.cs,ceremonyMin:S.cm,sunset:S.sun,goldenLead:S.gl,goldenMin:S.gm,travelA:S.ta,travelB:S.tb,buffer:S.bf,formalsSetup:S.fs,formalsWarn:S.fw,groups:S.groups,before:S.before,after:S.after}}
+function listHtml(k){var a=S[k];return a.map(function(x,i){
+ if(k==='groups')return '<div class="li3"><input data-k="groups" data-i="'+i+'" data-f="name" value="'+esc(x.name)+'"><input type="number" min="0" data-k="groups" data-i="'+i+'" data-f="count" value="'+esc(x.count)+'"><input type="number" min="0" step="0.5" data-k="groups" data-i="'+i+'" data-f="minutes" value="'+esc(x.minutes)+'"><button class="del" data-rm="'+k+'" data-i="'+i+'">x</button></div>';
+ var auto=x.kind==='formals'||x.kind==='travel';
+ return '<div class="li"><input data-k="'+k+'" data-i="'+i+'" data-f="name" value="'+esc(x.name)+'"><input type="number" min="0" '+(auto?'disabled title="calculated" value="auto"':'data-k="'+k+'" data-i="'+i+'" data-f="min" value="'+esc(x.min)+'"')+'><button class="del" data-rm="'+k+'" data-i="'+i+'">x</button></div>'}).join('')}
+function lines(r){return r.rows.map(function(x){return fmtTime(x.start)+' - '+fmtTime(x.end)+'  '+x.name+(x.min?' ('+x.min+' min)':'')})}
+function render(focusKeep){
+ F.forEach(function(f){var el=$(f);if(document.activeElement!==el)el.value=S[f]==null?'':S[f]});
+ if(!focusKeep){['before','after','groups'].forEach(function(k){$(k).innerHTML=listHtml(k)})}
+ var r=buildSchedule(cfg());
+ if(r.error){$('err').innerHTML='<div class="warn err">'+esc(r.error)+'</div>';$('tl').innerHTML='';$('warns').innerHTML='';$('tlnote').textContent='';return}
+ $('err').innerHTML='';
+ $('gtot').textContent='Group shots total: '+r.groupMinutes+' min'+(S.fs>0?' (+ '+S.fs+' min setup = '+(r.groupMinutes+Number(S.fs))+' min formals block)':'');
+ $('warns').innerHTML=r.warnings.map(function(w){return '<div class="warn">'+esc(w)+'</div>'}).join('');
+ $('tl').innerHTML=r.rows.map(function(x){return '<tr class="'+esc(x.kind)+'"><td class="t">'+esc(fmtTime(x.start))+' - '+esc(fmtTime(x.end))+'</td><td>'+esc(x.name)+'</td><td class="m">'+x.min+' min</td></tr>'}).join('');
+ $('tlnote').textContent=(S.couple?S.couple+(S.date?' · '+S.date:'')+' · ':'')+'Photographer starts '+fmtTime(r.startOfDay)+'. Last block ends '+fmtTime(r.endOfDay)+'.';
+ $('prGroups').innerHTML=S.groups.map(function(g){return '<tr><td class="t">'+esc(g.count)+' x</td><td>'+esc(g.name)+'</td><td class="m">'+esc(g.minutes)+' min each</td></tr>'}).join('');
+ save()}
+document.addEventListener('input',function(e){var t=e.target;
+ if(t.dataset&&t.dataset.k){var it=S[t.dataset.k][t.dataset.i];if(it){it[t.dataset.f]=t.type==='number'?(t.value===''?'':Number(t.value)):t.value;render(true)}}
+ else if(F.indexOf(t.id)>=0){S[t.id]=t.type==='number'?(t.value===''?'':Number(t.value)):t.value;render(true)}});
+document.addEventListener('click',function(e){var t=e.target;
+ if(t.dataset.rm){S[t.dataset.rm].splice(+t.dataset.i,1);render()}
+ if(t.dataset.add){var k=t.dataset.add;S[k].push(k==='groups'?{name:'New group shot',count:1,minutes:3}:{name:'New block',min:15});render()}});
+$('print').onclick=function(){window.print()};
+$('reset').onclick=function(){if(confirm('Reset everything to the examples?')){S=ex();render()}};
+$('copy').onclick=function(){var r=buildSchedule(cfg());if(r.error)return;var txt=(S.couple||'Wedding day')+(S.date?' - '+S.date:'')+'\nTIMELINE\n'+lines(r).join('\n')+'\n\nFAMILY GROUP SHOTS ('+r.groupMinutes+' min)\n'+S.groups.map(function(g){return g.count+' x '+g.name+' ('+g.minutes+' min each)'}).join('\n');
+ function ok(){$('copied').textContent='Copied'}var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok,function(){ta.select();document.execCommand('copy');ok()})}else{ta.select();document.execCommand('copy');ok()}document.body.removeChild(ta)};
+$('export').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));a.download='wedding-day-plan.json';a.click()};
+$('importBtn').onclick=function(){$('importFile').click()};
+$('importFile').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(!d||!Array.isArray(d.before)||!Array.isArray(d.after)||!Array.isArray(d.groups))throw 0;S=d;render()}catch(e){alert('That file is not a plan exported from this tool.')}};r.readAsText(f)};
+load();render();
+})();
+</script></body></html>
