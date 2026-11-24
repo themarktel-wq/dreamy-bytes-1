@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PawReport: Client Visit Report Card Generator</title>
+<style>
+:root{--ink:#1f2937;--mut:#5f6b7a;--bg:#f5f7fa;--line:#d8dee6;--acc:#2a7f62}
+*{box-sizing:border-box}html,body{margin:0}body{font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden}
+header{background:var(--acc);color:#fff;padding:14px 16px}header h1{margin:0;font-size:20px}header p{margin:2px 0 0;font-size:13px;opacity:.92}
+nav{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:0;z-index:5}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:20px;padding:8px 14px;font:inherit;color:var(--ink);cursor:pointer}nav button[aria-selected=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{max-width:980px;margin:0 auto;padding:14px 12px 40px}section{display:none}section.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}.card h2{margin:0 0 8px;font-size:17px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+input,select,textarea{width:100%;padding:9px;border:1px solid #b8c2cc;border-radius:8px;font:inherit;background:#fff;color:var(--ink);min-width:0}
+input[type=color]{padding:2px;height:40px}input[type=checkbox]{width:auto}
+.tg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.tg label{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;margin:0;cursor:pointer}
+.moods{display:flex;flex-wrap:wrap;gap:8px}.moods button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer;color:var(--ink)}.moods button[aria-pressed=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.slot{aspect-ratio:1;border:2px dashed #b8c2cc;border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;color:var(--mut);font-size:13px;text-align:center;cursor:pointer}
+.slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.slot input{position:absolute;inset:0;opacity:0;cursor:pointer}.slot .x{position:absolute;top:4px;right:4px;z-index:2;background:#fff;border:1px solid var(--line);border-radius:50%;width:26px;height:26px;padding:0;cursor:pointer;font-size:14px;line-height:1}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 14px;font:inherit;cursor:pointer}button.btn.alt{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#preview{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;max-width:520px;margin:0 auto}
+#preview .hd{padding:16px;color:#fff;display:flex;align-items:center;gap:12px}#preview .hd img{width:48px;height:48px;border-radius:10px;object-fit:cover;background:#fff}
+#preview .hd b{font-size:18px;display:block}#preview .hd span{font-size:13px;opacity:.95}
+#preview .bd{padding:14px 16px}#preview ul{list-style:none;margin:8px 0;padding:0}#preview li{padding:4px 0;border-bottom:1px solid #eef1f4}#preview li.no{color:#8a94a1}
+#preview .pics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}#preview .pics img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+#preview .notes{white-space:pre-wrap;background:#f6f8fa;border-radius:8px;padding:10px;margin-top:10px}
+.msg{font-size:13px;color:var(--mut);min-height:18px;margin-top:6px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 4px;border-bottom:1px solid var(--line);font-size:14px}
+@media (min-width:860px){.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}}
+@media print{header,nav,.noprint{display:none!important}body{background:#fff}main{padding:0}section{display:none!important}section#s-make{display:block!important}#form{display:none!important}#preview{border:0;max-width:none}.two{display:block}}
+</style></head><body>
+<header><h1>PawReport</h1><p>A branded visit report for your client in 30 seconds. Works offline; nothing is uploaded.</p></header>
+<nav id="tabs" role="tablist"></nav>
+<main>
+<section id="s-make" class="on"><div class="two">
+ <div id="form">
+  <div class="card"><h2>Visit</h2><div class="grid">
+   <div><label for="pet">Pet name</label><input id="pet" placeholder="e.g. Max"></div>
+   <div><label for="walker">Your name</label><input id="walker"></div>
+   <div><label for="when">Date and time</label><input id="when" type="datetime-local"></div>
+   <div><label for="dur">Length (minutes)</label><input id="dur" type="number" min="0" step="5"></div>
+   <div><label for="kind">Visit type</label><select id="kind"><option>Walk</option><option>Drop-in visit</option><option>Overnight stay</option><option>Day care</option><option>Grooming</option></select></div>
+  </div></div>
+  <div class="card"><h2>Quick checklist</h2><div class="tg" id="tg"></div>
+   <h2 style="margin-top:14px">Mood</h2><div class="moods" id="moods"></div></div>
+  <div class="card"><h2>Notes</h2><textarea id="notes" rows="4" placeholder="Anything the owner should know..."></textarea>
+   <h2 style="margin-top:14px">Photos (stay on this device)</h2><div class="photos" id="photos"></div></div>
+ </div>
+ <div>
+  <div id="preview" aria-live="polite"></div>
+  <div class="row noprint" style="justify-content:center"><button class="btn" id="bImg">Save as image</button><button class="btn alt" id="bCopy">Copy text</button><button class="btn alt" id="bPrint">Print / PDF</button><button class="btn alt" id="bSave">Save to history</button><button class="btn alt" id="bNew">New report</button></div>
+  <p class="msg noprint" id="msg" role="status" style="text-align:center"></p>
+ </div></div></section>
+<section id="s-hist"><div class="card"><h2>Visit history</h2><p class="msg">Saved on this device only. Photos are not stored in history.</p><div style="overflow-x:auto"><table id="ht"><thead><tr><th>Date</th><th>Pet</th><th>Type</th><th></th></tr></thead><tbody></tbody></table></div><div class="row"><button class="btn alt" id="hClear">Clear history</button></div></div></section>
+<section id="s-brand"><div class="card"><h2>Your brand</h2><div class="grid">
+ <div><label for="bname">Business name</label><input id="bname"></div>
+ <div><label for="bcol">Accent colour</label><input id="bcol" type="color"></div>
+ <div><label for="blogo">Logo (optional, stays on this device)</label><input id="blogo" type="file" accept="image/*"></div>
+ <div><label for="bfoot">Footer line</label><input id="bfoot" placeholder="e.g. Thank you for trusting us!"></div>
+</div><div class="row"><button class="btn alt" id="bLogoClear">Remove logo</button><button class="btn alt" id="bExport">Back up settings + history</button><label class="btn alt" style="margin:0;display:inline-block;cursor:pointer">Restore backup<input id="bImport" type="file" accept="application/json" hidden></label></div></div></section>
+</main>
+<script id="logic">
+const PR = (function(){
+  const TOGGLES = [['pee','Pee'],['poop','Poop'],['water','Fresh water'],['meal','Meal given'],['meds','Medication given'],['play','Play / toy time']];
+  const MOODS = [['happy','Happy','\u{1F604}'],['calm','Calm','\u{1F60C}'],['energetic','Energetic','\u{1F929}'],['tired','Tired','\u{1F634}'],['nervous','Nervous','\u{1F628}']];
+  const pad = n => String(n).padStart(2, '0');
+  function fmtWhen(v){ if(!v) return ''; const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/); if(!m) return String(v); const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1]; const h = +m[4]; return mon + ' ' + (+m[3]) + ', ' + m[1] + ' at ' + ((h%12)||12) + ':' + m[5] + (h<12?' AM':' PM'); }
+  function moodOf(r){ return MOODS.find(m => m[0] === r.mood) || null; }
+  function lines(r){ return TOGGLES.map(t => ({ key: t[0], label: t[1], done: !!(r.checks && r.checks[t[0]]) })); }
+  function title(r, b){ return (r.pet ? r.pet : 'Your pet') + "'s " + String(r.kind || 'visit').toLowerCase() + ' report'; }
+  function buildText(r, b){
+    const L = []; L.push((b.name ? b.name + ': ' : '') + title(r, b));
+    const w = fmtWhen(r.when); if (w) L.push(w + (r.dur ? ' (' + r.dur + ' min)' : '')); else if (r.dur) L.push(r.dur + ' min');
+    if (r.walker) L.push('With ' + r.walker);
+    L.push('');
+    lines(r).forEach(x => L.push((x.done ? '✅ ' : '⬜ ') + x.label));
+    const m = moodOf(r); if (m) L.push('Mood: ' + m[2] + ' ' + m[1]);
+    if (String(r.notes || '').trim()) { L.push(''); L.push('Notes: ' + String(r.notes).trim()); }
+    if (b.foot) { L.push(''); L.push(b.foot); }
+    return L.join('\n');
+  }
+  function wrap(measure, text, maxW){ const out = []; String(text).split('\n').forEach(par => { let cur = ''; par.split(/\s+/).forEach(w => { const t = cur ? cur + ' ' + w : w; if (measure(t) > maxW && cur) { out.push(cur); cur = w; } else cur = t; }); out.push(cur); }); return out; }
+  function resizeDims(w, h, max){ const s = Math.min(1, max / Math.max(w, h)); return [Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s))]; }
+  function safeColor(c){ return /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#2a7f62'; }
+  return { TOGGLES, MOODS, fmtWhen, lines, title, buildText, wrap, resizeDims, safeColor, moodOf };
+})();
+if (typeof module !== 'undefined') module.exports = PR;
+</script>
+<script id="ui">
+(function(){
+const $ = id => document.getElementById(id), KEY = 'pawreport-v1';
+const DEFB = { name: 'Your Pet Care', col: '#2a7f62', logo: '', foot: 'Thank you for trusting us with your pet!' };
+let B = Object.assign({}, DEFB), H = [], R = null, photos = [null, null, null];
+function load(){ try{ const t = JSON.parse(localStorage.getItem(KEY) || '{}'); if (t.brand) B = Object.assign({}, DEFB, t.brand); if (Array.isArray(t.hist)) H = t.hist; if (t.walker) B.walker = t.walker; }catch(e){} }
+function persist(msg){ try{ localStorage.setItem(KEY, JSON.stringify({ brand: B, hist: H, walker: B.walker })); return true; }catch(e){ if (msg) say('Could not save on this device (storage full or blocked).'); return false; } }
+const say = m => { $('msg').textContent = m; };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function nowLocal(){ const d = new Date(), p = n => String(n).padStart(2,'0'); return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+function blank(){ return { pet: '', walker: B.walker || '', when: nowLocal(), dur: 30, kind: 'Walk', checks: {}, mood: '', notes: '' }; }
+const tabs = [['s-make','New report'],['s-hist','History'],['s-brand','Your brand']];
+function showTab(id){ tabs.forEach(t => $(t[0]).classList.toggle('on', t[0] === id)); [...$('tabs').children].forEach(b => b.setAttribute('aria-selected', b.dataset.t === id)); if (id === 's-hist') renderHist(); }
+tabs.forEach(t => { const b = document.createElement('button'); b.textContent = t[1]; b.dataset.t = t[0]; b.setAttribute('role','tab'); b.onclick = () => showTab(t[0]); $('tabs').appendChild(b); });
+PR.TOGGLES.forEach(t => { const l = document.createElement('label'); l.innerHTML = '<input type="checkbox" data-c="' + t[0] + '"> ' + esc(t[1]); $('tg').appendChild(l); });
+PR.MOODS.forEach(m => { const b = document.createElement('button'); b.type = 'button'; b.dataset.m = m[0]; b.setAttribute('aria-pressed', 'false'); b.textContent = m[2] + ' ' + m[1]; $('moods').appendChild(b); });
+for (let i = 0; i < 3; i++){ const d = document.createElement('div'); d.className = 'slot'; d.dataset.i = i; d.innerHTML = '<span>Add photo ' + (i+1) + '</span><input type="file" accept="image/*" aria-label="Photo ' + (i+1) + '">'; $('photos').appendChild(d); }
+function fillForm(){ $('pet').value = R.pet; $('walker').value = R.walker; $('when').value = R.when; $('dur').value = R.dur; $('kind').value = R.kind; $('notes').value = R.notes;
+  document.querySelectorAll('[data-c]').forEach(c => c.checked = !!R.checks[c.dataset.c]); document.querySelectorAll('[data-m]').forEach(b => b.setAttribute('aria-pressed', String(R.mood === b.dataset.m))); renderPhotos(); }
+function renderPhotos(){ document.querySelectorAll('.slot').forEach(s => { const i = +s.dataset.i; const old = s.querySelector('img'), x = s.querySelector('.x'); if (old) old.remove(); if (x) x.remove(); s.querySelector('span').style.display = photos[i] ? 'none' : ''; if (photos[i]){ const im = document.createElement('img'); im.src = photos[i]; im.alt = 'Photo ' + (i+1); s.appendChild(im); const b = document.createElement('button'); b.className = 'x'; b.type = 'button'; b.textContent = 'x'; b.setAttribute('aria-label', 'Remove photo ' + (i+1)); b.onclick = ev => { ev.stopPropagation(); photos[i] = null; renderPhotos(); renderPreview(); }; s.appendChild(b); } }); }
+function renderPreview(){ const L = PR.lines(R), m = PR.moodOf(R), col = PR.safeColor(B.col), w = PR.fmtWhen(R.when);
+  $('preview').innerHTML = '<div class="hd" style="background:' + col + '">' + (B.logo ? '<img alt="" src="' + B.logo + '">' : '') + '<div><b>' + esc(B.name) + '</b><span>' + esc(PR.title(R, B)) + '</span></div></div><div class="bd"><div>' + esc(w) + (R.dur ? ' &middot; ' + esc(R.dur) + ' min' : '') + (R.walker ? '<br>With ' + esc(R.walker) : '') + '</div><ul>' + L.map(x => '<li class="' + (x.done ? '' : 'no') + '">' + (x.done ? '&#10003; ' : '&#8211; ') + esc(x.label) + '</li>').join('') + '</ul>' + (m ? '<div><b>Mood:</b> ' + m[2] + ' ' + esc(m[1]) + '</div>' : '') + (String(R.notes).trim() ? '<div class="notes">' + esc(R.notes) + '</div>' : '') + (photos.some(Boolean) ? '<div class="pics">' + photos.filter(Boolean).map(p => '<img alt="Visit photo" src="' + p + '">').join('') + '</div>' : '') + (B.foot ? '<p style="color:var(--mut);margin:12px 0 0">' + esc(B.foot) + '</p>' : '') + '</div>'; }
+function readForm(){ R.pet = $('pet').value; R.walker = $('walker').value; B.walker = R.walker; R.when = $('when').value; R.dur = $('dur').value; R.kind = $('kind').value; R.notes = $('notes').value; document.querySelectorAll('[data-c]').forEach(c => R.checks[c.dataset.c] = c.checked); }
+$('form').addEventListener('input', () => { readForm(); persist(); renderPreview(); });
+$('moods').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; R.mood = R.mood === b.dataset.m ? '' : b.dataset.m; document.querySelectorAll('[data-m]').forEach(x => x.setAttribute('aria-pressed', String(R.mood === x.dataset.m))); renderPreview(); });
+function readImage(file, max, cb){ const fr = new FileReader(); fr.onload = () => { const im = new Image(); im.onload = () => { const d = PR.resizeDims(im.naturalWidth, im.naturalHeight, max); const c = document.createElement('canvas'); c.width = d[0]; c.height = d[1]; c.getContext('2d').drawImage(im, 0, 0, d[0], d[1]); cb(c.toDataURL('image/jpeg', 0.82)); }; im.onerror = () => say('That file is not a readable image.'); im.src = fr.result; }; fr.onerror = () => say('Could not read that file.'); fr.readAsDataURL(file); }
+$('photos').addEventListener('change', e => { const s = e.target.closest('.slot'); const f = e.target.files && e.target.files[0]; if (!s || !f) return; readImage(f, 900, d => { photos[+s.dataset.i] = d; renderPhotos(); renderPreview(); }); e.target.value = ''; });
+function drawCard(){ return new Promise(res => { const W = 1080, pad = 60, col = PR.safeColor(B.col); const c = document.createElement('canvas'); const cx = c.getContext('2d'); const F = (px, b) => (b ? 'bold ' : '') + px + 'px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif';
+  const meas = (t, f) => { cx.font = f; return cx.measureText(t).width; };
+  const L = PR.lines(R), m = PR.moodOf(R), notes = String(R.notes).trim(); const nl = notes ? PR.wrap(t => meas(t, F(34)), notes, W - pad * 2 - 40) : [];
+  const pics = photos.filter(Boolean); const picH = pics.length ? Math.floor((W - pad * 2 - 20 * (pics.length - 1)) / pics.length) : 0; const ftxt = B.foot ? PR.wrap(t => meas(t, F(30)), B.foot, W - pad * 2) : [];
+  const H = 220 + 130 + L.length * 62 + (m ? 70 : 0) + (nl.length ? nl.length * 46 + 70 : 0) + (pics.length ? picH + 50 : 0) + (ftxt.length ? ftxt.length * 40 + 60 : 0) + 60;
+  c.width = W; c.height = H; cx.fillStyle = '#fff'; cx.fillRect(0, 0, W, H); cx.fillStyle = col; cx.fillRect(0, 0, W, 200); cx.textBaseline = 'alphabetic';
+  const finish = () => { let y = 270; cx.fillStyle = '#1f2937'; cx.font = F(34); const w = PR.fmtWhen(R.when) + (R.dur ? '  -  ' + R.dur + ' min' : ''); cx.fillText(w, pad, y); y += 44; if (R.walker){ cx.fillStyle = '#5f6b7a'; cx.fillText('With ' + R.walker, pad, y); } y += 60;
+    L.forEach(x => { cx.fillStyle = x.done ? '#1f2937' : '#8a94a1'; cx.font = F(40, x.done); cx.fillText((x.done ? '✓  ' : '–  ') + x.label, pad, y); cx.strokeStyle = '#eef1f4'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(pad, y + 18); cx.lineTo(W - pad, y + 18); cx.stroke(); y += 62; });
+    if (m){ y += 10; cx.fillStyle = '#1f2937'; cx.font = F(40, true); cx.fillText('Mood: ' + m[2] + ' ' + m[1], pad, y + 10); y += 60; }
+    if (nl.length){ const bh = nl.length * 46 + 30; cx.fillStyle = '#f6f8fa'; cx.fillRect(pad, y, W - pad * 2, bh); cx.fillStyle = '#1f2937'; cx.font = F(34); nl.forEach((t, i) => cx.fillText(t, pad + 20, y + 52 + i * 46)); y += bh + 40; }
+    let k = 0; const drawPics = () => { if (k >= pics.length){ foot(); return; } const im = new Image(); im.onload = () => { const x = pad + k * (picH + 20); const s = Math.max(picH / im.naturalWidth, picH / im.naturalHeight); const sw = picH / s, sh = picH / s; cx.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, x, y, picH, picH); k++; drawPics(); }; im.src = pics[k]; };
+    const foot = () => { if (pics.length) y += picH + 40; if (ftxt.length){ cx.fillStyle = '#5f6b7a'; cx.font = F(30); ftxt.forEach((t, i) => cx.fillText(t, pad, y + 30 + i * 40)); } c.toBlob(b => res(b), 'image/png'); };
+    drawPics(); };
+  const head = () => { cx.fillStyle = '#fff'; cx.font = F(54, true); const tx = logoX; cx.fillText(B.name, tx, 95); cx.font = F(36); cx.fillText(PR.title(R, B), tx, 150); finish(); }; let logoX = pad;
+  if (B.logo){ const lg = new Image(); lg.onload = () => { cx.fillStyle = '#fff'; cx.fillRect(pad, 40, 120, 120); cx.drawImage(lg, pad, 40, 120, 120); logoX = pad + 150; head(); }; lg.onerror = head; lg.src = B.logo; } else head(); }); }
+$('bImg').onclick = async () => { readForm(); const b = await drawCard(); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'report-' + (R.pet || 'pet').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png'; a.click(); say('Image saved to your downloads.'); };
+$('bCopy').onclick = async () => { readForm(); const t = PR.buildText(R, B); try{ await navigator.clipboard.writeText(t); say('Text copied. Paste it into WhatsApp or a message.'); }catch(e){ const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); say('Text copied. Paste it into WhatsApp or a message.'); }catch(x){ say('Copy blocked by the browser: select the text in the preview instead.'); } ta.remove(); } };
+$('bPrint').onclick = () => { readForm(); renderPreview(); window.print(); };
+$('bSave').onclick = () => { readForm(); const rec = JSON.parse(JSON.stringify(R)); rec.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); H.unshift(rec); H = H.slice(0, 200); if (persist(true)) say('Saved to history (' + H.length + ' reports).'); };
+$('bNew').onclick = () => { const w = R.walker; R = blank(); R.walker = w; photos = [null, null, null]; fillForm(); renderPreview(); say(''); };
+function renderHist(){ $('ht').querySelector('tbody').innerHTML = H.length ? H.map((r, i) => '<tr><td>' + esc(PR.fmtWhen(r.when)) + '</td><td>' + esc(r.pet || '-') + '</td><td>' + esc(r.kind) + '</td><td style="white-space:nowrap"><button class="btn alt" data-o="' + i + '">Open</button> <button class="btn alt" data-d="' + i + '" aria-label="Delete">x</button></td></tr>').join('') : '<tr><td colspan="4">No saved reports yet.</td></tr>'; }
+$('ht').addEventListener('click', e => { const o = e.target.closest('[data-o]'), d = e.target.closest('[data-d]'); if (o){ R = Object.assign(blank(), JSON.parse(JSON.stringify(H[+o.dataset.o]))); photos = [null, null, null]; fillForm(); renderPreview(); showTab('s-make'); } if (d){ H.splice(+d.dataset.d, 1); persist(); renderHist(); } });
+$('hClear').onclick = () => { if (confirm('Delete all saved reports on this device?')){ H = []; persist(); renderHist(); } };
+function fillBrand(){ $('bname').value = B.name; $('bcol').value = PR.safeColor(B.col); $('bfoot').value = B.foot; }
+$('s-brand').addEventListener('input', e => { if (e.target.type === 'file') return; B.name = $('bname').value; B.col = $('bcol').value; B.foot = $('bfoot').value; persist(); renderPreview(); });
+$('blogo').onchange = e => { const f = e.target.files[0]; if (!f) return; readImage(f, 240, d => { B.logo = d; persist(true); renderPreview(); }); };
+$('bLogoClear').onclick = () => { B.logo = ''; $('blogo').value = ''; persist(); renderPreview(); };
+$('bExport').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ brand: B, hist: H }, null, 1)], { type: 'application/json' })); a.download = 'pawreport-backup.json'; a.click(); };
+$('bImport').onchange = e => { const f = e.target.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => { try{ const t = JSON.parse(fr.result); if (!t || typeof t !== 'object' || (!t.brand && !t.hist)) throw 0; if (t.brand) B = Object.assign({}, DEFB, t.brand); if (Array.isArray(t.hist)) H = t.hist; persist(true); fillBrand(); renderPreview(); renderHist(); say('Backup restored.'); }catch(x){ alert('That file is not a PawReport backup.'); } }; fr.readAsText(f); };
+load(); R = blank(); fillForm(); fillBrand(); renderPreview(); showTab('s-make');
+})();
+</script></body></html>

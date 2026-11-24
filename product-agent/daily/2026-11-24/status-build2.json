@@ -1,0 +1,11 @@
+{
+ "stage": "build2",
+ "date": "2026-11-24",
+ "products": {
+  "d20261124-06": {"slug": "no-show-shield-n8n", "name": "No-Show Shield: Grooming Reminder + Deposit + Waitlist n8n Flow", "status": "built", "qa": "pass (simulator only; not run on live n8n/Twilio/Stripe/Google)", "price_usd": 45, "files": ["workflows/ (5 n8n JSON files)", "sheet-templates/ (3 CSV)", "SETUP.md", "README.md", "cover.png"]},
+  "d20261124-07": {"slug": "groomer-sitter-policy-intake-pack", "name": "Groomer & Sitter Policy and Intake Pack", "status": "built", "qa": "pass (files open, PDFs render; not legal-reviewed; score 23/40 flagged marginal in plan)", "price_usd": 19, "files": ["00-Start-Here.docx", "01-05 .docx", "pdf/ (6 PDFs)", "README.md", "cover.png"]},
+  "d20261124-08": {"slug": "walkwise-dog-walker-planner", "name": "WalkWise: Dog Walker Package & Profit Planner", "status": "built", "qa": "pass (12 unit + 16 browser checks, Chromium only)", "price_usd": 29, "files": ["index.html", "README.md", "cover.png"]},
+  "d20261124-09": {"slug": "pawreport-visit-report-card", "name": "PawReport: Client Visit Report Card Generator", "status": "built", "qa": "pass (21 checks, Chromium only)", "price_usd": 25, "files": ["index.html", "README.md", "cover.png"]}
+ },
+ "summary": {"built": 4, "failed": 0}
+}
