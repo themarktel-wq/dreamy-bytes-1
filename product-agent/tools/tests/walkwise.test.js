@@ -1,0 +1,26 @@
+// node walkwise.test.js <path-to-index.html>
+const fs = require('fs'), assert = require('assert');
+const file = process.argv[2];
+const html = fs.readFileSync(file, 'utf8');
+const logic = html.match(/<script id="logic">([\s\S]*?)<\/script>/)[1];
+const WW = new Function('module', logic + '; return WW;')(undefined);
+const near = (a, b, m, tol = 0.011) => { assert(Math.abs(a - b) <= tol, m + ': got ' + a + ' expected ' + b); };
+let pass = 0; const t = (name, f) => { f(); pass++; console.log('ok  ', name); };
+const S = { rates: { 15: 15, 30: 22, 45: 30, 60: 38 }, xdog: 10, pup: 3, hol: 25, feePct: 0, feeFlat: 0, mile: 0.5, target: 20 };
+t('walkPrice base/extra dog/puppy+holiday', () => { near(WW.walkPrice(S, 30, 1, false, false), 22, 'base'); near(WW.walkPrice(S, 30, 2, false, false), 32, '2 dogs'); near(WW.walkPrice(S, 30, 1, true, true), 31.25, 'pup+hol'); near(WW.walkPrice(S, 60, 3, false, false), 58, '3 dogs 60'); });
+t('walkPrice tolerates blank/garbage', () => { near(WW.walkPrice({ rates: {}, xdog: '', pup: 'x', hol: null }, 30, 'a', true, true), 0, 'blank'); });
+t('route totals (hand calculated)', () => { const r = WW.route(S, [{ len: 30, dogs: 1, drive: 0, miles: 0 }, { len: 45, dogs: 2, drive: 10, miles: 3 }, { len: 30, dogs: 1, pup: true, drive: 12, miles: 4 }]);
+  near(r.revenue, 87, 'rev'); near(r.travel, 3.5, 'travel'); near(r.net, 83.5, 'net'); assert.strictEqual(r.minutes, 127); near(r.netPerHour, 39.45, 'nph'); });
+t('route with fees', () => { const r = WW.route(Object.assign({}, S, { feePct: 10, feeFlat: 1 }), [{ len: 30, dogs: 1, drive: 0, miles: 0 }]); near(r.fees, 3.2, 'fee'); near(r.net, 18.8, 'net'); near(r.netPerHour, 37.6, 'nph'); });
+t('empty route no NaN', () => { const r = WW.route(S, []); assert.strictEqual(r.netPerHour, 0); assert.strictEqual(r.revenue, 0); });
+t('package default (hand calculated)', () => { const p = WW.pack(S, { n: 10, len: 30, dogs: 1, disc: 10, drive: 10, miles: 3 });
+  near(p.list, 220, 'list'); near(p.price, 198, 'price'); near(p.perWalk, 19.8, 'per walk'); near(p.travel, 15, 'travel'); near(p.net, 183, 'net'); near(p.hours, 6.67, 'hours'); near(p.netPerHour, 27.45, 'nph'); near(p.netPerHourFull, 30.75, 'full nph'); near(p.maxDisc, 32.58, 'maxDisc'); });
+t('max discount really hits target (property check, with fees)', () => { const S2 = Object.assign({}, S, { feePct: 10, feeFlat: 1, target: 25 }); const P = { n: 8, len: 45, dogs: 2, disc: 0, drive: 15, miles: 4 };
+  const p0 = WW.pack(S2, P); assert(p0.maxDisc > 0 && p0.maxDisc < 100, 'maxDisc range ' + p0.maxDisc);
+  const p1 = WW.pack(S2, Object.assign({}, P, { disc: p0.maxDisc })); near(p1.netPerHour, 25, 'nph at max discount', 0.1); const p2 = WW.pack(S2, Object.assign({}, P, { disc: p0.maxDisc + 5 })); assert(p2.netPerHour < 25, 'beyond max falls below target'); });
+t('max discount negative when target unreachable', () => { const p = WW.pack(Object.assign({}, S, { target: 500 }), { n: 10, len: 30, dogs: 1, disc: 0, drive: 10, miles: 3 }); assert(p.maxDisc < 0); });
+t('package with 0 walks no NaN', () => { const p = WW.pack(S, { n: 0, len: 30, dogs: 1, disc: 10, drive: 10, miles: 3 }); assert.strictEqual(p.perWalk, 0); assert.strictEqual(p.netPerHour, 0); assert.strictEqual(p.maxDisc, null); });
+t('discount clamped 0-100', () => { near(WW.pack(S, { n: 1, len: 30, dogs: 1, disc: 150, drive: 0, miles: 0 }).price, 0, 'over 100'); near(WW.pack(S, { n: 1, len: 30, dogs: 1, disc: -5, drive: 0, miles: 0 }).price, 22, 'negative'); });
+t('marketplace vs direct (hand calculated)', () => { const c = WW.compare({ price: 22, mfee: 20, mflat: 0, dfee: 3, dflat: 0.3, walks: 40 }); near(c.marketNet, 17.6, 'm'); near(c.directNet, 21.04, 'd'); near(c.diffWalk, 3.44, 'diff'); near(c.diffMonth, 137.6, 'month'); near(c.marketPriceToMatch, 26.3, 'price to match'); });
+t('compare 0% fees no difference', () => { const c = WW.compare({ price: 30, mfee: 0, mflat: 0, dfee: 0, dflat: 0, walks: 10 }); assert.strictEqual(c.diffMonth, 0); });
+console.log('ALL ' + pass + ' UNIT TESTS PASSED');

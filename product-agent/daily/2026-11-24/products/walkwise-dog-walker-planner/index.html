@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WalkWise: Dog Walker Package &amp; Profit Planner</title>
+<style>
+:root{--ink:#1d2433;--mut:#5b6475;--bg:#f4f7f5;--card:#fff;--acc:#2a7f62;--acc2:#e8f4ef;--bad:#b42318;--ok:#157347;--line:#d9e0dc}
+*{box-sizing:border-box}html,body{margin:0}body{font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden}
+header{background:var(--acc);color:#fff;padding:14px 16px}header h1{margin:0;font-size:20px}header p{margin:2px 0 0;opacity:.9;font-size:13px}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:20px;padding:8px 14px;font:inherit;cursor:pointer;color:var(--ink)}
+nav button[aria-selected=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{padding:14px 12px 40px;max-width:900px;margin:0 auto}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.card h2{margin:0 0 8px;font-size:17px}.note{color:var(--mut);font-size:13px;margin:4px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+input,select{width:100%;padding:9px;border:1px solid #b9c3be;border-radius:8px;font:inherit;background:#fff;color:var(--ink);min-width:0}
+input[type=checkbox]{width:auto}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}
+.kpi div{background:var(--acc2);border-radius:10px;padding:10px}.kpi b{display:block;font-size:20px}.kpi span{font-size:12px;color:var(--mut)}
+.good{color:var(--ok)}.bad{color:var(--bad)}
+table{width:100%;border-collapse:collapse}th,td{padding:6px 4px;text-align:left;font-size:13px;vertical-align:middle}th{color:var(--mut);font-weight:600;border-bottom:1px solid var(--line)}
+td input,td select{padding:6px;font-size:13px}
+.tblwrap{overflow-x:auto}#rt{min-width:660px}#rt td:first-child input{min-width:130px}#rt td select{min-width:64px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.alt{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.warn{background:#fff7e6;border:1px solid #f0c36d;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:12px}
+#sheet{display:none}
+@media print{header,nav,main>section,.noprint{display:none!important}main{padding:0}#sheet{display:block!important}body{background:#fff}#sheet .card{border:0}}
+</style></head><body>
+<header><h1>WalkWise</h1><p>Price walks, build prepaid packages and see profit per hour after drive time.</p></header>
+<nav role="tablist" id="tabs"></nav>
+<main>
+<div class="warn" id="warn">Starting numbers are <b>examples</b>, not market data (except the labelled Rover reference). Replace them with your own rates and costs. Everything stays in your browser; nothing is uploaded.</div>
+
+<section id="s-rates" class="on">
+ <div class="card"><h2>Your business and costs</h2>
+  <div class="grid">
+   <div><label for="biz">Business name</label><input id="biz"></div>
+   <div><label for="cur">Currency symbol</label><input id="cur" maxlength="4"></div>
+   <div><label for="mile">Travel cost per mile/km</label><input id="mile" type="number" step="0.01" min="0"></div>
+   <div><label for="feePct">Platform / payment fee %</label><input id="feePct" type="number" step="0.1" min="0" max="100"></div>
+   <div><label for="feeFlat">Fee per walk (flat)</label><input id="feeFlat" type="number" step="0.01" min="0"></div>
+   <div><label for="target">Target net per hour</label><input id="target" type="number" step="0.5" min="0"></div>
+  </div>
+  <p class="note">Fees: enter the percentage or flat fee your platform or card processor charges. WalkWise does not assume any commission. Travel cost: your own per-mile (or per-km) figure.</p>
+ </div>
+ <div class="card"><h2>Rate card</h2>
+  <div class="grid">
+   <div><label for="r15">15 min</label><input id="r15" type="number" step="0.5" min="0"></div>
+   <div><label for="r30">30 min</label><input id="r30" type="number" step="0.5" min="0"></div>
+   <div><label for="r45">45 min</label><input id="r45" type="number" step="0.5" min="0"></div>
+   <div><label for="r60">60 min</label><input id="r60" type="number" step="0.5" min="0"></div>
+   <div><label for="xdog">Each extra dog (per walk)</label><input id="xdog" type="number" step="0.5" min="0"></div>
+   <div><label for="pup">Puppy add-on (per walk)</label><input id="pup" type="number" step="0.5" min="0"></div>
+   <div><label for="hol">Holiday surcharge %</label><input id="hol" type="number" step="1" min="0"></div>
+  </div>
+  <p class="note"><b>Market reference (not your price):</b> Rover's published national average is about $21.45 per 30-minute walk, range about $16-$38, and about $12.90 more per extra dog (rover.com dog walking rates, retrieved Nov 2026; varies a lot by city).</p>
+ </div>
+</section>
+
+<section id="s-pack">
+ <div class="card"><h2>Package builder</h2>
+  <div class="grid">
+   <div><label for="pn">Walks in the package</label><input id="pn" type="number" min="1" step="1"></div>
+   <div><label for="pl">Walk length</label><select id="pl"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
+   <div><label for="pd">Dogs per walk</label><input id="pd" type="number" min="1" max="6" step="1"></div>
+   <div><label for="pdisc">Discount %</label><input id="pdisc" type="number" min="0" max="100" step="0.5"></div>
+   <div><label for="pdrive">Drive minutes per walk</label><input id="pdrive" type="number" min="0" step="1"></div>
+   <div><label for="pmiles">Miles/km per walk (travel)</label><input id="pmiles" type="number" min="0" step="0.1"></div>
+  </div>
+  <div class="kpi" id="packOut"></div>
+ </div>
+</section>
+
+<section id="s-route">
+ <div class="card"><h2>Daily route sheet</h2>
+  <p class="note">One row per walk. Drive minutes and miles are the trip to reach that walk. Net per hour counts walking and driving time.</p>
+  <div class="tblwrap"><table id="rt"><thead><tr><th>Client</th><th>Length</th><th>Dogs</th><th>Pup</th><th>Hol</th><th>Drive min</th><th>Miles</th><th>Price</th><th></th></tr></thead><tbody></tbody></table></div>
+  <p><button class="btn" id="addRow">Add walk</button> <button class="btn alt" id="clearRows">Clear day</button></p>
+  <div class="kpi" id="routeOut"></div>
+ </div>
+</section>
+
+<section id="s-cmp">
+ <div class="card"><h2>Marketplace vs direct clients</h2>
+  <p class="note">Enter the fees yourself. The marketplace fee is whatever your platform really charges you; the direct fee is your card/payment processor.</p>
+  <div class="grid">
+   <div><label for="cprice">Walk price</label><input id="cprice" type="number" min="0" step="0.5"></div>
+   <div><label for="mfee">Marketplace fee %</label><input id="mfee" type="number" min="0" max="99" step="0.1"></div>
+   <div><label for="mflat">Marketplace flat fee per walk</label><input id="mflat" type="number" min="0" step="0.01"></div>
+   <div><label for="dfee">Direct payment fee %</label><input id="dfee" type="number" min="0" max="99" step="0.1"></div>
+   <div><label for="dflat">Direct flat fee per walk</label><input id="dflat" type="number" min="0" step="0.01"></div>
+   <div><label for="cwalks">Walks per month</label><input id="cwalks" type="number" min="0" step="1"></div>
+  </div>
+  <div class="kpi" id="cmpOut"></div>
+ </div>
+</section>
+
+<section id="s-sheet">
+ <div class="card"><h2>Client price sheet</h2>
+  <p class="note">A clean sheet to print or save as PDF (browser Print). Packages shown use the discount you set in the Package tab.</p>
+  <p><button class="btn" id="printBtn">Print / save as PDF</button> <button class="btn alt" id="exportBtn">Export my data (JSON)</button> <label class="btn alt" style="display:inline-block;margin:0;cursor:pointer">Import data<input id="importFile" type="file" accept="application/json" hidden></label> <button class="btn alt" id="resetBtn">Reset to examples</button></p>
+  <div id="sheetPrev"></div>
+ </div>
+</section>
+</main>
+<div id="sheet"></div>
+<script id="logic">
+const WW = (function(){
+  const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+  const n = x => { x = parseFloat(x); return isFinite(x) ? x : 0; };
+  function walkPrice(S, len, dogs, pup, hol){
+    const base = n(S.rates[len]); const extra = Math.max(0, Math.round(n(dogs)) - 1) * n(S.xdog);
+    let p = base + extra + (pup ? n(S.pup) : 0);
+    if (hol) p *= 1 + n(S.hol) / 100;
+    return r2(p);
+  }
+  function feeFor(S, price){ return r2(price * n(S.feePct) / 100 + n(S.feeFlat)); }
+  function route(S, rows){
+    let rev = 0, fees = 0, miles = 0, walkMin = 0, driveMin = 0;
+    const lines = rows.map(r => { const price = walkPrice(S, r.len, r.dogs, r.pup, r.hol); const fee = feeFor(S, price);
+      rev += price; fees += fee; miles += n(r.miles); walkMin += n(r.len); driveMin += n(r.drive); return { price, fee }; });
+    const travel = r2(miles * n(S.mile)); const net = r2(rev - fees - travel); const mins = walkMin + driveMin;
+    return { lines, revenue: r2(rev), fees: r2(fees), travel, net, walkMin, driveMin, minutes: mins, netPerHour: mins > 0 ? r2(net / (mins / 60)) : 0, count: rows.length };
+  }
+  function pack(S, P){
+    const N = Math.max(0, Math.round(n(P.n))); const one = walkPrice(S, P.len, P.dogs, false, false);
+    const list = r2(one * N); const disc = Math.min(100, Math.max(0, n(P.disc))); const price = r2(list * (1 - disc / 100));
+    const fees = r2(price * n(S.feePct) / 100 + n(S.feeFlat) * N); const travel = r2(N * n(P.miles) * n(S.mile));
+    const net = r2(price - fees - travel); const hours = N * (n(P.len) + n(P.drive)) / 60;
+    const full = r2(list - (list * n(S.feePct) / 100 + n(S.feeFlat) * N) - travel);
+    const nph = hours > 0 ? r2(net / hours) : 0, nphFull = hours > 0 ? r2(full / hours) : 0;
+    // max discount that still reaches target net/hour: price >= (target*hours + flat*N + travel)/(1-pct)
+    let maxDisc = null; const pct = n(S.feePct) / 100;
+    if (list > 0 && hours > 0 && pct < 1){ const need = (n(S.target) * hours + n(S.feeFlat) * N + travel) / (1 - pct); maxDisc = r2((1 - need / list) * 100); }
+    return { one, list, price, perWalk: N ? r2(price / N) : 0, fees, travel, net, hours: r2(hours), netPerHour: nph, netPerHourFull: nphFull, maxDisc, n: N };
+  }
+  function compare(C){
+    const p = n(C.price), W = n(C.walks);
+    const mk = r2(p * (1 - n(C.mfee) / 100) - n(C.mflat)), dr = r2(p * (1 - n(C.dfee) / 100) - n(C.dflat));
+    const mPrice = n(C.mfee) < 100 ? r2((dr + n(C.mflat)) / (1 - n(C.mfee) / 100)) : 0;
+    return { marketNet: mk, directNet: dr, diffWalk: r2(dr - mk), diffMonth: r2((dr - mk) * W), marketPriceToMatch: mPrice };
+  }
+  return { walkPrice, feeFor, route, pack, compare, r2 };
+})();
+if (typeof module !== 'undefined') module.exports = WW;
+</script>
+<script id="ui">
+(function(){
+const DEF = { biz:'Your Dog Walking Co.', cur:'$', mile:0.5, feePct:0, feeFlat:0, target:20, rates:{15:15,30:22,45:30,60:38}, xdog:10, pup:3, hol:25,
+  pack:{n:10,len:30,dogs:1,disc:10,drive:10,miles:3}, rows:[{c:'Example: Max',len:30,dogs:1,pup:false,hol:false,drive:0,miles:0},{c:'Example: Luna + Bo',len:45,dogs:2,pup:false,hol:false,drive:10,miles:3},{c:'Example: Rio (puppy)',len:30,dogs:1,pup:true,hol:false,drive:12,miles:4}],
+  cmp:{price:22,mfee:20,mflat:0,dfee:3,dflat:0.3,walks:40} };
+let S; const KEY='walkwise-v1';
+const $ = id => document.getElementById(id);
+function load(){ try{ const t = localStorage.getItem(KEY); if(t){ S = Object.assign(JSON.parse(JSON.stringify(DEF)), JSON.parse(t)); return; } }catch(e){} S = JSON.parse(JSON.stringify(DEF)); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+const money = x => (S.cur||'') + (Math.round(x*100)/100).toFixed(2);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tabs = [['s-rates','Rates & costs'],['s-pack','Packages'],['s-route','Day route'],['s-cmp','Marketplace vs direct'],['s-sheet','Client price sheet']];
+function showTab(id){ tabs.forEach(t => { $(t[0]).classList.toggle('on', t[0]===id); }); [...$('tabs').children].forEach(b => b.setAttribute('aria-selected', b.dataset.t===id)); if(id==='s-sheet') renderSheet(); }
+tabs.forEach(t => { const b=document.createElement('button'); b.textContent=t[1]; b.dataset.t=t[0]; b.setAttribute('role','tab'); b.onclick=()=>showTab(t[0]); $('tabs').appendChild(b); });
+const SIMPLE = ['biz','cur','mile','feePct','feeFlat','target','xdog','pup','hol'];
+function fill(){ SIMPLE.forEach(k => $(k).value = S[k]); [15,30,45,60].forEach(l => $('r'+l).value = S.rates[l]);
+  const P=S.pack; $('pn').value=P.n; $('pl').value=P.len; $('pd').value=P.dogs; $('pdisc').value=P.disc; $('pdrive').value=P.drive; $('pmiles').value=P.miles;
+  const C=S.cmp; $('cprice').value=C.price; $('mfee').value=C.mfee; $('mflat').value=C.mflat; $('dfee').value=C.dfee; $('dflat').value=C.dflat; $('cwalks').value=C.walks; }
+function read(){ SIMPLE.forEach(k => S[k] = (k==='biz'||k==='cur') ? $(k).value : $(k).value);
+  [15,30,45,60].forEach(l => S.rates[l] = $('r'+l).value);
+  S.pack = {n:$('pn').value,len:$('pl').value,dogs:$('pd').value,disc:$('pdisc').value,drive:$('pdrive').value,miles:$('pmiles').value};
+  S.cmp = {price:$('cprice').value,mfee:$('mfee').value,mflat:$('mflat').value,dfee:$('dfee').value,dflat:$('dflat').value,walks:$('cwalks').value}; }
+const kpi = (l, v, cls) => '<div><b class="'+(cls||'')+'">'+v+'</b><span>'+l+'</span></div>';
+function renderPack(){ const p = WW.pack(S, S.pack); const reach = p.maxDisc;
+  let h = kpi('One walk list price', money(p.one)) + kpi('Package list value', money(p.list)) + kpi('Package price', money(p.price)) + kpi('Price per walk', money(p.perWalk)) + kpi('Fees + travel', money(p.fees + p.travel)) + kpi('Net after costs', money(p.net)) +
+    kpi('Net per hour (discounted)', money(p.netPerHour), p.netPerHour >= WW.r2(parseFloat(S.target)||0) ? 'good':'bad') + kpi('Net per hour (no discount)', money(p.netPerHourFull));
+  h += '<div style="grid-column:1/-1;background:#fff;border:1px solid var(--line)"><b>' + (reach===null ? 'Add walk length and walks to see the limit.' : reach < 0 ? 'Even full price does not reach your target of ' + money(parseFloat(S.target)||0) + '/hour for this package.' : 'Largest discount that still reaches your target of ' + money(parseFloat(S.target)||0) + '/hour: ' + Math.min(100, reach).toFixed(1) + '%') + '</b><br><span>Hours counted: ' + p.hours + ' (walking + driving).</span></div>';
+  $('packOut').innerHTML = h; }
+function renderRoute(){ const rows = S.rows; const tb = document.querySelector('#rt tbody'); const r = WW.route(S, rows);
+  tb.innerHTML = rows.map((x,i) => '<tr data-i="'+i+'"><td><input data-f="c" value="'+esc(x.c)+'" aria-label="Client"></td><td><select data-f="len">'+[15,30,45,60].map(l=>'<option '+(+x.len===l?'selected':'')+'>'+l+'</option>').join('')+'</select></td><td><input data-f="dogs" type="number" min="1" max="6" value="'+esc(x.dogs)+'" style="width:52px"></td><td><input data-f="pup" type="checkbox" '+(x.pup?'checked':'')+'></td><td><input data-f="hol" type="checkbox" '+(x.hol?'checked':'')+'></td><td><input data-f="drive" type="number" min="0" value="'+esc(x.drive)+'" style="width:60px"></td><td><input data-f="miles" type="number" min="0" step="0.1" value="'+esc(x.miles)+'" style="width:60px"></td><td>'+money(r.lines[i].price)+'</td><td><button class="btn alt" data-del="'+i+'" aria-label="Remove walk">x</button></td></tr>').join('');
+  $('routeOut').innerHTML = kpi('Walks', r.count) + kpi('Revenue', money(r.revenue)) + kpi('Fees', money(r.fees)) + kpi('Travel cost', money(r.travel)) + kpi('Net', money(r.net)) + kpi('Time (walk + drive)', Math.round(r.minutes) + ' min') + kpi('Net per hour', money(r.netPerHour), r.netPerHour >= (parseFloat(S.target)||0) ? 'good':'bad'); }
+function renderCmp(){ const c = WW.compare(S.cmp); $('cmpOut').innerHTML = kpi('You keep per walk (marketplace)', money(c.marketNet)) + kpi('You keep per walk (direct)', money(c.directNet)) + kpi('Difference per walk', money(c.diffWalk), c.diffWalk>=0?'good':'bad') + kpi('Difference per month', money(c.diffMonth), c.diffMonth>=0?'good':'bad') + kpi('Marketplace price needed to match direct', money(c.marketPriceToMatch)); }
+function sheetHtml(){ const lens=[15,30,45,60]; const p = WW.pack(S,S.pack);
+  let h = '<h1 style="margin:0">'+esc(S.biz)+'</h1><p>Dog walking price list</p><table><thead><tr><th>Walk length</th><th>Price</th></tr></thead><tbody>' + lens.map(l => '<tr><td>'+l+' minutes</td><td>'+money(WW.walkPrice(S,l,1,false,false))+'</td></tr>').join('') + '</tbody></table>';
+  h += '<p>Each extra dog: +' + money(parseFloat(S.xdog)||0) + ' per walk. Puppy add-on: +' + money(parseFloat(S.pup)||0) + ' per walk. Holiday walks: +' + (parseFloat(S.hol)||0) + '%.</p>';
+  h += '<h3>Prepaid package</h3><p>' + esc(p.n) + ' walks of ' + esc(S.pack.len) + ' minutes (' + esc(S.pack.dogs) + ' dog' + (+S.pack.dogs>1?'s':'') + '): <b>' + money(p.price) + '</b> (' + money(p.perWalk) + ' per walk' + ((parseFloat(S.pack.disc)||0) > 0 ? ', ' + (parseFloat(S.pack.disc)||0) + '% off ' + money(p.list) : '') + ').</p>';
+  return h; }
+function renderSheet(){ $('sheetPrev').innerHTML = sheetHtml(); $('sheet').innerHTML = sheetHtml(); }
+function all(){ renderPack(); renderRoute(); renderCmp(); if($('s-sheet').classList.contains('on')) renderSheet(); }
+document.addEventListener('input', e => { if(e.target.closest('#rt')){ const tr=e.target.closest('tr'); const f=e.target.dataset.f; if(tr&&f){ const row=S.rows[+tr.dataset.i]; row[f] = e.target.type==='checkbox' ? e.target.checked : e.target.value; save(); const r=WW.route(S,S.rows); const priceCell=tr.children[7]; priceCell.textContent=money(r.lines[+tr.dataset.i].price);
+   $('routeOut').innerHTML = kpi('Walks', r.count) + kpi('Revenue', money(r.revenue)) + kpi('Fees', money(r.fees)) + kpi('Travel cost', money(r.travel)) + kpi('Net', money(r.net)) + kpi('Time (walk + drive)', Math.round(r.minutes) + ' min') + kpi('Net per hour', money(r.netPerHour), r.netPerHour >= (parseFloat(S.target)||0) ? 'good':'bad'); } return; }
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'){ read(); save(); all(); } });
+document.addEventListener('change', e => { if(e.target.closest('#rt') && e.target.dataset.f==='len') renderRoute(); });
+$('addRow').onclick = () => { S.rows.push({c:'',len:30,dogs:1,pup:false,hol:false,drive:10,miles:2}); save(); renderRoute(); };
+$('clearRows').onclick = () => { S.rows = []; save(); renderRoute(); };
+$('rt').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if(b){ S.rows.splice(+b.dataset.del,1); save(); renderRoute(); } });
+$('printBtn').onclick = () => { renderSheet(); window.print(); };
+$('exportBtn').onclick = () => { const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'})); a.download='walkwise-data.json'; a.click(); };
+$('importFile').onchange = e => { const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ S=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(rd.result)); save(); fill(); all(); }catch(x){ alert('That file is not a WalkWise data file.'); } }; rd.readAsText(f); };
+$('resetBtn').onclick = () => { if(confirm('Reset everything to the example numbers?')){ S=JSON.parse(JSON.stringify(DEF)); save(); fill(); all(); } };
+load(); fill(); showTab('s-rates'); all();
+})();
+</script></body></html>
