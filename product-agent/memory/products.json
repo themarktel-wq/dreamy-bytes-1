@@ -1,0 +1,212 @@
+[
+ {
+  "id": "xlsx-01",
+  "type": "excel-google-sheets-template",
+  "niche": "Freelancer income + quarterly tax tracker",
+  "price_usd": 19,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-02",
+  "type": "excel-google-sheets-template",
+  "niche": "Small business P&L + cash flow",
+  "price_usd": 24,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-03",
+  "type": "excel-google-sheets-template",
+  "niche": "Debt payoff planner snowball/avalanche",
+  "price_usd": 17,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-04",
+  "type": "excel-google-sheets-template",
+  "niche": "Household budget plan vs actual",
+  "price_usd": 14,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-05",
+  "type": "excel-google-sheets-template",
+  "niche": "Etsy seller profit tracker",
+  "price_usd": 19,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-06",
+  "type": "excel-google-sheets-template",
+  "niche": "Rental property analyzer + portfolio",
+  "price_usd": 29,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-07",
+  "type": "excel-google-sheets-template",
+  "niche": "Wedding planner budget/guests/checklist",
+  "price_usd": 19,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-08",
+  "type": "excel-google-sheets-template",
+  "niche": "Project tracker with auto Gantt",
+  "price_usd": 22,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-09",
+  "type": "excel-google-sheets-template",
+  "niche": "Inventory tracker with reorder alerts",
+  "price_usd": 24,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-10",
+  "type": "excel-google-sheets-template",
+  "niche": "Net worth + savings goals",
+  "price_usd": 17,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-11",
+  "type": "excel-google-sheets-template",
+  "niche": "Sales CRM pipeline tracker",
+  "price_usd": 24,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "xlsx-12",
+  "type": "excel-google-sheets-template",
+  "niche": "Job search tracker dashboard",
+  "price_usd": 12,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "printables-12",
+  "type": "printable-pdf-bundle",
+  "niche": "12 planners bundle",
+  "price_usd": 9,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "builder-linkpage",
+  "type": "single-file-html-website-builder",
+  "niche": "LinkPage Studio link-in-bio builder",
+  "price_usd": 29,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "builder-localpro",
+  "type": "single-file-html-website-builder",
+  "niche": "LocalPro local trades site builder",
+  "price_usd": 59,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "builder-menumaker",
+  "type": "single-file-html-website-builder",
+  "niche": "MenuMaker restaurant site + QR builder",
+  "price_usd": 39,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "builder-portfoliopro",
+  "type": "single-file-html-website-builder",
+  "niche": "PortfolioPro portfolio builder",
+  "price_usd": 39,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "builder-launchpad",
+  "type": "single-file-html-website-builder",
+  "niche": "LaunchPad landing page builder",
+  "price_usd": 49,
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "n8n-50",
+  "type": "n8n-workflows",
+  "niche": "50 US trending automations (sales, support, finance, marketing, ops, ecommerce)",
+  "price_usd": "29-49 each",
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": "simulated tests only, not run in real n8n"
+ },
+ {
+  "id": "us-micro-saas-50",
+  "type": "single-file-html-apps",
+  "niche": "50 US lifetime-licence micro tools (CRMs, invoicers, ledgers, loggers, boards)",
+  "price_usd": "25-30",
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ },
+ {
+  "id": "ecom-saas-20",
+  "type": "single-file-html-apps+licence server",
+  "niche": "10 Pakistan PKR + 10 international e-commerce subscription apps",
+  "price_usd": "varies",
+  "built": "2026-11",
+  "status": "built, untested in market",
+  "market_results": null,
+  "notes": ""
+ }
+]

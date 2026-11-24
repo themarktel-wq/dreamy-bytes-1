@@ -1,0 +1,60 @@
+{
+ "timezone": "Asia/Karachi",
+ "run_time_local": "01:43",
+ "us_every_day": true,
+ "rotate_regions": [
+  "UK",
+  "Canada",
+  "Australia",
+  "Germany",
+  "India",
+  "UAE",
+  "Pakistan",
+  "Brazil",
+  "Mexico",
+  "Philippines"
+ ],
+ "regions_per_day_extra": 2,
+ "selling_platforms": [
+  "Etsy",
+  "Gumroad",
+  "Own website + Meta ads"
+ ],
+ "product_types_we_can_build": [
+  "excel-google-sheets-template",
+  "printable-pdf",
+  "single-file-html-app-or-builder",
+  "n8n-workflows",
+  "docx-pdf-doc-template",
+  "prompt-pack-md-pdf"
+ ],
+ "price_bands_usd": {
+  "printable": [
+   3,
+   15
+  ],
+  "template": [
+   9,
+   39
+  ],
+  "app_or_builder": [
+   25,
+   79
+  ],
+  "automation": [
+   29,
+   59
+  ]
+ },
+ "max_new_products_per_day": 3,
+ "min_total_score": 24,
+ "banned": [
+  "trademarked characters/brands",
+  "medical/legal/financial advice claims",
+  "copying competitor files",
+  "fake reviews or testimonials",
+  "adult content",
+  "guaranteed income claims"
+ ],
+ "deliver_branch": "claude/brave-shannon-wlas1c"
+}
