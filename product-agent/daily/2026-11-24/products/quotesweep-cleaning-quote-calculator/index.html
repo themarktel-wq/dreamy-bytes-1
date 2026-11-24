@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuoteSweep - Margin-Safe Cleaning Quote Calculator</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+.est h2{font-size:20px;margin:0}.est table td,.est table th{font-size:14px}.est .tot{font-size:22px;font-weight:700}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:20px}
+</style></head><body>
+<header class="top"><h1>QuoteSweep</h1><p>Margin-safe quotes for cleaning businesses. Works offline. Your data stays in this browser.</p></header>
+<main>
+<div class="tabs noprint" id="tabs"><button data-t="quote" class="on">Quote</button><button data-t="settings">My costs &amp; times</button><button data-t="saved">Saved quotes</button><button data-t="help">How it works</button></div>
+
+<section id="t-quote">
+ <div class="card noprint"><h2>1. The job</h2>
+  <div class="grid">
+   <div><label>Client name</label><input id="client" placeholder="e.g. Jane Smith"></div>
+   <div><label>Bedrooms</label><input id="beds" type="number" min="0" value="3"></div>
+   <div><label>Bathrooms</label><input id="baths" type="number" min="0" value="2"></div>
+   <div><label>Kitchens</label><input id="kits" type="number" min="0" value="1"></div>
+   <div><label>Home size (sq ft, 0 to skip)</label><input id="sqft" type="number" min="0" value="1600"></div>
+   <div><label>Condition</label><select id="cond"><option value="light">Light (tidy home)</option><option value="normal" selected>Normal</option><option value="heavy">Heavy (first / overdue clean)</option></select></div>
+   <div><label>Pets in home</label><select id="pets"><option value="0">No</option><option value="1">Yes</option></select></div>
+   <div><label>Crew size (people)</label><input id="crew" type="number" min="1" value="2"></div>
+  </div>
+  <h3>Add-ons</h3><div class="tw"><table id="addons"></table></div>
+ </div>
+
+ <div class="card noprint"><h2>2. Your numbers for this job</h2>
+  <div class="kpi" id="kpi"></div>
+  <div id="warn" class="row"></div>
+  <h3>Recurring options (price and margin after discount)</h3>
+  <div class="tw"><table id="freq"></table></div>
+  <div class="note">Price = cost / (1 - target margin). This is margin on the price, not a markup on cost. A 25% margin means 25 cents of every price dollar is profit before your own pay.</div>
+ </div>
+
+ <div class="card noprint"><h2>3. Client estimate</h2>
+  <div class="grid"><div><label>Your business name</label><input id="biz" placeholder="e.g. Bright Home Cleaning"></div><div><label>Contact (phone / email)</label><input id="contact"></div><div><label>Offer shown to client</label><select id="offer"></select></div><div><label>Note to client</label><input id="cnote" placeholder="Optional"></div></div>
+  <div class="row"><button class="btn" id="print">Print / save as PDF</button><button class="btn sec" id="copy">Copy estimate text</button><button class="btn sec" id="save">Save this quote</button></div>
+ </div>
+ <div class="card printable est" id="est"></div>
+</section>
+
+<section id="t-settings" class="hidden">
+ <div class="card"><h2>Cost settings</h2>
+  <div class="grid">
+   <div><label>Labor cost per hour ($, wage + payroll costs)</label><input id="s_labor" type="number" step="0.5" min="0"></div>
+   <div><label>Overhead per labor hour ($: supplies, insurance, vehicle, software)</label><input id="s_over" type="number" step="0.5" min="0"></div>
+   <div><label>Target margin on price (%)</label><input id="s_margin" type="number" step="1" min="0" max="90"></div>
+   <div><label>Lowest margin you accept (%) - warning line</label><input id="s_floor" type="number" step="1" min="0" max="90"></div>
+   <div><label>Sales tax added to client total (%)</label><input id="s_tax" type="number" step="0.1" min="0"></div>
+   <div><label>Minimum job price ($, 0 = none)</label><input id="s_min" type="number" step="1" min="0"></div>
+   <div><label>Setup / travel minutes per job (unpaid prep)</label><input id="s_setup" type="number" step="1" min="0"></div>
+   <div><label>Currency symbol</label><input id="s_cur" maxlength="3"></div>
+  </div>
+  <div class="note">The starting numbers are examples, not industry standards. Replace every one with your own real costs.</div>
+ </div>
+ <div class="card"><h2>Task minutes (total labor minutes, one person)</h2>
+  <div class="grid">
+   <div><label>Per bedroom</label><input id="m_bed" type="number" min="0"></div>
+   <div><label>Per bathroom</label><input id="m_bath" type="number" min="0"></div>
+   <div><label>Per kitchen</label><input id="m_kit" type="number" min="0"></div>
+   <div><label>Common areas, per 100 sq ft</label><input id="m_sq" type="number" step="0.5" min="0"></div>
+   <div><label>Multiplier: light</label><input id="c_light" type="number" step="0.05" min="0.1"></div>
+   <div><label>Multiplier: normal</label><input id="c_normal" type="number" step="0.05" min="0.1"></div>
+   <div><label>Multiplier: heavy</label><input id="c_heavy" type="number" step="0.05" min="0.1"></div>
+   <div><label>Multiplier: pets</label><input id="c_pets" type="number" step="0.05" min="0.1"></div>
+  </div>
+  <h3>Add-on list (name, minutes each)</h3><div class="tw"><table id="addcfg"></table></div>
+  <div class="row"><button class="btn sec" id="addadd">+ Add an add-on</button></div>
+  <h3>Recurring discounts (%)</h3><div class="tw"><table id="freqcfg"></table></div>
+  <div class="row"><button class="btn del" id="reset">Reset all settings to examples</button></div>
+ </div>
+</section>
+
+<section id="t-saved" class="hidden"><div class="card"><h2>Saved quotes</h2><div class="row"><button class="btn sec" id="exp">Export JSON</button><label class="btn sec" style="margin:0;cursor:pointer">Import JSON<input id="imp" type="file" accept=".json,application/json" class="hidden"></label></div><div class="tw"><table id="savedtbl"></table></div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How QuoteSweep works</h2>
+<p>1. Fill in <b>My costs &amp; times</b> once (labor, overhead, margin, how many minutes each room takes you).</p>
+<p>2. For each job enter rooms, condition, pets and add-ons. QuoteSweep adds up labor minutes, multiplies by your loaded hourly cost, and divides by (1 - margin) to get the price that leaves your target margin.</p>
+<p>3. Check recurring discounts: each row shows the new price and the margin you keep. Red means below your warning line.</p>
+<p>4. Print the client estimate or copy it as text. The client never sees your costs or margin.</p>
+<p><b>Honest notes.</b> Minutes and multipliers are starter examples you must calibrate with a few timed real jobs. Not tax or accounting advice. Data is stored only in this browser (localStorage): use Export JSON to back up.</p>
+</div></section>
+</main>
+<script>
+//CORE
+var DEFAULTS={labor:18,over:20,margin:25,floor:15,tax:0,min:0,setup:15,cur:'$',m_bed:20,m_bath:30,m_kit:40,m_sq:3,c_light:0.85,c_normal:1,c_heavy:1.35,c_pets:1.1,
+ addons:[{n:'Inside oven',m:30},{n:'Inside fridge',m:25},{n:'Interior windows (each)',m:5},{n:'Inside cabinets',m:30},{n:'Laundry load',m:15}],
+ freqs:[{n:'One-time',d:0},{n:'Monthly',d:5},{n:'Bi-weekly',d:10},{n:'Weekly',d:15}]};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function loadedRate(s){return num(s.labor)+num(s.over);}
+function jobMinutes(s,j){
+ var base=num(j.beds)*num(s.m_bed)+num(j.baths)*num(s.m_bath)+num(j.kits)*num(s.m_kit)+num(j.sqft)/100*num(s.m_sq)+num(s.setup);
+ var mult=num(s['c_'+j.cond],1);if(j.pets)mult*=num(s.c_pets,1);
+ var add=0;(j.addons||[]).forEach(function(q){add+=num(q.qty)*num(q.m);});
+ return base*mult+add;}
+function priceFor(cost,margin,minPrice){var m=Math.min(Math.max(margin,0),0.95);var p=cost/(1-m);return Math.max(p,num(minPrice));}
+function quote(s,j){
+ var minutes=jobMinutes(s,j),hours=minutes/60,cost=hours*loadedRate(s);
+ var price=priceFor(cost,num(s.margin)/100,s.min);
+ var crew=Math.max(1,num(j.crew,1));
+ var out={minutes:minutes,hours:hours,onsite:hours/crew,cost:cost,price:price,profit:price-cost,margin:price>0?(price-cost)/price:0,tax:price*num(s.tax)/100};
+ out.total=price+out.tax;
+ out.freqs=s.freqs.map(function(f){var p=price*(1-num(f.d)/100);return {n:f.n,d:num(f.d),price:p,profit:p-cost,margin:p>0?(p-cost)/p:0,status:status(p>0?(p-cost)/p:0,s)};});
+ out.status=status(out.margin,s);return out;}
+function status(m,s){var t=num(s.margin)/100-1e-9,f=num(s.floor)/100;return m>=t?'g':(m>=f?'a':'r');}
+//ENDCORE
+var KEY='quotesweep.v1';
+function $(id){return document.getElementById(id);}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var S=load('settings',JSON.parse(JSON.stringify(DEFAULTS)));var SAVED=load('saved',[]);
+function load(k,d){try{var v=localStorage.getItem(KEY+'.'+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function store(k,v){try{localStorage.setItem(KEY+'.'+k,JSON.stringify(v));}catch(e){}}
+function money(v){var c=S.cur||'$';return c+(Math.round(v*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+var SET_IDS={labor:'s_labor',over:'s_over',margin:'s_margin',floor:'s_floor',tax:'s_tax',min:'s_min',setup:'s_setup',cur:'s_cur',m_bed:'m_bed',m_bath:'m_bath',m_kit:'m_kit',m_sq:'m_sq',c_light:'c_light',c_normal:'c_normal',c_heavy:'c_heavy',c_pets:'c_pets'};
+var JOB={addonQty:{}};
+function job(){var j={client:$('client').value,beds:num($('beds').value),baths:num($('baths').value),kits:num($('kits').value),sqft:num($('sqft').value),cond:$('cond').value,pets:$('pets').value==='1',crew:num($('crew').value,1),addons:[]};
+ S.addons.forEach(function(a,i){j.addons.push({n:a.n,m:a.m,qty:num(JOB.addonQty[i])});});return j;}
+function renderSettings(){Object.keys(SET_IDS).forEach(function(k){$(SET_IDS[k]).value=S[k];});
+ $('addcfg').innerHTML='<tr><th>Name</th><th>Minutes each</th><th></th></tr>'+S.addons.map(function(a,i){return '<tr><td><input data-a="n" data-i="'+i+'" value="'+esc(a.n)+'"></td><td><input type="number" min="0" data-a="m" data-i="'+i+'" value="'+a.m+'"></td><td><button class="btn del" data-rm="'+i+'">x</button></td></tr>';}).join('');
+ $('freqcfg').innerHTML='<tr><th>Plan</th><th>Discount %</th></tr>'+S.freqs.map(function(f,i){return '<tr><td><input data-f="n" data-i="'+i+'" value="'+esc(f.n)+'"></td><td><input type="number" min="0" max="90" data-f="d" data-i="'+i+'" value="'+f.d+'"></td></tr>';}).join('');}
+function renderAddons(){$('addons').innerHTML='<tr><th>Add-on</th><th>Qty</th><th class="num">Minutes</th></tr>'+S.addons.map(function(a,i){return '<tr><td>'+esc(a.n)+'</td><td style="width:90px"><input type="number" min="0" data-q="'+i+'" value="'+(JOB.addonQty[i]||0)+'"></td><td class="num">'+a.m+'</td></tr>';}).join('');}
+function offerOpts(){var cur=$('offer').value;$('offer').innerHTML=S.freqs.map(function(f,i){return '<option value="'+i+'">'+esc(f.n)+'</option>';}).join('');if(cur&&$('offer').querySelector('option[value="'+cur+'"]'))$('offer').value=cur;}
+var LAST=null;
+function render(){var j=job(),q=quote(S,j);LAST={j:j,q:q};
+ $('kpi').innerHTML='<div><span class="mut">Labor time</span><b>'+q.hours.toFixed(1)+' h</b></div><div><span class="mut">On site with crew</span><b>'+q.onsite.toFixed(1)+' h</b></div><div><span class="mut">Your cost</span><b>'+money(q.cost)+'</b></div><div><span class="mut">Price</span><b>'+money(q.price)+'</b></div><div><span class="mut">Profit</span><b>'+money(q.profit)+'</b></div><div><span class="mut">Margin</span><b>'+(q.margin*100).toFixed(1)+'%</b></div>';
+ var bad=q.freqs.filter(function(f){return f.status==='r';}).map(function(f){return f.n;});
+ $('warn').innerHTML=bad.length?'<span class="pill r">Below your minimum margin on: '+esc(bad.join(', '))+'</span>':'<span class="pill g">All plans keep at least your minimum margin</span>';
+ $('freq').innerHTML='<tr><th>Plan</th><th class="num">Discount</th><th class="num">Price</th><th class="num">Profit</th><th class="num">Margin</th><th></th></tr>'+q.freqs.map(function(f){return '<tr><td>'+esc(f.n)+'</td><td class="num">'+f.d+'%</td><td class="num">'+money(f.price)+'</td><td class="num">'+money(f.profit)+'</td><td class="num">'+(f.margin*100).toFixed(1)+'%</td><td><span class="pill '+f.status+'">'+({g:'on target',a:'thin',r:'too low'})[f.status]+'</span></td></tr>';}).join('');
+ renderEstimate();}
+function estimateData(){var j=LAST.j,q=LAST.q,f=q.freqs[num($('offer').value)]||q.freqs[0];var lines=[];
+ if(j.beds)lines.push(j.beds+' bedroom'+(j.beds>1?'s':''));if(j.baths)lines.push(j.baths+' bathroom'+(j.baths>1?'s':''));if(j.kits)lines.push(j.kits+' kitchen'+(j.kits>1?'s':''));if(j.sqft)lines.push('Common areas (about '+j.sqft+' sq ft)');
+ j.addons.forEach(function(a){if(a.qty>0)lines.push(a.n+(a.qty>1?' x'+a.qty:''));});
+ var tax=f.price*num(S.tax)/100;return {f:f,lines:lines,tax:tax,total:f.price+tax,j:j};}
+function renderEstimate(){var e=estimateData(),d=new Date().toLocaleDateString();
+ $('est').innerHTML='<h2>'+esc($('biz').value||'Cleaning Estimate')+'</h2><div class="mut">'+esc($('contact').value)+'</div><p><b>Estimate for:</b> '+esc(e.j.client||'Client')+' &nbsp; <span class="mut">'+d+'</span></p><h3>Included</h3><ul>'+e.lines.map(function(l){return '<li>'+esc(l)+'</li>';}).join('')+'</ul><p>Home condition: '+e.j.cond+(e.j.pets?', pets in home':'')+'. Plan: <b>'+esc(e.f.n)+'</b></p><table><tr><td>Price</td><td class="num">'+money(e.f.price)+'</td></tr>'+(num(S.tax)?'<tr><td>Tax ('+S.tax+'%)</td><td class="num">'+money(e.tax)+'</td></tr>':'')+'<tr><td><b>Total per visit</b></td><td class="num tot">'+money(e.total)+'</td></tr></table>'+($('cnote').value?'<p>'+esc($('cnote').value)+'</p>':'')+'<p class="mut">Estimate based on the details above. Final price may change if the home differs from what was described.</p>';}
+function estText(){var e=estimateData();return (($('biz').value||'Cleaning Estimate')+'\nEstimate for '+(e.j.client||'Client')+'\n'+e.lines.map(function(l){return '- '+l;}).join('\n')+'\nPlan: '+e.f.n+'\nPrice: '+money(e.f.price)+(num(S.tax)?'\nTax: '+money(e.tax):'')+'\nTotal per visit: '+money(e.total)+($('cnote').value?'\n'+$('cnote').value:'')).trim();}
+function readSettings(){Object.keys(SET_IDS).forEach(function(k){var el=$(SET_IDS[k]);S[k]=k==='cur'?el.value:num(el.value);});store('settings',S);}
+function renderSaved(){$('savedtbl').innerHTML='<tr><th>Date</th><th>Client</th><th class="num">Price</th><th class="num">Margin</th><th></th></tr>'+(SAVED.length?SAVED.map(function(x,i){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.j.client||'-')+'</td><td class="num">'+money(x.price)+'</td><td class="num">'+(x.margin*100).toFixed(1)+'%</td><td><button class="btn sec" data-load="'+i+'">Open</button> <button class="btn del" data-del="'+i+'">x</button></td></tr>';}).join(''):'<tr><td colspan="5" class="mut">No saved quotes yet.</td></tr>');}
+function setJob(j){$('client').value=j.client||'';$('beds').value=j.beds;$('baths').value=j.baths;$('kits').value=j.kits;$('sqft').value=j.sqft;$('cond').value=j.cond;$('pets').value=j.pets?'1':'0';$('crew').value=j.crew;JOB.addonQty={};(j.addons||[]).forEach(function(a,i){JOB.addonQty[i]=a.qty;});renderAddons();}
+document.addEventListener('input',function(e){var t=e.target;
+ if(t.dataset.q!==undefined){JOB.addonQty[t.dataset.q]=num(t.value);render();return;}
+ if(t.dataset.a){S.addons[t.dataset.i][t.dataset.a]=t.dataset.a==='m'?num(t.value):t.value;store('settings',S);renderAddons();render();return;}
+ if(t.dataset.f){S.freqs[t.dataset.i][t.dataset.f]=t.dataset.f==='d'?num(t.value):t.value;store('settings',S);offerOpts();render();return;}
+ if(Object.keys(SET_IDS).some(function(k){return SET_IDS[k]===t.id;})){readSettings();render();return;}
+ render();});
+document.addEventListener('click',function(e){var t=e.target;
+ if(t.dataset.t){['quote','settings','saved','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==t.dataset.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});if(t.dataset.t==='saved')renderSaved();return;}
+ if(t.dataset.rm!==undefined){S.addons.splice(num(t.dataset.rm),1);JOB.addonQty={};store('settings',S);renderSettings();renderAddons();render();return;}
+ if(t.dataset.del!==undefined){SAVED.splice(num(t.dataset.del),1);store('saved',SAVED);renderSaved();return;}
+ if(t.dataset.load!==undefined){var x=SAVED[num(t.dataset.load)];setJob(x.j);document.querySelector('[data-t=quote]').click();render();return;}
+ if(t.id==='addadd'){S.addons.push({n:'New add-on',m:15});store('settings',S);renderSettings();renderAddons();render();}
+ if(t.id==='reset'){if(confirm('Reset all settings to the example values?')){S=JSON.parse(JSON.stringify(DEFAULTS));store('settings',S);JOB.addonQty={};init();}}
+ if(t.id==='print')window.print();
+ if(t.id==='copy'){var tx=estText();if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';setTimeout(function(){t.textContent='Copy estimate text';},1500);},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);}
+ if(t.id==='save'){SAVED.unshift({date:new Date().toLocaleString(),j:LAST.j,price:LAST.q.price,margin:LAST.q.margin});store('saved',SAVED);t.textContent='Saved';setTimeout(function(){t.textContent='Save this quote';},1500);}
+ if(t.id==='exp'){var b=new Blob([JSON.stringify({settings:S,saved:SAVED},null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='quotesweep-backup.json';a.click();}
+});
+$('imp').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.settings&&Array.isArray(d.settings.addons)&&Array.isArray(d.settings.freqs)){S=d.settings;SAVED=d.saved||[];store('settings',S);store('saved',SAVED);init();renderSaved();}else alert('This file is not a QuoteSweep backup.');}catch(x){alert('Could not read that file.');}};r.readAsText(f);});
+function init(){renderSettings();renderAddons();offerOpts();render();}
+init();
+</script></body></html>
