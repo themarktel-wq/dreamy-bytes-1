@@ -1,0 +1,151 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Delivery Promise Tracker for Photographers</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1f2933;--mut:#6b7280;--acc:#2f5d62;--line:#e3ded3;--g:#1f8a4c;--a:#c98a00;--r:#c0392b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:var(--acc);color:#fff;padding:16px 16px 14px}header h1{margin:0;font-size:20px}header p{margin:4px 0 0;opacity:.85;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px 12px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}
+h2{font-size:16px;margin:0 0 8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.row>label{flex:1 1 140px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+input,select,textarea,button{font:inherit}input,select,textarea{border:1px solid var(--line);border-radius:6px;padding:7px 8px;background:#fff;color:var(--ink);width:100%}
+button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer}button.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.del{background:#fff;color:var(--r);border:1px solid var(--r);padding:4px 8px;font-size:12px}
+.pills{display:flex;gap:8px;flex-wrap:wrap}.pill{padding:6px 12px;border-radius:99px;font-weight:600;font-size:13px;color:#fff}.pill.g{background:var(--g)}.pill.a{background:var(--a)}.pill.r{background:var(--r)}.pill.n{background:var(--mut)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:760px}th,td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:middle;font-size:13px}th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+td input,td select{padding:5px 6px;font-size:13px}td select{min-width:98px}.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}.dot.green{background:var(--g)}.dot.amber{background:var(--a)}.dot.red{background:var(--r)}.dot.none{background:#cbd5e1}
+.note{font-size:12px;color:var(--mut)}.banner{background:#fff8e1;border:1px solid #f0d98a;border-radius:8px;padding:8px 10px;font-size:13px;margin:10px 0}
+textarea{min-height:170px;white-space:pre-wrap}
+.hide{display:none}@media print{header,.noprint{display:none}body{background:#fff}}
+@media(max-width:640px){main{padding:8px}.row>label{flex:1 1 45%}}
+</style></head><body>
+<header><h1>Delivery Promise Tracker</h1><p>Promised dates vs. your real editing queue. Data stays in this browser (localStorage). Nothing is sent anywhere.</p></header>
+<main>
+<div class="banner" id="sampleBanner">Sample data is loaded so you can see how it works (sample couples and dates are made up). Use <b>Clear all</b> and add your own jobs.</div>
+<section class="card"><h2>1. Your editing capacity</h2>
+<div class="row"><label>Hours per week you can edit<input id="cap" type="number" min="1" step="0.5"></label>
+<label>Default edit hours per wedding<input id="defHrs" type="number" min="0.5" step="0.5"></label>
+<label>Buffer days added to dates in messages<input id="buf" type="number" min="0" step="1"></label>
+<label>Today (override for testing)<input id="today" type="date"></label>
+<label>Your name / studio (for messages)<input id="studio" type="text" placeholder="Your name"></label></div>
+<p class="note">Default 12 hours per wedding is an editable starting point: one survey of wedding photographers (Fstoppers) reported an average of about 12 editing hours per wedding, another industry source says 14. Your own number depends on image count, culling and style, so set it per job. This is not a promise about your workflow.</p></section>
+<section class="card"><h2>2. Status of your queue</h2><div class="pills" id="pills"></div><p id="advice" class="note"></p></section>
+<section class="card"><h2>3. Add a job</h2>
+<div class="row"><label>Couple<input id="nCouple" type="text" placeholder="e.g. Jordan &amp; Lee"></label><label>Wedding date<input id="nWed" type="date"></label>
+<label>Promised delivery date<input id="nProm" type="date"></label><label>Or promise (weeks after wedding)<input id="nWeeks" type="number" min="1" placeholder="e.g. 6"></label>
+<label>Images (approx.)<input id="nImg" type="number" min="0"></label><label>Edit hours (blank = default)<input id="nHrs" type="number" min="0.5" step="0.5"></label>
+<button id="add">Add job</button></div></section>
+<section class="card"><h2>4. Jobs and forecast</h2><div class="tw"><table><thead><tr><th>Couple</th><th>Wedding</th><th>Promised</th><th>Images</th><th>Edit h</th><th>Status</th><th>Forecast finish</th><th>Result</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+<p class="note">Forecast: jobs are edited in order of promised date. Each job starts on the later of its wedding date, today and the finish of the job before it, then takes edit hours / weekly capacity x 7 calendar days (rounded up). Green = on time. Amber = up to 7 days late. Red = more than 7 days late. It is an estimate, not a guarantee.</p>
+<div class="row noprint"><button class="sec" id="export">Export JSON</button><button class="sec" id="importBtn">Import JSON</button><input type="file" id="importFile" accept=".json" class="hide"><button class="sec" id="sample">Load sample</button><button class="del" id="clear">Clear all</button></div></section>
+<section class="card"><h2>5. Client update message</h2><div class="row"><label>Job<select id="mJob"></select></label><label>Message<select id="mKind"><option value="auto">Auto (by status)</option><option value="ontrack">On track</option><option value="delayed">Delayed</option><option value="delivered">Delivered</option></select></label><label>Gallery link (optional)<input id="mLink" type="text"></label></div>
+<textarea id="msg" readonly></textarea><div class="row" style="margin-top:8px"><button id="copy">Copy message</button><span class="note" id="copied"></span></div>
+<p class="note">Messages quote the forecast finish plus your buffer days, so you do not over-promise again. Read and edit before sending.</p></section>
+</main>
+<script>
+// ---- CORE (pure functions, unit-tested in Node) ----
+var DAY = 86400000;
+function parseDate(s) { // 'YYYY-MM-DD' -> day number (UTC), or NaN
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return NaN;
+  var p = s.split('-').map(Number), t = Date.UTC(p[0], p[1] - 1, p[2]);
+  var d = new Date(t); if (d.getUTCMonth() !== p[1] - 1) return NaN;
+  return Math.round(t / DAY);
+}
+function fmtDate(n) { var d = new Date(n * DAY); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); }
+function prettyDate(n) { var d = new Date(n * DAY); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear(); }
+// days needed to edit one job at a given weekly capacity (calendar days)
+function editDays(editHours, weeklyHours) {
+  if (!(weeklyHours > 0)) return Infinity;
+  return Math.ceil(editHours / weeklyHours * 7);
+}
+// forecast: undelivered jobs, sorted by promised date; start = max(shoot, previous finish [, today]); finish = start + editDays
+function forecast(jobs, weeklyHours, todayStr) {
+  var today = todayStr ? parseDate(todayStr) : NaN;
+  var open = jobs.filter(function (j) { return j.status !== 'delivered'; }).map(function (j) {
+    return { job: j, shoot: parseDate(j.weddingDate), promised: parseDate(j.promisedDate) };
+  }).filter(function (x) { return !isNaN(x.shoot) && !isNaN(x.promised); });
+  open.sort(function (a, b) { return a.promised - b.promised || a.shoot - b.shoot; });
+  var prev = -Infinity, out = [];
+  open.forEach(function (x) {
+    var start = Math.max(x.shoot, prev); if (!isNaN(today)) start = Math.max(start, today);
+    var hrs = Number(x.job.editHours); if (!(hrs >= 0)) hrs = 0;
+    var finish = start + editDays(hrs, weeklyHours);
+    var late = finish - x.promised, st = late <= 0 ? 'green' : (late <= 7 ? 'amber' : 'red');
+    out.push({ id: x.job.id, couple: x.job.couple, start: start, finish: finish, promised: x.promised, shoot: x.shoot, lateDays: late, rag: st, hours: hrs });
+    prev = finish;
+  });
+  return out;
+}
+// smallest whole weekly-hour capacity (1..max) at which no job is late; null if none
+function minCapacityForAllGreen(jobs, todayStr, max) {
+  max = max || 80;
+  for (var c = 1; c <= max; c++) { if (forecast(jobs, c, todayStr).every(function (r) { return r.rag === 'green'; })) return c; }
+  return null;
+}
+function summary(rows) {
+  var s = { green: 0, amber: 0, red: 0, hours: 0 };
+  rows.forEach(function (r) { s[r.rag]++; s.hours += r.hours; }); return s;
+}
+// message templates. bufferDays is added to the forecast date so you do not over-promise.
+function messageFor(kind, row, job, opt) {
+  opt = opt || {}; var me = opt.studio || 'your photographer', buf = Number(opt.bufferDays) || 0;
+  var names = job.couple || 'there';
+  if (kind === 'delivered') return 'Hi ' + names + ',\n\nYour wedding gallery is ready! ' + (opt.link ? 'You can view it here: ' + opt.link + '\n\n' : 'I will send the gallery link in this message thread.\n\n') + 'Please download your favourites and keep a backup copy of your files. Thank you for trusting me with your day.\n\nWarm wishes,\n' + me;
+  if (!row) return '';
+  var est = prettyDate(row.finish + buf), prom = prettyDate(row.promised);
+  if (kind === 'ontrack') return 'Hi ' + names + ',\n\nA quick update on your wedding photos: editing is on schedule. I expect to deliver your gallery by ' + est + ', ahead of the date we agreed (' + prom + '). I will message you the moment it is ready.\n\nWarm wishes,\n' + me;
+  return 'Hi ' + names + ',\n\nI want to be upfront with you about your wedding photos. We agreed on ' + prom + ', and because of my current editing queue I now expect delivery by ' + est + '. I am sorry for the extra wait and I know how much you are looking forward to them. If anything changes I will tell you straight away. ' + (opt.sneak ? 'In the meantime, here is a small preview: ' + opt.sneak + '\n\n' : 'I can send a few sneak-peek images sooner if you would like.\n\n') + 'Thank you for your patience.\n\nWarm wishes,\n' + me;
+}
+function pickKind(row) { return row ? (row.rag === 'green' ? 'ontrack' : 'delayed') : 'delivered'; }
+if (false && typeof module !== 'undefined') module.exports = { parseDate: parseDate, fmtDate: fmtDate, prettyDate: prettyDate, editDays: editDays, forecast: forecast, minCapacityForAllGreen: minCapacityForAllGreen, summary: summary, messageFor: messageFor, pickKind: pickKind };
+
+(function(){
+var KEY='dpt.v1',$=function(i){return document.getElementById(i)};
+var SAMPLE_TODAY=null;
+function sampleJobs(){var t=parseDate(fmtDate(Math.floor(Date.now()/DAY)));function d(o){return fmtDate(t+o)}
+ return [{id:'s1',couple:'Sample: Alex & Sam',weddingDate:d(-60),promisedDate:d(-14),images:640,editHours:12,status:'editing',sample:1},
+ {id:'s2',couple:'Sample: Priya & Chen',weddingDate:d(-35),promisedDate:d(7),images:820,editHours:14,status:'waiting',sample:1},
+ {id:'s3',couple:'Sample: Jordan & Lee',weddingDate:d(-20),promisedDate:d(22),images:700,editHours:12,status:'waiting',sample:1},
+ {id:'s4',couple:'Sample: Maria & Tom',weddingDate:d(5),promisedDate:d(47),images:900,editHours:15,status:'waiting',sample:1},
+ {id:'s5',couple:'Sample: Nora & Ben',weddingDate:d(-90),promisedDate:d(-45),images:560,editHours:10,status:'delivered',sample:1}]}
+var S;function load(){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+ if(!S||!Array.isArray(S.jobs)){S={cap:10,defHrs:12,buf:3,studio:'',jobs:sampleJobs()}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function todayStr(){return $('today').value||fmtDate(Math.floor(Date.now()/DAY))}
+function readSettings(){S.cap=Number($('cap').value)||0;S.defHrs=Number($('defHrs').value)||12;S.buf=Math.max(0,Number($('buf').value)||0);S.studio=$('studio').value}
+function render(){
+ $('cap').value=S.cap;$('defHrs').value=S.defHrs;$('buf').value=S.buf;$('studio').value=S.studio||'';
+ $('sampleBanner').style.display=S.jobs.some(function(j){return j.sample})?'block':'none';
+ var fc=forecast(S.jobs,S.cap,todayStr()),by={};fc.forEach(function(r){by[r.id]=r});
+ var sm=summary(fc),del=S.jobs.filter(function(j){return j.status==='delivered'}).length;
+ $('pills').innerHTML='<span class="pill g">'+sm.green+' on track</span><span class="pill a">'+sm.amber+' at risk (≤7 days late)</span><span class="pill r">'+sm.red+' late (&gt;7 days)</span><span class="pill n">'+del+' delivered</span><span class="pill n">'+sm.hours+' edit hours in queue</span>';
+ var adv='';if(!(S.cap>0)){adv='Enter your weekly editing hours to see a forecast.'}else if(fc.length){var mc=minCapacityForAllGreen(S.jobs,todayStr(),80);
+  adv=(sm.amber+sm.red)===0?'Every open job is forecast on or before its promised date at '+S.cap+' h/week.':(mc?'To bring every open job to green you would need about '+mc+' editing hours per week (you entered '+S.cap+').':'Even at 80 hours a week some dates cannot be met. Renegotiate those delivery dates early.')}
+ $('advice').textContent=adv;
+ var rows=S.jobs.slice().sort(function(a,b){return (a.status==='delivered')-(b.status==='delivered')||parseDate(a.promisedDate)-parseDate(b.promisedDate)});
+ $('rows').innerHTML=rows.map(function(j){var r=by[j.id],res='<span class="dot none"></span>—',fin='—';
+  if(j.status==='delivered'){res='Delivered'}else if(r){fin=isFinite(r.finish)?prettyDate(r.finish):'—';var l=r.lateDays;res='<span class="dot '+r.rag+'"></span>'+(l<=0?(-l)+' days spare':l+' days late')}
+  return '<tr data-id="'+esc(j.id)+'"><td><input data-f="couple" value="'+esc(j.couple)+'"></td><td><input type="date" data-f="weddingDate" value="'+esc(j.weddingDate)+'"></td><td><input type="date" data-f="promisedDate" value="'+esc(j.promisedDate)+'"></td><td><input type="number" data-f="images" value="'+esc(j.images)+'" style="width:76px"></td><td><input type="number" step="0.5" data-f="editHours" value="'+esc(j.editHours)+'" style="width:70px"></td><td><select data-f="status"><option value="waiting"'+(j.status==='waiting'?' selected':'')+'>Waiting</option><option value="editing"'+(j.status==='editing'?' selected':'')+'>Editing</option><option value="delivered"'+(j.status==='delivered'?' selected':'')+'>Delivered</option></select></td><td>'+fin+'</td><td>'+res+'</td><td><button class="del" data-del="1">Delete</button></td></tr>'}).join('')||'<tr><td colspan="9" class="note">No jobs yet. Add one above.</td></tr>';
+ var cur=$('mJob').value;$('mJob').innerHTML=S.jobs.map(function(j){return '<option value="'+esc(j.id)+'">'+esc(j.couple)+'</option>'}).join('');if(cur&&S.jobs.some(function(j){return j.id===cur}))$('mJob').value=cur;
+ msg();save()}
+function msg(){var j=S.jobs.filter(function(x){return x.id===$('mJob').value})[0];if(!j){$('msg').value='';return}
+ var r=forecast(S.jobs,S.cap,todayStr()).filter(function(x){return x.id===j.id})[0],k=$('mKind').value;
+ if(j.status==='delivered')r=null;if(k==='auto')k=pickKind(r);
+ if((k==='ontrack'||k==='delayed')&&!r){$('msg').value='Cannot forecast this job: set its dates, edit hours and your weekly capacity first.';return}
+ $('msg').value=messageFor(k,r,j,{bufferDays:S.buf,studio:S.studio,link:$('mLink').value})}
+document.addEventListener('input',function(e){var t=e.target;if(t.closest&&t.closest('tr[data-id]')&&t.dataset.f){var j=S.jobs.filter(function(x){return x.id===t.closest('tr').dataset.id})[0];if(j){j[t.dataset.f]=(t.type==='number')?(t.value===''?'':Number(t.value)):t.value;j.sample=0;if(t.tagName==='SELECT'||t.type==='date'||t.type==='number'){render()}else save()}}
+ else if(['cap','defHrs','buf','today','studio'].indexOf(t.id)>=0){readSettings();render()}else if(['mJob','mKind','mLink'].indexOf(t.id)>=0)msg()});
+document.addEventListener('click',function(e){var t=e.target;if(t.dataset&&t.dataset.del){var id=t.closest('tr').dataset.id;S.jobs=S.jobs.filter(function(j){return j.id!==id});render()}});
+$('add').onclick=function(){var w=$('nWed').value,p=$('nProm').value;if(!$('nCouple').value.trim()||isNaN(parseDate(w))){alert('Add a couple name and the wedding date.');return}
+ if(isNaN(parseDate(p))){var wk=Number($('nWeeks').value);if(!(wk>0)){alert('Add a promised date or the number of weeks you promised.');return}p=fmtDate(parseDate(w)+wk*7)}
+ var h=Number($('nHrs').value)||S.defHrs;S.jobs=S.jobs.filter(function(j){return !j.sample}).concat([{id:'j'+Date.now(),couple:$('nCouple').value.trim(),weddingDate:w,promisedDate:p,images:Number($('nImg').value)||'',editHours:h,status:'waiting'}]);
+ ['nCouple','nWed','nProm','nWeeks','nImg','nHrs'].forEach(function(i){$(i).value=''});render()};
+$('clear').onclick=function(){if(confirm('Delete all jobs from this browser?')){S.jobs=[];render()}};
+$('sample').onclick=function(){S.jobs=sampleJobs();render()};
+$('export').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));a.download='delivery-tracker-backup.json';a.click()};
+$('importBtn').onclick=function(){$('importFile').click()};
+$('importFile').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(!d||!Array.isArray(d.jobs))throw 0;S={cap:Number(d.cap)||10,defHrs:Number(d.defHrs)||12,buf:Number(d.buf)||0,studio:String(d.studio||''),jobs:d.jobs};render()}catch(e){alert('That file is not a Delivery Promise Tracker backup.')}};r.readAsText(f)};
+$('copy').onclick=function(){var v=$('msg').value;function ok(){$('copied').textContent='Copied'}
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(ok,function(){$('msg').select();document.execCommand('copy');ok()})}else{$('msg').select();document.execCommand('copy');ok()}};
+load();render();
+})();
+</script></body></html>
