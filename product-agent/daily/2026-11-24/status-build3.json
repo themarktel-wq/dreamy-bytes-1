@@ -37,6 +37,25 @@
     "README.md",
     "cover.png"
    ]
+  },
+  "d20261124-11": {
+   "slug": "wedding-photography-contract-client-guide-pack",
+   "name": "Wedding Photography Contract + Client Guide Pack",
+   "status": "built",
+   "qa": "pass",
+   "price_usd": 29,
+   "files": [
+    "01-Wedding-Photography-Contract.docx/.pdf",
+    "02-Client-Guide.docx/.pdf",
+    "03-Client-Questionnaire.docx/.pdf",
+    "04-Delivery-and-Gallery-Emails.docx/.pdf",
+    "README.md",
+    "cover.png"
+   ]
   }
+ },
+ "summary": {
+  "built": 4,
+  "failed": 0
  }
 }
