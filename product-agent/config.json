@@ -1,6 +1,6 @@
 {
  "timezone": "Asia/Karachi",
- "run_time_local": "01:43",
+ "run_time_local": "01:20 research, 02:20 / 03:20 / 04:20 build, 05:20 package",
  "us_every_day": true,
  "rotate_regions": [
   "UK",
@@ -45,7 +45,7 @@
    59
   ]
  },
- "max_new_products_per_day": 3,
+ "max_new_products_per_day": 15,
  "min_total_score": 24,
  "banned": [
   "trademarked characters/brands",
@@ -69,5 +69,56 @@
   "max_zip_mb": 150,
   "draft_only": true,
   "upload": "manual drag-drop into Products > Import a product pack until the owner gives API access"
- }
+ },
+ "daily_target_products": {
+  "min": 10,
+  "target": 12,
+  "max": 15
+ },
+ "niches_per_day": 3,
+ "products_per_niche": "4-5",
+ "min_software_share": 0.4,
+ "focus": "SaaS/software, unique concepts, and everyday SERVICE BUSINESSES converted into sellable products (productized services)",
+ "service_business_universe": [
+  "home cleaning",
+  "HVAC/plumbing/electrical trades",
+  "landscaping/lawn care",
+  "real-estate agents",
+  "property managers/landlords",
+  "dentists/clinics/physio",
+  "salons/barbers/spas",
+  "gyms/personal trainers/yoga studios",
+  "photographers/videographers",
+  "wedding/event planners",
+  "tutors/coaches/teachers",
+  "accountants/bookkeepers",
+  "immigration/legal consultants (templates only, no advice)",
+  "insurance agents",
+  "restaurants/cafes/food trucks",
+  "auto repair/detailing",
+  "pet groomers/vets/dog walkers",
+  "daycare/nannies",
+  "travel agents",
+  "marketing agencies/freelancers",
+  "recruiters/HR consultants",
+  "moving companies",
+  "pest control",
+  "interior designers/architects",
+  "cleaning/laundry/dry-clean shops",
+  "security/guard services",
+  "courier/logistics",
+  "repair shops (phones/laptops)",
+  "funeral-free list: avoid sensitive/medical advice niches"
+ ],
+ "productization_patterns": [
+  "quote/price calculator",
+  "client intake + mini CRM (micro-SaaS)",
+  "booking/reminder/no-show automation (n8n)",
+  "proposal/contract/SOP template pack (DOCX/PDF)",
+  "profit & capacity dashboard (xlsx)",
+  "client-facing report/portal generator (HTML)",
+  "audit/checklist scorer",
+  "lead-magnet quiz/estimator",
+  "website/landing builder for that trade"
+ ]
 }

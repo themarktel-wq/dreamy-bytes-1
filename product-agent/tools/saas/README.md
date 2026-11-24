@@ -1,0 +1,4 @@
+# tools/saas: single-file micro-SaaS / software generator
+`src/kit.js` + `kit.css` = framework (modules, tables, dashboards, tools, CSV, licence gating, webhook). `src/lib.js` = factories (`crm`, `invoicer`, `ledger`, `logger`, `board`, `US`). Product specs live in `src/*_*.js`, each starting with `//=== pNN id`; see `us_a.js` and `in_a.js` for examples of `KIT.app({...})` and factory calls with custom calculators (`KIT.calc`) and message templates (`KIT.compose`).
+Build: `cd product-agent/tools/saas && python3 build.py` (creates `config.json` with a random secret if missing: never commit it; the owner's real secret is used for licence keys), then `node extract.js && node smoke.js`. Needs Playwright (preinstalled in the cloud container).
+New spec files: name them `src/d<YYYYMMDD>_<n>.js`. Output goes to `dist/pNN.html`; copy the final HTML into the product folder. Prices: one-time lifetime for US tools (usTiers), or subscription tiers for local-market apps.

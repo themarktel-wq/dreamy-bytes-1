@@ -1,0 +1,10 @@
+tools/saas/config.json
+tools/saas/dist/
+tools/saas/checkout.json
+node_modules/
+__pycache__/
+*.pyc
+tools/sheets/out/
+tools/sheets/chk/
+tools/sheets/pdf/
+tools/sheets/shots/

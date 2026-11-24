@@ -58,3 +58,26 @@ Append each product to `memory/products.json` (id, type, niche, region, price, d
 - No marketplace API or private sales data is available; say so and keep confidence labels honest.
 - Do not publish listings, run ads or spend money. Stop at ready-to-upload packages and wait for the owner.
 - Do not scrape sites that forbid it, do not copy competitor products, do not fake reviews.
+
+---
+# MULTI-STAGE DAILY MODE (current): 10-15 products per day across 3 niches
+
+The owner wants 10-15 digital products every day (max 15), about 4-5 per niche, across 3 DIFFERENT niches each day, focused on SaaS/software and on everyday service businesses turned into products (productized services). At least 40% must be software (micro-SaaS apps/tools built with `tools/saas`, n8n automations, HTML tools/builders); the rest can be spreadsheets, docs templates, printables. All products must be UNIQUE concepts.
+
+Because one session cannot do all of this, the day is split into 5 scheduled stages. Each stage is a separate session that reads and writes files in `product-agent/daily/YYYY-MM-DD/` (use the date in Asia/Karachi; stage 1 creates the folder, later stages use the same folder name). ALWAYS start by adding the repo with push access, pulling the branch, and doing a push test; if push fails, stop and report the error.
+
+## Stage 1: research and plan (about 01:20 PKT)
+1. Read config, memory (products.json, rejected.json, results.csv) and the last 3 daily folders. Pick 3 niches from `service_business_universe` (never the same niche two days in a row; weigh any real results in results.csv).
+2. For each niche do real research (about 12 searches per niche): the service business's daily workflow, what they pay for, what they complain about (forums, reviews, Reddit/Facebook-group threads, job boards), existing software and its price/limits (competitor pricing pages and 1-3 star reviews), and the productization patterns that fit. Every claim: `claim | URL | date | quant/qual | confidence`. Never invent numbers.
+3. For each niche produce 4-5 product concepts using the productization patterns. Each concept must have: unique-concept one-liner ("why this is different"), the niche buyer persona, pain points, pitch points, type (software / xlsx / n8n / docx / printable / html tool), price, features list, screens/sheets/fields detailed enough for another session to build it without guessing (fields, stages, calculators, formulas, sample data), evidence refs, and a novelty check against `memory/products.json` and 3 competitors (reject near-duplicates).
+4. Evidence gate per NICHE (>=3 independent sources, >=1 quantitative signal, a real gap) and score per product (>=24/40). Total 10-15 products (aim 12). If fewer than 10 pass, say so and plan fewer; never pad with weak ideas.
+5. Write `plan.json` (list of products with id d<date>-NN, niche, type, assigned_stage: build1/build2/build3 split so software items are spread evenly and each build stage gets 4-5 products), `research-<niche>.md` x3 (evidence cards + personas), `PLAN.md`. Commit and push.
+
+## Stages 2, 3, 4: build (about 02:20, 03:20, 04:20 PKT)
+Read `plan.json`; build ONLY the products assigned to your stage (build1/build2/build3). If plan.json is missing, stop and report. For each product: build it with the right pipeline (`tools/saas` for software, `tools/sheets`, `tools/n8n`, `tools/builders`, docs/printables), run its tests, make `cover.png`, `README.md` in vault format (first line `# Name`, description, features, who it is for, `Price:` line in PKR and USD), `brief.md`, `qa-report.md` (what was tested and what was not). A product that fails QA is marked failed in `status.json` and is NOT delivered; do not ship half-working products. Save into `daily/DATE/products/<slug>/`. Commit and push after EACH product (so progress is never lost). Update `daily/DATE/status-<stage>.json`.
+
+## Stage 5: package (about 05:20 PKT)
+Read all `status-*.json`. Build `daily/DATE/pack.zip` containing one top-level folder per delivered product, with ONLY vault files (product files, README.md, cover.png, samples; no brief/evidence/qa; no secrets). Write `SUMMARY.md` (niches picked and why, each product with its unique concept, price, QA status, what failed, what to test next), update `memory/products.json` with delivered products, and push. Publish SUMMARY as an Artifact page if the tool exists. Final message in Roman Urdu with links.
+
+## Rules for all stages
+Do not publish listings, run ads or spend money. Respect the evidence gate and honesty rules. If network blocks a research site, list it and continue. Keep memory valid JSON. Etsy/Gumroad are OFF; the vault is the shop.
