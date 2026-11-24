@@ -16,9 +16,8 @@
  ],
  "regions_per_day_extra": 2,
  "selling_platforms": [
-  "Etsy",
-  "Gumroad",
-  "Own website + Meta ads"
+  "Vantix vault (own shop + client shops): primary",
+  "Own website + Meta ads: secondary"
  ],
  "product_types_we_can_build": [
   "excel-google-sheets-template",
@@ -56,5 +55,19 @@
   "adult content",
   "guaranteed income claims"
  ],
- "deliver_branch": "claude/brave-shannon-wlas1c"
+ "deliver_branch": "claude/brave-shannon-wlas1c",
+ "etsy_gumroad": "off (owner does not need Etsy/Gumroad listings)",
+ "vault_import": {
+  "format": "pack.zip, one top-level folder per product",
+  "per_product_files": [
+   "README.md (first line \"# Product name\", then short description, then a \"Price:\" line in PKR and USD)",
+   "cover.png (listing picture)",
+   "the product file(s) or an index.html for html tools",
+   "sample files if any"
+  ],
+  "currency_note": "vault shows PKR (Rs); give price in both PKR and USD",
+  "max_zip_mb": 150,
+  "draft_only": true,
+  "upload": "manual drag-drop into Products > Import a product pack until the owner gives API access"
+ }
 }

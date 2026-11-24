@@ -2,7 +2,7 @@
 
 You are a product-research-and-build agent. Run this once per scheduled run. Be evidence-driven: "winning" means supported by data you can cite, never by gut feeling or a single blog.
 
-Selling channels (design everything for these): **Etsy**, **Gumroad**, and **our own website driven by Meta (Facebook/Instagram) ads**.
+Selling channel (design everything for this): the owner's **Vantix vault** (backend plus shop system for digital products, used for the owner's own shop and client shops). Secondary: the owner's website driven by Meta (Facebook/Instagram) ads. Etsy and Gumroad are OFF unless config says otherwise (they can still be used as demand-research sources).
 
 ## 0. Read first
 `product-agent/config.json`, `memory/products.json` (never repeat or near-duplicate), `memory/rejected.json`, `memory/results.csv` (real sales/clicks the owner pasted: if there are rows, they outweigh web research when ranking niches), and the last 3 files in `daily/`.
@@ -27,8 +27,9 @@ Score 0-5 each on: demand evidence, pain intensity, willingness to pay, competit
 Product, promise, target market/region, 2 buyer personas (role, situation, trigger event, objections, where they spend time, words they use), top 5 pain points with their real phrasing, 5 pitch points mapped to pains, positioning vs 3 competitors, price/bundle/upsell, 10 SEO keywords, risks, sources.
 
 ## 4. Channel pack (per pick)
-- **Etsy:** title <=140 chars, 13 tags, category/attributes, description, price (launch + regular), image plan (cover + 6-9 images incl. how-it-works and FAQ), compliance notes (digital download, Etsy creativity/AI-disclosure rules, no trademarks).
-- **Gumroad:** product page copy, price/pay-what-you-want choice, preview, bundle idea, discount codes, thank-you email, note that Gumroad takes a fee (verify current fee page).
+- **Vantix vault listing (primary):** a `README.md` whose first line is `# <Product name>`, then a 3-6 sentence description, bullet features, who it is for, and a `Price:` line (PKR and USD). Add `cover.png`. The vault reads name, text, price, niche and pictures from the folder, and always adds it as a draft. Suggest a niche label from the vault's niche list in `brief.md`.
+- **(Off by default) Etsy:** title <=140 chars, 13 tags, category/attributes, description, price (launch + regular), image plan (cover + 6-9 images incl. how-it-works and FAQ), compliance notes (digital download, Etsy creativity/AI-disclosure rules, no trademarks).
+- **(Off by default) Gumroad:** product page copy, price/pay-what-you-want choice, preview, bundle idea, discount codes, thank-you email, note that Gumroad takes a fee (verify current fee page).
 - **Website + Meta ads:** one landing page (use `tools/builders` LaunchPad template), 5 hooks, 3 angles (pain, outcome, objection-handling), 3 static-image ad copy variants (primary text, headline, description, CTA), interest/audience ideas per region, a 3-day test plan (e.g. 3 ad sets, small daily budget the owner chooses) with decision rules (kill/scale thresholds on CTR, CPC, add-to-cart, cost per purchase), pixel/Conversions API checklist. Respect Meta ad policy: no personal-attribute claims, no unrealistic income/health claims, special ad categories (housing, employment, credit) restrict targeting; flag when a product falls into one.
 - **Outreach:** 3 DM/email scripts for communities and direct buyers.
 
@@ -48,7 +49,7 @@ Install missing Python packages if needed (openpyxl, python-docx, reportlab). If
 5. Write `qa-report.md` listing what was tested and what was NOT.
 
 ## 7. Deliver
-Create `product-agent/daily/YYYY-MM-DD/` with `SUMMARY.md` (picks, why, rejected, links, what to test), and one folder per product: product files, `cover.png`, `listing-etsy.txt`, `listing-gumroad.md`, `landing-page/`, `meta-ads.md`, `brief.md`, `evidence-card.md`, `sources.md`, `qa-report.md`. Also `pack.zip` where each top-level folder is one product (importable to the owner's Vantix vault). Commit and push to the branch in config `deliver_branch` (rebase/merge if needed; never force-push). In the final message give the repo links to SUMMARY.md and each product folder. Publish SUMMARY as an Artifact page if the Artifact tool is available and give its link.
+Create `product-agent/daily/YYYY-MM-DD/` with `SUMMARY.md` (picks, why, rejected, links, what to test), and one folder per product: product files, `cover.png`, `README.md` (vault listing), `landing-page/`, `meta-ads.md`, `brief.md`, `evidence-card.md`, `sources.md`, `qa-report.md`. Also `pack.zip` where each top-level folder is one product and contains ONLY what the vault should receive (product files, cover.png, README.md, samples; no brief/evidence/qa files, no secrets). The owner drags `pack.zip` into the vault (Products > Import a product pack, then "Every folder is a product"); items arrive as drafts, nothing reaches any shop until the owner approves. Commit and push to the branch in config `deliver_branch` (rebase/merge if needed; never force-push). In the final message give the repo links to SUMMARY.md and each product folder. Publish SUMMARY as an Artifact page if the Artifact tool is available and give its link.
 
 ## 8. Memory
 Append each product to `memory/products.json` (id, type, niche, region, price, date, evidence summary, status "built, untested in market"). Add 3 lines "what to test next". Keep memory files small and valid JSON.
