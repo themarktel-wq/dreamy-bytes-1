@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>First-90-Days Client Keeper - Cleaning Retention Tracker</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#4338ca;--acc2:#e0e7ff}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:22px}
+.script{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px;margin:4px 0;font-size:13px;white-space:pre-wrap}
+.bar{height:10px;border-radius:5px;background:#e5e7eb;overflow:hidden;min-width:60px}.bar i{display:block;height:100%}
+tr.sel td{background:#eef2ff}
+</style></head><body>
+<header class="top"><h1>First-90-Days Client Keeper</h1><p>Retention tracker for cleaning companies: watch every new recurring client through day 90. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs" id="tabs"><button data-t="dash" class="on">Dashboard</button><button data-t="clients">Clients</button><button data-t="checkins">Check-ins due</button><button data-t="help">How it works</button></div>
+
+<section id="t-dash">
+ <div class="card"><h2>Today</h2><div class="kpi" id="kpi"></div><p class="note" id="sampleNote"></p></div>
+ <div class="card"><h2>At-risk clients</h2><div class="tw"><table id="risk"></table></div></div>
+ <div class="card"><h2>90-day retention by start month</h2><div class="tw"><table id="cohort"></table></div><div class="note">Retention = clients still active at day 90 / clients whose 90 days are complete. Clients still inside their first 90 days are shown as "maturing" and are not counted yet (unless they already churned, which counts as lost).</div></div>
+</section>
+
+<section id="t-clients" class="hidden">
+ <div class="card"><h2>Add a client</h2>
+  <div class="grid">
+   <div><label>Name</label><input id="n_name"></div><div><label>Start date</label><input id="n_start" type="date"></div>
+   <div><label>Frequency</label><select id="n_freq"><option>weekly</option><option selected>bi-weekly</option><option>monthly</option></select></div>
+   <div><label>Price per visit</label><input id="n_price" type="number" min="0" step="1"></div><div><label>Assigned cleaner</label><input id="n_cleaner"></div></div>
+  <div class="row"><button class="btn" id="addClient">Add client</button><button class="btn sec" id="clearSample">Remove sample clients</button></div></div>
+ <div class="card"><h2>Clients</h2><div class="row"><label class="btn sec" style="margin:0;cursor:pointer">Import CSV<input id="impcsv" type="file" accept=".csv,text/csv" class="hidden"></label><button class="btn sec" id="expcsv">Export CSV</button><button class="btn sec" id="expjson">Backup JSON</button></div>
+  <div class="tw"><table id="clients"></table></div></div>
+ <div class="card hidden" id="detail"></div>
+</section>
+
+<section id="t-checkins" class="hidden"><div class="card"><h2>Check-ins due or overdue</h2><div class="row"><div><label>Your business name (for message scripts)</label><input id="biz" placeholder="Bright Home Cleaning"></div></div><div id="due"></div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How it works</h2>
+<p><b>1.</b> Add each new recurring client with their start date. The app schedules check-ins at day 1, 7, 30, 60 and 90 and gives you a message to send.</p>
+<p><b>2.</b> Log what happens: complaint, reschedule, cleaner change, no reply, price increase, praise.</p>
+<p><b>3.</b> The risk score (0-100) is a simple rule we chose, shown below. Green under 30, amber 30-60, red above 60.</p>
+<div class="note"><b>Score rule (a heuristic, not a statistical model):</b> 10 per complaint + 5 per reschedule in the last 30 days + 8 per cleaner change + 6 per unanswered message + 4 per pending price increase - 5 per praise, kept between 0 and 100. Only events from the client's first 90 days count (older events are ignored). Change the weights in the code of this file if you want different ones.</div>
+<p><b>Why these signals?</b> Cleaning-industry blogs commonly cite quality and communication problems as the main reasons clients cancel. That is vendor content with unclear methods, so treat it as a prompt to check in, not as proof.</p>
+<p><b>Data.</b> Stored in this browser only (localStorage). Use Backup JSON or Export CSV regularly. Sample clients are fictional and labelled as sample.</p></div></section>
+</main>
+<script>
+//CORE
+var WEIGHTS={complaint:10,reschedule:5,cleaner_change:8,no_reply:6,price_increase:4,praise:-5};
+var TOUCH=[{d:1,t:'Day-1 thank you',s:'Hi {name}, this is {biz}. Thank you for choosing us! How did your first clean look? If anything was missed, tell me and {cleaner} will fix it on the next visit.'},
+ {d:7,t:'Week-1 check-in',s:'Hi {name}, quick check-in from {biz}: how are you finding the clean so far? Anything you would like us to do differently?'},
+ {d:30,t:'Day-30 review',s:'Hi {name}, it has been a month with {biz}. Is {cleaner} doing things the way you like? We would love your feedback.'},
+ {d:60,t:'Day-60 check-in',s:'Hi {name}, {biz} here. Anything we should adjust for your home or schedule before the next visits?'},
+ {d:90,t:'Day-90 thank you',s:'Hi {name}, you have been with {biz} for 90 days. Thank you! If you are happy, a short review would mean a lot, and tell us if you want any changes.'}];
+function dayDiff(a,b){return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);}
+function addDays(d,n){var t=new Date(Date.parse(d+'T00:00:00Z')+n*86400000);return t.toISOString().slice(0,10);}
+function score(c,today){var s=0;(c.events||[]).forEach(function(e){var age=dayDiff(e.date,today);var inFirst90=dayDiff(c.start,e.date)<=90&&dayDiff(c.start,e.date)>=0;if(!inFirst90)return;if(!(e.type in WEIGHTS))return;
+ if(e.type==='reschedule'&&age>30)return;s+=WEIGHTS[e.type];});return Math.max(0,Math.min(100,s));}
+function band(s){return s>60?'r':(s>=30?'a':'g');}
+function churnedWithin90(c){return !!c.churned&&dayDiff(c.start,c.churned)<=90;}
+function isActive(c){return !c.churned;}
+function cohorts(list,today){var m={};list.forEach(function(c){var k=c.start.slice(0,7);var r=m[k]||(m[k]={month:k,started:0,mature:0,retained:0,maturing:0});r.started++;
+ if(dayDiff(c.start,today)>=90){r.mature++;if(!churnedWithin90(c))r.retained++;}else if(!churnedWithin90(c)){r.maturing++;}else{/*churned early: counts as lost but not mature yet*/r.mature++;}});
+ return Object.keys(m).sort().map(function(k){var r=m[k];r.pct=r.mature?r.retained/r.mature:null;return r;});}
+function touchpoints(c,today){return TOUCH.map(function(t){var due=addDays(c.start,t.d);var done=(c.done||{})[t.d];return {d:t.d,title:t.t,due:due,done:!!done,state:done?'done':(due<today?'overdue':(due===today?'today':'upcoming'))};});}
+function fillScript(s,c,biz){return s.replace(/\{name\}/g,c.name||'there').replace(/\{cleaner\}/g,c.cleaner||'our team').replace(/\{biz\}/g,biz||'our team');}
+function toCSV(list){var esc=function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+ var rows=[['name','start','freq','price','cleaner','churned','events','done']];
+ list.forEach(function(c){rows.push([c.name,c.start,c.freq,c.price,c.cleaner,c.churned||'',(c.events||[]).map(function(e){return e.type+'@'+e.date;}).join(';'),Object.keys(c.done||{}).filter(function(k){return c.done[k];}).join(';')]);});
+ return rows.map(function(r){return r.map(esc).join(',');}).join('\n');}
+function parseCSV(t){var rows=[],row=[],f='',q=false;for(var i=0;i<t.length;i++){var ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=ch;}else if(ch==='"')q=true;else if(ch===','){row.push(f);f='';}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f='';}else f+=ch;}
+ if(f!==''||row.length){row.push(f);rows.push(row);}return rows.filter(function(r){return r.some(function(x){return x!=='';});});}
+function fromCSV(t){var rows=parseCSV(t);if(rows.length<2||rows[0][0]!=='name'||rows[0][1]!=='start')throw new Error('bad header');var out=[];
+ rows.slice(1).forEach(function(r,i){if(!/^\d{4}-\d{2}-\d{2}$/.test(r[1]||''))return;var ev=(r[6]||'').split(';').filter(Boolean).map(function(x){var p=x.split('@');return {type:p[0],date:p[1]};}).filter(function(e){return e.type in WEIGHTS&&/^\d{4}-\d{2}-\d{2}$/.test(e.date||'');});
+ var done={};(r[7]||'').split(';').filter(Boolean).forEach(function(k){done[k]=true;});
+ out.push({id:'i'+Date.now()+'_'+i,name:r[0],start:r[1],freq:r[2]||'bi-weekly',price:parseFloat(r[3])||0,cleaner:r[4]||'',churned:r[5]||'',events:ev,done:done});});return out;}
+//ENDCORE
+var KEY='keeper90.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+var TODAY=todayStr();
+function ld(k,d){try{var v=localStorage.getItem(KEY+'.'+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function sv(){try{localStorage.setItem(KEY+'.clients',JSON.stringify(C));localStorage.setItem(KEY+'.biz',$('biz').value);}catch(e){}}
+function sample(){var t=TODAY,a=function(n){return addDays(t,-n);};
+ return [{id:'s1',sample:1,name:'Sample: Alice Moreno',start:a(12),freq:'weekly',price:140,cleaner:'Dana',events:[{type:'complaint',date:a(10)},{type:'complaint',date:a(8)},{type:'reschedule',date:a(5)},{type:'no_reply',date:a(2)}],done:{1:true}},
+ {id:'s2',sample:1,name:'Sample: Ben Okafor',start:a(40),freq:'bi-weekly',price:120,cleaner:'Priya',events:[{type:'praise',date:a(20)}],done:{1:true,7:true,30:true}},
+ {id:'s3',sample:1,name:'Sample: Chloe Park',start:a(75),freq:'bi-weekly',price:160,cleaner:'Dana',events:[{type:'cleaner_change',date:a(30)},{type:'complaint',date:a(25)},{type:'complaint',date:a(20)},{type:'complaint',date:a(12)},{type:'no_reply',date:a(9)},{type:'no_reply',date:a(4)},{type:'reschedule',date:a(15)},{type:'reschedule',date:a(6)},{type:'price_increase',date:a(10)}],done:{1:true,7:true,30:true,60:true}},
+ {id:'s4',sample:1,name:'Sample: Dev Patel',start:a(150),freq:'monthly',price:190,cleaner:'Priya',events:[],done:{1:true,7:true,30:true,60:true,90:true}},
+ {id:'s5',sample:1,name:'Sample: Eva Rossi',start:a(130),freq:'weekly',price:130,cleaner:'Sam',churned:a(60),events:[{type:'complaint',date:a(115)},{type:'complaint',date:a(105)}],done:{1:true,7:true,30:true}},
+ {id:'s6',sample:1,name:'Sample: Farid Khan',start:a(3),freq:'bi-weekly',price:110,cleaner:'Sam',events:[],done:{1:true}}];}
+var C=ld('clients',null);if(!C){C=sample();}
+function render(){
+ var act=C.filter(isActive),scored=act.map(function(c){var s=score(c,TODAY);return {c:c,s:s,b:band(s)};});
+ var red=scored.filter(function(x){return x.b==='r';}).length,amb=scored.filter(function(x){return x.b==='a';}).length;
+ var due=0;act.forEach(function(c){touchpoints(c,TODAY).forEach(function(t){if(!t.done&&(t.state==='overdue'||t.state==='today'))due++;});});
+ var mrr=act.reduce(function(a,c){return a+(parseFloat(c.price)||0);},0);
+ $('kpi').innerHTML='<div><span class="mut">Active clients</span><b>'+act.length+'</b></div><div><span class="mut">Red (high risk)</span><b style="color:var(--bad)">'+red+'</b></div><div><span class="mut">Amber</span><b style="color:var(--warn)">'+amb+'</b></div><div><span class="mut">Check-ins due</span><b>'+due+'</b></div><div><span class="mut">Visit value / cycle</span><b>'+Math.round(mrr)+'</b></div>';
+ $('sampleNote').textContent=C.some(function(c){return c.sample;})?'Sample clients (fictional) are loaded so you can see how it works. Remove them in the Clients tab.':'';
+ var rk=scored.filter(function(x){return x.s>=30;}).sort(function(a,b){return b.s-a.s;});
+ $('risk').innerHTML='<tr><th>Client</th><th>Cleaner</th><th>Day</th><th>Score</th><th></th></tr>'+(rk.length?rk.map(function(x){return '<tr><td>'+esc(x.c.name)+'</td><td>'+esc(x.c.cleaner)+'</td><td>'+Math.max(0,dayDiff(x.c.start,TODAY))+'</td><td><div class="bar"><i style="width:'+x.s+'%;background:'+(x.b==='r'?'var(--bad)':'var(--warn)')+'"></i></div></td><td><span class="pill '+x.b+'">'+x.s+'</span> <button class="btn sec" data-open="'+esc(x.c.id)+'">Open</button></td></tr>';}).join(''):'<tr><td colspan="5" class="mut">No clients at 30+ points. Nice.</td></tr>');
+ var co=cohorts(C,TODAY);
+ $('cohort').innerHTML='<tr><th>Start month</th><th>Started</th><th>Day-90 reached</th><th>Retained</th><th>Retention</th><th>Maturing</th></tr>'+(co.length?co.map(function(r){return '<tr><td>'+r.month+'</td><td>'+r.started+'</td><td>'+r.mature+'</td><td>'+r.retained+'</td><td>'+(r.pct==null?'-':Math.round(r.pct*100)+'%')+'</td><td>'+r.maturing+'</td></tr>';}).join(''):'<tr><td colspan="6" class="mut">No data yet.</td></tr>');
+ $('clients').innerHTML='<tr><th>Client</th><th>Start</th><th>Freq</th><th>Price</th><th>Cleaner</th><th>Status</th><th>Score</th><th></th></tr>'+C.map(function(c){var s=score(c,TODAY);return '<tr><td>'+esc(c.name)+'</td><td>'+c.start+'</td><td>'+esc(c.freq)+'</td><td>'+esc(c.price)+'</td><td>'+esc(c.cleaner)+'</td><td>'+(c.churned?'churned '+c.churned:'active')+'</td><td><span class="pill '+band(s)+'">'+s+'</span></td><td><button class="btn sec" data-open="'+esc(c.id)+'">Open</button></td></tr>';}).join('');
+ renderDue();}
+function renderDue(){var biz=$('biz').value;var items=[];C.filter(isActive).forEach(function(c){touchpoints(c,TODAY).forEach(function(t){if(!t.done&&(t.state==='overdue'||t.state==='today'))items.push({c:c,t:t});});});
+ items.sort(function(a,b){return a.t.due<b.t.due?-1:1;});
+ $('due').innerHTML=items.length?items.map(function(x,i){var sc=fillScript(TOUCH.filter(function(k){return k.d===x.t.d;})[0].s,x.c,biz);return '<div class="card"><b>'+esc(x.c.name)+'</b> - '+esc(x.t.title)+' <span class="pill '+(x.t.state==='overdue'?'r':'a')+'">'+x.t.state+' ('+x.t.due+')</span><div class="script" id="sc'+i+'">'+esc(sc)+'</div><div class="row"><button class="btn sec" data-copy="'+i+'">Copy message</button><button class="btn" data-done="'+esc(x.c.id)+'" data-day="'+x.t.d+'">Mark sent</button></div></div>';}).join(''):'<p class="mut">Nothing due. All check-ins are up to date.</p>';
+ window.__scripts=items.map(function(x){return fillScript(TOUCH.filter(function(k){return k.d===x.t.d;})[0].s,x.c,biz);});}
+function findC(id){return C.filter(function(c){return c.id===id;})[0];}
+function openDetail(id){var c=findC(id);if(!c)return;var s=score(c,TODAY);var tp=touchpoints(c,TODAY);var evs=(c.events||[]).map(function(e,i){return '<tr><td>'+e.date+'</td><td>'+e.type.replace('_',' ')+'</td><td class="num">'+(WEIGHTS[e.type]>0?'+':'')+WEIGHTS[e.type]+'</td><td><button class="btn del" data-delev="'+i+'" data-id="'+esc(c.id)+'">x</button></td></tr>';}).join('');
+ $('detail').classList.remove('hidden');$('detail').dataset.id=id;
+ $('detail').innerHTML='<h2>'+esc(c.name)+' <span class="pill '+band(s)+'">risk '+s+'</span></h2><p class="mut">Start '+c.start+' - day '+Math.max(0,dayDiff(c.start,TODAY))+' - '+esc(c.freq)+' - cleaner '+esc(c.cleaner)+'</p>'
+ +'<h3>Log an event</h3><div class="row"><select id="ev_type">'+Object.keys(WEIGHTS).map(function(k){return '<option value="'+k+'">'+k.replace('_',' ')+'</option>';}).join('')+'</select><input id="ev_date" type="date" value="'+TODAY+'" style="width:auto"><button class="btn" data-addev="'+esc(c.id)+'">Add</button></div><div class="tw"><table>'+(evs||'<tr><td class="mut">No events yet.</td></tr>')+'</table></div>'
+ +'<h3>Check-ins</h3><div class="tw"><table>'+tp.map(function(t){return '<tr><td>'+esc(t.title)+'</td><td>'+t.due+'</td><td><span class="pill '+(t.done?'g':(t.state==='overdue'?'r':'a'))+'">'+t.state+'</span></td><td><button class="btn sec" data-toggle="'+esc(c.id)+'" data-day="'+t.d+'">'+(t.done?'Undo':'Mark done')+'</button></td></tr>';}).join('')+'</table></div>'
+ +'<div class="row"><button class="btn sec" data-churn="'+esc(c.id)+'">'+(c.churned?'Mark active again':'Mark as churned (today)')+'</button><button class="btn del" data-rmclient="'+esc(c.id)+'">Delete client</button></div>';
+ document.querySelector('[data-t=clients]').click();$('detail').scrollIntoView();}
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['dash','clients','checkins','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});return;}
+ if(d.open){openDetail(d.open);return;}
+ if(d.addev){var c=findC(d.addev);c.events=c.events||[];c.events.push({type:$('ev_type').value,date:$('ev_date').value||TODAY});sv();render();openDetail(d.addev);return;}
+ if(d.delev!==undefined){var c2=findC(d.id);c2.events.splice(+d.delev,1);sv();render();openDetail(d.id);return;}
+ if(d.toggle){var c3=findC(d.toggle);c3.done=c3.done||{};c3.done[d.day]=!c3.done[d.day];sv();render();openDetail(d.toggle);return;}
+ if(d.done){var c4=findC(d.done);c4.done=c4.done||{};c4.done[d.day]=true;sv();render();return;}
+ if(d.copy!==undefined){var tx=window.__scripts[+d.copy];if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);return;}
+ if(d.churn){var c5=findC(d.churn);c5.churned=c5.churned?'':TODAY;sv();render();openDetail(d.churn);return;}
+ if(d.rmclient){if(confirm('Delete this client?')){C=C.filter(function(x){return x.id!==d.rmclient;});sv();$('detail').classList.add('hidden');render();}return;}
+ if(t.id==='addClient'){var nm=$('n_name').value.trim(),st=$('n_start').value;if(!nm||!st){alert('Enter a name and a start date.');return;}C.unshift({id:'c'+Date.now(),name:nm,start:st,freq:$('n_freq').value,price:parseFloat($('n_price').value)||0,cleaner:$('n_cleaner').value,events:[],done:{}});['n_name','n_price','n_cleaner'].forEach(function(i){$(i).value='';});sv();render();return;}
+ if(t.id==='clearSample'){C=C.filter(function(c){return !c.sample;});sv();$('detail').classList.add('hidden');render();return;}
+ if(t.id==='expcsv'||t.id==='expjson'){var isC=t.id==='expcsv',b=new Blob([isC?toCSV(C):JSON.stringify(C,null,1)],{type:isC?'text/csv':'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=isC?'keeper-clients.csv':'keeper-backup.json';a.click();}
+});
+$('impcsv').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var l=fromCSV(r.result);if(!l.length){alert('No valid rows found (start date must be YYYY-MM-DD).');return;}C=C.filter(function(c){return !c.sample;}).concat(l);sv();render();}catch(x){alert('Could not read that CSV. Use the file from Export CSV as a template.');}};r.readAsText(f);});
+$('biz').addEventListener('input',function(){sv();renderDue();});
+$('n_start').value=TODAY;try{$('biz').value=localStorage.getItem(KEY+'.biz')||'';}catch(e){}
+render();
+</script></body></html>

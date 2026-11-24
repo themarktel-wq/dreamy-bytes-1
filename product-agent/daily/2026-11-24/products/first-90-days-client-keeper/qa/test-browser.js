@@ -1,0 +1,31 @@
+const {chromium}=require('playwright');const path=require('path');const assert=require('assert');const fs=require('fs');
+(async()=>{const b=await chromium.launch();const errs=[];
+for(const [name,vp] of [['phone',{width:375,height:800}],['desktop',{width:1280,height:900}]]){
+ const c=await b.newContext({viewport:vp,acceptDownloads:true});const p=await c.newPage();p.on('console',m=>{if(m.type()==='error')errs.push(m.text())});p.on('pageerror',e=>errs.push(String(e)));
+ await p.goto('file://'+path.resolve(__dirname,'../index.html'));
+ const tabs=async(t)=>{await p.click('[data-t='+t+']')};
+ const ov=async(l)=>{const o=await p.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);assert(o<=1,name+' overflow on '+l+': '+o)};
+ const bad=async(l)=>{const t=await p.evaluate(()=>document.body.innerText);assert(!/undefined|NaN|\[object/.test(t),'bad text on '+l)};
+ await ov('dash');await bad('dash');
+ const risk=await p.evaluate(()=>document.getElementById('risk').innerText);assert(/Sample: Alice Moreno/.test(risk)&&/Sample: Chloe Park/.test(risk),'risk list: '+risk);
+ const sc=await p.evaluate(()=>[...document.querySelectorAll('#risk tr')].slice(1).map(r=>[r.cells[0].innerText,r.cells[4].querySelector('.pill').innerText]));
+ const m=Object.fromEntries(sc);assert.strictEqual(m['Sample: Chloe Park'],'64');assert.strictEqual(m['Sample: Alice Moreno'],'31');
+ await tabs('clients');await ov('clients');
+ await p.fill('#n_name','Zed Test');await p.fill('#n_price','99');await p.fill('#n_cleaner','Kim');await p.click('#addClient');
+ assert((await p.evaluate(()=>document.getElementById('clients').innerText)).includes('Zed Test'));
+ await p.evaluate(()=>{[...document.querySelectorAll('#clients tr')].find(r=>r.innerText.includes('Zed Test')).querySelector('[data-open]').click()});
+ await p.selectOption('#ev_type','complaint');await p.click('[data-addev]');await p.selectOption('#ev_type','complaint');await p.click('[data-addev]');
+ assert(/risk 20/.test(await p.innerText('#detail')),'score after 2 complaints: '+await p.innerText('#detail'));
+ await ov('detail');
+ await tabs('checkins');await ov('checkins');await bad('checkins');
+ const due=await p.innerText('#due');assert(/Sample: Alice Moreno/.test(due)&&/Week-1 check-in/.test(due));
+ await p.fill('#biz','Bright Co');assert(/Bright Co/.test(await p.innerText('#due')));
+ const before=(await p.$$('#due [data-done]')).length;await p.click('#due [data-done]');const after=(await p.$$('#due [data-done]')).length;assert.strictEqual(after,before-1);
+ await tabs('clients');const [dl]=await Promise.all([p.waitForEvent('download'),p.click('#expcsv')]);const f=await dl.path();const csv=fs.readFileSync(f,'utf8');assert(/^name,start,freq/.test(csv)&&/Zed Test/.test(csv));
+ await p.click('#clearSample');assert(!(await p.innerText('#clients')).includes('Sample: Alice'));
+ await p.setInputFiles('#impcsv',f);await p.waitForTimeout(300);assert((await p.innerText('#clients')).includes('Sample: Alice Moreno'),'csv import');
+ await p.reload();assert((await p.evaluate(()=>document.getElementById('clients').innerText)).includes('Zed Test'),'persist');
+ await tabs('dash');await ov('dash2');
+ await p.screenshot({path:path.resolve(__dirname,'shot-'+name+'.png'),fullPage:true});
+ console.log('ok',name);await c.close();}
+await b.close();assert.deepStrictEqual(errs,[],'console errors: '+errs.join('|'));console.log('browser tests passed');})().catch(e=>{console.error(e);process.exit(1)});
