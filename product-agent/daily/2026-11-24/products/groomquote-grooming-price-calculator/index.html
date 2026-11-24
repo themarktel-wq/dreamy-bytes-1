@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GroomQuote - Matting-Proof Grooming Price Calculator</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#be185d;--acc2:#fce7f3}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:20px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:10px 0}.doc h2{margin:0;font-size:20px}.doc td,.doc th{font-size:14px}
+.consent{border:1px solid #999;border-radius:6px;padding:10px;margin:10px 0;font-size:13px}.sig{display:flex;gap:20px;margin-top:22px}.sig div{flex:1;border-top:1px solid #333;padding-top:4px;font-size:12px}
+.gridcell{min-width:70px}td input[data-hz],td input[data-hs],td input[data-c=n],td input[data-a=n]{min-width:140px}
+@media print{body.pc #doc-invoice{display:none!important}body.pi #doc-checkin{display:none!important}body:not(.pc):not(.pi) #doc-invoice{display:none!important}.doc{border:0;padding:0;margin:0}}
+</style></head><body>
+<header class="top"><h1>GroomQuote</h1><p>Size + coat + time pricing for groomers, with a matting consent line at check-in and an itemised invoice at pickup. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs noprint" id="tabs"><button data-t="quote" class="on">Quote &amp; check-in</button><button data-t="settings">My price grid &amp; rules</button><button data-t="history">History</button><button data-t="help">How it works</button></div>
+
+<section id="t-quote">
+ <div class="card noprint"><h2>1. The dog</h2>
+  <div class="grid">
+   <div><label>Pet name</label><input id="pet"></div><div><label>Owner name</label><input id="owner"></div><div><label>Owner phone</label><input id="phone"></div>
+   <div><label>Size</label><select id="size"></select></div><div><label>Service</label><select id="svc"></select></div></div>
+  <h3>Coat condition at check-in</h3><div id="coat" class="row"></div>
+  <h3>Add-ons</h3><div class="tw"><table id="addons"></table></div>
+  <div class="grid"><div><label>Deposit already paid</label><input id="paid" type="number" min="0" step="1" value="0"></div><div><label>Notes (behaviour, health, requests)</label><input id="notes"></div></div>
+ </div>
+ <div class="card noprint"><h2>2. Estimate</h2><div class="kpi" id="kpi"></div><div class="note">Estimate is a starting price. Coat tier is chosen by the groomer at check-in; surcharge amounts are the groomer's own rules from the settings tab.</div>
+  <div class="row"><button class="btn" id="pCheckin">Print check-in form</button><button class="btn sec" id="pInvoice">Print itemised invoice</button><button class="btn sec" id="copy">Copy invoice text</button><button class="btn sec" id="save">Save visit</button></div>
+  <div class="row"><label style="margin:0">Your business name</label><input id="biz" style="max-width:260px" placeholder="e.g. Happy Tails Grooming"></div></div>
+ <div class="doc" id="doc-checkin"></div>
+ <div class="doc" id="doc-invoice"></div>
+</section>
+
+<section id="t-settings" class="hidden">
+ <div class="card"><h2>Price grid (base price per size and service)</h2><div class="tw"><table id="gridP"></table></div>
+  <div class="note">Sample numbers are examples only: set your own. They are not market prices or breed prices.</div></div>
+ <div class="card"><h2>Base minutes per size and service</h2><div class="tw"><table id="gridM"></table></div></div>
+ <div class="card"><h2>Coat condition tiers</h2><div class="tw"><table id="coatcfg"></table></div><div class="note">Surcharge is added to the base price. Time multiplier scales the base minutes (matted coats take longer).</div></div>
+ <div class="card"><h2>Add-ons</h2><div class="tw"><table id="addcfg"></table></div><div class="row"><button class="btn sec" id="addadd">+ Add an add-on</button></div></div>
+ <div class="card"><h2>Deposit, tax and time slots</h2><div class="grid">
+  <div><label>Deposit (% of price)</label><input id="s_depPct" type="number" min="0" max="100"></div><div><label>Deposit minimum ($)</label><input id="s_depMin" type="number" min="0"></div><div><label>Deposit maximum ($, 0 = no cap)</label><input id="s_depMax" type="number" min="0"></div>
+  <div><label>Tax on invoice (%)</label><input id="s_tax" type="number" min="0" step="0.1"></div><div><label>Slot length (minutes)</label><input id="s_slot" type="number" min="5" step="5"></div><div><label>Currency symbol</label><input id="s_cur" maxlength="3"></div></div>
+  <div class="note">Real shop policies seen online show deposits in the $20-40 range per dog (source: groomer policy pages, e.g. franpos.com/grooming-deposits). Set your own amounts.</div>
+  <h3>Consent wording on the check-in form</h3><textarea id="s_consent"></textarea>
+  <div class="row"><button class="btn del" id="reset">Reset everything to examples</button><button class="btn sec" id="exp">Export JSON backup</button><label class="btn sec" style="margin:0;cursor:pointer">Import JSON<input id="imp" type="file" accept=".json" class="hidden"></label></div></div>
+</section>
+
+<section id="t-history" class="hidden"><div class="card"><h2>Saved visits</h2><div class="tw"><table id="hist"></table></div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How GroomQuote works</h2>
+<p><b>Price</b> = base price for the dog's size and service + the coat-tier surcharge + add-ons. <b>Time</b> = base minutes x the coat-tier multiplier + add-on minutes, rounded up to your slot length.</p>
+<p><b>Deposit</b> = deposit % x price, kept between your minimum and maximum.</p>
+<p>At check-in choose the coat tier with the owner and print the check-in form: it has a consent line naming the tier and the surcharge, so the matting price is agreed before the dog is groomed. Print the itemised invoice at pickup.</p>
+<p><b>Honest notes.</b> All prices, times and tier rules are your own settings; the examples are not market data. The consent wording is a template, not legal advice: adapt it to your local rules. Data is stored in this browser only: use Export JSON to back up.</p>
+</div></section>
+</main>
+<script>
+//CORE
+var DEFAULTS={sizes:['Small (under 20 lb)','Medium (20-50 lb)','Large (50-80 lb)','Giant (over 80 lb)'],services:['Bath & brush','Full groom','Trim / tidy'],
+ price:[[40,60,50],[55,80,65],[70,100,80],[90,130,105]],mins:[[45,75,60],[60,100,80],[75,120,95],[90,150,120]],
+ coats:[{n:'Normal coat',s:0,m:1},{n:'Heavy shedding',s:15,m:1.15},{n:'Matted - light',s:10,m:1.2},{n:'Matted - moderate',s:25,m:1.4},{n:'Matted - severe',s:45,m:1.75}],
+ addons:[{n:'Teeth brushing',p:8,m:5},{n:'Nail grind',p:10,m:10},{n:'De-shed treatment',p:20,m:20},{n:'Flea bath',p:15,m:15}],
+ depPct:30,depMin:20,depMax:40,tax:0,slot:30,cur:'$',
+ consent:'I have discussed my dog\'s coat condition with the groomer. The coat is classed as the tier shown above and the surcharge listed applies. Prices are starting rates and can change if the coat is more matted than it first appears; I will be told before extra charges are added. For my dog\'s comfort the groomer may recommend a shorter cut or shave-down where de-matting would cause pain.'};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function clampDeposit(S,price){var d=num(S.depPct)/100*price;if(num(S.depMin)>0)d=Math.max(d,num(S.depMin));if(num(S.depMax)>0)d=Math.min(d,num(S.depMax));return Math.min(d,price);}
+function priceFor(S,j){
+ var base=num(S.price[j.size]&&S.price[j.size][j.svc]);var baseMin=num(S.mins[j.size]&&S.mins[j.size][j.svc]);
+ var coat=S.coats[j.coat]||{s:0,m:1};var lines=[];var addT=0,addM=0;
+ (S.addons||[]).forEach(function(a,i){var q=num((j.addons||{})[i]);if(q>0){lines.push({n:a.n,qty:q,p:num(a.p),t:q*num(a.p)});addT+=q*num(a.p);addM+=q*num(a.m);}});
+ var sur=num(coat.s);var subtotal=base+sur+addT;var tax=subtotal*num(S.tax)/100;var total=subtotal+tax;
+ var minutes=baseMin*num(coat.m,1)+addM;var slot=Math.max(1,num(S.slot,30));var slots=minutes>0?Math.ceil(minutes/slot-1e-9):0;
+ var deposit=clampDeposit(S,total);var paid=num(j.paid);
+ return {base:base,coatName:coat.n,surcharge:sur,addons:lines,addTotal:addT,subtotal:subtotal,tax:tax,total:total,minutes:minutes,slots:slots,deposit:deposit,paid:paid,balance:total-paid};}
+//ENDCORE
+var KEY='groomquote.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function ld(k,d){try{var v=localStorage.getItem(KEY+'.'+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function st(k,v){try{localStorage.setItem(KEY+'.'+k,JSON.stringify(v));}catch(e){}}
+var S=ld('settings',JSON.parse(JSON.stringify(DEFAULTS)));var HIST=ld('history',[]);var ADD={};var COAT=0;var LAST=null;
+function money(v){return (S.cur||'$')+(Math.round(v*100)/100).toFixed(2);}
+function job(){return {pet:$('pet').value,owner:$('owner').value,phone:$('phone').value,size:+$('size').value,svc:+$('svc').value,coat:COAT,addons:ADD,paid:num($('paid').value),notes:$('notes').value};}
+function fillSel(){var a=$('size').value,b=$('svc').value;$('size').innerHTML=S.sizes.map(function(x,i){return '<option value="'+i+'">'+esc(x)+'</option>';}).join('');$('svc').innerHTML=S.services.map(function(x,i){return '<option value="'+i+'">'+esc(x)+'</option>';}).join('');if(a&&+a<S.sizes.length)$('size').value=a;if(b&&+b<S.services.length)$('svc').value=b;}
+function renderCoat(){$('coat').innerHTML=S.coats.map(function(c,i){return '<label style="display:inline-flex;gap:6px;align-items:center;margin:0;padding:6px 10px;border:1px solid var(--line);border-radius:999px;color:var(--ink);font-size:13px;cursor:pointer'+(i===COAT?';background:var(--acc2);border-color:var(--acc)':'')+'"><input type="radio" name="coat" data-coat="'+i+'"'+(i===COAT?' checked':'')+'>'+esc(c.n)+(num(c.s)?' (+'+money(num(c.s))+')':'')+'</label>';}).join('');}
+function renderAddonsPick(){$('addons').innerHTML='<tr><th>Add-on</th><th class="num">Price</th><th style="width:90px">Qty</th></tr>'+S.addons.map(function(a,i){return '<tr><td>'+esc(a.n)+'</td><td class="num">'+money(num(a.p))+'</td><td><input type="number" min="0" data-q="'+i+'" value="'+(ADD[i]||0)+'"></td></tr>';}).join('');}
+function gridTable(id,data,key){var h='<tr><th></th>'+S.services.map(function(s,j){return '<th><input data-hs="'+j+'" value="'+esc(s)+'"></th>';}).join('')+'<th></th></tr>';
+ h+=S.sizes.map(function(sz,i){return '<tr><td><input data-hz="'+i+'" value="'+esc(sz)+'"></td>'+S.services.map(function(s,j){return '<td><input class="gridcell" type="number" min="0" data-g="'+key+'" data-i="'+i+'" data-j="'+j+'" value="'+data[i][j]+'"></td>';}).join('')+'<td></td></tr>';}).join('');$(id).innerHTML=h;}
+function renderSettings(){gridTable('gridP',S.price,'price');gridTable('gridM',S.mins,'mins');
+ $('coatcfg').innerHTML='<tr><th>Tier</th><th>Surcharge</th><th>Time x</th></tr>'+S.coats.map(function(c,i){return '<tr><td><input data-c="n" data-i="'+i+'" value="'+esc(c.n)+'"></td><td><input type="number" min="0" data-c="s" data-i="'+i+'" value="'+c.s+'"></td><td><input type="number" min="0.5" step="0.05" data-c="m" data-i="'+i+'" value="'+c.m+'"></td></tr>';}).join('');
+ $('addcfg').innerHTML='<tr><th>Add-on</th><th>Price</th><th>Minutes</th><th></th></tr>'+S.addons.map(function(a,i){return '<tr><td><input data-a="n" data-i="'+i+'" value="'+esc(a.n)+'"></td><td><input type="number" min="0" data-a="p" data-i="'+i+'" value="'+a.p+'"></td><td><input type="number" min="0" data-a="m" data-i="'+i+'" value="'+a.m+'"></td><td><button class="btn del" data-rm="'+i+'">x</button></td></tr>';}).join('');
+ ['depPct','depMin','depMax','tax','slot','cur'].forEach(function(k){$('s_'+k).value=S[k];});$('s_consent').value=S.consent;}
+function docs(j,q){var biz=$('biz').value||'Grooming Salon',d=new Date().toLocaleDateString();var svc=S.services[j.svc]+' - '+S.sizes[j.size];
+ var coat=S.coats[j.coat]||{n:'',s:0};
+ $('doc-checkin').innerHTML='<h2>'+esc(biz)+' - Check-in form</h2><p class="mut">'+d+'</p><table><tr><td><b>Pet</b></td><td>'+esc(j.pet)+'</td><td><b>Owner</b></td><td>'+esc(j.owner)+'</td></tr><tr><td><b>Phone</b></td><td>'+esc(j.phone)+'</td><td><b>Service</b></td><td>'+esc(svc)+'</td></tr></table>'
+ +'<h3>Estimate</h3><table><tr><td>Base price</td><td class="num">'+money(q.base)+'</td></tr><tr><td>Coat condition: <b>'+esc(q.coatName)+'</b></td><td class="num">'+money(q.surcharge)+'</td></tr>'+q.addons.map(function(a){return '<tr><td>'+esc(a.n)+(a.qty>1?' x'+a.qty:'')+'</td><td class="num">'+money(a.t)+'</td></tr>';}).join('')+(num(S.tax)?'<tr><td>Tax ('+S.tax+'%)</td><td class="num">'+money(q.tax)+'</td></tr>':'')+'<tr><td><b>Estimated total</b></td><td class="num"><b>'+money(q.total)+'</b></td></tr><tr><td>Deposit requested</td><td class="num">'+money(q.deposit)+'</td></tr></table>'
+ +'<p>Estimated time: about '+Math.round(q.minutes)+' minutes ('+q.slots+' x '+S.slot+'-minute slot'+(q.slots>1?'s':'')+').</p>'+(j.notes?'<p><b>Notes:</b> '+esc(j.notes)+'</p>':'')
+ +'<div class="consent"><b>Coat condition and matting consent</b><br>Coat tier agreed at check-in: <b>'+esc(q.coatName)+'</b> (surcharge '+money(q.surcharge)+').<br>'+esc(S.consent)+'</div>'
+ +'<div class="sig"><div>Owner signature / date</div><div>Groomer signature / date</div></div><p class="mut" style="margin-top:12px">Template wording only, not legal advice. Adapt to your local rules.</p>';
+ $('doc-invoice').innerHTML='<h2>'+esc(biz)+' - Invoice</h2><p class="mut">'+d+'</p><p><b>Pet:</b> '+esc(j.pet)+' &nbsp; <b>Owner:</b> '+esc(j.owner)+'</p><table><tr><th>Item</th><th class="num">Amount</th></tr><tr><td>'+esc(svc)+'</td><td class="num">'+money(q.base)+'</td></tr>'+(q.surcharge?'<tr><td>Coat condition surcharge: '+esc(q.coatName)+'</td><td class="num">'+money(q.surcharge)+'</td></tr>':'')+q.addons.map(function(a){return '<tr><td>'+esc(a.n)+(a.qty>1?' x'+a.qty:'')+'</td><td class="num">'+money(a.t)+'</td></tr>';}).join('')+'<tr><td>Subtotal</td><td class="num">'+money(q.subtotal)+'</td></tr>'+(num(S.tax)?'<tr><td>Tax ('+S.tax+'%)</td><td class="num">'+money(q.tax)+'</td></tr>':'')+'<tr><td><b>Total</b></td><td class="num"><b>'+money(q.total)+'</b></td></tr><tr><td>Deposit paid</td><td class="num">-'+money(q.paid)+'</td></tr><tr><td><b>Balance due at pickup</b></td><td class="num"><b>'+money(q.balance)+'</b></td></tr></table><p class="mut">Thank you!</p>';}
+function render(){var j=job(),q=priceFor(S,j);LAST={j:j,q:q};
+ $('kpi').innerHTML='<div><span class="mut">Base price</span><b>'+money(q.base)+'</b></div><div><span class="mut">Coat surcharge</span><b>'+money(q.surcharge)+'</b></div><div><span class="mut">Add-ons</span><b>'+money(q.addTotal)+'</b></div><div><span class="mut">Total</span><b>'+money(q.total)+'</b></div><div><span class="mut">Deposit</span><b>'+money(q.deposit)+'</b></div><div><span class="mut">Time</span><b>'+Math.round(q.minutes)+' min</b><span class="mut">'+q.slots+' slot'+(q.slots===1?'':'s')+'</span></div><div><span class="mut">Balance at pickup</span><b>'+money(q.balance)+'</b></div>';
+ docs(j,q);}
+function invText(){var q=LAST.q,j=LAST.j;return [($('biz').value||'Grooming Salon')+' - Invoice','Pet: '+j.pet,S.services[j.svc]+' - '+S.sizes[j.size]+': '+money(q.base),q.surcharge?'Coat condition ('+q.coatName+'): '+money(q.surcharge):''].concat(q.addons.map(function(a){return a.n+(a.qty>1?' x'+a.qty:'')+': '+money(a.t);})).concat([num(S.tax)?'Tax: '+money(q.tax):'','Total: '+money(q.total),'Deposit paid: '+money(q.paid),'Balance due: '+money(q.balance)]).filter(Boolean).join('\n');}
+function saveS(){st('settings',S);}
+document.addEventListener('input',function(e){var t=e.target,d=t.dataset;
+ if(d.q!==undefined){ADD[d.q]=num(t.value);render();return;}
+ if(d.g){S[d.g][+d.i][+d.j]=num(t.value);saveS();render();return;}
+ if(d.hs!==undefined){S.services[+d.hs]=t.value;saveS();fillSel();render();return;}
+ if(d.hz!==undefined){S.sizes[+d.hz]=t.value;saveS();fillSel();render();return;}
+ if(d.c){S.coats[+d.i][d.c]=d.c==='n'?t.value:num(t.value);saveS();renderCoat();render();return;}
+ if(d.a){S.addons[+d.i][d.a]=d.a==='n'?t.value:num(t.value);saveS();renderAddonsPick();render();return;}
+ if(t.id&&t.id.indexOf('s_')===0){var k=t.id.slice(2);S[k]=(k==='cur'||k==='consent')?t.value:num(t.value);saveS();renderCoat();renderAddonsPick();render();return;}
+ try{localStorage.setItem(KEY+'.biz',$('biz').value);}catch(x){}render();});
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset.coat!==undefined){COAT=+t.dataset.coat;renderCoat();render();}else if(t.id==='size'||t.id==='svc')render();});
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['quote','settings','history','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});if(d.t==='history')renderHist();return;}
+ if(d.rm!==undefined){S.addons.splice(+d.rm,1);ADD={};saveS();renderSettings();renderAddonsPick();render();return;}
+ if(d.del!==undefined){HIST.splice(+d.del,1);st('history',HIST);renderHist();return;}
+ if(t.id==='addadd'){S.addons.push({n:'New add-on',p:10,m:10});saveS();renderSettings();renderAddonsPick();render();}
+ if(t.id==='pCheckin'){document.body.className='pc';window.print();}
+ if(t.id==='pInvoice'){document.body.className='pi';window.print();}
+ if(t.id==='copy'){var tx=invText();if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';setTimeout(function(){t.textContent='Copy invoice text';},1500);},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);}
+ if(t.id==='save'){HIST.unshift({date:new Date().toLocaleString(),pet:LAST.j.pet,owner:LAST.j.owner,svc:S.services[LAST.j.svc]+' / '+S.sizes[LAST.j.size],coat:LAST.q.coatName,total:LAST.q.total,deposit:LAST.q.deposit});st('history',HIST);t.textContent='Saved';setTimeout(function(){t.textContent='Save visit';},1500);}
+ if(t.id==='reset'){if(confirm('Reset everything to the example values? Saved visits are kept.')){S=JSON.parse(JSON.stringify(DEFAULTS));saveS();ADD={};COAT=0;init();}}
+ if(t.id==='exp'){var b=new Blob([JSON.stringify({settings:S,history:HIST},null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='groomquote-backup.json';a.click();}
+});
+window.addEventListener('afterprint',function(){document.body.className='';});
+$('imp').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.settings&&d.settings.sizes&&d.settings.services&&d.settings.price&&d.settings.coats){S=d.settings;HIST=d.history||[];saveS();st('history',HIST);ADD={};COAT=0;init();}else alert('This file is not a GroomQuote backup.');}catch(x){alert('Could not read that file.');}};r.readAsText(f);});
+function renderHist(){$('hist').innerHTML='<tr><th>Date</th><th>Pet</th><th>Owner</th><th>Service</th><th>Coat</th><th class="num">Total</th><th></th></tr>'+(HIST.length?HIST.map(function(h,i){return '<tr><td>'+esc(h.date)+'</td><td>'+esc(h.pet)+'</td><td>'+esc(h.owner)+'</td><td>'+esc(h.svc)+'</td><td>'+esc(h.coat)+'</td><td class="num">'+money(h.total)+'</td><td><button class="btn del" data-del="'+i+'">x</button></td></tr>';}).join(''):'<tr><td colspan="7" class="mut">No saved visits yet.</td></tr>');}
+function init(){fillSel();renderCoat();renderAddonsPick();renderSettings();try{$('biz').value=localStorage.getItem(KEY+'.biz')||'';}catch(e){}render();}
+init();
+</script></body></html>

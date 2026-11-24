@@ -1,0 +1,57 @@
+{
+ "stage": "build1",
+ "date": "2026-11-24",
+ "products": [
+  {
+   "id": "d20261124-01",
+   "name": "QuoteSweep: Margin-Safe Cleaning Quote Calculator",
+   "slug": "quotesweep-cleaning-quote-calculator",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 39,
+   "price_pkr": 10920,
+   "type": "html tool"
+  },
+  {
+   "id": "d20261124-02",
+   "name": "First-90-Days Client Keeper (Cleaning Retention Tracker)",
+   "slug": "first-90-days-client-keeper",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 35,
+   "price_pkr": 9800,
+   "type": "html tool / micro-CRM"
+  },
+  {
+   "id": "d20261124-03",
+   "name": "Room-by-Room QC Inspection Pack",
+   "slug": "room-by-room-qc-inspection-pack",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 19,
+   "price_pkr": 5320,
+   "type": "docx + printable"
+  },
+  {
+   "id": "d20261124-04",
+   "name": "Cleaning Business Profit & Capacity Sheet",
+   "slug": "cleaning-profit-capacity-sheet",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 24,
+   "price_pkr": 6720,
+   "type": "xlsx"
+  },
+  {
+   "id": "d20261124-05",
+   "name": "GroomQuote: Matting-Proof Grooming Price Calculator",
+   "slug": "groomquote-grooming-price-calculator",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 29,
+   "price_pkr": 8120,
+   "type": "html tool"
+  }
+ ],
+ "failed": []
+}
