@@ -1,0 +1,3 @@
+booking_id,date,time,client,phone,email,dog,service,price,status,deposit_status,r48_sent,r24_sent,risk_flag,waitlist_offered,rebooked
+SAMPLE-1,2030-01-15,10:00,Sample Client,+15550000001,sample@example.com,Sample Dog,Full groom,$80,Booked,,,,,,
+SAMPLE-2,2030-01-15,13:30,Sample Client Two,+15550000002,sample2@example.com,Sample Dog Two,Bath & brush,$55,Confirmed,paid,,,,,

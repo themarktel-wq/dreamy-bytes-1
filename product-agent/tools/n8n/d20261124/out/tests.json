@@ -1,0 +1,1243 @@
+[
+ {
+  "file": "no-show-shield-01-reminder-chain.json",
+  "title": "deposit request by SMS (new booking, no deposit yet)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B1",
+     "date": "2026-11-27",
+     "time": "10:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Decide",
+   "Send SMS",
+   "Mark flag (sms)"
+  ],
+  "notexpect": [
+   "Send email",
+   "Alert owner",
+   "Trigger waitlist"
+  ],
+  "contains": [
+   [
+    "Send SMS",
+    "REPLACE_WITH_YOUR_OWN_PAYMENT_LINK"
+   ],
+   [
+    "Send SMS",
+    "+15551230001"
+   ],
+   [
+    "Mark flag (sms)",
+    "\"deposit_status\":\"requested\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-01-reminder-chain.json",
+  "title": "48h reminder by SMS",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B2",
+     "date": "2026-11-26",
+     "time": "02:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS",
+   "Mark flag (sms)"
+  ],
+  "notexpect": [
+   "Send email",
+   "Alert owner"
+  ],
+  "contains": [
+   [
+    "Send SMS",
+    "Reply YES to confirm or NO to cancel"
+   ],
+   [
+    "Mark flag (sms)",
+    "\"r48_sent\":\"yes\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-01-reminder-chain.json",
+  "title": "24h reminder falls back to email when no phone",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B3",
+     "date": "2026-11-25",
+     "time": "06:10",
+     "client": "Dana Smith",
+     "phone": "",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send email",
+   "Mark flag (email)"
+  ],
+  "notexpect": [
+   "Send SMS"
+  ],
+  "contains": [
+   [
+    "Send email",
+    "dana@example.com"
+   ],
+   [
+    "Mark flag (email)",
+    "\"r24_sent\":\"yes\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-01-reminder-chain.json",
+  "title": "unconfirmed within 12h alerts the owner (no client message)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B4",
+     "date": "2026-11-24",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "yes",
+     "r24_sent": "yes",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Alert owner",
+   "Mark flag (owner)"
+  ],
+  "notexpect": [
+   "Send SMS",
+   "Send email"
+  ],
+  "contains": [
+   [
+    "Alert owner",
+    "AT RISK"
+   ],
+   [
+    "Mark flag (owner)",
+    "\"risk_flag\":\"yes\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-01-reminder-chain.json",
+  "title": "confirmed, already-flagged, past and far-future rows do nothing",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B5",
+     "date": "2026-11-26",
+     "time": "02:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Confirmed",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    },
+    {
+     "booking_id": "B6",
+     "date": "2026-11-24",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "yes",
+     "r24_sent": "yes",
+     "risk_flag": "yes",
+     "waitlist_offered": "",
+     "rebooked": ""
+    },
+    {
+     "booking_id": "B7",
+     "date": "2026-11-24",
+     "time": "05:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    },
+    {
+     "booking_id": "B8",
+     "date": "2026-12-02",
+     "time": "18:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send SMS",
+   "Send email",
+   "Alert owner",
+   "Trigger waitlist"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-01-reminder-chain.json",
+  "title": "row set to Cancelled triggers the waitlist webhook",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B9",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Cancelled",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Trigger waitlist"
+  ],
+  "notexpect": [
+   "Send SMS"
+  ],
+  "contains": [
+   [
+    "Trigger waitlist",
+    "B9"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-01-reminder-chain.json",
+  "title": "cancelled row already offered is ignored",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B10",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Cancelled",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "yes",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Trigger waitlist"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-01-reminder-chain.json",
+  "title": "two rows same action (two 48h reminders)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B11",
+     "date": "2026-11-26",
+     "time": "02:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    },
+    {
+     "booking_id": "B12",
+     "date": "2026-11-26",
+     "time": "03:10",
+     "client": "Lee Park",
+     "phone": "+15551230002",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS",
+   "Mark flag (sms)"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send SMS",
+    "Lee"
+   ],
+   [
+    "Send SMS",
+    "Dana"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-01-reminder-chain.json",
+  "title": "empty sheet",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {}
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send SMS",
+   "Alert owner"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-02-reply-capture.json",
+  "title": "YES confirms the next booking",
+  "sample": {
+   "From": "+1 (555) 123-0001",
+   "Body": " yes "
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Confirmed",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-26",
+     "time": "12:10",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Mark confirmed",
+   "Thank you SMS"
+  ],
+  "notexpect": [
+   "Mark cancelled",
+   "Forward reply"
+  ],
+  "contains": [
+   [
+    "Mark confirmed",
+    "\"status\":\"Confirmed\""
+   ],
+   [
+    "Mark confirmed",
+    "B20"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-02-reply-capture.json",
+  "title": "NO cancels and starts the waitlist",
+  "sample": {
+   "From": "+15551230001",
+   "Body": "No"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Confirmed",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-26",
+     "time": "12:10",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Mark cancelled",
+   "Start waitlist",
+   "Cancelled SMS"
+  ],
+  "notexpect": [
+   "Mark confirmed"
+  ],
+  "contains": [
+   [
+    "Start waitlist",
+    "B20"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-02-reply-capture.json",
+  "title": "other text is forwarded to owner",
+  "sample": {
+   "From": "+15551230001",
+   "Body": "Can we move to 3pm?"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Confirmed",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-26",
+     "time": "12:10",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Forward reply"
+  ],
+  "notexpect": [
+   "Mark confirmed",
+   "Mark cancelled"
+  ],
+  "contains": [
+   [
+    "Forward reply",
+    "Can we move to 3pm?"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-02-reply-capture.json",
+  "title": "unknown number",
+  "sample": {
+   "From": "+15550001111",
+   "Body": "YES"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Confirmed",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-26",
+     "time": "12:10",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [
+   "Unmatched reply"
+  ],
+  "notexpect": [
+   "Mark confirmed"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-03-cancel-to-waitlist.json",
+  "title": "offers go to matching waiting rows only, in order (SMS and email)",
+  "sample": {
+   "booking_id": "B30",
+   "reason": "client replied NO"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B30",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ],
+   "Read Waitlist": [
+    {
+     "wl_id": "W1",
+     "client": "Ana Cruz",
+     "phone": "+15552220001",
+     "email": "",
+     "dog": "Rex",
+     "preferred_days": "wed,fri",
+     "added": "2026-11-01",
+     "status": "waiting"
+    },
+    {
+     "wl_id": "W2",
+     "client": "Bo Chan",
+     "phone": "",
+     "email": "bo@example.com",
+     "dog": "Mia",
+     "preferred_days": "any",
+     "added": "2026-11-02",
+     "status": "waiting"
+    },
+    {
+     "wl_id": "W3",
+     "client": "Cy Dee",
+     "phone": "+15552220003",
+     "email": "",
+     "dog": "Zed",
+     "preferred_days": "mon",
+     "added": "2026-11-03",
+     "status": "waiting"
+    },
+    {
+     "wl_id": "W4",
+     "client": "Ed Fox",
+     "phone": "+15552220004",
+     "email": "",
+     "dog": "Ace",
+     "preferred_days": "any",
+     "added": "2026-10-01",
+     "status": "filled"
+    }
+   ]
+  },
+  "expect": [
+   "Mark cancelled and offered",
+   "Offer by SMS",
+   "Offer by email"
+  ],
+  "notexpect": [
+   "Tell owner"
+  ],
+  "contains": [
+   [
+    "Offer by SMS",
+    "wl_id=W1"
+   ],
+   [
+    "Offer by SMS",
+    "booking_id=B30"
+   ],
+   [
+    "Offer by email",
+    "bo@example.com"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-03-cancel-to-waitlist.json",
+  "title": "no waitlist match tells the owner",
+  "sample": {
+   "booking_id": "B30"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B30",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ],
+   "Read Waitlist": [
+    {
+     "wl_id": "W3",
+     "client": "Cy Dee",
+     "phone": "+15552220003",
+     "email": "",
+     "dog": "Zed",
+     "preferred_days": "mon",
+     "added": "2026-11-03",
+     "status": "waiting"
+    },
+    {
+     "wl_id": "W4",
+     "client": "Ed Fox",
+     "phone": "+15552220004",
+     "email": "",
+     "dog": "Ace",
+     "preferred_days": "any",
+     "added": "2026-10-01",
+     "status": "filled"
+    }
+   ]
+  },
+  "expect": [
+   "Tell owner"
+  ],
+  "notexpect": [
+   "Offer by SMS",
+   "Offer by email"
+  ],
+  "contains": [
+   [
+    "Tell owner",
+    "nobody on waitlist matches"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-03-cancel-to-waitlist.json",
+  "title": "empty waitlist tells the owner",
+  "sample": {
+   "booking_id": "B30"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B30",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ],
+   "Read Waitlist": [
+    {}
+   ]
+  },
+  "expect": [
+   "Tell owner"
+  ],
+  "notexpect": [],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-03-cancel-to-waitlist.json",
+  "title": "unknown booking id stops",
+  "sample": {
+   "booking_id": "NOPE"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B30",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "",
+     "rebooked": ""
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Mark cancelled and offered",
+   "Offer by SMS"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-04-claim-slot.json",
+  "title": "first valid claim books the slot",
+  "sample": {},
+  "query": {
+   "booking_id": "B40",
+   "wl_id": "W1"
+  },
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B40",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Cancelled",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "yes",
+     "rebooked": ""
+    }
+   ],
+   "Read Waitlist": [
+    {
+     "wl_id": "W1",
+     "client": "Ana Cruz",
+     "phone": "+15552220001",
+     "email": "",
+     "dog": "Rex",
+     "status": "waiting"
+    }
+   ]
+  },
+  "expect": [
+   "Add new booking",
+   "Close old slot",
+   "Waitlist filled",
+   "Tell owner filled",
+   "Page: booked"
+  ],
+  "notexpect": [
+   "Page: taken"
+  ],
+  "contains": [
+   [
+    "Add new booking",
+    "Ana Cruz"
+   ],
+   [
+    "Add new booking",
+    "\"status\":\"Confirmed\""
+   ],
+   [
+    "Page: booked",
+    "You are booked"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-04-claim-slot.json",
+  "title": "second claim sees taken page",
+  "sample": {},
+  "query": {
+   "booking_id": "B40",
+   "wl_id": "W1"
+  },
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B40",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Cancelled",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "yes",
+     "rebooked": "W99"
+    }
+   ],
+   "Read Waitlist": [
+    {
+     "wl_id": "W1",
+     "client": "Ana Cruz",
+     "phone": "+15552220001",
+     "email": "",
+     "dog": "Rex",
+     "status": "waiting"
+    }
+   ]
+  },
+  "expect": [
+   "Page: taken"
+  ],
+  "notexpect": [
+   "Add new booking"
+  ],
+  "contains": [
+   [
+    "Page: taken",
+    "already been taken"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-04-claim-slot.json",
+  "title": "invalid link",
+  "sample": {},
+  "query": {
+   "booking_id": "ZZ",
+   "wl_id": "W1"
+  },
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B40",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Cancelled",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "yes",
+     "rebooked": ""
+    }
+   ],
+   "Read Waitlist": [
+    {
+     "wl_id": "W1",
+     "client": "Ana Cruz",
+     "phone": "+15552220001",
+     "email": "",
+     "dog": "Rex",
+     "status": "waiting"
+    }
+   ]
+  },
+  "expect": [
+   "Page: taken"
+  ],
+  "notexpect": [
+   "Add new booking"
+  ],
+  "contains": [
+   [
+    "Page: taken",
+    "not valid"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-04-claim-slot.json",
+  "title": "already-filled waitlist row",
+  "sample": {},
+  "query": {
+   "booking_id": "B40",
+   "wl_id": "W1"
+  },
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B40",
+     "date": "2026-11-25",
+     "time": "16:10",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "dog": "Biscuit",
+     "service": "Full groom",
+     "price": "$80",
+     "status": "Cancelled",
+     "deposit_status": "paid",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": "",
+     "waitlist_offered": "yes",
+     "rebooked": ""
+    }
+   ],
+   "Read Waitlist": [
+    {
+     "wl_id": "W1",
+     "client": "Ana Cruz",
+     "phone": "+15552220001",
+     "email": "",
+     "dog": "Rex",
+     "status": "filled"
+    }
+   ]
+  },
+  "expect": [
+   "Page: taken"
+  ],
+  "notexpect": [
+   "Add new booking"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-05-weekly-report.json",
+  "title": "weekly report counts only the last 7 full days",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "R1",
+     "date": "2026-11-22",
+     "status": "Completed",
+     "price": "$80"
+    },
+    {
+     "booking_id": "R2",
+     "date": "2026-11-21",
+     "status": "Completed",
+     "price": "$60"
+    },
+    {
+     "booking_id": "R3",
+     "date": "2026-11-23",
+     "status": "No-show",
+     "price": "$75"
+    },
+    {
+     "booking_id": "R4",
+     "date": "2026-11-20",
+     "status": "Cancelled",
+     "price": "$50"
+    },
+    {
+     "booking_id": "R5",
+     "date": "2026-11-04",
+     "status": "No-show",
+     "price": "$99"
+    },
+    {
+     "booking_id": "R6",
+     "date": "2026-11-24",
+     "status": "No-show",
+     "price": "$99"
+    }
+   ]
+  },
+  "expect": [
+   "Log report",
+   "Email report"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Log report",
+    "\"no_shows\":1"
+   ],
+   [
+    "Log report",
+    "\"completed\":2"
+   ],
+   [
+    "Log report",
+    "\"no_show_rate_pct\":33.3"
+   ],
+   [
+    "Log report",
+    "\"est_lost_revenue\":75"
+   ],
+   [
+    "Log report",
+    "\"cancellations\":1"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "no-show-shield-05-weekly-report.json",
+  "title": "weekly report with no data does not divide by zero",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {}
+   ]
+  },
+  "expect": [],
+  "notexpect": [],
+  "contains": [],
+  "trigger": "x"
+ }
+]

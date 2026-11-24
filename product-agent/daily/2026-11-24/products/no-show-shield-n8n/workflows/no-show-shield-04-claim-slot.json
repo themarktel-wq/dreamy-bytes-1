@@ -1,0 +1,616 @@
+{
+ "name": "04 No-Show Shield 4: first-come slot claim page",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "GET",
+    "path": "noshow-claim",
+    "options": {},
+    "responseMode": "responseNode"
+   },
+   "id": "994a0b90-6b35-5d71-b35c-77c087663616",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    240,
+    300
+   ],
+   "webhookId": "df12db2d-dd2d-59b7-be7b-ac9ce899896e"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Grooming Studio",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "c01c218b-d7a7-59ef-8355-adf78c106797",
+       "name": "tzOffset",
+       "value": "+00:00",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "sms",
+       "type": "string"
+      },
+      {
+       "id": "2dfebd07-0447-5b1a-8350-a480592b2e50",
+       "name": "depositRequired",
+       "value": "yes",
+       "type": "string"
+      },
+      {
+       "id": "a4cf7162-3622-5837-b1fa-b57ffe251d43",
+       "name": "depositAmount",
+       "value": "25",
+       "type": "string"
+      },
+      {
+       "id": "dbf65193-c173-5ef5-a959-2129a6580f0a",
+       "name": "depositLink",
+       "value": "https://buy.stripe.com/REPLACE_WITH_YOUR_OWN_PAYMENT_LINK",
+       "type": "string"
+      },
+      {
+       "id": "4ee3666d-f08d-5047-bde5-4dd4c6c6c822",
+       "name": "currency",
+       "value": "$",
+       "type": "string"
+      },
+      {
+       "id": "64910023-0e63-568e-aed3-f4709127e228",
+       "name": "maxOffers",
+       "value": "3",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      },
+      {
+       "id": "0c5a7abe-3978-5d8e-a7ea-50d1836b17c3",
+       "name": "cancelWebhookUrl",
+       "value": "https://YOUR-N8N-HOST/webhook/noshow-cancel",
+       "type": "string"
+      },
+      {
+       "id": "eaad1a76-cd32-5c52-8c63-efd712da35d5",
+       "name": "claimWebhookUrl",
+       "value": "https://YOUR-N8N-HOST/webhook/noshow-claim",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "c49fc4a7-6eee-5620-9a4e-427613fd1ad2",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "5509088a-5274-5dd9-ac14-237dba4c0658",
+   "name": "Read Bookings",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    680,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Waitlist",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "a90213e4-7f76-5d0a-b87b-43f8c460d44e",
+   "name": "Read Waitlist",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    900,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const q = $('Webhook').first().json.query || {};\nconst bookings = $('Read Bookings').all().map(i => i.json);\nconst wl = $input.all().map(i => i.json);\nconst slot = bookings.find(x => String(x.booking_id) === String(q.booking_id));\nconst w = wl.find(x => String(x.wl_id) === String(q.wl_id));\nconst stat = s => String((s && s.status) || '').trim().toLowerCase();\nif (!slot || !w) return [{ json: { ok: false, why: 'This link is not valid any more.' } }];\nif (stat(slot) !== 'cancelled' || String(slot.rebooked || '').trim()) return [{ json: { ok: false, why: 'Sorry, this slot has already been taken.' } }];\nif (stat(w) !== 'waiting') return [{ json: { ok: false, why: 'This offer is no longer available.' } }];\nreturn [{ json: { ok: true, slot_id: slot.booking_id, new_id: 'W' + Date.now().toString(36), date: String(slot.date).slice(0, 10), time: slot.time, service: slot.service || '', price: slot.price || '', wl_id: w.wl_id, client: w.client, phone: w.phone || '', email: w.email || '', dog: w.dog || '' } }];"
+   },
+   "id": "5f3be4ed-e833-5248-9dbd-af3fa8228720",
+   "name": "Check claim",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "9dfcf4a8-46af-5022-bf24-b191fc475369",
+       "leftValue": "={{ !!($json.ok) }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "15cb2213-2bfe-5fe8-8043-7eb1c4472aa6",
+   "name": "IF jsonok",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1340,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "append",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $json.new_id }}",
+      "date": "={{ $json.date }}",
+      "time": "={{ $json.time }}",
+      "client": "={{ $json.client }}",
+      "phone": "={{ $json.phone }}",
+      "email": "={{ $json.email }}",
+      "dog": "={{ $json.dog }}",
+      "service": "={{ $json.service }}",
+      "price": "={{ $json.price }}",
+      "status": "={{ 'Confirmed' }}",
+      "deposit_status": "={{ '' }}",
+      "r48_sent": "={{ '' }}",
+      "r24_sent": "={{ '' }}",
+      "risk_flag": "={{ '' }}",
+      "waitlist_offered": "={{ 'yes' }}"
+     },
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "d734c40f-bca1-55b7-98d9-9934306673d7",
+   "name": "Add new booking",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1560,
+    180
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $('Check claim').first().json.slot_id }}",
+      "rebooked": "={{ $('Check claim').first().json.new_id }}"
+     },
+     "matchingColumns": [
+      "booking_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "731d8284-20f9-5913-b5ef-4333f4588d0b",
+   "name": "Close old slot",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1780,
+    180
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Waitlist",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "wl_id": "={{ $('Check claim').first().json.wl_id }}",
+      "status": "={{ 'filled' }}"
+     },
+     "matchingColumns": [
+      "wl_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "83d8505b-39c2-5dd9-9d19-5d41c79d83d8",
+   "name": "Waitlist filled",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    2000,
+    180
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Slot filled from waitlist: ' + $('Check claim').first().json.date + ' ' + $('Check claim').first().json.time }}",
+    "emailFormat": "text",
+    "text": "={{ $('Check claim').first().json.client + ' (' + $('Check claim').first().json.dog + ') claimed the slot.' }}",
+    "options": {}
+   },
+   "id": "a4c53dcf-518a-5a65-943c-234356d03e2c",
+   "name": "Tell owner filled",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2220,
+    180
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "respondWith": "text",
+    "responseBody": "={{ '<html><body style=\"font-family:sans-serif;text-align:center;padding:40px\"><h2>You are booked!</h2><p>' + $('Check claim').first().json.date + ' at ' + $('Check claim').first().json.time + '</p></body></html>' }}",
+    "options": {
+     "responseHeaders": {
+      "entries": [
+       {
+        "name": "Content-Type",
+        "value": "text/html; charset=utf-8"
+       }
+      ]
+     }
+    }
+   },
+   "id": "f1590a48-a598-58ec-8c52-726d3b0f6e16",
+   "name": "Page: booked",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    2440,
+    180
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "text",
+    "responseBody": "={{ '<html><body style=\"font-family:sans-serif;text-align:center;padding:40px\"><h2>' + $json.why + '</h2></body></html>' }}",
+    "options": {
+     "responseHeaders": {
+      "entries": [
+       {
+        "name": "Content-Type",
+        "value": "text/html; charset=utf-8"
+       }
+      ]
+     }
+    }
+   },
+   "id": "54d8b71f-9fcb-5d3a-ad7c-88f001a75ec2",
+   "name": "Page: taken",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    1560,
+    420
+   ]
+  },
+  {
+   "parameters": {
+    "content": "## No-Show Shield 4: first-come slot claim page\nThe link in the waitlist offer lands here. The first valid tap books the slot for that client; later taps see a polite \"already taken\" page. The owner is emailed.\n\n**Setup**\n1. Create a Google Sheet with tabs Bookings, Waitlist and Report using the CSV headers in the sheet-templates folder; paste its ID into the Config node (sheetId).\n2. Fill in the Config node: business name, owner email, time zone offset (for example -05:00), channel (sms or email) and your own Stripe/PayPal payment link.\n3. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth: Account SID / Auth Token) if you use SMS.\n4. Execute once with test rows, then activate.\n5. Set this Webhook node to respond via the Respond to Webhook nodes (already configured).",
+    "height": 300,
+    "width": 420
+   },
+   "id": "9277cc6c-67fb-5e87-a610-e64164d37584",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Webhook": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Read Bookings",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Bookings": {
+   "main": [
+    [
+     {
+      "node": "Read Waitlist",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Waitlist": {
+   "main": [
+    [
+     {
+      "node": "Check claim",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Check claim": {
+   "main": [
+    [
+     {
+      "node": "IF jsonok",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonok": {
+   "main": [
+    [
+     {
+      "node": "Add new booking",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Page: taken",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Add new booking": {
+   "main": [
+    [
+     {
+      "node": "Close old slot",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Close old slot": {
+   "main": [
+    [
+     {
+      "node": "Waitlist filled",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Waitlist filled": {
+   "main": [
+    [
+     {
+      "node": "Tell owner filled",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Tell owner filled": {
+   "main": [
+    [
+     {
+      "node": "Page: booked",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

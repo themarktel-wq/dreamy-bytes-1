@@ -1,0 +1,606 @@
+{
+ "name": "03 No-Show Shield 3: cancelled slot to waitlist offer",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "noshow-cancel",
+    "options": {},
+    "responseMode": "onReceived"
+   },
+   "id": "0e3dc926-e1c9-5a39-9e67-eeef438869df",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    240,
+    300
+   ],
+   "webhookId": "5cfdc987-dcb7-5ebe-9c56-3c1a9555fbab"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Grooming Studio",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "c01c218b-d7a7-59ef-8355-adf78c106797",
+       "name": "tzOffset",
+       "value": "+00:00",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "sms",
+       "type": "string"
+      },
+      {
+       "id": "2dfebd07-0447-5b1a-8350-a480592b2e50",
+       "name": "depositRequired",
+       "value": "yes",
+       "type": "string"
+      },
+      {
+       "id": "a4cf7162-3622-5837-b1fa-b57ffe251d43",
+       "name": "depositAmount",
+       "value": "25",
+       "type": "string"
+      },
+      {
+       "id": "dbf65193-c173-5ef5-a959-2129a6580f0a",
+       "name": "depositLink",
+       "value": "https://buy.stripe.com/REPLACE_WITH_YOUR_OWN_PAYMENT_LINK",
+       "type": "string"
+      },
+      {
+       "id": "4ee3666d-f08d-5047-bde5-4dd4c6c6c822",
+       "name": "currency",
+       "value": "$",
+       "type": "string"
+      },
+      {
+       "id": "64910023-0e63-568e-aed3-f4709127e228",
+       "name": "maxOffers",
+       "value": "3",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      },
+      {
+       "id": "0c5a7abe-3978-5d8e-a7ea-50d1836b17c3",
+       "name": "cancelWebhookUrl",
+       "value": "https://YOUR-N8N-HOST/webhook/noshow-cancel",
+       "type": "string"
+      },
+      {
+       "id": "eaad1a76-cd32-5c52-8c63-efd712da35d5",
+       "name": "claimWebhookUrl",
+       "value": "https://YOUR-N8N-HOST/webhook/noshow-claim",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "cdb9ed12-f1cb-5e01-b891-a21868ef60e4",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const b = $input.first().json.body || {};\nreturn [{json:{booking_id:String(b.booking_id||''),reason:String(b.reason||'')}}];"
+   },
+   "id": "9a7ec265-11e0-5c0a-b9d1-d876af17fb87",
+   "name": "Normalize",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    680,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "66b46403-9b50-5edf-883c-7b71e0e0a4d0",
+   "name": "Read Bookings",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    900,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const b = $('Normalize').first().json;\nconst rows = $input.all().map(i => i.json).filter(r => r && r.booking_id);\nconst r = rows.find(x => String(x.booking_id) === String(b.booking_id));\nif (!r) return [];\nreturn [{ json: { booking_id: r.booking_id, date: String(r.date).slice(0, 10), time: r.time, service: r.service || 'appointment', client: r.client, dog: r.dog, reason: b.reason || '' } }];"
+   },
+   "id": "2873035b-ec2a-5acf-9b1e-8308ef3657ac",
+   "name": "Find slot",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $json.booking_id }}",
+      "status": "={{ 'Cancelled' }}",
+      "waitlist_offered": "={{ 'yes' }}"
+     },
+     "matchingColumns": [
+      "booking_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "30a3eb1b-e926-554a-bdbe-1d7f84955a03",
+   "name": "Mark cancelled and offered",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1340,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Waitlist",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "89c9a957-dee6-55c1-9f9c-320b1945839f",
+   "name": "Read Waitlist",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1560,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json;\nconst slot = $('Find slot').first().json;\nconst wd = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][new Date(slot.date + 'T12:00:00Z').getUTCDay()];\nconst wl = $input.all().map(i => i.json).filter(r => r && r.wl_id && String(r.status || 'waiting').trim().toLowerCase() === 'waiting');\nconst ok = wl.filter(r => { const p = String(r.preferred_days || 'any').toLowerCase(); return p.includes('any') || p.includes(wd) || p.trim() === ''; })\n  .sort((a, b) => String(a.added).localeCompare(String(b.added))).slice(0, Number(c.maxOffers) || 3);\nconst label = slot.date + ' at ' + slot.time;\nif (!ok.length) return [{ json: { channel: 'owner', subject: 'Slot open, nobody on waitlist matches: ' + label, text: 'A booking on ' + label + ' (' + slot.service + ') was cancelled (' + (slot.reason || 'no reason given') + ') and no waiting client prefers ' + wd + '. Offer it manually.' } }];\nreturn ok.map(r => {\n  const phone = String(r.phone || '').trim(), email = String(r.email || '').trim();\n  const channel = (c.channel === 'sms' && phone) ? 'sms' : (email ? 'email' : (phone ? 'sms' : 'owner'));\n  const link = c.claimWebhookUrl + '?booking_id=' + encodeURIComponent(slot.booking_id) + '&wl_id=' + encodeURIComponent(r.wl_id);\n  const text = 'Hi ' + String(r.client || 'there').split(/\\s+/)[0] + ', a slot just opened at ' + c.businessName + ': ' + label + '. First to tap gets it: ' + link;\n  return { json: { channel, to_phone: phone, to_email: email, subject: 'Slot opened: ' + label, text: channel === 'owner' ? 'Waitlist client ' + r.client + ' has no contact details. Slot: ' + label : text } };\n});"
+   },
+   "id": "f677e5d7-4125-58a5-8a88-5de559fd235d",
+   "name": "Pick waitlist",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1780,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "0c3684e9-c864-593a-a576-c2f27c430da8",
+       "leftValue": "={{ !!($json.channel === 'owner') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "81b8363a-b33f-5c25-8e0b-77f7f9350ad3",
+   "name": "IF jsonchannel  owner",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    2000,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.text }}",
+    "options": {}
+   },
+   "id": "2b2a3b6a-2d9a-5fa2-9e67-f69a9364161d",
+   "name": "Tell owner",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2220,
+    180
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "da6790aa-cd5e-5f9f-b7fe-5153868e202c",
+       "leftValue": "={{ !!($json.channel === 'sms') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "6648357c-5b1c-56a6-b826-1de8140e2038",
+   "name": "IF jsonchannel  sms",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    2220,
+    420
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $json.to_phone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ $json.text }}"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "ccea5efb-1616-5de5-b45e-2066eb7b1f1f",
+   "name": "Offer by SMS",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2440,
+    300
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth: Account SID / Auth Token)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $json.to_email }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.text }}",
+    "options": {}
+   },
+   "id": "17bdc287-6cb3-5563-a363-220833db5eaa",
+   "name": "Offer by email",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2440,
+    540
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## No-Show Shield 3: cancelled slot to waitlist offer\nCalled when a booking is cancelled (by reply NO, by the hourly check, or by you). Marks the row, finds waiting clients whose preferred days match, and texts or emails each a first-come claim link.\n\n**Setup**\n1. Create a Google Sheet with tabs Bookings, Waitlist and Report using the CSV headers in the sheet-templates folder; paste its ID into the Config node (sheetId).\n2. Fill in the Config node: business name, owner email, time zone offset (for example -05:00), channel (sms or email) and your own Stripe/PayPal payment link.\n3. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth: Account SID / Auth Token) if you use SMS.\n4. Execute once with test rows, then activate.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "30858657-a644-5ae1-8900-5f1a68b53ba9",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Webhook": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Normalize",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalize": {
+   "main": [
+    [
+     {
+      "node": "Read Bookings",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Bookings": {
+   "main": [
+    [
+     {
+      "node": "Find slot",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Find slot": {
+   "main": [
+    [
+     {
+      "node": "Mark cancelled and offered",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark cancelled and offered": {
+   "main": [
+    [
+     {
+      "node": "Read Waitlist",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Waitlist": {
+   "main": [
+    [
+     {
+      "node": "Pick waitlist",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Pick waitlist": {
+   "main": [
+    [
+     {
+      "node": "IF jsonchannel  owner",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonchannel  owner": {
+   "main": [
+    [
+     {
+      "node": "Tell owner",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "IF jsonchannel  sms",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonchannel  sms": {
+   "main": [
+    [
+     {
+      "node": "Offer by SMS",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Offer by email",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}
