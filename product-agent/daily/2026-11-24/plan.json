@@ -1,0 +1,498 @@
+{
+ "date": "2026-11-24",
+ "timezone": "Asia/Karachi",
+ "niches": [
+  "home-cleaning",
+  "pet-grooming-walking",
+  "photographers"
+ ],
+ "total": 13,
+ "software_count": 8,
+ "software_share": 0.62,
+ "products": [
+  {
+   "id": "d20261124-01",
+   "niche": "home-cleaning",
+   "name": "QuoteSweep: Margin-Safe Cleaning Quote Calculator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 39,
+   "unique_concept": "Quote calculator that works BACKWARDS from the owner's real labor+overhead cost and target margin, then shows the per-room price and a shareable client-facing estimate page; competitors only add up line items.",
+   "persona": "Solo/2-person maid owner",
+   "pain_points": "Underquoting; phone quotes by gut; per-seat software fees",
+   "pitch_points": "Never lose money on a job; quote in 60 seconds; no monthly fee; client gets a clean estimate link/printable",
+   "features": [
+    "Cost settings (labor $/hr, overhead $/hr, target margin %, tax %)",
+    "Room-by-room task minutes table (editable)",
+    "Condition multiplier (light/normal/heavy), pets, add-ons (oven, fridge, windows, inside cabinets)",
+    "Margin check with red/green warning",
+    "Recurring discount (weekly/bi-weekly/monthly) with margin impact",
+    "Printable/PDF-able client estimate (browser print), saved quotes in localStorage, JSON export"
+   ],
+   "build_spec": "Single-file index.html (use tools/builders core). Fields: bedrooms, bathrooms, sqft, kitchens, condition, pets(bool), add-ons[]. Formulas: minutes = sum(room_minutes x condition_mult); cost = hours x (labor + overhead) x crew_size; price = cost / (1 - target_margin) (ZenMaid-style divide-by-(1-margin); label clearly, NOT markup) ; recurring price = price x (1 - discount); margin_after_discount = (price_after - cost)/price_after. Sample data: labor $18, overhead $20, 25% -> $50.67/hr (matches C10 example). Tests: node test of formula functions + phone-width browser check.",
+   "evidence_refs": [
+    "C3",
+    "C9",
+    "C10",
+    "C13"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "ZenMaid",
+     "Jobber",
+     "Housecall Pro"
+    ]
+   },
+   "score_out_of_40": 27,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261124-02",
+   "niche": "home-cleaning",
+   "name": "First-90-Days Client Keeper (Cleaning Retention Tracker)",
+   "type": "html tool / micro-CRM",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 35,
+   "unique_concept": "Retention-first mini-CRM: tracks only the first 90 days of every new recurring client and scores churn risk from quality/communication signals (the commonly cited causes), instead of being a general scheduler.",
+   "persona": "Growing team lead (3-8 cleaners)",
+   "pain_points": "Clients leave after small unaddressed issues; favorite cleaner quits; no follow-up system",
+   "pitch_points": "Spot at-risk clients before they cancel; scripted check-in messages; know which cleaner/client pairing is risky",
+   "features": [
+    "Client list with start date, frequency, price, assigned cleaner",
+    "Touchpoint schedule (day 1, 7, 30, 60, 90) with message scripts",
+    "Risk score: missed-spot flag, reschedule count, unanswered messages, cleaner change, price increase pending",
+    "Dashboard: at-risk list, retention % by cohort month",
+    "CSV import/export, localStorage"
+   ],
+   "build_spec": "Single-file HTML app. Data model client{id,name,start,freq,price,cleaner,events[]}. Event types: complaint, reschedule, cleaner_change, no_reply, praise, price_increase. Score = 10 x complaint + 5 x reschedule(last 30d) + 8 x cleaner_change + 6 x no_reply - 5 x praise, capped 0-100; bands <30 green, 30-60 amber, >60 red (rule is OUR heuristic; state this in README, no claim of statistical validity). Retention % = active at 90d / started in cohort. Sample data labelled as sample. Test: scoring unit tests + phone-width check.",
+   "evidence_refs": [
+    "C11",
+    "C12",
+    "C7"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "ZenMaid",
+     "Jobber",
+     "Swept (as vendor tool, retention calculator)"
+    ]
+   },
+   "score_out_of_40": 26,
+   "score_note": "Evidence on churn causes is Low confidence (vendor blogs); scoring weights are our heuristic"
+  },
+  {
+   "id": "d20261124-03",
+   "niche": "home-cleaning",
+   "name": "Room-by-Room QC Inspection Pack",
+   "type": "docx + printable",
+   "is_software": false,
+   "assigned_stage": "build1",
+   "price_usd": 19,
+   "unique_concept": "Inspection scorecards by room with photo-proof slots and a client-facing 'what we did today' sheet; built around the quality-inconsistency cancellation cause rather than generic cleaning checklists.",
+   "persona": "Maid owner / team lead",
+   "pain_points": "Inconsistent quality across crews; no proof of work",
+   "pitch_points": "Consistent standard across crews; supervisors audit in 10 minutes; clients see proof",
+   "features": [
+    "Standard clean, deep clean, move-out inspection scorecards (DOCX + printable PDF)",
+    "Photo-proof slot sheet",
+    "Client visit summary slip",
+    "Crew onboarding SOP (training checklist)",
+    "Cleaner-swap handover note template"
+   ],
+   "build_spec": "DOCX via python-docx + PDF via reportlab. Each scorecard: 8-12 rooms x 6-10 checks, 0/1/N-A scoring, total % formula described in text and pass mark field. 'Not professional advice' note not needed; add 'adapt to your local rules' note. Test: files open, page counts, no placeholder text.",
+   "evidence_refs": [
+    "C12",
+    "C7"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "Jobber checklist templates (free web)",
+     "ZenMaid checklist features",
+     "generic Etsy cleaning checklists (not copied)"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Competition from free checklists is high; value is the inspection scoring + proof workflow"
+  },
+  {
+   "id": "d20261124-04",
+   "niche": "home-cleaning",
+   "name": "Cleaning Business Profit & Capacity Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build1",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that computes true cost per cleaning hour (labor + drive + overhead), profit per client, and weekly crew capacity, so the owner can see which recurring clients lose money.",
+   "persona": "Growing team lead",
+   "pain_points": "Don't know which clients are unprofitable; capacity guesses",
+   "pitch_points": "See margin per client; decide who to reprice; know how many more clients fit",
+   "features": [
+    "Settings sheet (wages, burden %, vehicle cost/mi, supplies %, overhead)",
+    "Clients sheet (price, hours, drive minutes, frequency)",
+    "Auto profit/hr and margin per client with conditional formatting",
+    "Capacity sheet (cleaner hours/week vs booked)",
+    "Reprice suggestion column to hit target margin"
+   ],
+   "build_spec": "tools/sheets openpyxl + LibreOffice recalc via verify.py. Formulas: cost_per_visit = hours x loaded_wage x crew + drive_min/60 x loaded_wage + miles x cost_per_mile + price x supplies_pct; margin = (price-cost)/price; reprice = cost/(1-target). Independent expected-value test with 3 sample clients computed in Python.",
+   "evidence_refs": [
+    "C10",
+    "C9"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "ZenMaid (no per-client profit view found, not exhaustively verified)",
+     "Jobber reports",
+     "generic Etsy small-biz P&L sheets"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261124-05",
+   "niche": "pet-grooming-walking",
+   "name": "GroomQuote: Matting-Proof Grooming Price Calculator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 29,
+   "unique_concept": "Calculator that builds the groomer's own breed/size price grid and adds coat-condition and matting tiers with an itemised pre-pickup invoice, so the 'surprise fee' argument is settled at drop-off.",
+   "persona": "Solo/mobile groomer",
+   "pain_points": "Matting surcharge arguments; flat prices that ignore labor",
+   "pitch_points": "Price by size+coat+time; consent line for matting at check-in; itemised invoice before pickup",
+   "features": [
+    "Price grid editor (size tiers x service)",
+    "Coat condition tier (normal/heavy shed/matted light-moderate-severe) with surcharge rules",
+    "Add-ons (teeth, nail grind, de-shed, flea bath)",
+    "Estimated duration -> slots",
+    "Printable check-in form with matting consent line + itemised invoice",
+    "localStorage, JSON export"
+   ],
+   "build_spec": "Single-file HTML. price = base(size,service) + coat_surcharge + sum(addons); time = base_minutes x coat_mult; deposit = deposit_pct x price (default $20-40 range from P8 as suggestion, user-editable). Sample grid labelled 'example, set your own'. No breed price claims. Tests: unit tests of price function + phone-width.",
+   "evidence_refs": [
+    "P8",
+    "P4",
+    "P5"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "MoeGo (booking-first)",
+     "Gingr",
+     "Pawfinity"
+    ]
+   },
+   "score_out_of_40": 26,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261124-06",
+   "niche": "pet-grooming-walking",
+   "name": "No-Show Shield: Grooming Reminder + Deposit + Waitlist n8n Flow",
+   "type": "n8n",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 45,
+   "unique_concept": "n8n workflow that turns a cancelled/unconfirmed slot into a filled slot: reminder chain, deposit-link step, and automatic waitlist offer, built on tools the groomer already owns (Google Calendar/Sheets, Twilio or email) instead of a $50-239/mo platform.",
+   "persona": "Solo groomer with a Google Sheet/Calendar",
+   "pain_points": "No-shows 5-15% (vendor estimates), manual texting",
+   "pitch_points": "Fewer empty slots; no new platform subscription; works with their calendar",
+   "features": [
+    "Trigger on new booking row/Calendar event",
+    "Reminder at -48h and -24h (SMS via Twilio node or email), reply YES/NO capture",
+    "No reply by -12h -> status 'at risk' and notify owner",
+    "Cancel -> offer slot to waitlist rows in order",
+    "Deposit payment-link placeholder (Stripe link, owner adds own)",
+    "Weekly no-show report row"
+   ],
+   "build_spec": "tools/n8n: build JSON workflow(s), validate with sim.js harness. Sheets: Bookings(date,time,client,phone,email,dog,service,status,deposit), Waitlist(client,phone,dog,preferred_days,added). Credentials as placeholders only. QA must state: not run against live Twilio/Stripe.",
+   "evidence_refs": [
+    "P6",
+    "P7",
+    "P8",
+    "P12"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "MoeGo reminders",
+     "Gingr",
+     "Pawfinity"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "No-show data is vendor-sourced (Low)"
+  },
+  {
+   "id": "d20261124-07",
+   "niche": "pet-grooming-walking",
+   "name": "Groomer & Sitter Policy and Intake Pack",
+   "type": "docx",
+   "is_software": false,
+   "assigned_stage": "build2",
+   "price_usd": 19,
+   "unique_concept": "Fill-in policy set built from real shop policy patterns: matting consent, deposit/no-show policy, vaccination record check, behaviour disclosure, photo release, plus a sitter service agreement. Templates only, not legal advice.",
+   "persona": "Solo groomer / dog walker",
+   "pain_points": "Unclear policies cause disputes; clients ignore rules",
+   "pitch_points": "Clear signed policies; one pack for grooming and sitting",
+   "features": [
+    "Client intake form (pet info, vaccinations, vet, behaviour)",
+    "Grooming policy with matting + late/no-show clauses (fields for owner's amounts)",
+    "Dog walking/sitting service agreement skeleton",
+    "Photo release",
+    "Incident note template"
+   ],
+   "build_spec": "python-docx; each doc with fillable bracketed fields; footer 'Template only, not legal advice; check local rules'. Test: files open, no placeholder text beyond intentional [fields].",
+   "evidence_refs": [
+    "P8",
+    "P10"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "Rover/Wag terms (platform-only)",
+     "free policy templates on shop sites",
+     "Time To Pet forms"
+    ]
+   },
+   "score_out_of_40": 23,
+   "score_note": "Marginal at the 24 gate: policy templates are common; differentiation is the combined groomer+walker bundle based on real shop policy patterns (P8)"
+  },
+  {
+   "id": "d20261124-08",
+   "niche": "pet-grooming-walking",
+   "name": "WalkWise: Dog Walker Package & Profit Planner",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 29,
+   "unique_concept": "Planner that prices walks by length/dogs/zone, builds prepaid packages with the discount's profit impact visible, and shows profit per hour after drive time; marketplaces and Time To Pet focus on booking, not pricing math.",
+   "persona": "Dog walker / pet sitter (1-3 staff)",
+   "pain_points": "Ad hoc discounts; unclear profit after drive time; platform fees",
+   "pitch_points": "Price with confidence; offer packages without losing money; compare marketplace vs direct",
+   "features": [
+    "Rate card (15/30/45/60 min, extra dog, puppy, holiday)",
+    "Package builder (e.g. 10 walks, user-set discount) with margin impact",
+    "Daily route sheet: walks, travel minutes, profit/hour",
+    "Platform-fee compare: enter fee % or $ yourself (no assumed commission)",
+    "Client price sheet printout"
+   ],
+   "build_spec": "Single-file HTML. profit_hr = (sum(price) - platform_fees - mileage_cost) / (walk_min + drive_min)/60. Example defaults from P9 shown as 'market reference (Rover avg $21.45 per 30 min)' with source note. Tests: unit tests + phone-width.",
+   "evidence_refs": [
+    "P9",
+    "P10",
+    "P1"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "Time To Pet",
+     "Rover/Wag (marketplaces)",
+     "Gingr"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261124-09",
+   "niche": "pet-grooming-walking",
+   "name": "PawReport: Client Visit Report Card Generator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 25,
+   "unique_concept": "Generates a polished, shareable visit report (potty, meal, mood, photo slots, notes) from a 30-second form; a lightweight alternative to full sitter software for owners who just want the client delight part.",
+   "persona": "Dog walker / pet sitter",
+   "pain_points": "Clients want proof/updates; texting photos is messy",
+   "pitch_points": "Professional updates in seconds; branded; one-off cost",
+   "features": [
+    "Branded report template (logo upload, colours)",
+    "Quick toggles (potty, water, meal, medication, mood emoji set)",
+    "Photo slots (local, no upload)",
+    "Export as image/print PDF/copy text for WhatsApp",
+    "Visit history in localStorage"
+   ],
+   "build_spec": "Single-file HTML; canvas/print CSS for export; no network. Tests: render at phone width, print to PDF smoke test.",
+   "evidence_refs": [
+    "P10",
+    "P9"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "Time To Pet report cards",
+     "Rover updates",
+     "Gingr"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence for willingness to pay is weak (Low); gate marginal"
+  },
+  {
+   "id": "d20261124-10",
+   "niche": "photographers",
+   "name": "Delivery Promise Tracker for Photographers",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build3",
+   "price_usd": 39,
+   "unique_concept": "Tracks the post-wedding edit backlog against each contract's promised delivery date and warns when the queue makes a date unrealistic, with a ready-to-send client update message; CRMs track jobs, not editing capacity.",
+   "persona": "Part-time wedding photographer (10-20 weddings)",
+   "pain_points": "Backlog, late galleries, anxious couples",
+   "pitch_points": "Know early which deliveries are at risk; send honest updates; fewer late-gallery disputes",
+   "features": [
+    "Jobs table (couple, wedding date, promised date, images, status)",
+    "Editing-hours estimate per job (editable default 12 h from Fstoppers survey, with source note)",
+    "Weekly editing capacity input",
+    "Auto forecast delivery date per job in queue order; red/amber/green",
+    "One-click update message templates (on track / delayed / delivered)"
+   ],
+   "build_spec": "Single-file HTML. forecast: process jobs sorted by promised date; start = max(shoot_date, previous_finish); finish = start + ceil(edit_hours/weekly_capacity_hours x 7) days. Status: green if finish<=promised, amber if <=7 days late, red otherwise. Unit tests with 3 jobs; phone-width check.",
+   "evidence_refs": [
+    "H2",
+    "H3",
+    "H4",
+    "H5"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "HoneyBook",
+     "Dubsado",
+     "Studio Ninja"
+    ]
+   },
+   "score_out_of_40": 27,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261124-11",
+   "niche": "photographers",
+   "name": "Wedding Photography Contract + Client Guide Pack",
+   "type": "docx",
+   "is_software": false,
+   "assigned_stage": "build3",
+   "price_usd": 29,
+   "unique_concept": "Contract template with explicit delivery-timeline, gallery-access-duration and edit-style clauses (the dispute points seen in client complaints) plus a client guide and questionnaire; templates only, not legal advice.",
+   "persona": "Part-time/full-time photographer",
+   "pain_points": "Disputes over turnaround, gallery access, image count",
+   "pitch_points": "Clear promises in writing; reduces misunderstandings; client guide sets expectations",
+   "features": [
+    "Contract template with fields for delivery window, gallery access months, image count range, style notes, copyright/usage",
+    "Client questionnaire",
+    "Timeline & expectations guide (client-facing)",
+    "Delivery email set (on time, delayed, delivered)",
+    "Gallery expiry reminder email"
+   ],
+   "build_spec": "python-docx + PDF; bracketed fields; footer 'Template only, not legal advice; have a lawyer review for your jurisdiction'. Test: opens, no unintended placeholders.",
+   "evidence_refs": [
+    "H4",
+    "H5",
+    "H6"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "HoneyBook/Dubsado contract tools (part of subscriptions)",
+     "Shootproof/Pixieset templates (not verified)",
+     "free photographer contract templates"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Competition: many contract templates exist; differentiation is the clause set mapped to complaints"
+  },
+  {
+   "id": "d20261124-12",
+   "niche": "photographers",
+   "name": "True Hourly Rate Calculator for Wedding Photographers",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build3",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that includes the invisible hours (editing, admin, travel) to show a photographer's real hourly rate and the package price needed for a target income; uses survey-based hour defaults, clearly labelled and editable.",
+   "persona": "Full-time studio owner",
+   "pain_points": "Underpricing because editing hours are hidden",
+   "pitch_points": "Know true hourly rate; price packages to hit income; test 'what if I outsource editing'",
+   "features": [
+    "Inputs sheet (weddings/yr, package price, shoot h, edit h, admin h, travel h, expenses)",
+    "True hourly rate and annual profit",
+    "Outsourced-editing scenario (user enters cost per wedding)",
+    "Package price needed for target income",
+    "Defaults from H3 flagged as survey-based"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc verify. hourly = (price - direct_costs) / (shoot+edit+admin+travel); needed_price = (target_income + overheads)/weddings + direct_costs. Expected-value tests in Python.",
+   "evidence_refs": [
+    "H3",
+    "H8"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "generic Etsy wedding pricing sheets",
+     "Narrative blog calculator (vendor, not verified)",
+     "Studio Ninja reports"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261124-13",
+   "niche": "photographers",
+   "name": "Shot List & Day Timeline Builder",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build3",
+   "price_usd": 29,
+   "unique_concept": "Couple-and-photographer shared builder producing a family-groups shot list and a timed day schedule (sunset, travel, buffers) as a print-ready sheet; generates the timeline from ceremony time rather than a static template.",
+   "persona": "Part-time wedding photographer",
+   "pain_points": "Time lost on group shots; unrealistic timelines",
+   "pitch_points": "Fewer rushed formals; agreed schedule; client-ready PDF",
+   "features": [
+    "Ceremony time + venues -> auto schedule with travel buffers",
+    "Family group shot list with minute estimates and total time check",
+    "Sunset time input (manual, no API) for golden-hour slot",
+    "Printable timeline and shot list",
+    "localStorage"
+   ],
+   "build_spec": "Single-file HTML. schedule built backwards from ceremony start using block durations (user-editable); group-shot total = sum(groups x minutes_each). Unit tests + phone width. No claim of industry-standard durations; defaults labelled as editable examples.",
+   "evidence_refs": [
+    "H4",
+    "H3"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json (generic builders/xlsx/n8n-50 are not niche-specific)",
+    "competitors": [
+     "Wedding timeline apps (Pixieset, Aisle Planner - not verified in this research)",
+     "free Etsy timelines",
+     "HoneyBook questionnaires"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence is indirect (Low): kept as lowest-confidence software item; drop first if time is short"
+  }
+ ],
+ "stage_counts": {
+  "build1": 5,
+  "build2": 4,
+  "build3": 4
+ },
+ "stage_software": {
+  "build1": 3,
+  "build2": 3,
+  "build3": 2
+ },
+ "blocked_or_missing": [
+  "Reddit/Facebook group threads: not returned by WebSearch",
+  "Meta Ad Library: not reachable",
+  "No direct WebFetch tool in this session; research used search result summaries only",
+  "IBISWorld/APPA pages not read in full (paywall/secondhand)"
+ ]
+}
