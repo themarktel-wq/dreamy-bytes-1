@@ -1,0 +1,47 @@
+{
+ "stage": "build1",
+ "date": "2026-11-26",
+ "products": [
+  {
+   "id": "d20261126-01",
+   "name": "PlateCost: Menu Item Cost and Price Calculator",
+   "slug": "platecost-menu-item-cost-price-calculator",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 35,
+   "price_pkr": 9800,
+   "type": "html tool"
+  },
+  {
+   "id": "d20261126-04",
+   "name": "Labor Cost vs Sales Planner",
+   "slug": "labor-cost-vs-sales-planner",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 24,
+   "price_pkr": 6720,
+   "type": "xlsx"
+  },
+  {
+   "id": "d20261126-05",
+   "name": "PT Pack Keeper: Session Packs, Expiry and Renewals",
+   "slug": "pt-pack-keeper-session-packs-expiry-renewals",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 29,
+   "price_pkr": 8120,
+   "type": "html tool"
+  },
+  {
+   "id": "d20261126-09",
+   "name": "DocChase: Client Document Request Tracker",
+   "slug": "docchase-client-document-request-tracker",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 35,
+   "price_pkr": 9800,
+   "type": "html tool"
+  }
+ ],
+ "failed": []
+}

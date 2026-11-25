@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DocChase - Client Document Request Tracker</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#1e40af;--acc2:#dbeafe}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:22px}
+.script{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px;margin:4px 0;font-size:13px;white-space:pre-wrap}
+.bar{height:10px;border-radius:5px;background:#e5e7eb;overflow:hidden;min-width:80px}.bar i{display:block;height:100%;background:var(--ok)}
+select.st{width:auto;padding:4px}
+</style></head><body>
+<header class="top"><h1>DocChase</h1><p>Month-by-month tracker of the documents each client still owes you, with due dates, overdue ranking and reminder wording. No per-seat fees. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs" id="tabs"><button data-t="month" class="on">This month</button><button data-t="chase">Overdue &amp; reminders</button><button data-t="clients">Clients &amp; checklists</button><button data-t="settings">Settings</button><button data-t="help">How it works</button></div>
+
+<section id="t-month">
+ <div class="card"><div class="row"><div><label>Month</label><input type="month" id="m_month"></div><button class="btn sec" id="markReq">Mark all not-yet-requested as requested today</button></div><div class="kpi" id="kpi"></div><p class="note" id="sampleNote"></p></div>
+ <div id="monthCards"></div>
+</section>
+
+<section id="t-chase" class="hidden"><div class="card"><h2>Overdue ranking</h2><div class="note">Ranked by days overdue for the month chosen on the first tab. Reminder tone follows your settings (gentle, firm, final).</div><div class="tw"><table id="overTbl"></table></div></div>
+ <div class="card"><h2>Reminder messages by client</h2><div id="remind"></div></div></section>
+
+<section id="t-clients" class="hidden">
+ <div class="card"><h2>Add a client</h2><div class="grid"><div><label>Client name</label><input id="n_name"></div><div><label>Contact (email / phone)</label><input id="n_contact"></div></div>
+  <div class="row"><button class="btn" id="addClient">Add client</button><button class="btn sec" id="clearSample">Remove sample clients</button></div></div>
+ <div id="clientCards"></div>
+ <div class="card"><h2>Import / export</h2><div class="note">Checklist CSV columns: client, contact, document, due_day (day of the month, 1-31). Importing adds clients and documents; existing clients with the same name get the new documents.</div>
+  <div class="row"><label class="btn sec" style="margin:0;cursor:pointer">Import checklist CSV<input id="impcsv" type="file" accept=".csv,text/csv" class="hidden"></label><button class="btn sec" id="expchk">Export checklist CSV</button><button class="btn sec" id="expstat">Export this month's status CSV</button><button class="btn sec" id="expjson">Backup JSON</button><label class="btn sec" style="margin:0;cursor:pointer">Restore JSON<input id="impjson" type="file" accept=".json" class="hidden"></label></div></div>
+</section>
+
+<section id="t-settings" class="hidden"><div class="card"><h2>Your settings</h2><div class="grid">
+ <div><label>Your name / firm (used in messages)</label><input id="s_biz"></div>
+ <div><label>Gentle reminder up to (days overdue)</label><input id="s_gentle" type="number" min="0"></div>
+ <div><label>Firm reminder up to (days overdue; after that = final)</label><input id="s_firm" type="number" min="1"></div></div>
+ <label style="margin-top:8px">Standard document list used by "Add standard checklist" (one per line: name, due day)</label><textarea id="s_std"></textarea>
+ <div class="note">The standard list and due days are examples: edit them to match how you work. The tone rule is just a day-count you control.</div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How DocChase works</h2>
+<p><b>1.</b> Add each client and their recurring checklist (bank statement, card statement, receipts, payroll report...) with the day of the month each is due.</p>
+<p><b>2.</b> On "This month" every document starts as <i>not requested</i>. Mark them requested when you send your request and received when the file arrives. A document is <b>overdue</b> when today is after its due date and it is not received.</p>
+<p><b>3.</b> <b>Month-end readiness</b> = documents received / documents required, per client and overall.</p>
+<p><b>4.</b> "Overdue &amp; reminders" ranks overdue documents and writes one reminder per client (gentle, firm or final by days overdue) that you copy and send yourself.</p>
+<p><b>Honest notes.</b> Sample clients are fictional. DocChase does not email or connect to client files: it is a tracker. Data is stored in this browser only: use Backup JSON or the CSV exports regularly.</p></div></section>
+</main>
+<script>
+//CORE
+var STD='Bank statement, 5\nCredit card statement, 10\nReceipts / expense photos, 15\nPayroll report, 25';
+var DEFAULT_SET={biz:'',gentle:3,firm:10,std:STD};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function pad(n){return (n<10?'0':'')+n;}
+function dayDiff(a,b){return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);}
+function dueDate(month,day){var y=+month.slice(0,4),m=+month.slice(5,7);var last=new Date(Date.UTC(y,m,0)).getUTCDate();var d=Math.min(Math.max(1,Math.round(num(day,1))),last);return month+'-'+pad(d);}
+function key(c,d,m){return c.id+'|'+d.id+'|'+m;}
+function item(D,c,d,m,today){var rec=(D.status||{})[key(c,d,m)]||{status:'pending'};var due=dueDate(m,d.dueDay);var st=rec.status==='received'?'received':(today>due?'overdue':(rec.status==='requested'?'requested':'pending'));
+ return {client:c,doc:d,month:m,due:due,raw:rec.status,state:st,daysOverdue:st==='overdue'?dayDiff(due,today):0,requestedOn:rec.requestedOn||'',receivedOn:rec.receivedOn||''};}
+function readiness(D,c,m,today){var docs=c.docs||[],rec=0,over=0;docs.forEach(function(d){var s=item(D,c,d,m,today);if(s.state==='received')rec++;if(s.state==='overdue')over++;});return {total:docs.length,received:rec,overdue:over,pct:docs.length?rec/docs.length:1};}
+function overall(D,m,today){var t=0,r=0,o=0;(D.clients||[]).forEach(function(c){var x=readiness(D,c,m,today);t+=x.total;r+=x.received;o+=x.overdue;});return {total:t,received:r,overdue:o,pct:t?r/t:1};}
+function overdueList(D,m,today){var out=[];(D.clients||[]).forEach(function(c){(c.docs||[]).forEach(function(d){var s=item(D,c,d,m,today);if(s.state==='overdue')out.push(s);});});out.sort(function(a,b){return b.daysOverdue-a.daysOverdue||(a.client.name<b.client.name?-1:1);});return out;}
+function tone(set,days){return days<=num(set.gentle,3)?'gentle':(days<=num(set.firm,10)?'firm':'final');}
+function reminder(D,c,items,m){var set=D.set,worst=Math.max.apply(null,items.map(function(i){return i.daysOverdue;})),t=tone(set,worst),first=(c.name||'there').split(/\s+/)[0];var list=items.map(function(i){return '- '+i.doc.name+' (was due '+i.due+')';}).join('\n');var me=set.biz||'your bookkeeper';
+ var head={gentle:'Hi '+first+', a quick reminder from '+me+': I am still missing the following for '+m+':',firm:'Hi '+first+', following up from '+me+'. These documents for '+m+' are now overdue and I cannot finish your books without them:',final:'Hi '+first+', this is a final reminder from '+me+'. The documents below for '+m+' are '+worst+' days overdue. Please send them today so I can close your month, or tell me when I can expect them:'}[t];
+ return {tone:t,text:head+'\n'+list+'\nThank you!'};}
+function parseCSV(t){var rows=[],row=[],f='',q=false;for(var i=0;i<t.length;i++){var ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=ch;}else if(ch==='"')q=true;else if(ch===','){row.push(f);f='';}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f='';}else f+=ch;}if(f!==''||row.length){row.push(f);rows.push(row);}return rows.filter(function(r){return r.some(function(x){return x!=='';});});}
+function csvq(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function checklistCSV(D){var rows=[['client','contact','document','due_day']];(D.clients||[]).forEach(function(c){(c.docs||[]).forEach(function(d){rows.push([c.name,c.contact,d.name,d.dueDay]);});});return rows.map(function(r){return r.map(csvq).join(',');}).join('\n');}
+function statusCSV(D,m,today){var rows=[['client','document','month','due','status','days_overdue','requested_on','received_on']];(D.clients||[]).forEach(function(c){(c.docs||[]).forEach(function(d){var s=item(D,c,d,m,today);rows.push([c.name,d.name,m,s.due,s.state,s.daysOverdue,s.requestedOn,s.receivedOn]);});});return rows.map(function(r){return r.map(csvq).join(',');}).join('\n');}
+function importChecklist(D,text,uid){var rows=parseCSV(text);if(rows.length<2||rows[0][0].toLowerCase()!=='client'||(rows[0][2]||'').toLowerCase()!=='document')throw new Error('bad header');var added=0;
+ rows.slice(1).forEach(function(r){var nm=(r[0]||'').trim(),dn=(r[2]||'').trim(),dd=parseInt(r[3],10);if(!nm||!dn||!(dd>=1&&dd<=31))return;var c=(D.clients||[]).filter(function(x){return x.name===nm;})[0];if(!c){c={id:uid(),name:nm,contact:(r[1]||'').trim(),docs:[]};D.clients.push(c);}if(!c.docs.some(function(d){return d.name===dn;})){c.docs.push({id:uid(),name:dn,dueDay:dd});added++;}});return added;}
+function parseStd(text){return String(text||'').split('\n').map(function(l){var p=l.split(',');var dd=parseInt(p[p.length-1],10);var nm=p.slice(0,-1).join(',').trim();return nm&&dd>=1&&dd<=31?{name:nm,dueDay:dd}:null;}).filter(Boolean);}
+//ENDCORE
+var KEY='docchase.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+var TODAY=todayStr();
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function ld(){try{var v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function sample(){var m=TODAY.slice(0,7),k=function(c,d){return c+'|'+d+'|'+m;};
+ var D0={set:JSON.parse(JSON.stringify(DEFAULT_SET)),clients:[
+  {id:'c1',sample:1,name:'Harbor Bakery (sample)',contact:'',docs:[{id:'d11',name:'Bank statement',dueDay:5},{id:'d12',name:'Credit card statement',dueDay:10},{id:'d13',name:'Receipts / expense photos',dueDay:15},{id:'d14',name:'Payroll report',dueDay:25}]},
+  {id:'c2',sample:1,name:'Northside Plumbing (sample)',contact:'',docs:[{id:'d21',name:'Bank statement',dueDay:5},{id:'d22',name:'Receipts / expense photos',dueDay:15},{id:'d23',name:'Job invoices list',dueDay:20}]},
+  {id:'c3',sample:1,name:'Studio Lumen (sample)',contact:'',docs:[{id:'d31',name:'Bank statement',dueDay:5},{id:'d32',name:'Sales report',dueDay:12}]}],status:{}};
+ D0.status[k('c1','d11')]={status:'received',receivedOn:m+'-04'};D0.status[k('c1','d12')]={status:'requested',requestedOn:m+'-01'};D0.status[k('c2','d21')]={status:'received',receivedOn:m+'-03'};D0.status[k('c2','d22')]={status:'requested',requestedOn:m+'-01'};D0.status[k('c3','d31')]={status:'received',receivedOn:m+'-02'};D0.status[k('c3','d32')]={status:'received',receivedOn:m+'-10'};return D0;}
+var D=ld()||sample();if(!D.set)D.set=JSON.parse(JSON.stringify(DEFAULT_SET));if(!D.status)D.status={};
+var STL={received:['g','Received'],overdue:['r','Overdue'],requested:['a','Requested'],pending:['','Not requested']};
+function month(){return $('m_month').value||TODAY.slice(0,7);}
+function render(){var m=month(),o=overall(D,m,TODAY),ov=overdueList(D,m,TODAY);
+ $('kpi').innerHTML='<div><span class="mut">Month-end readiness</span><b>'+Math.round(o.pct*100)+'%</b></div><div><span class="mut">Documents received</span><b>'+o.received+' / '+o.total+'</b></div><div><span class="mut">Overdue</span><b style="color:var(--bad)">'+o.overdue+'</b></div><div><span class="mut">Clients</span><b>'+D.clients.length+'</b></div>';
+ $('sampleNote').textContent=D.clients.some(function(c){return c.sample;})?'Sample clients (fictional) are loaded so you can see how it works. Remove them in the Clients tab.':'';
+ $('monthCards').innerHTML=D.clients.length?D.clients.map(function(c){var r=readiness(D,c,m,TODAY);return '<div class="card"><div class="row" style="justify-content:space-between"><b>'+esc(c.name)+'</b><span>'+r.received+' / '+r.total+' received - '+Math.round(r.pct*100)+'% ready'+(r.overdue?' <span class="pill r">'+r.overdue+' overdue</span>':'')+'</span></div><div class="bar"><i style="width:'+Math.round(r.pct*100)+'%"></i></div><div class="tw"><table><tr><th>Document</th><th>Due</th><th>Status</th><th>Set status</th></tr>'+(c.docs||[]).map(function(d){var s=item(D,c,d,m,TODAY),L=STL[s.state];return '<tr><td>'+esc(d.name)+'</td><td>'+s.due+'</td><td><span class="pill '+L[0]+'">'+L[1]+(s.daysOverdue?' '+s.daysOverdue+'d':'')+'</span></td><td><select class="st" data-set="'+esc(c.id)+'|'+esc(d.id)+'"><option value="pending"'+(s.raw==='pending'?' selected':'')+'>Not requested</option><option value="requested"'+(s.raw==='requested'?' selected':'')+'>Requested</option><option value="received"'+(s.raw==='received'?' selected':'')+'>Received</option></select></td></tr>';}).join('')+'</table></div></div>';}).join(''):'<div class="card mut">No clients yet. Add one in the Clients tab.</div>';
+ $('overTbl').innerHTML='<tr><th>Client</th><th>Document</th><th>Due</th><th class="num">Days overdue</th><th>Tone</th></tr>'+(ov.length?ov.map(function(i){return '<tr><td>'+esc(i.client.name)+'</td><td>'+esc(i.doc.name)+'</td><td>'+i.due+'</td><td class="num"><b>'+i.daysOverdue+'</b></td><td><span class="pill '+(tone(D.set,i.daysOverdue)==='final'?'r':'a')+'">'+tone(D.set,i.daysOverdue)+'</span></td></tr>';}).join(''):'<tr><td colspan="5" class="mut">Nothing overdue for '+m+'.</td></tr>');
+ var by={};ov.forEach(function(i){(by[i.client.id]=by[i.client.id]||{c:i.client,items:[]}).items.push(i);});window.__rem=[];
+ $('remind').innerHTML=Object.keys(by).length?Object.keys(by).map(function(id){var g=by[id],r=reminder(D,g.c,g.items,m),n=window.__rem.push(r.text)-1;return '<div class="card"><b>'+esc(g.c.name)+'</b> <span class="pill '+(r.tone==='final'?'r':'a')+'">'+r.tone+'</span><div class="script">'+esc(r.text)+'</div><button class="btn sec" data-copy="'+n+'">Copy reminder</button></div>';}).join(''):'<p class="mut">No reminders needed.</p>';
+ $('clientCards').innerHTML=D.clients.map(function(c){return '<div class="card"><div class="row" style="justify-content:space-between"><b>'+esc(c.name)+'</b><button class="btn del" data-delc="'+esc(c.id)+'">Delete client</button></div><div class="tw"><table><tr><th>Document</th><th>Due day</th><th></th></tr>'+(c.docs||[]).map(function(d){return '<tr><td>'+esc(d.name)+'</td><td><input type="number" min="1" max="31" style="width:70px" data-dd="'+esc(c.id)+'|'+esc(d.id)+'" value="'+num(d.dueDay,1)+'"></td><td><button class="btn del" data-deld="'+esc(c.id)+'|'+esc(d.id)+'">x</button></td></tr>';}).join('')+'</table></div><div class="row"><input id="nd_'+esc(c.id)+'" placeholder="New document name" style="max-width:240px"><input id="ndd_'+esc(c.id)+'" type="number" min="1" max="31" placeholder="due day" style="width:90px"><button class="btn sec" data-adddoc="'+esc(c.id)+'">Add document</button><button class="btn sec" data-addstd="'+esc(c.id)+'">Add standard checklist</button></div></div>';}).join('');
+ ['biz','gentle','firm'].forEach(function(k){if(document.activeElement!==$('s_'+k))$('s_'+k).value=D.set[k];});if(document.activeElement!==$('s_std'))$('s_std').value=D.set.std;}
+function cl(id){return D.clients.filter(function(c){return c.id===id;})[0];}
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset.set){var p=t.dataset.set.split('|'),k=p[0]+'|'+p[1]+'|'+month();var rec=D.status[k]||{};rec.status=t.value;if(t.value==='requested'&&!rec.requestedOn)rec.requestedOn=TODAY;if(t.value==='received')rec.receivedOn=TODAY;D.status[k]=rec;sv();render();}
+ if(t.id==='m_month')render();});
+document.addEventListener('input',function(e){var t=e.target;if(t.dataset.dd){var p=t.dataset.dd.split('|');cl(p[0]).docs.filter(function(d){return d.id===p[1];})[0].dueDay=num(t.value,1);sv();return;}
+ if(t.id&&t.id.indexOf('s_')===0){var k=t.id.slice(2);D.set[k]=(k==='biz'||k==='std')?t.value:num(t.value);sv();render();}});
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['month','chase','clients','settings','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});if(d.t==='chase')render();return;}
+ if(d.copy!==undefined){var tx=window.__rem[+d.copy];if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);return;}
+ if(d.delc){if(confirm('Delete this client?')){D.clients=D.clients.filter(function(c){return c.id!==d.delc;});sv();render();}return;}
+ if(d.deld){var p=d.deld.split('|'),c=cl(p[0]);c.docs=c.docs.filter(function(x){return x.id!==p[1];});sv();render();return;}
+ if(d.adddoc){var nm=$('nd_'+d.adddoc).value.trim(),dd=parseInt($('ndd_'+d.adddoc).value,10);if(!nm||!(dd>=1&&dd<=31)){alert('Enter a document name and a due day between 1 and 31.');return;}cl(d.adddoc).docs.push({id:uid(),name:nm,dueDay:dd});sv();render();return;}
+ if(d.addstd){var c2=cl(d.addstd);parseStd(D.set.std).forEach(function(s){if(!c2.docs.some(function(x){return x.name===s.name;}))c2.docs.push({id:uid(),name:s.name,dueDay:s.dueDay});});sv();render();return;}
+ if(t.id==='addClient'){var n=$('n_name').value.trim();if(!n){alert('Enter a client name.');return;}D.clients.push({id:uid(),name:n,contact:$('n_contact').value,docs:parseStd(D.set.std).map(function(s){return {id:uid(),name:s.name,dueDay:s.dueDay};})});$('n_name').value='';$('n_contact').value='';sv();render();return;}
+ if(t.id==='clearSample'){D.clients=D.clients.filter(function(c){return !c.sample;});sv();render();return;}
+ if(t.id==='markReq'){var m=month();D.clients.forEach(function(c){(c.docs||[]).forEach(function(dc){var k=key(c,dc,m),rec=D.status[k]||{status:'pending'};if(rec.status==='pending'){rec.status='requested';rec.requestedOn=TODAY;D.status[k]=rec;}});});sv();render();return;}
+ var dl=function(name,text,type){var b=new Blob([text],{type:type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();};
+ if(t.id==='expchk')dl('docchase-checklist.csv',checklistCSV(D),'text/csv');
+ if(t.id==='expstat')dl('docchase-status-'+month()+'.csv',statusCSV(D,month(),TODAY),'text/csv');
+ if(t.id==='expjson')dl('docchase-backup.json',JSON.stringify(D,null,1),'application/json');
+});
+$('impcsv').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var n=importChecklist(D,r.result,uid);if(!n)alert('No new documents found. Check the columns: client, contact, document, due_day.');sv();render();}catch(x){alert('Could not read that CSV. Use Export checklist CSV as a template.');}};r.readAsText(f);});
+$('impjson').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(x.clients&&x.set){D=x;if(!D.status)D.status={};sv();render();}else alert('This file is not a DocChase backup.');}catch(err){alert('Could not read that file.');}};r.readAsText(f);});
+$('m_month').value=TODAY.slice(0,7);render();
+</script></body></html>
