@@ -13,6 +13,18 @@
     "README.md",
     "cover.png"
    ]
+  },
+  "d20261126-12": {
+   "slug": "bookkeeping-fee-capacity-calculator",
+   "name": "Bookkeeping Fee and Capacity Calculator",
+   "status": "built",
+   "qa": "pass (203 formulas, 0 errors, 94 values match independent maths; LibreOffice only)",
+   "price_usd": 24,
+   "files": [
+    "Bookkeeping-Fee-and-Capacity-Calculator.xlsx",
+    "README.md",
+    "cover.png"
+   ]
   }
  }
 }
