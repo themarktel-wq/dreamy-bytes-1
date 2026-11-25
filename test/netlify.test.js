@@ -83,11 +83,14 @@ const { fakeStore } = require('./fake-blobs.js');
     assert.equal((await call('POST', '/api/auth/login', { phone: '03000000000', password: 'mynew123' })).status, 200, 'not re-applied while the variable stays');
     delete process.env.OWNER_RESET_PASSWORD;
   });
-  await t('without owner env vars the setup message explains what to do', async () => {
+  await t('without owner env vars the built-in starting owner login is created, and the password can then be changed', async () => {
     const d2 = fakeStore(); fn._setStores({ data: d2, uploads: fakeStore() });
-    const keep = process.env.ADMIN_PASSWORD; delete process.env.ADMIN_PASSWORD;
-    const r = await call('GET', '/api/info'); process.env.ADMIN_PASSWORD = keep;
-    assert.equal(r.status, 503); assert.match(r.body.error, /ADMIN_PASSWORD/);
+    const keepP = process.env.ADMIN_PASSWORD, keepH = process.env.ADMIN_PHONE; delete process.env.ADMIN_PASSWORD; delete process.env.ADMIN_PHONE;
+    const info = await call('GET', '/api/info');
+    const bad = await call('POST', '/api/auth/login', { phone: '03036603409', password: 'wrongpass1' });
+    const good = await call('POST', '/api/auth/login', { phone: '03036603409', password: 'lahoremobile9989' });
+    process.env.ADMIN_PASSWORD = keepP; process.env.ADMIN_PHONE = keepH;
+    assert.equal(info.status, 200); assert.equal(bad.status, 401); assert.equal(good.status, 200); assert.ok(good.body.token || good.body.user);
   });
   console.log(`\n${passed} Netlify tests passed`);
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -4,7 +4,7 @@
    - writes take a short lock and check that nothing changed since the data was read, else the request is re-run
    - photos go to the "lm-uploads" store and are served from /uploads/…
    - live updates: the app polls /api/poll (functions cannot hold an open connection)
-   Env (Site settings → Environment variables): ADMIN_PHONE, ADMIN_PASSWORD (first sign-in), optional VAPID_SUBJECT. */
+   Env (Site settings → Environment variables, all optional): ADMIN_PHONE, ADMIN_PASSWORD (first sign-in; defaults are built in), VAPID_SUBJECT. */
 import crypto from 'node:crypto';
 // Static imports so Netlify's bundler packs these files into the function.
 import coreMod from '../../core/core.js';
@@ -91,7 +91,9 @@ async function attempt(data, uploads, req) {
   const core = createCore({ store, deps: makeDeps(pendingUploads) });
 
   if (!store.get('settings', 'main')) {
-    const phone = process.env.ADMIN_PHONE, pw = process.env.ADMIN_PASSWORD;
+    /* The owner login is created once, on the first request. Environment variables win; if they are not set, these
+       starting values are used. The owner must change the password after the first sign-in (Admin > Settings). */
+    const phone = process.env.ADMIN_PHONE || '03036603409', pw = process.env.ADMIN_PASSWORD || 'lahoremobile9989';
     if (!phone || !pw || pw.length < 6) return { status: 503, body: { error: 'Setup needed: add ADMIN_PHONE and ADMIN_PASSWORD (6+ characters) in Netlify → Site configuration → Environment variables, then redeploy.' } };
     core.seed({ demo: process.env.DEMO === '1', adminPhone: phone, adminPassword: pw, images: SEED_IMAGES });
   }
