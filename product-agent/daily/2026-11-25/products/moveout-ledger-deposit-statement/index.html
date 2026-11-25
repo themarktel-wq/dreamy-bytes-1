@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MoveOut Ledger: Itemized Deposit Statement Builder</title>
+<style>
+:root{--ink:#1d2433;--mut:#5b6475;--bg:#f4f6f9;--line:#d6dce5;--acc:#1c5f8f;--bad:#b42318;--ok:#157347}
+*{box-sizing:border-box}html,body{margin:0}body{font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden}
+header{background:var(--acc);color:#fff;padding:14px 16px}header h1{margin:0;font-size:20px}header p{margin:2px 0 0;font-size:13px;opacity:.92}
+nav{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:0;z-index:5}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:20px;padding:8px 14px;font:inherit;color:var(--ink);cursor:pointer}nav button[aria-selected=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{max-width:1000px;margin:0 auto;padding:14px 12px 40px}section{display:none}section.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}.card h2{margin:0 0 8px;font-size:17px}
+.note{color:var(--mut);font-size:13px;margin:4px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #b6c0cc;border-radius:8px;font:inherit;background:#fff;color:var(--ink);min-width:0}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:5px 4px;font-size:13px;text-align:left;vertical-align:middle}th{color:var(--mut);border-bottom:1px solid var(--line);white-space:nowrap}
+#it{min-width:1180px}#it td input,#it td select{padding:6px;font-size:13px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}.kpi div{background:#eaf2f8;border-radius:10px;padding:10px}.kpi b{display:block;font-size:20px}.kpi span{font-size:12px;color:var(--mut)}
+.good{color:var(--ok)}.bad{color:var(--bad)}
+.warns{margin:10px 0 0;padding:0;list-style:none}.warns li{background:#fff7e6;border:1px solid #f0c36d;border-radius:8px;padding:6px 9px;font-size:13px;margin-bottom:6px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.alt{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.warn{background:#fff7e6;border:1px solid #f0c36d;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:12px}
+#stm{overflow-x:auto;background:#fff;padding:18px;border:1px solid var(--line);border-radius:12px}#stm table{margin:10px 0}#stm th,#stm td{border:1px solid #cdd5df;padding:6px 8px}#stm .r{text-align:right}
+#sheet{display:none}
+@media print{header,nav,.noprint,main>section{display:none!important}main{padding:0}body{background:#fff}#stmPrintSrc{display:block!important}#sheet{display:block!important}}
+label.btn{font-size:15px;color:var(--acc);margin:0}</style></head><body>
+<header><h1>MoveOut Ledger</h1><p>Itemize deposit deductions room by room and print a clear statement. Works offline; nothing is uploaded.</p></header>
+<nav id="tabs" role="tablist"></nav>
+<main>
+<section id="s-info" class="on">
+ <div class="warn"><b>Template tool, not legal advice.</b> Rules on what you may deduct, itemization, receipts and deadlines differ by state and city. This tool does not know them: you enter the deadline days and decide what to charge. Starting values are <b>examples</b>.</div>
+ <div class="card"><h2>Tenancy details</h2><div class="grid">
+  <div><label for="landlord">Landlord / manager</label><input id="landlord"></div><div><label for="tenant">Tenant name(s)</label><input id="tenant"></div><div><label for="addr">Rental address</label><input id="addr"></div>
+  <div><label for="movein">Move-in date</label><input id="movein" type="date"></div><div><label for="moveout">Possession returned (move-out) date</label><input id="moveout" type="date"></div>
+  <div><label for="deposit">Security deposit held</label><input id="deposit" type="number" min="0" step="0.01"></div><div><label for="cur">Currency symbol</label><input id="cur" maxlength="4"></div>
+  <div><label for="days">Deadline in days (YOUR state / local rule)</label><input id="days" type="number" min="0" step="1"></div><div><label for="fwd">Tenant forwarding address</label><input id="fwd"></div>
+ </div><p class="note">Deadline = move-out date + the number of days you enter. Look the rule up for where you operate; this tool does not assume one.</p></div>
+</section>
+<section id="s-items">
+ <div class="card"><h2>Room-by-room items</h2><p class="note">One row per room item or charge (for example "Kitchen: oven" or "Unpaid rent"). Compare move-in and move-out condition, then choose how to charge. "Photo ref" is a file name or note: photos are not uploaded.</p>
+  <div class="tw"><table id="it"><thead><tr><th>Room</th><th>Item</th><th>Move-in</th><th>Move-out</th><th>Notes</th><th>Photo ref</th><th>Cost</th><th>Receipt ref</th><th>Charge method</th><th>Age (yrs)</th><th>Life (yrs)</th><th>Charged</th><th></th></tr></thead><tbody></tbody></table></div>
+  <div class="row"><button class="btn" id="addItem">Add item</button><button class="btn alt" id="clearItems">Clear all items</button></div>
+  <ul class="warns" id="warns"></ul>
+  <p class="note">Charge methods: <b>No charge</b> (normal wear), <b>Full cost</b>, or <b>Prorate</b> = cost x (1 - age / useful life), limited to 0-100% (optional method; age and useful life are your own figures).</p>
+ </div>
+</section>
+<section id="s-sum"><div class="card"><h2>Deposit summary</h2><div class="kpi" id="kpi"></div></div></section>
+<section id="s-stm"><div class="card"><h2>Itemized statement</h2><div class="row noprint" style="margin:0 0 10px"><button class="btn" id="print">Print / save as PDF</button><button class="btn alt" id="copy">Copy as text</button><button class="btn alt" id="export">Export data (JSON)</button><label class="btn alt" style="margin:0;display:inline-block;cursor:pointer">Import data<input id="import" type="file" accept="application/json" hidden></label><button class="btn alt" id="reset">Reset to examples</button></div><p class="note noprint" id="msg" role="status"></p><div id="stm"></div></div></section>
+</main>
+<div id="sheet"></div>
+<script id="logic">
+const ML = (function(){
+  const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100; const n = x => { x = parseFloat(x); return isFinite(x) ? x : 0; };
+  const COND = ['Good', 'Fair', 'Poor', 'Damaged', 'N/A'];
+  function prorate(cost, age, life){ cost = n(cost); life = n(life); if (life <= 0) return r2(cost); const f = Math.min(1, Math.max(0, 1 - n(age) / life)); return r2(cost * f); }
+  function charge(it){ const c = Math.max(0, n(it.cost)); if (it.method === 'full') return r2(c); if (it.method === 'prorate') return prorate(c, it.age, it.life); return 0; }
+  function totals(items, deposit){ const ded = r2(items.reduce((s, it) => s + charge(it), 0)); const dep = r2(n(deposit)); const bal = r2(dep - ded); return { deposit: dep, deductions: ded, refund: bal >= 0 ? bal : 0, owed: bal < 0 ? r2(-bal) : 0, balance: bal, charged: items.filter(it => charge(it) > 0).length }; }
+  function toUTC(s){ const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return null; const t = Date.UTC(+m[1], +m[2] - 1, +m[3]); const d = new Date(t); return (d.getUTCMonth() === +m[2] - 1) ? t : null; }
+  function addDays(s, days){ const t = toUTC(s); if (t === null) return ''; return new Date(t + Math.round(n(days)) * 864e5).toISOString().slice(0, 10); }
+  function daysLeft(due, today){ const a = toUTC(due), b = toUTC(today); if (a === null || b === null) return null; return Math.round((a - b) / 864e5); }
+  function fmtDate(s){ const t = toUTC(s); if (t === null) return ''; const d = new Date(t); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear(); }
+  function warnings(items){ const w = []; items.forEach((it, i) => { const c = charge(it); const nm = (it.room || 'Room') + ': ' + (it.item || 'item'); if (c <= 0) return;
+      if (!String(it.receipt || '').trim()) w.push(nm + ' is charged but has no receipt or invoice reference.');
+      if (it.movein && it.movein === it.moveout && it.movein !== 'N/A') w.push(nm + ' has the same condition at move-in and move-out (' + it.movein + '): check that this deduction is justified.');
+      if (it.method === 'prorate' && (n(it.life) <= 0)) w.push(nm + ' is set to prorate but has no useful life, so the full cost is charged.');
+      if (!String(it.photo || '').trim()) w.push(nm + ' is charged but has no photo reference.'); }); return w; }
+  function statementText(info, items, cur){ const t = totals(items, info.deposit); const m = v => (cur || '') + v.toFixed(2); const L = [];
+    L.push('SECURITY DEPOSIT STATEMENT'); L.push('Property: ' + (info.addr || '')); L.push('Tenant: ' + (info.tenant || '')); L.push('Landlord: ' + (info.landlord || ''));
+    if (info.moveout) L.push('Possession returned: ' + fmtDate(info.moveout)); L.push(''); L.push('Deposit held: ' + m(t.deposit)); L.push('');
+    items.filter(it => charge(it) > 0).forEach(it => L.push('- ' + (it.room || '') + ' / ' + (it.item || '') + ': ' + m(charge(it)) + (it.method === 'prorate' ? ' (prorated from ' + m(n(it.cost)) + ')' : '') + (it.receipt ? ' [receipt ' + it.receipt + ']' : '')));
+    L.push(''); L.push('Total deductions: ' + m(t.deductions)); L.push(t.owed > 0 ? 'Amount owed by tenant: ' + m(t.owed) : 'Refund due to tenant: ' + m(t.refund)); L.push(''); L.push('Template statement, not legal advice.'); return L.join('\n'); }
+  return { COND, prorate, charge, totals, addDays, daysLeft, fmtDate, warnings, statementText, r2 };
+})();
+if (typeof module !== 'undefined') module.exports = ML;
+</script>
+<script id="ui">
+(function(){
+const mk = (room,item,mi,mo,notes,photo,cost,rec,method,age,life) => ({room,item,movein:mi,moveout:mo,notes,photo,cost,receipt:rec,method,age,life});
+const DEF = { info:{landlord:'Example Landlord',tenant:'Example Tenant',addr:'12 Example Street, Unit 3',movein:'2024-02-01',moveout:'2026-11-20',deposit:1200,cur:'$',days:21,fwd:'Example forwarding address'},
+ items:[mk('Living room','Carpet stain','Good','Poor','Large stain near window','living-stain-01.jpg',180,'INV-001','prorate',3,8), mk('Kitchen','Oven (heavy grease)','Good','Poor','Not cleaned','kitchen-oven.jpg',95,'CLEAN-17','full','',''), mk('Bedroom 1','Wall scuffs','Good','Fair','Normal furniture marks','bed1-wall.jpg',60,'','none','',''), mk('Bathroom','Missing towel bar','Good','Damaged','Bar removed from wall','bath-bar.jpg',35,'RCPT-88','full','','')] };
+let S; const KEY='moveout-ledger-v1'; const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function load(){ try{ const t=localStorage.getItem(KEY); if(t){ const o=JSON.parse(t); S={info:Object.assign({},DEF.info,o.info),items:Array.isArray(o.items)?o.items:[]}; return; } }catch(e){} S=JSON.parse(JSON.stringify(DEF)); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+const money = x => (S.info.cur||'') + (Math.round(x*100)/100).toFixed(2);
+const tabs=[['s-info','Details'],['s-items','Items'],['s-sum','Summary'],['s-stm','Statement']];
+function showTab(id){ tabs.forEach(t=>$(t[0]).classList.toggle('on',t[0]===id)); [...$('tabs').children].forEach(b=>b.setAttribute('aria-selected',b.dataset.t===id)); if(id==='s-sum') renderSum(); if(id==='s-stm') renderStm(); }
+tabs.forEach(t=>{ const b=document.createElement('button'); b.textContent=t[1]; b.dataset.t=t[0]; b.setAttribute('role','tab'); b.onclick=()=>showTab(t[0]); $('tabs').appendChild(b); });
+const IDS=['landlord','tenant','addr','movein','moveout','deposit','cur','days','fwd'];
+function fill(){ IDS.forEach(k=>$(k).value=S.info[k]); }
+$('s-info').addEventListener('input',()=>{ IDS.forEach(k=>S.info[k]=$(k).value); save(); });
+const sel=(f,v,opts)=>'<select data-f="'+f+'">'+opts.map(o=>'<option value="'+esc(o)+'" '+(v===o?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select>';
+function renderItems(){ const tb=document.querySelector('#it tbody');
+  tb.innerHTML=S.items.map((it,i)=>'<tr data-i="'+i+'"><td><input data-f="room" value="'+esc(it.room)+'" style="min-width:100px"></td><td><input data-f="item" value="'+esc(it.item)+'" style="min-width:130px"></td><td>'+sel('movein',it.movein,ML.COND)+'</td><td>'+sel('moveout',it.moveout,ML.COND)+'</td><td><input data-f="notes" value="'+esc(it.notes)+'" style="min-width:130px"></td><td><input data-f="photo" value="'+esc(it.photo)+'" style="min-width:110px"></td><td><input data-f="cost" type="number" min="0" step="0.01" value="'+esc(it.cost)+'" style="width:80px"></td><td><input data-f="receipt" value="'+esc(it.receipt)+'" style="width:90px"></td><td><select data-f="method"><option value="none" '+(it.method==='none'?'selected':'')+'>No charge</option><option value="full" '+(it.method==='full'?'selected':'')+'>Full cost</option><option value="prorate" '+(it.method==='prorate'?'selected':'')+'>Prorate</option></select></td><td><input data-f="age" type="number" min="0" step="0.5" value="'+esc(it.age)+'" style="width:64px"></td><td><input data-f="life" type="number" min="0" step="0.5" value="'+esc(it.life)+'" style="width:64px"></td><td class="ch">'+money(ML.charge(it))+'</td><td><button class="btn alt" data-del="'+i+'" aria-label="Remove item">x</button></td></tr>').join('');
+  renderWarns(); }
+function renderWarns(){ const w=ML.warnings(S.items); $('warns').innerHTML=w.map(x=>'<li>'+esc(x)+'</li>').join(''); }
+$('it').addEventListener('input',e=>{ const tr=e.target.closest('tr'); const f=e.target.dataset.f; if(!tr||!f) return; S.items[+tr.dataset.i][f]=e.target.value; save(); tr.querySelector('.ch').textContent=money(ML.charge(S.items[+tr.dataset.i])); renderWarns(); });
+$('it').addEventListener('click',e=>{ const b=e.target.closest('[data-del]'); if(b){ S.items.splice(+b.dataset.del,1); save(); renderItems(); } });
+$('addItem').onclick=()=>{ S.items.push(mk('','','Good','Good','','','','','none','','')); save(); renderItems(); };
+$('clearItems').onclick=()=>{ if(confirm('Remove all items?')){ S.items=[]; save(); renderItems(); } };
+function today(){ const d=new Date(), p=x=>String(x).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+const kpi=(l,v,c)=>'<div><b class="'+(c||'')+'">'+v+'</b><span>'+l+'</span></div>';
+function dueInfo(){ const due=ML.addDays(S.info.moveout,S.info.days); if(!due) return {due:'',left:null}; return {due, left:ML.daysLeft(due,today())}; }
+function renderSum(){ const t=ML.totals(S.items,S.info.deposit), d=dueInfo();
+  let h=kpi('Deposit held',money(t.deposit))+kpi('Total deductions',money(t.deductions))+kpi('Items charged',t.charged)+(t.owed>0?kpi('Tenant owes',money(t.owed),'bad'):kpi('Refund due to tenant',money(t.refund),'good'));
+  h+=kpi('Statement deadline (your rule)', d.due?ML.fmtDate(d.due):'Enter move-out date and days')+(d.left===null?'':kpi('Days left', d.left<0?('Overdue by '+(-d.left)):d.left, d.left<0?'bad':(d.left<=5?'bad':'good')));
+  $('kpi').innerHTML=h; }
+function stmHtml(){ const t=ML.totals(S.items,S.info.deposit), d=dueInfo(), I=S.info; const rows=S.items.filter(it=>ML.charge(it)>0);
+  return '<h2 style="margin:0">Security Deposit Statement</h2><p><b>Property:</b> '+esc(I.addr)+'<br><b>Tenant:</b> '+esc(I.tenant)+'<br><b>Landlord / manager:</b> '+esc(I.landlord)+'<br>'+(I.movein?'<b>Move-in:</b> '+esc(ML.fmtDate(I.movein))+' &nbsp; ':'')+(I.moveout?'<b>Possession returned:</b> '+esc(ML.fmtDate(I.moveout)):'')+(d.due?'<br><b>Statement due by:</b> '+esc(ML.fmtDate(d.due)):'')+'</p>'
+   +'<table><thead><tr><th>Room / item</th><th>Move-in</th><th>Move-out</th><th>Description</th><th>Receipt</th><th>Photo</th><th class="r">Cost</th><th class="r">Charged</th></tr></thead><tbody>'+(rows.length?rows.map(it=>'<tr><td>'+esc(it.room)+' / '+esc(it.item)+'</td><td>'+esc(it.movein)+'</td><td>'+esc(it.moveout)+'</td><td>'+esc(it.notes)+(it.method==='prorate'?'<br><i>Prorated: age '+esc(it.age||0)+' of '+esc(it.life||0)+' yrs</i>':'')+'</td><td>'+esc(it.receipt)+'</td><td>'+esc(it.photo)+'</td><td class="r">'+money(parseFloat(it.cost)||0)+'</td><td class="r">'+money(ML.charge(it))+'</td></tr>').join(''):'<tr><td colspan="8">No deductions.</td></tr>')+'</tbody></table>'
+   +'<table style="max-width:360px;margin-left:auto"><tr><td>Deposit held</td><td class="r">'+money(t.deposit)+'</td></tr><tr><td>Total deductions</td><td class="r">'+money(t.deductions)+'</td></tr><tr><td><b>'+(t.owed>0?'Amount owed by tenant':'Refund due to tenant')+'</b></td><td class="r"><b>'+money(t.owed>0?t.owed:t.refund)+'</b></td></tr></table>'
+   +(I.fwd?'<p>Sent to forwarding address: '+esc(I.fwd)+'</p>':'')+'<p style="font-size:12px;color:#5b6475">Template statement, not legal advice. Receipts and photos are available on request. Rules for deposit deductions and deadlines vary by state and city.</p>'; }
+function renderStm(){ $('stm').innerHTML=stmHtml(); $('sheet').innerHTML=stmHtml(); }
+$('print').onclick=()=>{ renderStm(); window.print(); };
+$('copy').onclick=async()=>{ const t=ML.statementText(S.info,S.items,S.info.cur); try{ await navigator.clipboard.writeText(t); $('msg').textContent='Statement text copied.'; }catch(e){ $('msg').textContent='Copy blocked by the browser; use Print instead.'; } };
+$('export').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'})); a.download='moveout-ledger-data.json'; a.click(); };
+$('import').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const o=JSON.parse(r.result); if(!o||!o.info||!Array.isArray(o.items)) throw 0; S={info:Object.assign({},DEF.info,o.info),items:o.items}; save(); fill(); renderItems(); renderStm(); $('msg').textContent='Data imported.'; }catch(x){ alert('That file is not a MoveOut Ledger data file.'); } }; r.readAsText(f); };
+$('reset').onclick=()=>{ if(confirm('Reset everything to the example data?')){ S=JSON.parse(JSON.stringify(DEF)); save(); fill(); renderItems(); renderStm(); } };
+load(); fill(); renderItems(); showTab('s-info');
+})();
+</script></body></html>
