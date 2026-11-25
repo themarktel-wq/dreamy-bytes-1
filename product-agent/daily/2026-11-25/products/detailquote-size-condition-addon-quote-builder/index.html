@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DetailQuote - Size x Condition x Add-On Quote Builder</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#1d4ed8;--acc2:#dbeafe}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:20px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:10px 0}.doc h2{margin:0;font-size:20px}.doc td,.doc th{font-size:14px}
+.flag{background:#fffbeb;border:1px dashed #d97706;border-radius:8px;padding:8px;margin:8px 0;font-size:13px}
+.ref{font-size:11px;color:var(--mut)}
+td input[data-n],td input[data-pn]{min-width:140px}
+@media print{.doc{border:0;padding:0;margin:0}}
+</style></head><body>
+<header class="top"><h1>DetailQuote</h1><p>Quote builder for auto detailers: size, condition, packages and add-ons, with an "assessment required" flag instead of a made-up price for correction and coatings. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs noprint" id="tabs"><button data-t="quote" class="on">Quote</button><button data-t="settings">My prices &amp; rules</button><button data-t="saved">Saved quotes</button><button data-t="help">How it works</button></div>
+
+<section id="t-quote">
+ <div class="card noprint"><h2>1. The job</h2>
+  <div class="grid"><div><label>Customer</label><input id="cust"></div><div><label>Phone / email</label><input id="contact"></div><div><label>Vehicle (year make model)</label><input id="veh"></div>
+   <div><label>Size</label><select id="size"></select></div><div><label>Package</label><select id="pkg"></select></div><div><label>Condition</label><select id="cond"></select></div></div>
+  <h3>Add-ons (priced upgrades)</h3><div class="tw"><table id="addons"></table></div>
+  <h3>Needs an inspection first (no fixed price)</h3><div class="note">These depend on the paint and surface condition, so they are not added to the total. The customer sees them as "quoted after inspection" with the range you enter.</div><div class="tw"><table id="flags"></table></div>
+ </div>
+ <div class="card noprint"><h2>2. Quote</h2><div class="kpi" id="kpi"></div>
+  <div class="grid" style="margin-top:10px"><div><label>Your business name</label><input id="biz" placeholder="e.g. Shine Mobile Detailing"></div><div><label>Note to customer</label><input id="cnote"></div></div>
+  <div class="row"><button class="btn" id="print">Print / save as PDF</button><button class="btn sec" id="copy">Copy quote text</button><button class="btn sec" id="save">Save quote</button></div></div>
+ <div class="doc printable" id="doc"></div>
+</section>
+
+<section id="t-settings" class="hidden">
+ <div class="card"><h2>Package prices by vehicle size</h2><div class="tw"><table id="gridP"></table></div><div class="note">Starting numbers are examples only: set your own prices. They are not advice on what to charge.</div></div>
+ <div class="card"><h2>Condition surcharge</h2><div class="tw"><table id="condcfg"></table></div></div>
+ <div class="card"><h2>Add-ons</h2><div class="tw"><table id="addcfg"></table></div><div class="row"><button class="btn sec" id="addadd">+ Add an add-on</button></div>
+  <div class="note">"Market reference" ranges come from public marketing guides and shop pages (Housecall Pro, Jobber and Invoicefly detailing price guides, retrieved 2026-11). They are shown only for orientation: they vary by region and are not advice.</div></div>
+ <div class="card"><h2>Inspection-required items</h2><div class="tw"><table id="flagcfg"></table></div><div class="row"><button class="btn sec" id="addflag">+ Add an item</button></div></div>
+ <div class="card"><h2>Deposit, travel, tax, terms</h2><div class="grid">
+  <div><label>Deposit (% of total)</label><input id="s_dep" type="number" min="0" max="100"></div><div><label>Cancellation / reschedule notice (hours)</label><input id="s_notice" type="number" min="0"></div>
+  <div><label>Travel / mobile fee ($, flat)</label><input id="s_travel" type="number" min="0"></div><div><label>Tax (%)</label><input id="s_tax" type="number" min="0" step="0.1"></div>
+  <div><label>Quote valid (days)</label><input id="s_valid" type="number" min="1"></div><div><label>Currency symbol</label><input id="s_cur" maxlength="3"></div></div>
+  <h3>Terms printed on the quote</h3><textarea id="s_terms"></textarea>
+  <div class="note">Real detailer policies seen online vary: reschedule inside 24 h or 48 h forfeits the deposit at some shops, 50% deposits at others, and many mobile shops need the customer to confirm water and power access. Set your own policy.</div>
+  <div class="row"><button class="btn del" id="reset">Reset all settings to examples</button><button class="btn sec" id="exp">Export JSON backup</button><label class="btn sec" style="margin:0;cursor:pointer">Import JSON<input id="imp" type="file" accept=".json" class="hidden"></label></div></div>
+</section>
+
+<section id="t-saved" class="hidden"><div class="card"><h2>Saved quotes</h2><div class="tw"><table id="savedtbl"></table></div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How DetailQuote works</h2>
+<p><b>Price</b> = package price for the vehicle size x (1 + condition surcharge) + add-ons + travel fee, plus tax. <b>Deposit</b> = deposit % x total.</p>
+<p><b>Inspection items</b> (paint correction, ceramic coating, anything you only price after seeing the paint) are never added to the total. They are printed as "quoted after inspection" with the range you type, so you do not promise a fixed price you cannot keep.</p>
+<p>Print the quote or copy the text to send by message. The deposit amount and your cancellation notice are printed on it.</p>
+<p><b>Honest notes.</b> All starting prices are examples, not what you should charge. Terms text is a template, not legal advice: adapt it to your local rules. Data is stored in this browser only: use Export JSON to back up.</p></div></section>
+</main>
+<script>
+//CORE
+var DEFAULTS={sizes:['Compact / sedan','SUV / crossover','Truck / van','Oversized / 3-row'],
+ pkgs:['Maintenance wash','Interior detail','Full detail'],price:[[60,75,90,110],[110,130,150,175],[180,210,240,280]],
+ conds:[{n:'Light',p:0},{n:'Normal',p:0},{n:'Heavy (pet hair, stains, neglected)',p:25}],
+ addons:[{n:'Headlight restoration',p:90,ref:'$50-150'},{n:'Engine bay clean',p:80,ref:'$50-150'},{n:'Odor removal',p:120,ref:'$75-300'},{n:'Pet hair removal',p:40,ref:''},{n:'Clay bar + sealant',p:70,ref:''}],
+ flags:[{n:'Paint correction',ref:'$200-1,000'},{n:'Ceramic coating',ref:'$500-2,000'}],
+ dep:25,notice:24,travel:0,tax:0,valid:14,cur:'$',
+ terms:'Prices are for the vehicle and condition described. Final price may change if the vehicle is dirtier than described; you will be told before extra work starts. Deposit is applied to the final bill. Please give the notice shown above to reschedule or cancel, or the deposit may be forfeited. Mobile jobs need access to water and power and the vehicle keys at the booked time.'};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function quote(S,j){
+ var base=num(S.price[j.pkg]&&S.price[j.pkg][j.size]);var cp=num((S.conds[j.cond]||{}).p);var adj=base*(1+cp/100);
+ var lines=[],addT=0;(S.addons||[]).forEach(function(a,i){var q=num((j.addons||{})[i]);if(q>0){lines.push({n:a.n,qty:q,p:num(a.p),t:q*num(a.p)});addT+=q*num(a.p);}});
+ var flags=[];(S.flags||[]).forEach(function(f,i){var x=(j.flags||{})[i];if(x&&x.on){flags.push({n:f.n,low:x.low===''||x.low==null?null:num(x.low),high:x.high===''||x.high==null?null:num(x.high),ref:f.ref});}});
+ var travel=num(S.travel);var subtotal=adj+addT+travel;var tax=subtotal*num(S.tax)/100;var total=subtotal+tax;var deposit=total*num(S.dep)/100;
+ return {base:base,condPct:cp,condAmt:adj-base,adj:adj,lines:lines,addTotal:addT,flags:flags,travel:travel,subtotal:subtotal,tax:tax,total:total,deposit:deposit,balance:total-deposit};}
+function flagRange(f,cur){if(f.low!=null&&f.high!=null)return cur+f.low+' - '+cur+f.high;if(f.low!=null)return 'from '+cur+f.low;if(f.high!=null)return 'up to '+cur+f.high;return 'range confirmed after inspection';}
+//ENDCORE
+var KEY='detailquote.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function ld(k,d){try{var v=localStorage.getItem(KEY+'.'+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function st(k,v){try{localStorage.setItem(KEY+'.'+k,JSON.stringify(v));}catch(e){}}
+var S=ld('settings',JSON.parse(JSON.stringify(DEFAULTS)));var SAVED=ld('saved',[]);var ADD={},FLG={};var LAST=null;
+function money(v){return (S.cur||'$')+(Math.round(v*100)/100).toFixed(2);}
+function job(){return {cust:$('cust').value,contact:$('contact').value,veh:$('veh').value,size:+$('size').value,pkg:+$('pkg').value,cond:+$('cond').value,addons:ADD,flags:FLG};}
+function fillSel(){var a=[$('size').value,$('pkg').value,$('cond').value];$('size').innerHTML=S.sizes.map(function(x,i){return '<option value="'+i+'">'+esc(x)+'</option>';}).join('');$('pkg').innerHTML=S.pkgs.map(function(x,i){return '<option value="'+i+'">'+esc(x)+'</option>';}).join('');$('cond').innerHTML=S.conds.map(function(x,i){return '<option value="'+i+'">'+esc(x.n)+(num(x.p)?' (+'+x.p+'%)':'')+'</option>';}).join('');
+ if(a[0]&&+a[0]<S.sizes.length)$('size').value=a[0];if(a[1]&&+a[1]<S.pkgs.length)$('pkg').value=a[1];if(a[2]&&+a[2]<S.conds.length)$('cond').value=a[2];}
+function renderPick(){$('addons').innerHTML='<tr><th>Add-on</th><th class="num">Price</th><th>Market reference</th><th style="width:90px">Qty</th></tr>'+S.addons.map(function(a,i){return '<tr><td>'+esc(a.n)+'</td><td class="num">'+money(num(a.p))+'</td><td class="ref">'+(a.ref?esc(a.ref)+' (marketing guides)':'')+'</td><td><input type="number" min="0" data-q="'+i+'" value="'+(ADD[i]||0)+'"></td></tr>';}).join('');
+ $('flags').innerHTML='<tr><th>Item</th><th>Add to quote</th><th>Your range: from</th><th>to</th><th>Market reference</th></tr>'+S.flags.map(function(f,i){var x=FLG[i]||{};return '<tr><td>'+esc(f.n)+'</td><td><input type="checkbox" data-fo="'+i+'"'+(x.on?' checked':'')+'></td><td><input type="number" min="0" data-fl="'+i+'" value="'+(x.low==null?'':x.low)+'" style="width:90px"></td><td><input type="number" min="0" data-fh="'+i+'" value="'+(x.high==null?'':x.high)+'" style="width:90px"></td><td class="ref">'+(f.ref?esc(f.ref)+' (marketing guides)':'')+'</td></tr>';}).join('');}
+function renderSettings(){
+ $('gridP').innerHTML='<tr><th></th>'+S.pkgs.map(function(p,j){return '<th><input data-pn="'+j+'" value="'+esc(p)+'"></th>';}).join('')+'</tr>'+S.sizes.map(function(sz,i){return '<tr><td><input data-n="'+i+'" value="'+esc(sz)+'"></td>'+S.pkgs.map(function(p,j){return '<td><input type="number" min="0" style="min-width:70px" data-g="'+j+'" data-i="'+i+'" value="'+S.price[j][i]+'"></td>';}).join('')+'</tr>';}).join('');
+ $('condcfg').innerHTML='<tr><th>Condition</th><th>Surcharge %</th></tr>'+S.conds.map(function(c,i){return '<tr><td><input data-cn="'+i+'" value="'+esc(c.n)+'" style="min-width:200px"></td><td><input type="number" min="0" data-cp="'+i+'" value="'+c.p+'"></td></tr>';}).join('');
+ $('addcfg').innerHTML='<tr><th>Add-on</th><th>Price</th><th>Reference (text)</th><th></th></tr>'+S.addons.map(function(a,i){return '<tr><td><input data-a="n" data-i="'+i+'" value="'+esc(a.n)+'" style="min-width:160px"></td><td><input type="number" min="0" data-a="p" data-i="'+i+'" value="'+a.p+'"></td><td><input data-a="ref" data-i="'+i+'" value="'+esc(a.ref)+'"></td><td><button class="btn del" data-rma="'+i+'">x</button></td></tr>';}).join('');
+ $('flagcfg').innerHTML='<tr><th>Item</th><th>Reference (text)</th><th></th></tr>'+S.flags.map(function(f,i){return '<tr><td><input data-f="n" data-i="'+i+'" value="'+esc(f.n)+'" style="min-width:160px"></td><td><input data-f="ref" data-i="'+i+'" value="'+esc(f.ref)+'"></td><td><button class="btn del" data-rmf="'+i+'">x</button></td></tr>';}).join('');
+ ['dep','notice','travel','tax','valid','cur'].forEach(function(k){$('s_'+k).value=S[k];});$('s_terms').value=S.terms;}
+function docHtml(j,q){var biz=$('biz').value||'Detailing Quote',d=new Date().toLocaleDateString();var cur=S.cur||'$';
+ var rows='<tr><td>'+esc(S.pkgs[j.pkg])+' - '+esc(S.sizes[j.size])+'</td><td class="num">'+money(q.base)+'</td></tr>'+(q.condAmt?'<tr><td>Condition: '+esc((S.conds[j.cond]||{}).n)+' (+'+q.condPct+'%)</td><td class="num">'+money(q.condAmt)+'</td></tr>':'')+q.lines.map(function(a){return '<tr><td>'+esc(a.n)+(a.qty>1?' x'+a.qty:'')+'</td><td class="num">'+money(a.t)+'</td></tr>';}).join('')+(q.travel?'<tr><td>Mobile / travel fee</td><td class="num">'+money(q.travel)+'</td></tr>':'')+(num(S.tax)?'<tr><td>Tax ('+S.tax+'%)</td><td class="num">'+money(q.tax)+'</td></tr>':'');
+ var fl=q.flags.length?'<div class="flag"><b>Quoted after inspection (not included in the total above)</b><ul style="margin:6px 0 0 18px;padding:0">'+q.flags.map(function(f){return '<li>'+esc(f.n)+': '+esc(flagRange(f,cur))+'</li>';}).join('')+'</ul></div>':'';
+ return '<h2>'+esc(biz)+'</h2><p class="mut">Quote date '+d+' - valid '+S.valid+' days</p><p><b>For:</b> '+esc(j.cust||'Customer')+(j.contact?' ('+esc(j.contact)+')':'')+'<br><b>Vehicle:</b> '+esc(j.veh||'-')+'</p><table><tr><th>Item</th><th class="num">Amount</th></tr>'+rows+'<tr><td><b>Total</b></td><td class="num"><b>'+money(q.total)+'</b></td></tr><tr><td>Deposit to book ('+S.dep+'%)</td><td class="num">'+money(q.deposit)+'</td></tr><tr><td>Balance after service</td><td class="num">'+money(q.balance)+'</td></tr></table>'+fl+($('cnote').value?'<p>'+esc($('cnote').value)+'</p>':'')+'<p class="mut"><b>Cancellation / reschedule notice:</b> '+S.notice+' hours.<br>'+esc(S.terms)+'</p>';}
+function render(){var j=job(),q=quote(S,j);LAST={j:j,q:q};
+ $('kpi').innerHTML='<div><span class="mut">Package (condition adj.)</span><b>'+money(q.adj)+'</b></div><div><span class="mut">Add-ons</span><b>'+money(q.addTotal)+'</b></div><div><span class="mut">Total</span><b>'+money(q.total)+'</b></div><div><span class="mut">Deposit</span><b>'+money(q.deposit)+'</b></div><div><span class="mut">Inspection items</span><b>'+q.flags.length+'</b></div>';
+ $('doc').innerHTML=docHtml(j,q);}
+function qText(){var q=LAST.q,j=LAST.j,cur=S.cur||'$';return [($('biz').value||'Detailing Quote'),'For: '+(j.cust||'Customer'),'Vehicle: '+(j.veh||'-'),S.pkgs[j.pkg]+' - '+S.sizes[j.size]+': '+money(q.base),q.condAmt?'Condition: '+money(q.condAmt):''].concat(q.lines.map(function(a){return a.n+(a.qty>1?' x'+a.qty:'')+': '+money(a.t);})).concat([q.travel?'Mobile fee: '+money(q.travel):'',num(S.tax)?'Tax: '+money(q.tax):'','Total: '+money(q.total),'Deposit to book: '+money(q.deposit)].concat(q.flags.map(function(f){return 'Quoted after inspection - '+f.n+': '+flagRange(f,cur);})).concat(['Cancellation notice: '+S.notice+' hours'])).filter(Boolean).join('\n');}
+function sv(){st('settings',S);}
+document.addEventListener('input',function(e){var t=e.target,d=t.dataset;
+ if(d.q!==undefined){ADD[d.q]=num(t.value);render();return;}
+ if(d.fl!==undefined){FLG[d.fl]=FLG[d.fl]||{};FLG[d.fl].low=t.value===''?null:num(t.value);render();return;}
+ if(d.fh!==undefined){FLG[d.fh]=FLG[d.fh]||{};FLG[d.fh].high=t.value===''?null:num(t.value);render();return;}
+ if(d.g!==undefined){S.price[+d.g][+d.i]=num(t.value);sv();render();return;}
+ if(d.n!==undefined){S.sizes[+d.n]=t.value;sv();fillSel();render();return;}
+ if(d.pn!==undefined){S.pkgs[+d.pn]=t.value;sv();fillSel();render();return;}
+ if(d.cn!==undefined){S.conds[+d.cn].n=t.value;sv();fillSel();render();return;}
+ if(d.cp!==undefined){S.conds[+d.cp].p=num(t.value);sv();fillSel();render();return;}
+ if(d.a){S.addons[+d.i][d.a]=d.a==='p'?num(t.value):t.value;sv();renderPick();render();return;}
+ if(d.f){S.flags[+d.i][d.f]=t.value;sv();renderPick();render();return;}
+ if(t.id&&t.id.indexOf('s_')===0){var k=t.id.slice(2);S[k]=(k==='cur'||k==='terms')?t.value:num(t.value);sv();render();return;}
+ if(t.id==='biz'){try{localStorage.setItem(KEY+'.biz',t.value);}catch(x){}}
+ render();});
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset.fo!==undefined){FLG[t.dataset.fo]=FLG[t.dataset.fo]||{};FLG[t.dataset.fo].on=t.checked;render();}else if(t.id==='size'||t.id==='pkg'||t.id==='cond')render();});
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['quote','settings','saved','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});if(d.t==='saved')renderSaved();return;}
+ if(d.rma!==undefined){S.addons.splice(+d.rma,1);ADD={};sv();renderSettings();renderPick();render();return;}
+ if(d.rmf!==undefined){S.flags.splice(+d.rmf,1);FLG={};sv();renderSettings();renderPick();render();return;}
+ if(d.del!==undefined){SAVED.splice(+d.del,1);st('saved',SAVED);renderSaved();return;}
+ if(t.id==='addadd'){S.addons.push({n:'New add-on',p:50,ref:''});sv();renderSettings();renderPick();render();}
+ if(t.id==='addflag'){S.flags.push({n:'New item',ref:''});sv();renderSettings();renderPick();render();}
+ if(t.id==='print')window.print();
+ if(t.id==='copy'){var tx=qText();if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';setTimeout(function(){t.textContent='Copy quote text';},1500);},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);}
+ if(t.id==='save'){SAVED.unshift({date:new Date().toLocaleString(),cust:LAST.j.cust,veh:LAST.j.veh,pkg:S.pkgs[LAST.j.pkg]+' / '+S.sizes[LAST.j.size],total:LAST.q.total,deposit:LAST.q.deposit,flags:LAST.q.flags.length});st('saved',SAVED);t.textContent='Saved';setTimeout(function(){t.textContent='Save quote';},1500);}
+ if(t.id==='reset'){if(confirm('Reset all settings to the examples? Saved quotes are kept.')){S=JSON.parse(JSON.stringify(DEFAULTS));sv();ADD={};FLG={};init();}}
+ if(t.id==='exp'){var b=new Blob([JSON.stringify({settings:S,saved:SAVED},null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='detailquote-backup.json';a.click();}
+});
+$('imp').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d.settings&&d.settings.sizes&&d.settings.pkgs&&d.settings.price&&d.settings.conds&&d.settings.addons&&d.settings.flags){S=d.settings;SAVED=d.saved||[];sv();st('saved',SAVED);ADD={};FLG={};init();}else alert('This file is not a DetailQuote backup.');}catch(x){alert('Could not read that file.');}};r.readAsText(f);});
+function renderSaved(){$('savedtbl').innerHTML='<tr><th>Date</th><th>Customer</th><th>Vehicle</th><th>Package</th><th class="num">Total</th><th class="num">Deposit</th><th></th></tr>'+(SAVED.length?SAVED.map(function(x,i){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.cust)+'</td><td>'+esc(x.veh)+'</td><td>'+esc(x.pkg)+'</td><td class="num">'+money(x.total)+'</td><td class="num">'+money(x.deposit)+'</td><td><button class="btn del" data-del="'+i+'">x</button></td></tr>';}).join(''):'<tr><td colspan="7" class="mut">No saved quotes yet.</td></tr>');}
+function init(){fillSel();renderPick();renderSettings();try{$('biz').value=localStorage.getItem(KEY+'.biz')||'';}catch(e){}render();}
+init();
+</script></body></html>
