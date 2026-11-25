@@ -1,0 +1,19 @@
+const core=require('./corejs.js')(__dirname+'/../index.html');const assert=require('assert');let n=0;function t(name,f){f();n++;console.log('ok',name);}
+const near=(a,b,e=1e-9)=>assert(Math.abs(a-b)<e,a+' vs '+b);
+const D={set:{margin:65,fcTarget:30,overhead:0,cur:'$'},ingredients:[{id:'c',name:'Chicken',unit:'g',packPrice:22.5,packQty:5000,yieldPct:85},{id:'t',name:'Tortilla',unit:'each',packPrice:9,packQty:50,yieldPct:100},{id:'s',name:'Salsa',unit:'g',packPrice:8,packQty:2000,yieldPct:100},{id:'g',name:'Cabbage',unit:'g',packPrice:12,packQty:10000,yieldPct:80}],
+ recipes:[{id:'r1',name:'Taco',portions:10,packaging:0.35,wastePct:5,overhead:'',price:11,lines:[{ing:'c',qty:1500},{ing:'t',qty:30},{ing:'g',qty:600},{ing:'s',qty:300}]}]};
+t('unit cost = pack price / (pack qty x yield): chicken 22.5/(5000x0.85)',()=>{near(core.unitCost(D.ingredients[0],0),22.5/(5000*0.85));});
+t('yield 100% and tortilla 9/50 = 0.18',()=>{near(core.unitCost(D.ingredients[1],0),0.18);});
+t('invalid yield (0 or blank) falls back to 100%, zero pack qty gives 0',()=>{near(core.unitCost({packPrice:10,packQty:10,yieldPct:0},0),1);near(core.unitCost({packPrice:10,packQty:10},0),1);near(core.unitCost({packPrice:10,packQty:0,yieldPct:80},0),0);});
+const batch=1500*22.5/(5000*0.85)+30*0.18+600*12/(10000*0.8)+300*8/2000;
+t('hand calc: batch ingredient cost 15.441176',()=>{near(core.recipeCost(D,D.recipes[0],0).batch,batch);});
+t('plate cost = batch/10 x 1.05 + 0.35 + overhead 0',()=>{const c=core.recipeCost(D,D.recipes[0],0);near(c.ingPlate,batch/10*1.05);near(c.plate,batch/10*1.05+0.35);});
+t('price needed = plate cost / (1 - 0.65) and resulting food-cost %',()=>{const c=core.recipeCost(D,D.recipes[0],0);const plate=batch/10*1.05+0.35;near(c.price,plate/0.35);near(c.foodPct,(batch/10*1.05)/(plate/0.35));});
+t('current price 11 -> margin (11-plate)/11 and gap',()=>{const c=core.recipeCost(D,D.recipes[0],0);const plate=batch/10*1.05+0.35;near(c.curMargin,(11-plate)/11);near(c.gap,plate/0.35-11);});
+t('overhead per plate: recipe-level overrides default; blank uses default',()=>{const D2=JSON.parse(JSON.stringify(D));D2.set.overhead=1;near(core.recipeCost(D2,D2.recipes[0],0).overhead,1);D2.recipes[0].overhead=2.5;near(core.recipeCost(D2,D2.recipes[0],0).overhead,2.5);D2.recipes[0].overhead=0;near(core.recipeCost(D2,D2.recipes[0],0).overhead,0);});
+t('supplier what-if +10% raises ingredient part by exactly 10%, not packaging',()=>{const a=core.recipeCost(D,D.recipes[0],0),b=core.recipeCost(D,D.recipes[0],10);near(b.ingPlate,a.ingPlate*1.1);near(b.packaging,a.packaging);near(b.plate,a.plate+a.ingPlate*0.1);});
+t('applyChange +10% changes pack prices permanently; recost equals what-if',()=>{const D3=JSON.parse(JSON.stringify(D));const w=core.recipeCost(D3,D3.recipes[0],10).plate;core.applyChange(D3,10);near(core.recipeCost(D3,D3.recipes[0],0).plate,w,1e-6);near(D3.ingredients[1].packPrice,9.9,1e-9);});
+t('margin cap and zero: margin 0 -> price = cost; margin>=95 capped',()=>{const D4=JSON.parse(JSON.stringify(D));D4.set.margin=0;const c=core.recipeCost(D4,D4.recipes[0],0);near(c.price,c.plate);D4.set.margin=99;const c2=core.recipeCost(D4,D4.recipes[0],0);near(c2.price,c2.plate/0.05);});
+t('missing ingredient line ignored, portions 0 treated as 1, no NaN',()=>{const D5=JSON.parse(JSON.stringify(D));D5.recipes[0].lines.push({ing:'zzz',qty:5});D5.recipes[0].portions=0;const c=core.recipeCost(D5,D5.recipes[0],0);assert(isFinite(c.plate)&&isFinite(c.price));near(c.batch,batch);});
+t('CSV has header, one row per item, correct price needed',()=>{const csv=core.menuCSV(D);const L=csv.split('\n');assert.strictEqual(L.length,2);assert(/^item,plates_per_batch/.test(L[0]));const plate=batch/10*1.05+0.35;assert(L[1].includes((plate/0.35).toFixed(4)));});
+console.log(n,'tests passed');

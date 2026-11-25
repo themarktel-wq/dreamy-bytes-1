@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PlateCost - Menu Item Cost and Price Calculator</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#c2410c;--acc2:#ffedd5}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:20px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:10px 0}.doc h2{margin:0;font-size:20px}.doc td,.doc th{font-size:14px}
+td input[data-in]{min-width:150px}
+@media print{.doc{border:0;padding:0;margin:0}}
+</style></head><body>
+<header class="top"><h1>PlateCost</h1><p>Cost every menu item with yield, waste, packaging and overhead, and see the price needed for your target margin. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs noprint" id="tabs"><button data-t="menu" class="on">Menu items</button><button data-t="ing">Ingredients</button><button data-t="set">Targets &amp; what-if</button><button data-t="help">How it works</button></div>
+
+<section id="t-menu">
+ <div class="card noprint"><h2>Your menu</h2><p class="note" id="sampleNote"></p><div class="row"><button class="btn" id="newItem">+ New menu item</button><button class="btn sec" id="expcsv">Export CSV</button><button class="btn sec" id="expjson">Backup JSON</button><label class="btn sec" style="margin:0;cursor:pointer">Restore JSON<input id="impjson" type="file" accept=".json" class="hidden"></label><button class="btn del" id="clearSample">Remove sample data</button></div><div class="tw"><table id="menuTbl"></table></div></div>
+ <div class="card noprint hidden" id="editor"></div>
+ <div class="doc printable hidden" id="sheet"></div>
+</section>
+
+<section id="t-ing" class="hidden"><div class="card"><h2>Ingredient library</h2>
+ <div class="note">Cost per unit = pack price / (pack quantity x yield). Yield is the share you can actually use after trim or cooking loss (100% = no loss). Use the same unit in recipes as in the pack (for example grams).</div>
+ <div class="tw"><table id="ingTbl"></table></div><div class="row"><button class="btn sec" id="addIng">+ Add ingredient</button></div></div></section>
+
+<section id="t-set" class="hidden"><div class="card"><h2>Targets</h2><div class="grid">
+ <div><label>Target margin on price (%)</label><input id="s_margin" type="number" min="0" max="95"></div>
+ <div><label>Food-cost % you aim for (example, editable)</label><input id="s_fcTarget" type="number" min="0" max="100"></div>
+ <div><label>Default overhead per plate</label><input id="s_overhead" type="number" min="0" step="0.05"></div>
+ <div><label>Currency symbol</label><input id="s_cur" maxlength="3"></div><div><label>Business name (printed)</label><input id="s_biz"></div></div>
+ <div class="note">Margin = (price - plate cost) / price. The food-cost % target is only an example you can change: it is not an industry rule. Overhead per plate is whatever you allocate (rent, labor, fuel, fees): enter your own figure.</div></div>
+ <div class="card"><h2>Supplier price what-if</h2><div class="grid"><div><label>All ingredient prices change by (%)</label><input id="s_whatIf" type="number" step="1"></div></div>
+ <div class="row"><button class="btn sec" id="applyWhatIf">Apply this change to pack prices permanently</button></div>
+ <div class="note">The what-if is shown live on the Menu items tab (columns marked "what-if") without changing your data. "Apply" multiplies every pack price by the percentage once, then resets the box to 0.</div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How PlateCost works</h2>
+<p><b>1.</b> Add your ingredients with pack price, pack quantity and yield. <b>2.</b> Build each menu item from ingredients (quantity for the whole batch), say how many plates the batch makes, and add packaging, waste % and overhead per plate. <b>3.</b> Read the price needed for your target margin and the food-cost % at that price. Enter your current menu price to see your real margin.</p>
+<p><b>Formulas.</b> Ingredient cost per unit = pack price / (pack quantity x yield). Ingredient cost per plate = batch ingredient cost / plates x (1 + waste %). Plate cost = ingredient cost per plate + packaging + overhead. Price needed = plate cost / (1 - target margin). Food-cost % = ingredient cost per plate / price.</p>
+<p><b>Honest notes.</b> Sample ingredients, prices and quantities are fictional examples. No industry benchmark is assumed: the food-cost target is yours. Data is stored in this browser only: use Backup JSON or Export CSV regularly.</p></div></section>
+</main>
+<script>
+//CORE
+var DEFAULT_SET={margin:65,fcTarget:30,overhead:0,cur:'$',biz:'',whatIf:0};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function yieldFrac(i){var y=num(i.yieldPct,100);if(y<=0||y>100)y=y<=0?100:100;return y/100;}
+function unitCost(i,whatIf){var q=num(i.packQty);if(q<=0)return 0;return num(i.packPrice)*(1+num(whatIf)/100)/(q*yieldFrac(i));}
+function ingById(D,id){return (D.ingredients||[]).filter(function(i){return i.id===id;})[0];}
+function recipeCost(D,r,whatIf){var batch=0,lines=[];(r.lines||[]).forEach(function(l){var i=ingById(D,l.ing);if(!i)return;var uc=unitCost(i,whatIf),c=num(l.qty)*uc;batch+=c;lines.push({name:i.name,unit:i.unit,qty:num(l.qty),unitCost:uc,cost:c});});
+ var portions=Math.max(1,num(r.portions,1));var ingPlate=batch/portions*(1+num(r.wastePct)/100);
+ var over=(r.overhead===''||r.overhead==null)?num(D.set.overhead):num(r.overhead);var plate=ingPlate+num(r.packaging)+over;
+ var m=Math.min(Math.max(num(D.set.margin)/100,0),0.95);var price=plate/(1-m);
+ var cur=num(r.price);var curMargin=cur>0?(cur-plate)/cur:null;
+ return {lines:lines,batch:batch,ingPlate:ingPlate,packaging:num(r.packaging),overhead:over,plate:plate,price:price,foodPct:price>0?ingPlate/price:0,curPrice:cur,curMargin:curMargin,curFoodPct:cur>0?ingPlate/cur:null,gap:cur>0?price-cur:null};}
+function applyChange(D,pct){(D.ingredients||[]).forEach(function(i){i.packPrice=Math.round(num(i.packPrice)*(1+num(pct)/100)*10000)/10000;});}
+function menuCSV(D){var q=function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};var rows=[['item','plates_per_batch','ingredient_cost_per_plate','packaging','overhead','plate_cost','price_needed','food_cost_pct_at_price_needed','current_price','current_margin_pct']];
+ (D.recipes||[]).forEach(function(r){var c=recipeCost(D,r,0);rows.push([r.name,num(r.portions,1),c.ingPlate.toFixed(4),c.packaging.toFixed(4),c.overhead.toFixed(4),c.plate.toFixed(4),c.price.toFixed(4),(c.foodPct*100).toFixed(2),c.curPrice||'',c.curMargin==null?'':(c.curMargin*100).toFixed(2)]);});
+ return rows.map(function(r){return r.map(q).join(',');}).join('\n');}
+//ENDCORE
+var KEY='platecost.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function ld(){try{var v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function sample(){return {set:JSON.parse(JSON.stringify(DEFAULT_SET)),
+ ingredients:[{id:'i1',sample:1,name:'Chicken thigh, boneless (sample)',unit:'g',packPrice:22.5,packQty:5000,yieldPct:85},{id:'i2',sample:1,name:'Corn tortillas (sample)',unit:'each',packPrice:9,packQty:50,yieldPct:100},{id:'i3',sample:1,name:'Rice, dry (sample)',unit:'g',packPrice:14,packQty:10000,yieldPct:100},{id:'i4',sample:1,name:'Cabbage (sample)',unit:'g',packPrice:12,packQty:10000,yieldPct:80},{id:'i5',sample:1,name:'Salsa (sample)',unit:'g',packPrice:8,packQty:2000,yieldPct:100}],
+ recipes:[{id:'r1',sample:1,name:'Chicken taco plate (sample)',portions:10,packaging:0.35,wastePct:5,overhead:'',price:11,lines:[{ing:'i1',qty:1500},{ing:'i2',qty:30},{ing:'i4',qty:600},{ing:'i5',qty:300}]},{id:'r2',sample:1,name:'Rice bowl (sample)',portions:10,packaging:0.5,wastePct:3,overhead:1.2,price:9.5,lines:[{ing:'i1',qty:1200},{ing:'i3',qty:1000},{ing:'i4',qty:500}]}]};}
+var D=ld()||sample();if(!D.set)D.set=JSON.parse(JSON.stringify(DEFAULT_SET));var EDIT=null;
+function money(v,d){return (D.set.cur||'$')+(Math.round(v*100)/100).toFixed(d==null?2:d);}
+function render(){var w=num(D.set.whatIf);
+ $('sampleNote').textContent=(D.ingredients.some(function(i){return i.sample;})||D.recipes.some(function(r){return r.sample;}))?'Sample items (fictional) are loaded so you can see how it works. Remove them with the button.':'';
+ var hasW=w!==0;
+ $('menuTbl').innerHTML='<tr><th>Item</th><th class="num">Plate cost</th><th class="num">Price needed</th><th class="num">Food cost %</th><th class="num">Your price</th><th class="num">Your margin</th>'+(hasW?'<th class="num">Price needed (what-if '+w+'%)</th>':'')+'<th></th></tr>'+(D.recipes.length?D.recipes.map(function(r){var c=recipeCost(D,r,0),cw=hasW?recipeCost(D,r,w):null;var low=c.curMargin!=null&&c.curMargin<num(D.set.margin)/100-1e-9;return '<tr><td>'+esc(r.name)+'</td><td class="num">'+money(c.plate)+'</td><td class="num"><b>'+money(c.price)+'</b></td><td class="num">'+(c.foodPct*100).toFixed(1)+'%</td><td class="num">'+(c.curPrice?money(c.curPrice):'-')+'</td><td class="num">'+(c.curMargin==null?'-':'<span class="pill '+(low?(c.curMargin<0?'r':'a'):'g')+'">'+(c.curMargin*100).toFixed(1)+'%</span>')+'</td>'+(hasW?'<td class="num">'+money(cw.price)+'</td>':'')+'<td><button class="btn sec" data-edit="'+esc(r.id)+'">Open</button></td></tr>';}).join(''):'<tr><td colspan="8" class="mut">No menu items yet.</td></tr>');
+ renderIng();['margin','fcTarget','overhead','cur','biz','whatIf'].forEach(function(k){if(document.activeElement!==$('s_'+k))$('s_'+k).value=D.set[k];});
+ renderEditor();}
+function renderIng(){$('ingTbl').innerHTML='<tr><th>Ingredient</th><th>Unit</th><th>Pack price</th><th>Pack quantity</th><th>Yield %</th><th class="num">Cost / unit</th><th></th></tr>'+D.ingredients.map(function(i){return '<tr><td><input data-in="name" data-id="'+esc(i.id)+'" value="'+esc(i.name)+'"></td><td><input data-in="unit" data-id="'+esc(i.id)+'" value="'+esc(i.unit)+'" style="width:70px"></td><td><input type="number" min="0" step="0.01" data-in="packPrice" data-id="'+esc(i.id)+'" value="'+num(i.packPrice)+'" style="width:90px"></td><td><input type="number" min="0" data-in="packQty" data-id="'+esc(i.id)+'" value="'+num(i.packQty)+'" style="width:90px"></td><td><input type="number" min="1" max="100" data-in="yieldPct" data-id="'+esc(i.id)+'" value="'+num(i.yieldPct,100)+'" style="width:70px"></td><td class="num" data-uc="'+esc(i.id)+'">'+money(unitCost(i,0),4)+'</td><td><button class="btn del" data-rmi="'+esc(i.id)+'">x</button></td></tr>';}).join('');}
+function recById(id){return D.recipes.filter(function(r){return r.id===id;})[0];}
+function renderEditor(){var ed=$('editor'),sh=$('sheet');if(!EDIT||!recById(EDIT)){ed.classList.add('hidden');sh.classList.add('hidden');return;}var r=recById(EDIT),c=recipeCost(D,r,0);ed.classList.remove('hidden');sh.classList.remove('hidden');
+ var opts=D.ingredients.map(function(i){return '<option value="'+esc(i.id)+'">'+esc(i.name)+' ('+esc(i.unit)+')</option>';}).join('');
+ ed.innerHTML='<h2>Edit: '+esc(r.name)+'</h2><div class="grid"><div><label>Name</label><input data-r="name" value="'+esc(r.name)+'"></div><div><label>Plates made by this batch</label><input type="number" min="1" data-r="portions" value="'+num(r.portions,1)+'"></div><div><label>Packaging per plate</label><input type="number" min="0" step="0.01" data-r="packaging" value="'+num(r.packaging)+'"></div><div><label>Waste / spoilage on ingredients (%)</label><input type="number" min="0" data-r="wastePct" value="'+num(r.wastePct)+'"></div><div><label>Overhead per plate (blank = default)</label><input type="number" min="0" step="0.05" data-r="overhead" value="'+(r.overhead===''||r.overhead==null?'':num(r.overhead))+'"></div><div><label>Your current menu price</label><input type="number" min="0" step="0.05" data-r="price" value="'+(num(r.price)||'')+'"></div></div>'
+ +'<h3>Recipe (quantities for the whole batch)</h3><div class="tw"><table><tr><th>Ingredient</th><th>Quantity</th><th class="num">Cost</th><th></th></tr>'+(r.lines||[]).map(function(l,k){var i=ingById(D,l.ing);return '<tr><td><select data-l="ing" data-k="'+k+'">'+opts.replace('value="'+esc(l.ing)+'"','value="'+esc(l.ing)+'" selected')+'</select></td><td><input type="number" min="0" data-l="qty" data-k="'+k+'" value="'+num(l.qty)+'" style="width:100px"> '+esc(i?i.unit:'')+'</td><td class="num" data-lc="'+k+'">'+money(num(l.qty)*(i?unitCost(i,0):0),4)+'</td><td><button class="btn del" data-rml="'+k+'">x</button></td></tr>';}).join('')+'</table></div><div class="row"><button class="btn sec" id="addLine">+ Add ingredient line</button><button class="btn" id="print">Print cost sheet</button><button class="btn del" id="delItem">Delete item</button></div><div class="kpi" id="edKpi"></div>';
+ updEditor();}
+function updEditor(){var r=recById(EDIT);if(!r)return;var c=recipeCost(D,r,0);var e=$('edKpi');if(e)e.innerHTML='<div><span class="mut">Ingredients / plate</span><b>'+money(c.ingPlate)+'</b></div><div><span class="mut">Plate cost</span><b>'+money(c.plate)+'</b></div><div><span class="mut">Price needed</span><b>'+money(c.price)+'</b></div><div><span class="mut">Food cost % at that price</span><b>'+(c.foodPct*100).toFixed(1)+'%</b></div><div><span class="mut">Your margin now</span><b>'+(c.curMargin==null?'-':(c.curMargin*100).toFixed(1)+'%')+'</b></div>';
+ $('sheet').innerHTML='<h2>'+esc(D.set.biz||'Cost sheet')+'</h2><p><b>'+esc(r.name)+'</b> - batch makes '+num(r.portions,1)+' plate(s) - '+new Date().toLocaleDateString()+'</p><table><tr><th>Ingredient</th><th class="num">Qty</th><th class="num">Cost</th></tr>'+c.lines.map(function(l){return '<tr><td>'+esc(l.name)+'</td><td class="num">'+l.qty+' '+esc(l.unit)+'</td><td class="num">'+money(l.cost,4)+'</td></tr>';}).join('')+'<tr><td colspan="2"><b>Batch ingredient cost</b></td><td class="num"><b>'+money(c.batch)+'</b></td></tr></table><table style="margin-top:10px"><tr><td>Ingredient cost per plate (incl. '+num(r.wastePct)+'% waste)</td><td class="num">'+money(c.ingPlate)+'</td></tr><tr><td>Packaging</td><td class="num">'+money(c.packaging)+'</td></tr><tr><td>Overhead per plate</td><td class="num">'+money(c.overhead)+'</td></tr><tr><td><b>Plate cost</b></td><td class="num"><b>'+money(c.plate)+'</b></td></tr><tr><td>Target margin</td><td class="num">'+num(D.set.margin)+'%</td></tr><tr><td><b>Price needed</b></td><td class="num"><b>'+money(c.price)+'</b></td></tr><tr><td>Food-cost % at that price</td><td class="num">'+(c.foodPct*100).toFixed(1)+'%</td></tr>'+(c.curPrice?'<tr><td>Your current price / margin</td><td class="num">'+money(c.curPrice)+' / '+(c.curMargin*100).toFixed(1)+'%</td></tr>':'')+'</table>';}
+document.addEventListener('input',function(e){var t=e.target,d=t.dataset;
+ if(d.in){var i=ingById(D,d.id);i[d.in]=(d.in==='name'||d.in==='unit')?t.value:num(t.value);sv();var u=document.querySelector('[data-uc="'+d.id+'"]');if(u)u.textContent=money(unitCost(i,0),4);refreshTable();updEditor();return;}
+ if(d.r){var r=recById(EDIT);r[d.r]=(d.r==='name')?t.value:(d.r==='overhead'&&t.value===''?'':num(t.value));sv();refreshTable();updEditor();return;}
+ if(d.l){var r2=recById(EDIT);r2.lines[+d.k][d.l]=d.l==='qty'?num(t.value):t.value;sv();var i2=ingById(D,r2.lines[+d.k].ing),cc=document.querySelector('[data-lc="'+d.k+'"]');if(cc)cc.textContent=money(num(r2.lines[+d.k].qty)*(i2?unitCost(i2,0):0),4);refreshTable();updEditor();return;}
+ if(t.id&&t.id.indexOf('s_')===0){var k=t.id.slice(2);D.set[k]=(k==='cur'||k==='biz')?t.value:num(t.value);sv();refreshTable();updEditor();}});
+document.addEventListener('change',function(e){if(e.target.dataset.l==='ing'){renderEditor();}});
+function refreshTable(){var a=document.activeElement,id=a&&a.id;var keep=a&&a.dataset;render0();}
+function render0(){var ae=document.activeElement;var st=ae&&ae.selectionStart;var savedId=ae&&ae.id,savedD=ae&&ae.dataset&&JSON.stringify(ae.dataset);var edHtml=$('editor').innerHTML,ingHtml=$('ingTbl').innerHTML;var w=num(D.set.whatIf);var hasW=w!==0;
+ $('menuTbl').innerHTML='<tr><th>Item</th><th class="num">Plate cost</th><th class="num">Price needed</th><th class="num">Food cost %</th><th class="num">Your price</th><th class="num">Your margin</th>'+(hasW?'<th class="num">Price needed (what-if '+w+'%)</th>':'')+'<th></th></tr>'+(D.recipes.length?D.recipes.map(function(r){var c=recipeCost(D,r,0),cw=hasW?recipeCost(D,r,w):null;var low=c.curMargin!=null&&c.curMargin<num(D.set.margin)/100-1e-9;return '<tr><td>'+esc(r.name)+'</td><td class="num">'+money(c.plate)+'</td><td class="num"><b>'+money(c.price)+'</b></td><td class="num">'+(c.foodPct*100).toFixed(1)+'%</td><td class="num">'+(c.curPrice?money(c.curPrice):'-')+'</td><td class="num">'+(c.curMargin==null?'-':'<span class="pill '+(low?(c.curMargin<0?'r':'a'):'g')+'">'+(c.curMargin*100).toFixed(1)+'%</span>')+'</td>'+(hasW?'<td class="num">'+money(cw.price)+'</td>':'')+'<td><button class="btn sec" data-edit="'+esc(r.id)+'">Open</button></td></tr>';}).join(''):'<tr><td colspan="8" class="mut">No menu items yet.</td></tr>');}
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['menu','ing','set','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});if(d.t==='menu')render();return;}
+ if(d.edit){EDIT=d.edit;renderEditor();$('editor').scrollIntoView();return;}
+ if(d.rmi){var id=d.rmi;if(D.recipes.some(function(r){return (r.lines||[]).some(function(l){return l.ing===id;});})&&!confirm('This ingredient is used in a recipe. Remove it anyway (the recipe line will be ignored)?'))return;D.ingredients=D.ingredients.filter(function(i){return i.id!==id;});sv();render();return;}
+ if(d.rml!==undefined){recById(EDIT).lines.splice(+d.rml,1);sv();render();return;}
+ if(t.id==='addIng'){D.ingredients.push({id:uid(),name:'New ingredient',unit:'g',packPrice:0,packQty:1000,yieldPct:100});sv();renderIng();return;}
+ if(t.id==='newItem'){var r={id:uid(),name:'New menu item',portions:1,packaging:0,wastePct:0,overhead:'',price:0,lines:[]};if(D.ingredients.length)r.lines.push({ing:D.ingredients[0].id,qty:0});D.recipes.push(r);EDIT=r.id;sv();render();$('editor').scrollIntoView();return;}
+ if(t.id==='addLine'){var rr=recById(EDIT);if(!D.ingredients.length){alert('Add ingredients first.');return;}rr.lines.push({ing:D.ingredients[0].id,qty:0});sv();renderEditor();return;}
+ if(t.id==='delItem'){if(confirm('Delete this menu item?')){D.recipes=D.recipes.filter(function(r){return r.id!==EDIT;});EDIT=null;sv();render();}return;}
+ if(t.id==='print')window.print();
+ if(t.id==='applyWhatIf'){var p=num(D.set.whatIf);if(!p){alert('Enter a percentage first.');return;}if(confirm('Multiply every pack price by '+(1+p/100).toFixed(4)+'? This changes your saved prices.')){applyChange(D,p);D.set.whatIf=0;sv();render();}return;}
+ if(t.id==='clearSample'){var ids={};D.recipes=D.recipes.filter(function(r){return !r.sample;});D.ingredients=D.ingredients.filter(function(i){return !i.sample;});if(EDIT&&!recById(EDIT))EDIT=null;sv();render();return;}
+ if(t.id==='expcsv'||t.id==='expjson'){var c=t.id==='expcsv',b=new Blob([c?menuCSV(D):JSON.stringify(D,null,1)],{type:c?'text/csv':'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=c?'platecost-menu.csv':'platecost-backup.json';a.click();}
+});
+$('impjson').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(x.ingredients&&x.recipes&&x.set){D=x;EDIT=null;sv();render();}else alert('This file is not a PlateCost backup.');}catch(err){alert('Could not read that file.');}};r.readAsText(f);});
+render();
+</script></body></html>
