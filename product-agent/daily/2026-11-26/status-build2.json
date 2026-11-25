@@ -1,0 +1,11 @@
+{
+ "stage": "build2",
+ "date": "2026-11-26",
+ "products": {
+  "d20261126-02": {"slug": "lean-par-order-sheet", "name": "Lean Par and Order Sheet", "status": "built", "qa": "pass (522 formulas, 0 errors, values match independent maths; LibreOffice only)", "price_usd": 24, "files": ["Lean-Par-and-Order-Sheet.xlsx", "README.md", "cover.png"]},
+  "d20261126-03": {"slug": "price-hike-reality-check", "name": "Price Hike Reality Check", "status": "built", "qa": "pass (24 checks, Chromium only)", "price_usd": 29, "files": ["index.html", "README.md", "cover.png"]},
+  "d20261126-06": {"slug": "comeback-nudge-n8n", "name": "Comeback Nudge: Ghosted-Client Re-engagement n8n Flow", "status": "built", "qa": "pass (simulator only; not run on live n8n/email/SMS/Sheets)", "price_usd": 45, "files": ["workflows/ (2 n8n JSON files)", "sheet-templates/Clients.csv", "SETUP.md", "README.md", "cover.png"]},
+  "d20261126-07": {"slug": "trainer-true-income-sheet", "name": "Trainer True Income Sheet", "status": "built", "qa": "pass (67 formulas, 0 errors, values match independent maths; LibreOffice only)", "price_usd": 24, "files": ["Trainer-True-Income-Sheet.xlsx", "README.md", "cover.png"]}
+ },
+ "summary": {"built": 4, "failed": 0}
+}

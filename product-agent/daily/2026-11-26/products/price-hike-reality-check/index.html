@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Price Hike Reality Check</title>
+<style>
+:root{--ink:#222a2f;--mut:#5c6870;--bg:#f5f7f6;--line:#d8dfdc;--acc:#c2410c;--ok:#157347;--bad:#b42318}
+*{box-sizing:border-box}html,body{margin:0}body{font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden}
+header{background:var(--acc);color:#fff;padding:14px 16px}header h1{margin:0;font-size:20px}header p{margin:2px 0 0;font-size:13px;opacity:.93}
+nav{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:0;z-index:5}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:20px;padding:8px 14px;font:inherit;color:var(--ink);cursor:pointer}nav button[aria-selected=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{max-width:980px;margin:0 auto;padding:14px 12px 40px}section{display:none}section.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}.card h2{margin:0 0 8px;font-size:17px}
+.note{color:var(--mut);font-size:13px;margin:4px 0 10px}.warn{background:#fff7e6;border:1px solid #f0c36d;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+input,select{width:100%;padding:9px;border:1px solid #b9c3be;border-radius:8px;font:inherit;background:#fff;color:var(--ink);min-width:0}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}.kpi div{background:#fdf0e8;border-radius:10px;padding:10px}.kpi b{display:block;font-size:20px}.kpi span{font-size:12px;color:var(--mut)}
+.good{color:var(--ok)}.bad{color:var(--bad)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:6px 5px;font-size:13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}th{color:var(--mut);white-space:nowrap}td.r,th.r{text-align:right}
+#mt{min-width:760px}#mt td input{padding:6px;font-size:13px}
+button.btn,label.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-size:15px;cursor:pointer;display:inline-block;margin:0}button.btn.alt,label.btn.alt{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.msg{font-size:13px;color:var(--mut);min-height:18px}
+#sum h2{margin:0 0 6px}#sum table{margin:8px 0}#sheet{display:none}
+@media print{header,nav,.noprint,main>section{display:none!important}main{padding:0}body{background:#fff}#sheet{display:block!important}}
+</style></head><body>
+<header><h1>Price Hike Reality Check</h1><p>How much volume can you lose before a menu price increase hurts profit? Works offline; nothing is uploaded.</p></header>
+<nav id="tabs" role="tablist"></nav>
+<main>
+<div class="warn" id="warn">Starting numbers are <b>examples</b>. This tool does maths only: it does not predict how customers will react. You enter the volume drop you think is realistic. Not financial advice.</div>
+<section id="s-one" class="on"><div class="card"><h2>One item</h2><div class="grid">
+ <div><label for="p">Current price</label><input id="p" type="number" min="0" step="0.01"></div><div><label for="c">Cost per unit (food + packaging)</label><input id="c" type="number" min="0" step="0.01"></div>
+ <div><label for="u">Units sold per week</label><input id="u" type="number" min="0" step="1"></div><div><label for="h">Proposed increase %</label><input id="h" type="number" min="0" step="0.5"></div><div><label for="cur">Currency symbol</label><input id="cur" maxlength="4"></div></div>
+ <div class="kpi" id="oneK"></div></div>
+ <div class="card"><h2>What if you lose volume?</h2><p class="note">Edit the volume-drop percentages to your own assumptions.</p><div class="tw"><table id="sc"><thead><tr><th>Volume drop %</th><th class="r">Units / week</th><th class="r">Profit / week</th><th class="r">Change vs today</th><th>Verdict</th></tr></thead><tbody></tbody></table></div></div></section>
+<section id="s-menu"><div class="card"><h2>Whole menu</h2><p class="note">One row per item. Leave "Increase %" blank to use the default below. The volume drop is applied to every item equally.</p>
+ <div class="grid"><div><label for="hd">Default increase %</label><input id="hd" type="number" min="0" step="0.5"></div><div><label for="dd">Volume drop to test %</label><input id="dd" type="number" min="0" max="100" step="0.5"></div></div>
+ <div class="tw" style="margin-top:10px"><table id="mt"><thead><tr><th>Item</th><th>Price</th><th>Unit cost</th><th>Units / week</th><th>Increase %</th><th class="r">New price</th><th class="r">Margin now</th><th class="r">Margin new</th><th class="r">Break-even loss</th><th></th></tr></thead><tbody></tbody></table></div>
+ <div class="row"><button class="btn" id="addM">Add item</button><button class="btn alt" id="clrM">Clear items</button></div><div class="kpi" id="menuK"></div></div></section>
+<section id="s-sum"><div class="card"><h2>One-page summary</h2><div class="row noprint" style="margin:0 0 10px"><button class="btn" id="print">Print / save as PDF</button><button class="btn alt" id="copy">Copy as text</button><button class="btn alt" id="exp">Export data (JSON)</button><label class="btn alt">Import data<input id="imp" type="file" accept="application/json" hidden></label><button class="btn alt" id="reset">Reset to examples</button></div><p class="msg noprint" id="msg" role="status"></p><div id="sum"></div></div></section>
+</main>
+<div id="sheet"></div>
+<script id="logic">
+const PH = (function(){
+  const n = x => { x = parseFloat(x); return isFinite(x) ? x : 0; };
+  const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+  function item(p, c, u, h, drop){ p = n(p); c = n(c); u = n(u); h = n(h) / 100; drop = Math.min(1, Math.max(0, n(drop) / 100));
+    const m0 = p - c, p1 = p * (1 + h), m1 = p1 - c; const bl = m1 > 0 ? 1 - m0 / m1 : null; const old = m0 * u, units = u * (1 - drop), nw = m1 * units;
+    return { p1: r2(p1), m0: r2(m0), m1: r2(m1), breakEven: bl === null ? null : bl, unitsCanLose: bl === null || bl < 0 ? 0 : u * bl, oldProfit: r2(old), newProfit: r2(nw), delta: r2(nw - old), units: units, revOld: r2(p * u), revNew: r2(p1 * units) }; }
+  function menu(items, hDefault, drop){ let old = 0, nwFull = 0, revOld = 0, revNewFull = 0; const rows = items.map(it => { const h = (it.h === '' || it.h === undefined || it.h === null) ? hDefault : it.h; const r = item(it.p, it.c, it.u, h, 0); old += n(it.p - it.c) * 0 + (n(it.p) - n(it.c)) * n(it.u); nwFull += (r.p1 - n(it.c)) * n(it.u); revOld += n(it.p) * n(it.u); revNewFull += n(r.p1) * n(it.u); return Object.assign({}, r, { h: n(h), breakEvenItem: r.breakEven }); });
+    const d = Math.min(1, Math.max(0, n(drop) / 100)); const nwDrop = nwFull * (1 - d);
+    return { rows, oldProfit: r2(old), newProfitNoLoss: r2(nwFull), newProfitAtDrop: r2(nwDrop), delta: r2(nwDrop - old), breakEven: nwFull > 0 ? 1 - old / nwFull : null, revOld: r2(revOld), revNewAtDrop: r2(revNewFull * (1 - d)) }; }
+  function verdict(delta){ return delta > 0.005 ? 'Profit up' : delta < -0.005 ? 'Profit down' : 'No change'; }
+  const pct = x => x === null ? 'n/a' : (Math.round(x * 1000) / 10).toFixed(1) + '%';
+  return { item, menu, verdict, pct, r2, n };
+})();
+if (typeof module !== 'undefined') module.exports = PH;
+</script>
+<script id="ui">
+(function(){
+const DEF = { cur:'$', one:{p:12,c:4,u:100,h:10,drops:[0,5,10,15,20,25]}, hd:10, dd:10, items:[{name:'Example: Burger',p:12,c:4,u:100,h:''},{name:'Example: Fries',p:5,c:2,u:300,h:''},{name:'Example: Steak',p:20,c:9,u:50,h:5}] };
+let S; const KEY='pricehike-v1'; const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function load(){ try{ const t=localStorage.getItem(KEY); if(t){ const o=JSON.parse(t); S=Object.assign(JSON.parse(JSON.stringify(DEF)),o); S.one=Object.assign({},DEF.one,o.one); if(!Array.isArray(S.items)) S.items=[]; return; } }catch(e){} S=JSON.parse(JSON.stringify(DEF)); }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+const money=x=>(S.cur||'')+(Math.round(x*100)/100).toFixed(2); const sgn=x=>(x>0?'+':x<0?'-':'')+money(Math.abs(x));
+const tabs=[['s-one','One item'],['s-menu','Whole menu'],['s-sum','Summary']];
+function showTab(id){ tabs.forEach(t=>$(t[0]).classList.toggle('on',t[0]===id)); [...$('tabs').children].forEach(b=>b.setAttribute('aria-selected',b.dataset.t===id)); if(id==='s-sum') renderSum(); }
+tabs.forEach(t=>{ const b=document.createElement('button'); b.textContent=t[1]; b.dataset.t=t[0]; b.setAttribute('role','tab'); b.onclick=()=>showTab(t[0]); $('tabs').appendChild(b); });
+const kpi=(l,v,c)=>'<div><b class="'+(c||'')+'">'+v+'</b><span>'+l+'</span></div>';
+function fillOne(){ $('p').value=S.one.p; $('c').value=S.one.c; $('u').value=S.one.u; $('h').value=S.one.h; $('cur').value=S.cur; }
+function renderOne(){ const r=PH.item(S.one.p,S.one.c,S.one.u,S.one.h,0);
+  $('oneK').innerHTML=kpi('Margin per unit now',money(r.m0))+kpi('New price',money(r.p1))+kpi('Margin per unit after',money(r.m1))+kpi('Break-even volume loss',r.breakEven===null?'n/a':PH.pct(r.breakEven),r.breakEven===null?'bad':'')+kpi('Units you can lose per week',r.breakEven===null?'n/a':(Math.round(r.unitsCanLose*10)/10))+kpi('Profit per week now',money(r.oldProfit));
+  $('sc').querySelector('tbody').innerHTML=S.one.drops.map((d,i)=>{ const x=PH.item(S.one.p,S.one.c,S.one.u,S.one.h,d); const cls=x.delta>0.005?'good':x.delta<-0.005?'bad':''; return '<tr><td><input data-d="'+i+'" type="number" min="0" max="100" step="0.5" value="'+esc(d)+'" style="width:84px" aria-label="Volume drop percent"></td><td class="r">'+(Math.round(x.units*10)/10)+'</td><td class="r">'+money(x.newProfit)+'</td><td class="r '+cls+'">'+sgn(x.delta)+'</td><td class="'+cls+'">'+PH.verdict(x.delta)+'</td></tr>'; }).join(''); }
+$('s-one').addEventListener('input',e=>{ if(e.target.dataset.d!==undefined){ S.one.drops[+e.target.dataset.d]=e.target.value; save(); renderOne(); return; } S.one.p=$('p').value; S.one.c=$('c').value; S.one.u=$('u').value; S.one.h=$('h').value; S.cur=$('cur').value; save(); renderOne(); });
+function renderMenu(){ const m=PH.menu(S.items.map(i=>({p:i.p,c:i.c,u:i.u,h:i.h})),S.hd,S.dd); const tb=document.querySelector('#mt tbody');
+  tb.innerHTML=S.items.map((it,i)=>{ const r=m.rows[i]; return '<tr data-i="'+i+'"><td><input data-f="name" value="'+esc(it.name)+'" style="min-width:130px"></td><td><input data-f="p" type="number" min="0" step="0.01" value="'+esc(it.p)+'" style="width:78px"></td><td><input data-f="c" type="number" min="0" step="0.01" value="'+esc(it.c)+'" style="width:78px"></td><td><input data-f="u" type="number" min="0" step="1" value="'+esc(it.u)+'" style="width:78px"></td><td><input data-f="h" type="number" min="0" step="0.5" value="'+esc(it.h)+'" placeholder="default" style="width:78px"></td><td class="r nw">'+money(r.p1)+'</td><td class="r">'+money(r.m0)+'</td><td class="r">'+money(r.m1)+'</td><td class="r be">'+(r.breakEven===null?'n/a':PH.pct(r.breakEven))+'</td><td><button class="btn alt" data-del="'+i+'" aria-label="Remove item">x</button></td></tr>'; }).join('');
+  menuK(m); }
+function menuK(m){ $('menuK').innerHTML=kpi('Profit per week now',money(m.oldProfit))+kpi('Profit after increase, no volume lost',money(m.newProfitNoLoss))+kpi('Whole-menu break-even volume loss',m.breakEven===null?'n/a':PH.pct(m.breakEven))+kpi('Profit after '+PH.n(S.dd)+'% volume drop',money(m.newProfitAtDrop))+kpi('Change vs today',sgn(m.delta),m.delta>0.005?'good':m.delta<-0.005?'bad':''); }
+$('s-menu').addEventListener('input',e=>{ const tr=e.target.closest('tr'); if(tr&&e.target.dataset.f){ S.items[+tr.dataset.i][e.target.dataset.f]=e.target.value; } else if(e.target.id==='hd'){ S.hd=e.target.value; } else if(e.target.id==='dd'){ S.dd=e.target.value; } else return; save();
+  const m=PH.menu(S.items.map(i=>({p:i.p,c:i.c,u:i.u,h:i.h})),S.hd,S.dd); if(tr){ const r=m.rows[+tr.dataset.i]; tr.querySelector('.nw').textContent=money(r.p1); tr.children[6].textContent=money(r.m0); tr.children[7].textContent=money(r.m1); tr.querySelector('.be').textContent=r.breakEven===null?'n/a':PH.pct(r.breakEven); } else renderMenu(); menuK(m); });
+$('mt').addEventListener('click',e=>{ const b=e.target.closest('[data-del]'); if(b){ S.items.splice(+b.dataset.del,1); save(); renderMenu(); } });
+$('addM').onclick=()=>{ S.items.push({name:'',p:'',c:'',u:'',h:''}); save(); renderMenu(); };
+$('clrM').onclick=()=>{ if(confirm('Remove all menu items?')){ S.items=[]; save(); renderMenu(); } };
+function sumHtml(){ const r=PH.item(S.one.p,S.one.c,S.one.u,S.one.h,0); const m=PH.menu(S.items.map(i=>({p:i.p,c:i.c,u:i.u,h:i.h})),S.hd,S.dd);
+  let h='<h2>Price increase reality check</h2><p><b>One item:</b> price '+money(PH.n(S.one.p))+' to '+money(r.p1)+' (+'+PH.n(S.one.h)+'%), unit cost '+money(PH.n(S.one.c))+', '+PH.n(S.one.u)+' units a week.<br>Margin per unit '+money(r.m0)+' to '+money(r.m1)+'. <b>Break-even volume loss: '+(r.breakEven===null?'n/a':PH.pct(r.breakEven)+' ('+(Math.round(r.unitsCanLose*10)/10)+' units a week)')+'</b>. Lose more than that and profit falls.</p>';
+  h+='<table><thead><tr><th>Volume drop</th><th class="r">Profit / week</th><th class="r">Change</th></tr></thead><tbody>'+S.one.drops.map(d=>{ const x=PH.item(S.one.p,S.one.c,S.one.u,S.one.h,d); return '<tr><td>'+esc(PH.n(d))+'%</td><td class="r">'+money(x.newProfit)+'</td><td class="r">'+sgn(x.delta)+'</td></tr>'; }).join('')+'</tbody></table>';
+  if(S.items.length) h+='<p><b>Whole menu</b> ('+S.items.length+' items, default increase '+PH.n(S.hd)+'%): profit now '+money(m.oldProfit)+' a week; after the increase with no volume lost '+money(m.newProfitNoLoss)+'. <b>Whole-menu break-even volume loss: '+(m.breakEven===null?'n/a':PH.pct(m.breakEven))+'</b>. At a '+PH.n(S.dd)+'% volume drop: '+money(m.newProfitAtDrop)+' ('+sgn(m.delta)+').</p><table><thead><tr><th>Item</th><th class="r">Price</th><th class="r">New price</th><th class="r">Break-even loss</th></tr></thead><tbody>'+S.items.map((it,i)=>'<tr><td>'+esc(it.name)+'</td><td class="r">'+money(PH.n(it.p))+'</td><td class="r">'+money(m.rows[i].p1)+'</td><td class="r">'+(m.rows[i].breakEven===null?'n/a':PH.pct(m.rows[i].breakEven))+'</td></tr>').join('')+'</tbody></table>';
+  return h+'<p style="font-size:12px;color:#5c6870">Maths from the numbers entered; it does not predict customer behaviour. Break-even assumes unit cost stays the same and the same share of volume is lost on every item. Not financial advice.</p>'; }
+function renderSum(){ $('sum').innerHTML=sumHtml(); $('sheet').innerHTML=sumHtml(); }
+function text(){ const r=PH.item(S.one.p,S.one.c,S.one.u,S.one.h,0); const m=PH.menu(S.items.map(i=>({p:i.p,c:i.c,u:i.u,h:i.h})),S.hd,S.dd); const L=['PRICE INCREASE REALITY CHECK','One item: '+money(PH.n(S.one.p))+' -> '+money(r.p1)+' (+'+PH.n(S.one.h)+'%), cost '+money(PH.n(S.one.c))+', '+PH.n(S.one.u)+' units/week','Break-even volume loss: '+(r.breakEven===null?'n/a':PH.pct(r.breakEven))];
+  S.one.drops.forEach(d=>{ const x=PH.item(S.one.p,S.one.c,S.one.u,S.one.h,d); L.push('- '+PH.n(d)+'% drop: profit '+money(x.newProfit)+' ('+sgn(x.delta)+')'); });
+  if(S.items.length){ L.push(''); L.push('Whole menu: profit now '+money(m.oldProfit)+'/week, after increase '+money(m.newProfitNoLoss)+', break-even volume loss '+(m.breakEven===null?'n/a':PH.pct(m.breakEven))+', at '+PH.n(S.dd)+'% drop '+money(m.newProfitAtDrop)+' ('+sgn(m.delta)+')'); } L.push(''); L.push('Maths only, not a prediction or financial advice.'); return L.join('\n'); }
+$('print').onclick=()=>{ renderSum(); window.print(); };
+$('copy').onclick=async()=>{ try{ await navigator.clipboard.writeText(text()); $('msg').textContent='Summary copied.'; }catch(e){ $('msg').textContent='Copy blocked by the browser; use Print instead.'; } };
+$('exp').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'})); a.download='price-hike-data.json'; a.click(); };
+$('imp').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const o=JSON.parse(r.result); if(!o||!o.one||!Array.isArray(o.items)||!Array.isArray(o.one.drops)) throw 0; S=Object.assign(JSON.parse(JSON.stringify(DEF)),o); save(); fillOne(); $('hd').value=S.hd; $('dd').value=S.dd; renderOne(); renderMenu(); renderSum(); $('msg').textContent='Data imported.'; }catch(x){ alert('That file is not a Price Hike data file.'); } }; r.readAsText(f); };
+$('reset').onclick=()=>{ if(confirm('Reset everything to the example numbers?')){ S=JSON.parse(JSON.stringify(DEF)); save(); fillOne(); $('hd').value=S.hd; $('dd').value=S.dd; renderOne(); renderMenu(); renderSum(); } };
+load(); fillOne(); $('hd').value=S.hd; $('dd').value=S.dd; renderOne(); renderMenu(); showTab('s-one');
+})();
+</script></body></html>
