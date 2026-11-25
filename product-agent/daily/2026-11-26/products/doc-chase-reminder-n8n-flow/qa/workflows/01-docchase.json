@@ -1,0 +1,386 @@
+{
+ "name": "Doc Chase: escalating document reminders for bookkeepers",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "days",
+       "daysInterval": 1,
+       "triggerAtHour": 8,
+       "triggerAtMinute": 0
+      }
+     ]
+    }
+   },
+   "id": "2bb47a3a-5baa-5618-80ba-7e7aa8a8d28b",
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    240,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Practice Name",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "160b65a0-20f3-52ae-96ba-67dc629bdc86",
+       "name": "signature",
+       "value": "Your Name, Your Practice Name",
+       "type": "string"
+      },
+      {
+       "id": "ef3019a6-1ba9-5f6e-bd00-231424cb7039",
+       "name": "replyContact",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "d13ef4ee-0662-525a-a2fb-61c19719c992",
+       "name": "earlyDays",
+       "value": "2",
+       "type": "string"
+      },
+      {
+       "id": "f5f1a9a4-2e7e-531a-b1ce-58382ae8ff91",
+       "name": "lateDays",
+       "value": "3",
+       "type": "string"
+      },
+      {
+       "id": "d5ebe719-117d-5ee9-b227-776177f9920a",
+       "name": "testDate",
+       "value": "",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "d9e46130-e8e8-5212-a23a-d2416c8ac414",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Requests",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "81f25a62-82e8-5289-b5f5-8faad08e3b19",
+   "name": "Read requests",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    680,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json;\nconst DAY = 864e5, ok = s => /^\\d{4}-\\d{2}-\\d{2}$/.test(String(s || '').trim());\nlet T;\nif (ok(c.testDate)) { const p = String(c.testDate).trim().split('-').map(Number); T = Date.UTC(p[0], p[1] - 1, p[2]); }\nelse { const n = new Date(); T = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()); }\nconst iso = t => new Date(t).toISOString().slice(0, 10);\nconst biz = c.businessName || 'Your bookkeeper', sig = c.signature || biz, reply = c.replyContact || 'this email';\nconst early = Number(c.earlyDays || 2), late = Number(c.lateDays || 3);\nconst groups = {}, overdue = [], skipped = [];\nfor (const it of $input.all()) {\n  const r = it.json;\n  if (!r.client && !r.email && !r.document) continue;\n  const status = String(r.status || '').trim().toLowerCase();\n  if (status === 'received') continue;\n  const dueStr = String(r.due || '').trim();\n  if (!r.email || !r.document || !ok(dueStr)) { skipped.push((r.client || r.email || 'row') + ' / ' + (r.document || '?') + ' (needs email, document and due date YYYY-MM-DD)'); continue; }\n  const p = dueStr.split('-').map(Number), due = Date.UTC(p[0], p[1] - 1, p[2]), diff = Math.round((due - T) / DAY);\n  if (diff < 0) overdue.push(r.client + ': ' + r.document + ' (due ' + dueStr + ', ' + (-diff) + ' days overdue)');\n  let kind = null;\n  if (diff === early) kind = 'gentle'; else if (diff === 0) kind = 'due'; else if (diff === -late) kind = 'firm';\n  if (!kind) continue;\n  const key = String(r.email).trim().toLowerCase() + '|' + kind;\n  (groups[key] = groups[key] || { kind, email: String(r.email).trim(), name: r.contact_name || r.client || 'there', client: r.client || '', docs: [] }).docs.push({ document: r.document, due: dueStr });\n}\nconst out = [], actions = [];\nfor (const g of Object.values(groups)) {\n  const list = g.docs.map(d => '- ' + d.document + ' (due ' + d.due + ')').join('\\n'), many = g.docs.length > 1;\n  let subject, body;\n  if (g.kind === 'gentle') { subject = 'Friendly reminder: ' + (many ? g.docs.length + ' documents' : g.docs[0].document) + ' due ' + (many ? 'soon' : g.docs[0].due); body = 'Hi ' + g.name + ',\\n\\nA quick heads-up: we will need the following from you in a couple of days so we can keep your books on schedule:\\n\\n' + list + '\\n\\nYou can reply to this email with the file(s) attached. Thank you!\\n\\n' + sig; }\n  else if (g.kind === 'due') { subject = 'Due today: ' + (many ? g.docs.length + ' documents' : g.docs[0].document); body = 'Hi ' + g.name + ',\\n\\nThese items are due today:\\n\\n' + list + '\\n\\nIf you have already sent them, thank you and please ignore this note. If something is holding you up, tell me and we will find a way.\\n\\n' + sig; }\n  else { subject = 'Still waiting on: ' + (many ? g.docs.length + ' documents' : g.docs[0].document); body = 'Hi ' + g.name + ',\\n\\nWe have not yet received the following, and they are now ' + late + ' days past the date we agreed:\\n\\n' + list + '\\n\\nWithout them we cannot finish your work, which may delay your reports. Please send them as soon as you can, or let me know a date by reply to ' + reply + '.\\n\\n' + sig; }\n  out.push({ json: { kind: g.kind, email: g.email, subject, body } });\n  actions.push((g.kind === 'firm' ? 'FIRM reminder' : g.kind === 'due' ? 'Due-today reminder' : 'Early reminder') + ' sent to ' + (g.client || g.email) + ': ' + g.docs.map(d => d.document).join(', '));\n}\nconst lines = [];\nif (actions.length) lines.push('Reminders sent today:', ...actions.map(a => '- ' + a), '');\nif (overdue.length) lines.push('Still missing and overdue:', ...overdue.map(a => '- ' + a), '');\nif (skipped.length) lines.push('Skipped rows:', ...skipped.map(a => '- ' + a), '');\nif (lines.length) out.push({ json: { kind: 'digest', email: c.ownerEmail, subject: 'Document chase digest ' + iso(T), body: lines.join('\\n').trim() } });\nreturn out.length ? out : [{ json: { none: true } }];"
+   },
+   "id": "9d2e00a9-5155-5b71-bc5e-1b3645b5f2db",
+   "name": "Classify",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    900,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "2044150b-d409-56d4-a158-316ba573fd19",
+       "leftValue": "={{ !!(!$json.none) }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "b1058210-42c1-5d3c-9f80-c57fd8ff4382",
+   "name": "Anything to send",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "68bf9620-7659-587c-8414-2f446fc9c90e",
+       "leftValue": "={{ !!($json.kind === 'digest') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "56e0762c-6694-5ee6-857e-50fb3b8d1115",
+   "name": "Owner digest or client mail",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1340,
+    180
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $json.email }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.body }}",
+    "options": {}
+   },
+   "id": "969eefc2-1437-53b4-9e75-c4e5df3293ac",
+   "name": "Email owner digest",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1560,
+    60
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $json.email }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.body }}",
+    "options": {}
+   },
+   "id": "1ebd21bc-81ff-5112-b003-64b35c6d2620",
+   "name": "Email client",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1560,
+    300
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Doc Chase: escalating document reminders for bookkeepers\nEvery morning reads your document-request Google Sheet, emails clients a friendly reminder 2 days before a document is due, a due-today note, and a firmer follow-up 3 days after the due date, grouping several documents for one client into one email. Rows marked Received stop. You get a daily digest of what was sent and what is still missing.\n\n**Setup**\n1. Create a Google Sheet with a tab named Requests and these columns: client, contact_name, email, document, due (YYYY-MM-DD), status (type Received when the document arrives, otherwise leave Requested).\n2. Open Config: fill ownerEmail, businessName, signature, replyContact and sheetId. earlyDays (2) and lateDays (3) set the reminder timing. Leave testDate blank (enter a date like 2026-12-03 to preview what would be sent that day).\n3. Connect Google Sheets OAuth2 and SMTP credentials on the marked nodes.\n4. Click Execute workflow with testDate set, read the owner digest, then clear testDate and activate. Set GENERIC_TIMEZONE for your area.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "835271c6-7e16-508b-949a-a8e422916785",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Read requests",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read requests": {
+   "main": [
+    [
+     {
+      "node": "Classify",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Classify": {
+   "main": [
+    [
+     {
+      "node": "Anything to send",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Anything to send": {
+   "main": [
+    [
+     {
+      "node": "Owner digest or client mail",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Owner digest or client mail": {
+   "main": [
+    [
+     {
+      "node": "Email owner digest",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Email client",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

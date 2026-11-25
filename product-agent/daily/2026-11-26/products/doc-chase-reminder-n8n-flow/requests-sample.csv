@@ -1,0 +1,5 @@
+client,contact_name,email,document,due,status
+Sample Cafe,Sample Owner One,owner1@example.com,October bank statement,2026-12-10,Requested
+Sample Cafe,Sample Owner One,owner1@example.com,October card statement,2026-12-10,Requested
+Sample Plumbing,Sample Owner Two,owner2@example.com,Payroll report,2026-12-12,Received
+Sample Salon,Sample Owner Three,owner3@example.com,Receipts folder,2026-12-05,Requested

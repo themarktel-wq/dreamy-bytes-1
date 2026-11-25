@@ -37,6 +37,23 @@
     "README.md",
     "cover.png"
    ]
+  },
+  "d20261126-11": {
+   "slug": "doc-chase-reminder-n8n-flow",
+   "name": "Doc Chase Reminder n8n Flow",
+   "status": "built",
+   "qa": "pass (simulated + 28 logic tests; not run live)",
+   "price_usd": 45,
+   "files": [
+    "DocChase.n8n.json",
+    "requests-sample.csv",
+    "README.md",
+    "cover.png"
+   ]
   }
+ },
+ "summary": {
+  "built": 4,
+  "failed": 0
  }
 }

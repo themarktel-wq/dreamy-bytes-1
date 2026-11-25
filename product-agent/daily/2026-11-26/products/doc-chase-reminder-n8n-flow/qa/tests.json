@@ -1,0 +1,72 @@
+[
+ {
+  "file": "01-docchase.json",
+  "title": "Doc Chase: escalating document reminders for bookkeepers",
+  "sample": {},
+  "mocks": {
+   "Read requests": [
+    {
+     "client": "Sample Cafe",
+     "contact_name": "Sample Cafe",
+     "email": "samplecafe@example.com",
+     "document": "October bank statement",
+     "due": "2026-11-27",
+     "status": "Requested"
+    },
+    {
+     "client": "Sample Cafe",
+     "contact_name": "Sample Cafe",
+     "email": "samplecafe@example.com",
+     "document": "October card statement",
+     "due": "2026-11-27",
+     "status": "Requested"
+    },
+    {
+     "client": "Sample Plumbing",
+     "contact_name": "Sample Plumbing",
+     "email": "sampleplumbing@example.com",
+     "document": "Payroll report",
+     "due": "2026-11-25",
+     "status": "Requested"
+    },
+    {
+     "client": "Sample Salon",
+     "contact_name": "Sample Salon",
+     "email": "samplesalon@example.com",
+     "document": "Receipts folder",
+     "due": "2026-11-22",
+     "status": "Requested"
+    },
+    {
+     "client": "Sample Retail",
+     "contact_name": "Sample Retail",
+     "email": "sampleretail@example.com",
+     "document": "Sales export",
+     "due": "2026-11-15",
+     "status": "Requested"
+    },
+    {
+     "client": "Sample Studio",
+     "contact_name": "Sample Studio",
+     "email": "samplestudio@example.com",
+     "document": "Loan statement",
+     "due": "2026-11-25",
+     "status": "Received"
+    },
+    {
+     "client": "Sample Shop",
+     "email": "",
+     "document": "Invoices",
+     "due": "2026-11-25",
+     "status": "Requested"
+    }
+   ]
+  },
+  "expect": [
+   "Email owner digest",
+   "Email client"
+  ],
+  "notexpect": [],
+  "trigger": "cron"
+ }
+]
