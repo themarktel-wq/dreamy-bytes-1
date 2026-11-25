@@ -1,0 +1,85 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Class Overbook Planner</title>
+<style>
+:root{--bg:#f6f4f9;--card:#fff;--ink:#222a33;--mut:#6b7280;--acc:#5b4b8a;--line:#e4e0ee;--red:#b42318;--grn:#1f8a4c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:var(--acc);color:#fff;padding:16px}header h1{margin:0;font-size:20px}header p{margin:4px 0 0;font-size:13px;opacity:.9}
+main{max-width:1000px;margin:0 auto;padding:10px 12px 60px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}h2{font-size:16px;margin:0 0 8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.row>label{flex:1 1 150px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+input,textarea{font:inherit;border:1px solid var(--line);border-radius:6px;padding:7px 8px;background:#fff;color:var(--ink);width:100%}button{font:inherit;background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer}button.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.stats{display:flex;gap:10px;flex-wrap:wrap}.stat{background:#f0edf8;border-radius:8px;padding:8px 12px;font-size:13px;flex:1 1 130px}.stat b{font-size:20px;display:block}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}th,td{border-bottom:1px solid var(--line);padding:6px;text-align:right;font-size:13px}th{font-size:11px;text-transform:uppercase;color:var(--mut)}th:first-child,td:first-child{text-align:left}tr.sel td{background:#f0edf8;font-weight:600}tr.best td:first-child:after{content:" (best net)";color:var(--grn);font-size:11px}
+.note{font-size:12px;color:var(--mut)}.banner{background:#fff8e1;border:1px solid #f0d98a;border-radius:8px;padding:8px 10px;font-size:13px;margin:10px 0}
+.bars{display:flex;align-items:flex-end;gap:3px;height:140px;border-bottom:1px solid var(--line);margin-top:8px;overflow-x:auto}.bar{flex:1 0 14px;background:#b9afd9;position:relative;min-height:1px}.bar.over{background:var(--red)}.bar.cap{background:var(--acc)}.axis{display:flex;gap:3px;font-size:10px;color:var(--mut);overflow-x:auto}.axis span{flex:1 0 14px;text-align:center}
+textarea{min-height:170px}@media(max-width:640px){.row>label{flex:1 1 45%}}@media print{header,.noprint{display:none!important}body{background:#fff}.card{border:0}}
+</style></head><body>
+<header><h1>Class Overbook Planner</h1><p>How many bookings should you accept? Uses your own no-show rate to show the chance of turning people away and of empty spots. Runs in your browser; nothing is sent anywhere.</p></header>
+<main>
+<div class="banner">The starting numbers are <b>examples</b>. Enter your own capacity, no-show rate (from your attendance records), price and cost of turning someone away.</div>
+<section class="card"><h2>1. Your class</h2><div class="row">
+<label>Capacity (spots)<input id="cap" type="number" min="1" step="1"></label><label>Bookings you accept<input id="bk" type="number" min="1" step="1"></label>
+<label>No-show rate % (your records)<input id="ns" type="number" min="0" max="100" step="0.5"></label><label>Revenue per attendee<input id="pr" type="number" min="0" step="0.5"></label>
+<label>Cost if someone is turned away<input id="tc" type="number" min="0" step="0.5"></label><label>Levels to compare (extra bookings)<input id="mx" type="number" min="1" max="30" step="1"></label></div>
+<p class="note">Assumption: every booked person shows up or not independently, with the same chance. Real classes can differ (friends booking together, bad weather, class type), so use this as a guide and check it against your own attendance over time.</p></section>
+<section class="card"><h2>2. Result for <span id="rb"></span> bookings</h2><div class="stats" id="stats"></div>
+<div class="bars" id="bars"></div><div class="axis" id="axis"></div><p class="note">Bars = chance of each number of attendees. Dark purple = exactly at capacity, red = over capacity (someone must be turned away).</p></section>
+<section class="card"><h2>3. Compare overbooking levels</h2><div class="tw"><table><thead><tr><th>Bookings</th><th>Chance over capacity</th><th>Expected turned away</th><th>Expected empty spots</th><th>Expected attendees served</th><th>Expected net</th></tr></thead><tbody id="cmp"></tbody></table></div>
+<p class="note">Net = revenue per attendee x expected attendees served - cost per turned-away person x expected turned away. It ignores everything else (goodwill, waitlists, retention). "Best net" is the best row by this simple measure, not a recommendation.</p></section>
+<section class="card"><h2>4. Printable policy</h2><div class="row"><label>Studio name<input id="studio"></label><label style="flex:3 1 300px">What happens to the person turned away<input id="remedy"></label></div><textarea id="pol" style="margin-top:8px"></textarea>
+<div class="row noprint" style="margin-top:8px"><button id="copy">Copy</button><button class="sec" id="print">Print</button><span class="note" id="copied"></span></div><p class="note">Edit the text. Replace [CANCELLATION WINDOW]. Check any consumer rules about refunds and credits where you operate.</p></section>
+</main>
+<script>
+// ---- CORE (pure functions, unit-tested in Node). Model: each booked person independently attends with probability q = 1 - noShowRate. ----
+function logChoose(n, k) { var s = 0, i; if (k > n - k) k = n - k; for (i = 1; i <= k; i++) s += Math.log(n - k + i) - Math.log(i); return s; }
+function binomPmf(n, q) { // array pmf[0..n] of attendees
+  var out = [], k;
+  if (!(n >= 0) || n !== Math.floor(n)) return [1];
+  q = Math.min(1, Math.max(0, q));
+  for (k = 0; k <= n; k++) {
+    if (q === 0) out.push(k === 0 ? 1 : 0); else if (q === 1) out.push(k === n ? 1 : 0);
+    else out.push(Math.exp(logChoose(n, k) + k * Math.log(q) + (n - k) * Math.log(1 - q)));
+  }
+  return out;
+}
+function metrics(bookings, cap, noShow, price, turnAwayCost) {
+  var q = 1 - noShow, pmf = binomPmf(bookings, q), pOver = 0, eTurn = 0, eEmpty = 0, eServed = 0, eAtt = 0, pFull = 0, k;
+  for (k = 0; k < pmf.length; k++) {
+    var p = pmf[k]; eAtt += k * p; eServed += Math.min(k, cap) * p;
+    if (k > cap) { pOver += p; eTurn += (k - cap) * p; } else { eEmpty += (cap - k) * p; }
+    if (k >= cap) pFull += p;
+  }
+  var net = price * eServed - turnAwayCost * eTurn;
+  return { bookings: bookings, pOver: pOver, pFull: pFull, eTurn: eTurn, eEmpty: eEmpty, eServed: eServed, eAttend: eAtt, revenue: price * eServed, turnCost: turnAwayCost * eTurn, net: net, pmf: pmf };
+}
+function compare(cap, noShow, price, turnAwayCost, maxExtra) {
+  var rows = [], e; for (e = 0; e <= maxExtra; e++) { var m = metrics(cap + e, cap, noShow, price, turnAwayCost); m.extra = e; rows.push(m); }
+  var best = rows[0]; rows.forEach(function (r) { if (r.net > best.net + 1e-9) best = r; }); return { rows: rows, bestExtra: best.extra };
+}
+function policyText(o) { // o: {studio, cap, bookings, noShowPct, pOverPct, remedy}
+  return (o.studio || 'Our studio') + ' booking policy\n\nThis class has ' + o.cap + ' spots. Because some booked people do not attend (about ' + o.noShowPct + '% of bookings, based on our own records), we accept up to ' + o.bookings + ' bookings. In the unlikely event that more than ' + o.cap + ' people arrive, ' + (o.remedy || 'the last people to check in will be offered a spot in the next class and a class credit') + '. Cancel at least [CANCELLATION WINDOW] before the class to release your spot.';
+}
+if (false && typeof module !== 'undefined') module.exports = { binomPmf: binomPmf, metrics: metrics, compare: compare, policyText: policyText };
+
+(function(){
+var KEY='cop.v1',$=function(i){return document.getElementById(i)},S;
+function load(){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}if(!S)S={cap:12,bk:14,ns:12,pr:20,tc:25,mx:8,studio:'',remedy:''}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function num(id,d){var v=Number($(id).value);return isFinite(v)?v:d}
+function pct(x){return (x*100).toFixed(1)+'%'}function f2(x){return x.toFixed(2)}
+function render(){
+ ['cap','bk','ns','pr','tc','mx'].forEach(function(k){if(document.activeElement!==$(k))$(k).value=S[k]});if(document.activeElement!==$('studio'))$('studio').value=S.studio;if(document.activeElement!==$('remedy'))$('remedy').value=S.remedy;
+ var cap=Math.max(1,Math.floor(S.cap)||1),bk=Math.max(1,Math.floor(S.bk)||1),ns=Math.min(100,Math.max(0,Number(S.ns)||0))/100,pr=Math.max(0,Number(S.pr)||0),tc=Math.max(0,Number(S.tc)||0),mx=Math.min(30,Math.max(1,Math.floor(S.mx)||8));
+ var m=metrics(bk,cap,ns,pr,tc);$('rb').textContent=bk;
+ $('stats').innerHTML='<div class="stat"><b>'+pct(m.pOver)+'</b>chance more people arrive than spots</div><div class="stat"><b>'+f2(m.eTurn)+'</b>expected people turned away</div><div class="stat"><b>'+f2(m.eEmpty)+'</b>expected empty spots</div><div class="stat"><b>'+f2(m.eAttend)+'</b>expected people who show up</div><div class="stat"><b>'+f2(m.net)+'</b>expected net (see note)</div>';
+ var mxp=Math.max.apply(null,m.pmf),lo=0;while(lo<m.pmf.length-1&&m.pmf[lo]<0.001)lo++;var hi=m.pmf.length-1;while(hi>lo&&m.pmf[hi]<0.001)hi--;
+ var bars='',ax='';for(var k=lo;k<=hi;k++){var h=Math.max(1,Math.round(m.pmf[k]/mxp*130));bars+='<div class="bar'+(k>cap?' over':(k===cap?' cap':''))+'" style="height:'+h+'px" title="'+k+' attend: '+pct(m.pmf[k])+'"></div>';ax+='<span>'+k+'</span>'}
+ $('bars').innerHTML=bars;$('axis').innerHTML=ax;
+ var c=compare(cap,ns,pr,tc,mx);$('cmp').innerHTML=c.rows.map(function(r){return '<tr class="'+(r.bookings===bk?'sel ':'')+(r.extra===c.bestExtra?'best':'')+'"><td>'+r.bookings+(r.extra?' (+'+r.extra+')':' (no overbooking)')+'</td><td>'+pct(r.pOver)+'</td><td>'+f2(r.eTurn)+'</td><td>'+f2(r.eEmpty)+'</td><td>'+f2(r.eServed)+'</td><td>'+f2(r.net)+'</td></tr>'}).join('');
+ if(document.activeElement!==$('pol')&&!S.polEdited)$('pol').value=policyText({studio:S.studio,cap:cap,bookings:bk,noShowPct:Math.round(ns*1000)/10,remedy:S.remedy});
+ save()}
+document.addEventListener('input',function(e){var t=e.target;if(t.id==='pol'){S.polEdited=1;return}
+ if(['cap','bk','ns','pr','tc','mx'].indexOf(t.id)>=0){S[t.id]=t.value===''?'':Number(t.value);S.polEdited=0;render()}else if(t.id==='studio'||t.id==='remedy'){S[t.id]=t.value;S.polEdited=0;render()}});
+$('copy').onclick=function(){var v=$('pol').value;function ok(){$('copied').textContent='Copied'}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(ok,function(){$('pol').select();document.execCommand('copy');ok()})}else{$('pol').select();document.execCommand('copy');ok()}};
+$('print').onclick=function(){window.print()};
+load();render();
+})();
+</script></body></html>

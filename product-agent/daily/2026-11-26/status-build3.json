@@ -1,0 +1,18 @@
+{
+ "stage": "build3",
+ "date": "2026-11-26",
+ "products": {
+  "d20261126-08": {
+   "slug": "class-overbook-planner",
+   "name": "Class Overbook Planner",
+   "status": "built",
+   "qa": "pass (24 unit assertions, Chromium only)",
+   "price_usd": 25,
+   "files": [
+    "index.html",
+    "README.md",
+    "cover.png"
+   ]
+  }
+ }
+}
