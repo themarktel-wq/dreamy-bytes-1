@@ -1,0 +1,143 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FixLog: Maintenance Tracker for Landlords</title>
+<style>
+:root{--bg:#f4f6f5;--card:#fff;--ink:#1f2933;--mut:#6b7280;--acc:#2b6a5c;--line:#dfe5e2;--red:#b42318;--amb:#b7791f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:var(--acc);color:#fff;padding:16px}header h1{margin:0;font-size:20px}header p{margin:4px 0 0;font-size:13px;opacity:.9}
+main{max-width:1100px;margin:0 auto;padding:10px 12px 60px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}h2{font-size:16px;margin:0 0 8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.row>label{flex:1 1 140px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+input,select,textarea,button{font:inherit}input,select,textarea{border:1px solid var(--line);border-radius:6px;padding:7px 8px;background:#fff;color:var(--ink);width:100%}
+button,a.btn{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer;text-decoration:none;display:inline-block;font-size:14px}button.sec,a.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.del{background:#fff;color:var(--red);border:1px solid var(--red);padding:4px 8px;font-size:12px}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:820px}th,td{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:middle;font-size:13px}th{font-size:11px;text-transform:uppercase;color:var(--mut);letter-spacing:.04em}td input,td select{padding:5px 6px;font-size:13px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;color:#fff}.b-urgent{background:var(--red)}.b-high{background:var(--amb)}.b-normal{background:#4b6fa5}.b-low{background:#7b8794}.late{color:var(--red);font-weight:600}
+.note{font-size:12px;color:var(--mut)}.banner{background:#fff8e1;border:1px solid #f0d98a;border-radius:8px;padding:8px 10px;font-size:13px;margin:10px 0}textarea{min-height:150px}
+.stats{display:flex;gap:10px;flex-wrap:wrap}.stat{background:#eef4f2;border-radius:8px;padding:8px 12px;font-size:13px}.stat b{font-size:18px;display:block}
+.hide{display:none}@media(max-width:640px){.row>label{flex:1 1 45%}}
+@media print{header,.noprint{display:none!important}body{background:#fff}.card{border:0}}
+</style></head><body>
+<header><h1>FixLog</h1><p>Maintenance requests, vendors, costs and tenant updates in one place. Data stays in this browser. Nothing is sent anywhere.</p></header>
+<main>
+<div class="banner" id="banner">Sample units and requests are loaded so you can see how it works (made-up data). Use <b>Clear sample data</b> to start with your own.</div>
+<section class="card"><h2>Your details</h2><div class="row"><label>Your name (for messages)<input id="sLandlord"></label><label>Your email<input id="sEmail" type="email"></label><label>Your phone (WhatsApp, with country code)<input id="sPhone"></label><label>Cost year<input id="sYear" type="number" min="2000" max="2100"></label><label>Today<input id="today" type="date"></label></div>
+<p class="note">Overdue flags use editable limits (days open): urgent <input id="lU" type="number" min="0" style="width:60px;display:inline"> high <input id="lH" type="number" min="0" style="width:60px;display:inline"> normal <input id="lN" type="number" min="0" style="width:60px;display:inline"> low <input id="lL" type="number" min="0" style="width:60px;display:inline">. These are examples, not legal deadlines. Check your local rules on repair timelines.</p></section>
+<section class="card"><h2>1. Units and tenants</h2><div class="tw"><table style="min-width:600px"><thead><tr><th>Unit</th><th>Tenant</th><th>Tenant email</th><th>Tenant phone</th><th></th></tr></thead><tbody id="units"></tbody></table></div>
+<div class="row noprint" style="margin-top:8px"><label>Unit name<input id="nuName" placeholder="e.g. 12 Oak St, Unit 2"></label><label>Tenant<input id="nuTenant"></label><label>Tenant email<input id="nuEmail"></label><label>Tenant phone<input id="nuPhone"></label><button id="addUnit">Add unit</button></div></section>
+<section class="card noprint"><h2>2. Log a request</h2><div class="row"><label>Unit<select id="nrUnit"></select></label><label>Title<input id="nrTitle" placeholder="e.g. Kitchen tap leaking"></label><label>Priority<select id="nrPri"><option value="urgent">Urgent</option><option value="high">High</option><option value="normal" selected>Normal</option><option value="low">Low</option></select></label><label>Opened<input id="nrOpened" type="date"></label></div>
+<div class="row" style="margin-top:8px"><label style="flex:3 1 300px">Details<input id="nrDesc"></label><label>Vendor<input id="nrVendor"></label><label>Cost (if known)<input id="nrCost" type="number" min="0" step="0.01"></label><button id="addReq">Add request</button></div></section>
+<section class="card"><h2>3. Open requests</h2><div class="stats" id="stats"></div><div class="tw" style="margin-top:8px"><table><thead><tr><th>Unit</th><th>Request</th><th>Priority</th><th>Age</th><th>Status</th><th>Vendor</th><th>Scheduled</th><th>Cost</th><th></th></tr></thead><tbody id="open"></tbody></table></div></section>
+<section class="card"><h2>4. Messages</h2>
+<div class="row"><label>Request<select id="mReq"></select></label><label>Message<select id="mKind"><option value="received">Received</option><option value="scheduled">Scheduled</option><option value="delayed">Delayed</option><option value="completed">Completed</option></select></label></div>
+<textarea id="msg" readonly style="margin-top:8px"></textarea><div class="row" style="margin-top:8px"><button id="copy">Copy</button><a class="btn sec" id="mMail" href="#">Email tenant</a><a class="btn sec" id="mWa" href="#" target="_blank" rel="noopener">WhatsApp tenant</a><span class="note" id="copied"></span></div>
+<h2 style="margin-top:16px">Request form text for a tenant</h2><p class="note">There is no server, so this is a ready-made message the tenant can reply to, not a hosted form. Send it by email or WhatsApp; replies come back to you.</p>
+<div class="row"><label>Unit<select id="fUnit"></select></label></div><textarea id="fText" readonly style="margin-top:8px;min-height:190px"></textarea><div class="row" style="margin-top:8px"><button id="fCopy" class="sec">Copy</button><a class="btn sec" id="fMail" href="#">Email to tenant</a><a class="btn sec" id="fWa" href="#" target="_blank" rel="noopener">WhatsApp to tenant</a></div></section>
+<section class="card"><h2>5. Repair history and yearly costs</h2><div class="row"><label>Unit history<select id="hUnit"></select></label></div><div class="tw" style="margin-top:8px"><table style="min-width:620px"><thead><tr><th>Opened</th><th>Request</th><th>Status</th><th>Vendor</th><th>Completed</th><th>Cost</th></tr></thead><tbody id="hist"></tbody></table></div>
+<h2 style="margin-top:14px">Costs in <span id="yr"></span></h2><div class="tw"><table style="min-width:420px"><thead><tr><th>Unit</th><th>Requests</th><th>Cost</th></tr></thead><tbody id="sum"></tbody></table></div><p class="note">A request counts in the year it was completed (or opened, if not yet completed). Costs are what you enter; keep receipts.</p></section>
+<section class="card noprint"><h2>6. Data</h2><div class="row"><button class="sec" id="csv">Export requests (CSV)</button><button class="sec" id="export">Backup (JSON)</button><button class="sec" id="importBtn">Restore (JSON)</button><input type="file" id="importFile" accept=".json" class="hide"><button class="sec" id="print">Print</button><button class="del" id="clear">Clear sample data</button></div></section>
+</main>
+<script>
+// ---- CORE (pure functions, unit-tested in Node) ----
+var DAY = 86400000;
+function parseDate(s) { if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return NaN; var p = s.split('-').map(Number), t = Date.UTC(p[0], p[1] - 1, p[2]); if (new Date(t).getUTCMonth() !== p[1] - 1) return NaN; return Math.round(t / DAY); }
+function fmtDate(n) { var d = new Date(n * DAY); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); }
+var PRIORITY = { urgent: 0, high: 1, normal: 2, low: 3 };
+var DEFAULT_LIMITS = { urgent: 2, high: 7, normal: 14, low: 30 }; // days open before flagged; editable examples, not standards
+var OPEN = { new: 1, scheduled: 1, in_progress: 1, waiting: 1 };
+function isOpen(r) { return !!OPEN[r.status]; }
+function ageDays(r, todayStr) { var a = parseDate(r.opened), t = parseDate(todayStr); if (isNaN(a) || isNaN(t)) return 0; return Math.max(0, t - a); }
+function isOverdue(r, todayStr, limits) { if (!isOpen(r)) return false; var L = limits || DEFAULT_LIMITS, lim = L[r.priority]; if (lim === undefined) lim = L.normal; return ageDays(r, todayStr) > lim; }
+function openList(reqs, todayStr, limits) {
+  return reqs.filter(isOpen).map(function (r) { return Object.assign({}, r, { age: ageDays(r, todayStr), overdue: isOverdue(r, todayStr, limits) }); })
+    .sort(function (a, b) { return (PRIORITY[a.priority] === undefined ? 9 : PRIORITY[a.priority]) - (PRIORITY[b.priority] === undefined ? 9 : PRIORITY[b.priority]) || b.age - a.age; });
+}
+function costDate(r) { return r.completed || r.opened || ''; }
+// annual cost: counts a request in the year of its completion date (or open date if not yet completed)
+function annualSummary(reqs, units, year) {
+  var by = {}; units.forEach(function (u) { by[u.id] = { unitId: u.id, name: u.name, count: 0, cost: 0 }; });
+  var total = { count: 0, cost: 0 };
+  reqs.forEach(function (r) { var d = costDate(r); if (String(d).slice(0, 4) !== String(year)) return; var row = by[r.unitId]; if (!row) return; var c = Number(r.cost); if (!(c >= 0)) c = 0; row.count++; row.cost += c; total.count++; total.cost += c; });
+  var rows = Object.keys(by).map(function (k) { by[k].cost = Math.round(by[k].cost * 100) / 100; return by[k]; }); total.cost = Math.round(total.cost * 100) / 100;
+  return { rows: rows, total: total };
+}
+function unitHistory(reqs, unitId) { return reqs.filter(function (r) { return r.unitId === unitId; }).sort(function (a, b) { return String(b.opened).localeCompare(String(a.opened)); }); }
+function csvCell(v) { var s = v === null || v === undefined ? '' : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; if (/[",\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"'; return s; }
+function toCsv(reqs, units) {
+  var nm = {}; units.forEach(function (u) { nm[u.id] = u.name; });
+  var head = ['Unit', 'Title', 'Description', 'Priority', 'Status', 'Vendor', 'Cost', 'Opened', 'Scheduled', 'Completed', 'Notes'];
+  var lines = [head.join(',')];
+  reqs.forEach(function (r) { lines.push([nm[r.unitId] || '', r.title, r.desc, r.priority, r.status, r.vendor, r.cost, r.opened, r.scheduled, r.completed, r.notes].map(csvCell).join(',')); });
+  return lines.join('\r\n');
+}
+function prettyDate(s) { var n = parseDate(s); if (isNaN(n)) return s || 'to be confirmed'; var d = new Date(n * DAY); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear(); }
+// Text a tenant can copy/send to report a problem. No server: it is a pre-filled message, not a hosted form.
+function tenantRequestText(unit, settings) {
+  return 'Maintenance request for ' + unit.name + '\n\nPlease fill in and send to ' + (settings.landlord || 'your landlord') + ':\n\n1. What is the problem? \n2. Where exactly (room / item)? \n3. When did it start? \n4. Is it urgent or a safety issue (water leak, no heat, no power, gas smell)? \n5. May we enter if you are not home (yes / no)? \n6. Best times for a visit: \n7. Photos or video attached? (yes / no)\n\nThank you.';
+}
+function mailtoLink(to, subject, body) { return 'mailto:' + (to || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); }
+function whatsappLink(phone, text) { var p = String(phone || '').replace(/[^\d]/g, ''); return 'https://wa.me/' + p + '?text=' + encodeURIComponent(text); }
+function statusMessage(kind, req, unit, settings) {
+  var tenant = (unit && unit.tenant) || 'there', who = settings.landlord || 'Your landlord', t = req.title || 'your request';
+  if (kind === 'received') return 'Hi ' + tenant + ',\n\nThanks for reporting "' + t + '" at ' + (unit ? unit.name : 'your unit') + '. I have logged it as ' + (req.priority || 'normal') + ' priority and will update you once I have arranged a visit.\n\n' + who;
+  if (kind === 'scheduled') return 'Hi ' + tenant + ',\n\nUpdate on "' + t + '": ' + (req.vendor ? req.vendor : 'a contractor') + ' is scheduled for ' + prettyDate(req.scheduled) + '. Please let me know if that date does not work or if we may enter while you are out.\n\n' + who;
+  if (kind === 'delayed') return 'Hi ' + tenant + ',\n\nUpdate on "' + t + '": it is taking longer than I hoped' + (req.notes ? ' (' + req.notes + ')' : '') + '. I am sorry for the delay and will confirm a new date as soon as I have one.\n\n' + who;
+  if (kind === 'completed') return 'Hi ' + tenant + ',\n\n"' + t + '" is now marked complete' + (req.completed ? ' (' + prettyDate(req.completed) + ')' : '') + '. Please tell me if anything is still not right.\n\n' + who;
+  return '';
+}
+if (typeof module !== 'undefined') module.exports = { parseDate: parseDate, fmtDate: fmtDate, isOpen: isOpen, ageDays: ageDays, isOverdue: isOverdue, openList: openList, annualSummary: annualSummary, unitHistory: unitHistory, csvCell: csvCell, toCsv: toCsv, prettyDate: prettyDate, tenantRequestText: tenantRequestText, mailtoLink: mailtoLink, whatsappLink: whatsappLink, statusMessage: statusMessage, DEFAULT_LIMITS: DEFAULT_LIMITS };
+
+(function(){
+var KEY='fixlog.v1',$=function(i){return document.getElementById(i)};
+function td(){return $('today').value||fmtDate(Math.floor(Date.now()/DAY))}
+function sample(){var t=parseDate(fmtDate(Math.floor(Date.now()/DAY))),d=function(o){return fmtDate(t+o)};
+ return {sample:1,settings:{landlord:'Sample Landlord',email:'',phone:'',year:new Date().getFullYear(),limits:{urgent:2,high:7,normal:14,low:30}},
+ units:[{id:'u1',name:'Sample: 12 Oak St, Unit 1',tenant:'Sample Tenant A',tenantEmail:'tenant.a@example.com',tenantPhone:'+1 555 0101'},{id:'u2',name:'Sample: 12 Oak St, Unit 2',tenant:'Sample Tenant B',tenantEmail:'',tenantPhone:'+1 555 0102'}],
+ reqs:[{id:'r1',unitId:'u1',title:'Kitchen tap leaking',desc:'Drips overnight',priority:'normal',status:'new',vendor:'',cost:'',opened:d(-20),scheduled:'',completed:'',notes:''},
+ {id:'r2',unitId:'u2',title:'No hot water',desc:'Since this morning',priority:'urgent',status:'scheduled',vendor:'Sample Plumber',cost:'',opened:d(-1),scheduled:d(1),completed:'',notes:''},
+ {id:'r3',unitId:'u1',title:'Replace smoke alarm battery',desc:'',priority:'low',status:'done',vendor:'',cost:12.5,opened:d(-40),scheduled:'',completed:d(-38),notes:''}]}}
+var S;function load(){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}if(!S||!S.units||!S.reqs||!S.settings)S=sample();if(!S.settings.limits)S.settings.limits=Object.assign({},DEFAULT_LIMITS)}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function unit(id){return S.units.filter(function(u){return u.id===id})[0]}
+function uopts(sel){return S.units.map(function(u){return '<option value="'+esc(u.id)+'"'+(u.id===sel?' selected':'')+'>'+esc(u.name)+'</option>'}).join('')}
+function money(v){var n=Number(v);return v===''||v==null||isNaN(n)?'':n.toFixed(2)}
+function render(){
+ var st=S.settings;$('sLandlord').value=st.landlord||'';$('sEmail').value=st.email||'';$('sPhone').value=st.phone||'';$('sYear').value=st.year;['U:urgent','H:high','N:normal','L:low'].forEach(function(p){var a=p.split(':');$('l'+a[0]).value=st.limits[a[1]]});
+ $('banner').style.display=S.sample?'block':'none';
+ $('units').innerHTML=S.units.map(function(u){return '<tr data-u="'+esc(u.id)+'"><td><input data-uf="name" value="'+esc(u.name)+'"></td><td><input data-uf="tenant" value="'+esc(u.tenant)+'"></td><td><input data-uf="tenantEmail" value="'+esc(u.tenantEmail)+'"></td><td><input data-uf="tenantPhone" value="'+esc(u.tenantPhone)+'"></td><td><button class="del" data-delu="'+esc(u.id)+'">Delete</button></td></tr>'}).join('')||'<tr><td colspan="5" class="note">Add your first unit below.</td></tr>';
+ var keepN=$('nrUnit').value,keepF=$('fUnit').value,keepH=$('hUnit').value,keepM=$('mReq').value;
+ $('nrUnit').innerHTML=uopts(keepN);$('fUnit').innerHTML=uopts(keepF);$('hUnit').innerHTML=uopts(keepH);
+ var ol=openList(S.reqs,td(),st.limits),od=ol.filter(function(r){return r.overdue}).length,sm=annualSummary(S.reqs,S.units,st.year);
+ $('stats').innerHTML='<div class="stat"><b>'+ol.length+'</b>open requests</div><div class="stat"><b class="'+(od?'late':'')+'">'+od+'</b>overdue (over your limit)</div><div class="stat"><b>'+sm.total.count+'</b>requests in '+esc(st.year)+'</div><div class="stat"><b>'+sm.total.cost.toFixed(2)+'</b>cost in '+esc(st.year)+'</div>';
+ $('open').innerHTML=ol.map(function(r){var u=unit(r.unitId);return '<tr data-r="'+esc(r.id)+'"><td>'+esc(u?u.name:'?')+'</td><td><b>'+esc(r.title)+'</b><br><span class="note">'+esc(r.desc)+'</span></td><td><span class="badge b-'+esc(r.priority)+'">'+esc(r.priority)+'</span></td><td class="'+(r.overdue?'late':'')+'">'+r.age+' d'+(r.overdue?' overdue':'')+'</td><td><select data-rf="status">'+[['new','New'],['scheduled','Scheduled'],['in_progress','In progress'],['waiting','Waiting (parts/tenant)'],['done','Done']].map(function(o){return '<option value="'+o[0]+'"'+(r.status===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></td><td><input data-rf="vendor" value="'+esc(r.vendor)+'"></td><td><input type="date" data-rf="scheduled" value="'+esc(r.scheduled)+'"></td><td><input type="number" step="0.01" min="0" data-rf="cost" value="'+esc(r.cost)+'" style="width:84px"></td><td><button class="del" data-delr="'+esc(r.id)+'">Delete</button></td></tr>'}).join('')||'<tr><td colspan="9" class="note">No open requests.</td></tr>';
+ $('mReq').innerHTML=S.reqs.map(function(r){var u=unit(r.unitId);return '<option value="'+esc(r.id)+'"'+(r.id===keepM?' selected':'')+'>'+esc((u?u.name:'?')+' - '+r.title+(isOpen(r)?'':' (done)'))+'</option>'}).join('');
+ hist();$('yr').textContent=st.year;
+ $('sum').innerHTML=sm.rows.map(function(x){return '<tr><td>'+esc(x.name)+'</td><td>'+x.count+'</td><td>'+x.cost.toFixed(2)+'</td></tr>'}).join('')+'<tr><td><b>Total</b></td><td><b>'+sm.total.count+'</b></td><td><b>'+sm.total.cost.toFixed(2)+'</b></td></tr>';
+ msg();form();save()}
+function hist(){var h=unitHistory(S.reqs,$('hUnit').value);$('hist').innerHTML=h.map(function(r){return '<tr><td>'+esc(r.opened)+'</td><td>'+esc(r.title)+'</td><td>'+esc(r.status)+'</td><td>'+esc(r.vendor)+'</td><td>'+esc(r.completed)+'</td><td>'+money(r.cost)+'</td></tr>'}).join('')||'<tr><td colspan="6" class="note">No history for this unit yet.</td></tr>'}
+function msg(){var r=S.reqs.filter(function(x){return x.id===$('mReq').value})[0];if(!r){$('msg').value='';$('mMail').removeAttribute('href');$('mWa').removeAttribute('href');return}
+ var u=unit(r.unitId),t=statusMessage($('mKind').value,r,u,S.settings);$('msg').value=t;
+ $('mMail').href=mailtoLink(u&&u.tenantEmail,'Update on your maintenance request: '+r.title,t);$('mWa').href=whatsappLink(u&&u.tenantPhone,t)}
+function form(){var u=unit($('fUnit').value);if(!u){$('fText').value='';return}var t=tenantRequestText(u,S.settings);$('fText').value=t;
+ $('fMail').href=mailtoLink(u.tenantEmail,'Maintenance request form for '+u.name,t);$('fWa').href=whatsappLink(u.tenantPhone,t)}
+document.addEventListener('input',function(e){var t=e.target,tr=t.closest&&t.closest('tr');
+ if(t.dataset&&t.dataset.uf){var u=unit(tr.dataset.u);if(u){u[t.dataset.uf]=t.value;save();msg();form();$('nrUnit').innerHTML=uopts($('nrUnit').value)}}
+ else if(t.dataset&&t.dataset.rf){var r=S.reqs.filter(function(x){return x.id===tr.dataset.r})[0];if(r){r[t.dataset.rf]=t.type==='number'?(t.value===''?'':Number(t.value)):t.value;if(t.dataset.rf==='status'&&t.value==='done'&&!r.completed)r.completed=td();render()}}
+ else if(t.id==='sLandlord'||t.id==='sEmail'||t.id==='sPhone'){S.settings.landlord=$('sLandlord').value;S.settings.email=$('sEmail').value;S.settings.phone=$('sPhone').value;save();msg();form()}
+ else if(t.id==='sYear'){S.settings.year=Number($('sYear').value)||new Date().getFullYear();render()}
+ else if(/^l[UHNL]$/.test(t.id)){var m={U:'urgent',H:'high',N:'normal',L:'low'};S.settings.limits[m[t.id[1]]]=Number(t.value)||0;render()}
+ else if(t.id==='today')render();else if(t.id==='mReq'||t.id==='mKind')msg();else if(t.id==='fUnit')form();else if(t.id==='hUnit')hist()});
+document.addEventListener('click',function(e){var t=e.target;
+ if(t.dataset.delu){if(S.reqs.some(function(r){return r.unitId===t.dataset.delu})&&!confirm('This unit has requests. Delete the unit and all its requests?'))return;S.units=S.units.filter(function(u){return u.id!==t.dataset.delu});S.reqs=S.reqs.filter(function(r){return r.unitId!==t.dataset.delu});render()}
+ if(t.dataset.delr){S.reqs=S.reqs.filter(function(r){return r.id!==t.dataset.delr});render()}});
+function dropSample(){if(S.sample){S.units=[];S.reqs=[];S.sample=0}}
+$('addUnit').onclick=function(){var n=$('nuName').value.trim();if(!n){alert('Enter a unit name.');return}dropSample();S.units.push({id:'u'+Date.now(),name:n,tenant:$('nuTenant').value.trim(),tenantEmail:$('nuEmail').value.trim(),tenantPhone:$('nuPhone').value.trim()});['nuName','nuTenant','nuEmail','nuPhone'].forEach(function(i){$(i).value=''});render()};
+$('addReq').onclick=function(){if(!S.units.length||!$('nrUnit').value){alert('Add a unit first.');return}var ti=$('nrTitle').value.trim();if(!ti){alert('Enter a title.');return}var op=$('nrOpened').value||td();
+ S.reqs.push({id:'r'+Date.now(),unitId:$('nrUnit').value,title:ti,desc:$('nrDesc').value.trim(),priority:$('nrPri').value,status:'new',vendor:$('nrVendor').value.trim(),cost:$('nrCost').value===''?'':Number($('nrCost').value),opened:op,scheduled:'',completed:'',notes:''});['nrTitle','nrDesc','nrVendor','nrCost','nrOpened'].forEach(function(i){$(i).value=''});render()};
+$('clear').onclick=function(){if(confirm('Delete sample data (or ALL data in this browser)?')){S={sample:0,settings:S.settings,units:[],reqs:[]};render()}};
+function copyFrom(id,okId){var v=$(id).value;function ok(){$('copied').textContent='Copied'}var ta=document.createElement('textarea');ta.value=v;document.body.appendChild(ta);if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(v).then(ok,function(){ta.select();document.execCommand('copy');ok()})}else{ta.select();document.execCommand('copy');ok()}document.body.removeChild(ta)}
+$('copy').onclick=function(){copyFrom('msg')};$('fCopy').onclick=function(){copyFrom('fText')};
+function dl(name,type,data){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:type}));a.download=name;a.click()}
+$('csv').onclick=function(){dl('fixlog-requests.csv','text/csv',toCsv(S.reqs,S.units))};$('export').onclick=function(){dl('fixlog-backup.json','application/json',JSON.stringify(S,null,1))};
+$('importBtn').onclick=function(){$('importFile').click()};$('print').onclick=function(){window.print()};
+$('importFile').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(!d||!Array.isArray(d.units)||!Array.isArray(d.reqs)||!d.settings)throw 0;S=d;if(!S.settings.limits)S.settings.limits=Object.assign({},DEFAULT_LIMITS);render()}catch(e){alert('That file is not a FixLog backup.')}};r.readAsText(f)};
+load();render();
+})();
+</script></body></html>
