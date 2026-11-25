@@ -14,6 +14,18 @@
     "README.md",
     "cover.png"
    ]
+  },
+  "d20261125-11": {
+   "slug": "rent-vs-cost-reality-planner",
+   "name": "Rent vs Cost Reality Planner",
+   "status": "built",
+   "qa": "pass",
+   "price_usd": 24,
+   "files": [
+    "Rent-vs-Cost-Reality-Planner.xlsx",
+    "README.md",
+    "cover.png"
+   ]
   }
  }
 }
