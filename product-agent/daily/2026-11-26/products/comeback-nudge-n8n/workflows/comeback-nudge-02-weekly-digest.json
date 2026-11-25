@@ -1,0 +1,301 @@
+{
+ "name": "02 Comeback Nudge 2: weekly at-risk client digest for you",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "weeks",
+       "weeksInterval": 1,
+       "triggerAtDay": [
+        1
+       ],
+       "triggerAtHour": 8,
+       "triggerAtMinute": 0
+      }
+     ]
+    }
+   },
+   "id": "80a15144-742e-5596-a3f4-f49a4adbe52e",
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    240,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Training Studio",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "3479e207-1109-5da9-b6fb-36f8b0604a6c",
+       "name": "coachName",
+       "value": "Your Coach",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "email",
+       "type": "string"
+      },
+      {
+       "id": "f39361da-4326-5cfb-82fe-fc5d046dd12a",
+       "name": "bookingLink",
+       "value": "https://YOUR-BOOKING-LINK",
+       "type": "string"
+      },
+      {
+       "id": "03a4480b-6be8-5c08-9c40-ac18166d2234",
+       "name": "packLink",
+       "value": "https://YOUR-OWN-PAYMENT-OR-PACK-LINK",
+       "type": "string"
+      },
+      {
+       "id": "9b9c6fc1-a7af-5b0c-b328-fad3d6013a73",
+       "name": "nudge1Days",
+       "value": "14",
+       "type": "string"
+      },
+      {
+       "id": "1c04bd54-5171-5aed-a93d-f168f95f8b93",
+       "name": "nudge2Days",
+       "value": "21",
+       "type": "string"
+      },
+      {
+       "id": "696d7fcd-e67e-5c4d-bd0b-cd690a8cf8a2",
+       "name": "nudge3Days",
+       "value": "35",
+       "type": "string"
+      },
+      {
+       "id": "106a52c2-d80e-543d-b6b7-04040b6ff55c",
+       "name": "minDaysBetweenNudges",
+       "value": "5",
+       "type": "string"
+      },
+      {
+       "id": "f6c85691-e76d-5702-aefa-9be779c4e383",
+       "name": "renewAtOrBelow",
+       "value": "1",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "dac3b2d7-6593-584d-a05f-d979c014dc98",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Clients",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "2a4a3393-fbfc-5137-9409-59a4489f11e2",
+   "name": "Read Clients",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    680,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json;\nconst rows = $input.all().map(i => i.json).filter(r => r && r.client_id && String(r.status || 'active').trim().toLowerCase() === 'active');\nconst today = new Date(); today.setUTCHours(0, 0, 0, 0);\nconst dayDiff = s => { const t = Date.parse(String(s || '').slice(0, 10) + 'T00:00:00Z'); return isNaN(t) ? null : Math.floor((today.getTime() - t) / 864e5); };\nconst N1 = Number(c.nudge1Days), RENEW = Number(c.renewAtOrBelow);\nconst quiet = [], low = [];\nrows.forEach(r => { const d = dayDiff(r.last_session); const b = r.pack_balance === '' || r.pack_balance === undefined ? null : Number(r.pack_balance);\n  if (d !== null && d >= N1) quiet.push({ name: r.client, days: d, nudges: Number(r.nudge_count) || 0 });\n  if (b !== null && !isNaN(b) && b <= RENEW && b >= 0) low.push({ name: r.client, left: b }); });\nquiet.sort((a, b) => b.days - a.days);\nif (!quiet.length && !low.length) return [];\nconst L = [];\nif (quiet.length) { L.push('Gone quiet (' + N1 + '+ days):'); quiet.forEach(q => L.push('- ' + q.name + ': ' + q.days + ' days since last session, ' + q.nudges + ' of 3 check-ins sent' + (q.nudges >= 3 ? ' (consider a personal call)' : ''))); }\nif (low.length) { if (L.length) L.push(''); L.push('Packs nearly used up:'); low.forEach(x => L.push('- ' + x.name + ': ' + x.left + ' left')); }\nreturn [{ json: { subject: 'Client digest: ' + quiet.length + ' quiet, ' + low.length + ' low packs', text: L.join('\\n'), quiet: quiet.length, low: low.length } }];"
+   },
+   "id": "d3784462-341c-5b5d-a668-3ae8bc195b0d",
+   "name": "Digest",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    900,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.text }}",
+    "options": {}
+   },
+   "id": "ed5ea0f6-517f-5020-9ecf-b99a88828137",
+   "name": "Email digest",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1120,
+    300
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Comeback Nudge 2: weekly at-risk client digest for you\nEvery Monday it emails you the clients who have gone quiet and the packs nearly used up, so you can follow up personally. Sends nothing when everyone is fine.\n\n**Setup**\n1. Create a Google Sheet with a tab named Clients using the header row in sheet-templates/Clients.csv; paste its ID into the Config node (sheetId).\n2. In Config set your business and coach name, owner email, your booking link and your own pack/payment link, and the day thresholds. channel = email (default) or sms.\n3. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth) only if you use SMS.\n4. Dates in the sheet are YYYY-MM-DD (format the columns as plain text). Run once with test rows, then activate.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "a0b2d28d-64bd-562f-bbc3-b62715b4d01f",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Read Clients",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Clients": {
+   "main": [
+    [
+     {
+      "node": "Digest",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Digest": {
+   "main": [
+    [
+     {
+      "node": "Email digest",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

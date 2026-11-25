@@ -1,0 +1,670 @@
+[
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "first check-in after 14+ quiet days",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C1",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-09",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [
+   "Send email",
+   "Mark sent (email)"
+  ],
+  "notexpect": [
+   "Send SMS",
+   "Mark reset"
+  ],
+  "contains": [
+   [
+    "Send email",
+    "Checking in"
+   ],
+   [
+    "Send email",
+    "16 days"
+   ],
+   [
+    "Send email",
+    "strength"
+   ],
+   [
+    "Mark sent (email)",
+    "\"nudge_count\":1"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "no message under 14 days",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C2",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-12",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send email",
+   "Send SMS",
+   "Mark reset",
+   "Mark sent (email)"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "second nudge needs count 1 and 21+ days",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C3",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-03",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 1,
+     "last_nudge": "2026-11-17",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [
+   "Send email"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send email",
+    "get back on schedule"
+   ],
+   [
+    "Mark sent (email)",
+    "\"nudge_count\":2"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "second nudge waits for the gap between nudges",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C4",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-03",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 1,
+     "last_nudge": "2026-11-23",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send email"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "final nudge at 35+ days, count 2",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C5",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-10-16",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 2,
+     "last_nudge": "2026-11-15",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [
+   "Send email"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send email",
+    "Keeping your spot open"
+   ],
+   [
+    "Mark sent (email)",
+    "\"nudge_count\":3"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "no fourth nudge",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C6",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-09-06",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 3,
+     "last_nudge": "2026-10-26",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send email",
+   "Send SMS"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "client who trained again is reset",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C7",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-22",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 2,
+     "last_nudge": "2026-11-15",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [
+   "Mark reset"
+  ],
+  "notexpect": [
+   "Send email",
+   "Send SMS"
+  ],
+  "contains": [
+   [
+    "Mark reset",
+    "\"nudge_count\":0"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "renewal when pack nearly used up (1 left)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C8",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-22",
+     "pack_balance": 1,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [
+   "Send email",
+   "Mark sent (email)"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send email",
+    "almost used up"
+   ],
+   [
+    "Send email",
+    "1 session left"
+   ],
+   [
+    "Send email",
+    "YOUR-OWN-PAYMENT-OR-PACK-LINK"
+   ],
+   [
+    "Mark sent (email)",
+    "\"renewal_sent\":\"2026-11-25\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "renewal not repeated once sent",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C9",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-22",
+     "pack_balance": 0,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "2026-11-23",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send email"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "no renewal when pack balance is blank",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C10",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-22",
+     "pack_balance": "",
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send email"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "paused client is skipped",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C11",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-10-26",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "paused"
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send email",
+   "Mark reset"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "bad last_session date is skipped, no crash",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C12",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "not a date",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send email"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "no contact details: nothing sent",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C13",
+     "client": "Dana Smith",
+     "email": "",
+     "phone": "",
+     "last_session": "2026-10-26",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send email",
+   "Send SMS"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "phone-only client falls back to SMS",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C14",
+     "client": "Dana Smith",
+     "email": "",
+     "phone": "+15551230001",
+     "last_session": "2026-11-09",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS",
+   "Mark sent (sms)"
+  ],
+  "notexpect": [
+   "Send email"
+  ],
+  "contains": [
+   [
+    "Send SMS",
+    "+15551230001"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "two clients same action",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "C15",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-09",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    },
+    {
+     "client_id": "C16",
+     "client": "Lee Park",
+     "email": "lee@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-05",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [
+   "Send email"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send email",
+    "Lee"
+   ],
+   [
+    "Send email",
+    "Dana"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-01-daily-nudges.json",
+  "title": "empty sheet",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {}
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send email",
+   "Mark reset"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-02-weekly-digest.json",
+  "title": "digest lists quiet clients and low packs",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "D1",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-05",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 3,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    },
+    {
+     "client_id": "D2",
+     "client": "Lee Park",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-22",
+     "pack_balance": 0,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    },
+    {
+     "client_id": "D3",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-23",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    }
+   ]
+  },
+  "expect": [
+   "Email digest"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Email digest",
+    "Dana Smith: 20 days"
+   ],
+   [
+    "Email digest",
+    "3 of 3 check-ins sent (consider a personal call)"
+   ],
+   [
+    "Email digest",
+    "Lee Park: 0 left"
+   ],
+   [
+    "Email digest",
+    "1 quiet, 1 low packs"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "comeback-nudge-02-weekly-digest.json",
+  "title": "no email when everyone is fine",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Clients": [
+    {
+     "client_id": "D4",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-22",
+     "pack_balance": 5,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "active"
+    },
+    {
+     "client_id": "D5",
+     "client": "Dana Smith",
+     "email": "dana@example.com",
+     "phone": "+15551230001",
+     "last_session": "2026-11-20",
+     "pack_balance": 0,
+     "goal": "strength",
+     "nudge_count": 0,
+     "last_nudge": "",
+     "renewal_sent": "",
+     "status": "paused"
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Email digest"
+  ],
+  "contains": [],
+  "trigger": "x"
+ }
+]

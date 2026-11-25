@@ -1,0 +1,2 @@
+client_id,client,email,phone,last_session,pack_balance,goal,nudge_count,last_nudge,renewal_sent,status
+SAMPLE-1,Sample Client,sample@example.com,+15550000001,2030-01-05,6,Build strength,0,,,active
