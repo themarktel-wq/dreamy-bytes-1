@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ProgressNote: Parent Progress Report Generator</title>
+<style>
+:root{--ink:#1f2433;--mut:#5d6677;--bg:#f5f6fa;--line:#d9dde6;--acc:#5f3dc4}
+*{box-sizing:border-box}html,body{margin:0}body{font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden}
+header{background:var(--acc);color:#fff;padding:14px 16px}header h1{margin:0;font-size:20px}header p{margin:2px 0 0;font-size:13px;opacity:.92}
+nav{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:0;z-index:5}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:20px;padding:8px 14px;font:inherit;color:var(--ink);cursor:pointer}nav button[aria-selected=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{max-width:980px;margin:0 auto;padding:14px 12px 40px}section{display:none}section.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}.card h2{margin:0 0 8px;font-size:17px}
+.note{color:var(--mut);font-size:13px;margin:4px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+input,select,textarea{width:100%;padding:9px;border:1px solid #b8c0cd;border-radius:8px;font:inherit;background:#fff;color:var(--ink);min-width:0}input[type=color]{padding:2px;height:40px}
+button.btn,label.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-size:15px;cursor:pointer;display:inline-block;margin:0}button.btn.alt,label.btn.alt{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tw{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:7px 4px;font-size:13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mut)}
+.msg{font-size:13px;color:var(--mut);min-height:18px}
+
+.rp{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rp .hd{padding:16px;color:#fff;display:flex;gap:12px;align-items:center}
+.rp .hd img{width:48px;height:48px;border-radius:10px;object-fit:cover;background:#fff}
+.rp .hd b{font-size:19px;display:block}
+
+.rp .bd{padding:14px 18px}
+.rp h3{margin:16px 0 4px;font-size:15px}
+.rp ul{margin:4px 0 0;padding-left:20px}
+.rp .att{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.rp .att span{background:#f1effb;border-radius:8px;padding:6px 10px;font-size:13px}
+
+.rp .ft{color:var(--mut);font-size:13px;padding:0 18px 16px}
+#sheet{display:none}
+@media print{header,nav,.noprint,main>section{display:none!important}main{padding:0}body{background:#fff}#sheet{display:block!important}#sheet .rp{border:0}}
+</style></head><body>
+<header><h1>ProgressNote</h1><p>Turn quick lesson notes into a monthly parent report. Works offline; nothing is uploaded.</p></header>
+<nav id="tabs" role="tablist"></nav>
+<main>
+<section id="s-stu" class="on"><div class="card"><h2>Students</h2><p class="note">Add each student with the parent's name and the goals you are working toward. Goals: one per line. Starting entries are <b>examples</b>.</p>
+ <div class="grid"><div><label for="sn">Student name</label><input id="sn"></div><div><label for="sp">Parent / guardian</label><input id="sp"></div><div><label for="ss">Subject</label><input id="ss"></div></div>
+ <label for="sg" style="margin-top:10px">Goals (one per line)</label><textarea id="sg" rows="3"></textarea><div class="row"><button class="btn" id="addStu">Add student</button></div><p class="msg" id="msgS" role="status"></p>
+ <div class="tw"><table id="st"><thead><tr><th>Student</th><th>Parent</th><th>Subject</th><th>Goals</th><th></th></tr></thead><tbody></tbody></table></div></div></section>
+<section id="s-log"><div class="card"><h2>Log a lesson (60 seconds)</h2><div class="grid">
+ <div><label for="lsid">Student</label><select id="lsid"></select></div><div><label for="ldate">Date</label><input id="ldate" type="date"></div>
+ <div><label for="lstat">Status</label><select id="lstat"></select></div></div>
+ <div class="grid" style="margin-top:10px"><div><label for="ltopic">Topic covered</label><input id="ltopic"></div><div><label for="lwin">A win today</label><input id="lwin"></div><div><label for="lstr">Needs more work</label><input id="lstr"></div><div><label for="lhw">Homework</label><input id="lhw"></div></div>
+ <div class="row"><button class="btn" id="addLesson">Save lesson</button></div><p class="msg" id="msgL" role="status"></p>
+ <h2 style="margin-top:14px">Lessons for this student</h2><div class="tw"><table id="lt"><thead><tr><th>Date</th><th>Status</th><th>Topic</th><th>Win</th><th>Needs work</th><th>Homework</th><th></th></tr></thead><tbody></tbody></table></div></div></section>
+<section id="s-rep"><div class="card"><h2>Monthly report</h2><div class="grid"><div><label for="rsid">Student</label><select id="rsid"></select></div><div><label for="rmon">Month</label><input id="rmon" type="month"></div></div>
+ <label for="rnext" style="margin-top:10px">Next steps (your words, optional)</label><textarea id="rnext" rows="3"></textarea>
+ <div class="row noprint"><button class="btn" id="print">Print / save as PDF</button><button class="btn alt" id="copy">Copy as text</button></div><p class="msg noprint" id="msgR" role="status"></p></div>
+ <div id="rep" aria-live="polite"></div></section>
+<section id="s-set"><div class="card"><h2>Your brand</h2><div class="grid"><div><label for="bname">Business / tutor name</label><input id="bname"></div><div><label for="bcol">Accent colour</label><input id="bcol" type="color"></div><div><label for="blogo">Logo (optional, stays on this device)</label><input id="blogo" type="file" accept="image/*"></div><div><label for="bfoot">Footer line</label><input id="bfoot"></div></div>
+ <div class="row"><button class="btn alt" id="bLogoClear">Remove logo</button><button class="btn alt" id="exp">Back up all data (JSON)</button><label class="btn alt">Restore backup<input id="imp" type="file" accept="application/json" hidden></label><button class="btn alt" id="reset">Reset to examples</button></div><p class="msg" id="msgB" role="status"></p>
+ <p class="note">Reports list what happened: topics, wins, areas to work on, homework and attendance counts. They contain no scores or predictions. Data is saved only in this browser: use Back up before clearing browser data.</p></div></section>
+</main>
+<div id="sheet"></div>
+<script id="logic">
+const PN = (function(){
+  const STATUS = ['Held', 'Cancelled by student', 'Cancelled by tutor', 'No-show'];
+  const mon = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const ym = d => String(d || '').slice(0, 7);
+  function monthLessons(lessons, sid, m){ return lessons.filter(l => l.sid === sid && ym(l.date) === m && /^\d{4}-\d{2}-\d{2}$/.test(l.date)).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0); }
+  function attendance(list){ const c = { held: 0, cancelledStudent: 0, cancelledTutor: 0, noShow: 0, total: list.length }; list.forEach(l => { if (l.status === 'Held') c.held++; else if (l.status === 'Cancelled by student') c.cancelledStudent++; else if (l.status === 'Cancelled by tutor') c.cancelledTutor++; else if (l.status === 'No-show') c.noShow++; }); return c; }
+  function uniq(arr){ const seen = new Set(), out = []; arr.forEach(x => { const t = String(x || '').trim(); const k = t.toLowerCase(); if (t && !seen.has(k)) { seen.add(k); out.push(t); } }); return out; }
+  function goals(txt){ return String(txt || '').split('\n').map(s => s.trim()).filter(Boolean); }
+  function monthName(m){ const x = String(m || '').match(/^(\d{4})-(\d{2})$/); return x && +x[2] >= 1 && +x[2] <= 12 ? mon[+x[2] - 1] + ' ' + x[1] : ''; }
+  function fmtDay(d){ const x = String(d).match(/^\d{4}-(\d{2})-(\d{2})$/); return x ? mon[+x[1] - 1].slice(0, 3) + ' ' + (+x[2]) : String(d); }
+  function report(stu, lessons, m, next){ const list = monthLessons(lessons, stu.id, m); const held = list.filter(l => l.status === 'Held');
+    return { student: stu.name, parent: stu.parent, subject: stu.subject, month: monthName(m), goals: goals(stu.goals), att: attendance(list), topics: uniq(held.map(l => l.topic)), wins: held.filter(l => String(l.win || '').trim()).map(l => ({ date: l.date, text: String(l.win).trim() })), work: held.filter(l => String(l.struggle || '').trim()).map(l => ({ date: l.date, text: String(l.struggle).trim() })), hw: held.filter(l => String(l.hw || '').trim()).map(l => ({ date: l.date, text: String(l.hw).trim() })), next: String(next || '').trim(), count: list.length }; }
+  function attLine(a){ const p = [a.held + ' lesson' + (a.held === 1 ? '' : 's') + ' held']; if (a.cancelledStudent) p.push(a.cancelledStudent + ' cancelled by student'); if (a.cancelledTutor) p.push(a.cancelledTutor + ' cancelled by tutor'); if (a.noShow) p.push(a.noShow + ' no-show'); return p.join(', '); }
+  function text(r, b){ const L = []; L.push((b.name ? b.name + ': ' : '') + 'Progress report for ' + (r.student || 'your child') + (r.month ? ', ' + r.month : '')); if (r.subject) L.push('Subject: ' + r.subject); L.push('Attendance: ' + attLine(r.att)); L.push('');
+    if (r.goals.length) { L.push('Goals:'); r.goals.forEach(g => L.push('- ' + g)); L.push(''); }
+    if (r.topics.length) { L.push('Topics covered: ' + r.topics.join('; ')); L.push(''); }
+    if (r.wins.length) { L.push('Wins:'); r.wins.forEach(w => L.push('- ' + fmtDay(w.date) + ': ' + w.text)); L.push(''); }
+    if (r.work.length) { L.push('Needs more work:'); r.work.forEach(w => L.push('- ' + fmtDay(w.date) + ': ' + w.text)); L.push(''); }
+    if (r.hw.length) { L.push('Homework set:'); r.hw.forEach(w => L.push('- ' + fmtDay(w.date) + ': ' + w.text)); L.push(''); }
+    if (r.next) { L.push('Next steps: ' + r.next); L.push(''); } if (b.foot) L.push(b.foot); return L.join('\n').trim(); }
+  function safeColor(c){ return /^#[0-9a-fA-F]{6}$/.test(c) ? c : '#5f3dc4'; }
+  return { STATUS, monthLessons, attendance, uniq, goals, monthName, fmtDay, report, attLine, text, safeColor };
+})();
+if (typeof module !== 'undefined') module.exports = PN;
+</script>
+<script id="ui">
+(function(){
+const DEF = { brand:{name:'Your Tutoring',col:'#5f3dc4',logo:'',foot:'Thank you for your support!'},
+ students:[{id:'s1',name:'Example Student',parent:'Example Parent',subject:'Maths',goals:'Fluent with fractions\nSolve two-step word problems'}],
+ lessons:[{id:'l1',sid:'s1',date:'2026-11-03',status:'Held',topic:'Adding fractions',win:'Found common denominators alone',struggle:'Simplifying answers',hw:'Worksheet 4'},{id:'l2',sid:'s1',date:'2026-11-10',status:'Held',topic:'Subtracting fractions',win:'Checked own answers',struggle:'',hw:'Worksheet 5'},{id:'l3',sid:'s1',date:'2026-11-17',status:'Cancelled by student',topic:'',win:'',struggle:'',hw:''},{id:'l4',sid:'s1',date:'2026-11-24',status:'Held',topic:'adding fractions',win:'',struggle:'Word problems',hw:''}],
+ next:{} };
+let S; const KEY='progressnote-v1'; const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function load(){ try{ const t=localStorage.getItem(KEY); if(t){ const o=JSON.parse(t); S={brand:Object.assign({},DEF.brand,o.brand),students:Array.isArray(o.students)?o.students:[],lessons:Array.isArray(o.lessons)?o.lessons:[],next:o.next||{}}; return; } }catch(e){} S=JSON.parse(JSON.stringify(DEF)); }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); return true; }catch(e){ return false; } }
+function today(){ const d=new Date(),p=x=>String(x).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+const tabs=[['s-stu','Students'],['s-log','Log lesson'],['s-rep','Report'],['s-set','Brand & backup']];
+function showTab(id){ tabs.forEach(t=>$(t[0]).classList.toggle('on',t[0]===id)); [...$('tabs').children].forEach(b=>b.setAttribute('aria-selected',b.dataset.t===id)); if(id==='s-log'){ fillSel(); renderLessons(); } if(id==='s-rep'){ fillSel(); renderRep(); } if(id==='s-stu') renderStu(); }
+tabs.forEach(t=>{ const b=document.createElement('button'); b.textContent=t[1]; b.dataset.t=t[0]; b.setAttribute('role','tab'); b.onclick=()=>showTab(t[0]); $('tabs').appendChild(b); });
+PN.STATUS.forEach(s=>{ const o=document.createElement('option'); o.textContent=s; $('lstat').appendChild(o); });
+function fillSel(){ ['lsid','rsid'].forEach(id=>{ const cur=$(id).value; $(id).innerHTML=S.students.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('')||'<option value="">(add a student first)</option>'; if(S.students.some(s=>s.id===cur)) $(id).value=cur; }); }
+function renderStu(){ document.querySelector('#st tbody').innerHTML=S.students.length?S.students.map(s=>'<tr><td>'+esc(s.name)+'</td><td>'+esc(s.parent)+'</td><td>'+esc(s.subject)+'</td><td>'+esc(PN.goals(s.goals).join('; '))+'</td><td><button class="btn alt" data-del="'+esc(s.id)+'" aria-label="Delete student">x</button></td></tr>').join(''):'<tr><td colspan="5">No students yet.</td></tr>'; }
+$('addStu').onclick=()=>{ const n=$('sn').value.trim(); if(!n){ $('msgS').textContent='Enter the student\'s name.'; return; } S.students.push({id:uid(),name:n,parent:$('sp').value.trim(),subject:$('ss').value.trim(),goals:$('sg').value}); save(); ['sn','sp','ss','sg'].forEach(i=>$(i).value=''); $('msgS').textContent='Student added.'; renderStu(); };
+$('st').addEventListener('click',e=>{ const b=e.target.closest('[data-del]'); if(!b) return; const s=S.students.find(x=>x.id===b.dataset.del); const n=S.lessons.filter(l=>l.sid===s.id).length; if(!confirm('Delete '+s.name+' and '+n+' logged lesson(s)?')) return; S.students=S.students.filter(x=>x.id!==s.id); S.lessons=S.lessons.filter(l=>l.sid!==s.id); save(); renderStu(); });
+$('addLesson').onclick=()=>{ const sid=$('lsid').value; if(!sid){ $('msgL').textContent='Add a student first.'; return; } if(!$('ldate').value){ $('msgL').textContent='Pick the lesson date.'; return; } S.lessons.push({id:uid(),sid,date:$('ldate').value,status:$('lstat').value,topic:$('ltopic').value.trim(),win:$('lwin').value.trim(),struggle:$('lstr').value.trim(),hw:$('lhw').value.trim()}); save(); ['ltopic','lwin','lstr','lhw'].forEach(i=>$(i).value=''); $('msgL').textContent='Lesson saved.'; renderLessons(); };
+$('lsid').onchange=renderLessons;
+function renderLessons(){ const sid=$('lsid').value; const ls=S.lessons.filter(l=>l.sid===sid).sort((a,b)=>a.date<b.date?1:-1); document.querySelector('#lt tbody').innerHTML=ls.length?ls.map(l=>'<tr><td>'+esc(l.date)+'</td><td>'+esc(l.status)+'</td><td>'+esc(l.topic)+'</td><td>'+esc(l.win)+'</td><td>'+esc(l.struggle)+'</td><td>'+esc(l.hw)+'</td><td><button class="btn alt" data-ld="'+esc(l.id)+'" aria-label="Delete lesson">x</button></td></tr>').join(''):'<tr><td colspan="7">No lessons logged for this student.</td></tr>'; }
+$('lt').addEventListener('click',e=>{ const b=e.target.closest('[data-ld]'); if(!b) return; S.lessons=S.lessons.filter(l=>l.id!==b.dataset.ld); save(); renderLessons(); });
+const nextKey=()=>$('rsid').value+'|'+$('rmon').value;
+function curReport(){ const stu=S.students.find(s=>s.id===$('rsid').value); if(!stu) return null; return PN.report(stu,S.lessons,$('rmon').value,$('rnext').value); }
+function repHtml(){ const r=curReport(); if(!r) return '<div id="rep" class="rp"><div class="bd">Add a student to create a report.</div></div>'; const col=PN.safeColor(S.brand.col); const li=a=>a.map(x=>'<li><b>'+esc(PN.fmtDay(x.date))+':</b> '+esc(x.text)+'</li>').join('');
+  return '<div id="rep" class="rp"><div class="hd" style="background:'+col+'">'+(S.brand.logo?'<img alt="" src="'+S.brand.logo+'">':'')+'<div><b>'+esc(S.brand.name)+'</b>Progress report for '+esc(r.student)+(r.month?' &middot; '+esc(r.month):'')+'</div></div><div class="bd">'+(r.subject?'<div><b>Subject:</b> '+esc(r.subject)+(r.parent?' &nbsp; <b>Parent / guardian:</b> '+esc(r.parent):'')+'</div>':'')
+   +'<h3>Attendance</h3><div class="att"><span>'+esc(PN.attLine(r.att))+'</span></div>'+(r.goals.length?'<h3>Goals we are working toward</h3><ul>'+r.goals.map(g=>'<li>'+esc(g)+'</li>').join('')+'</ul>':'')+(r.topics.length?'<h3>Topics covered</h3><ul>'+r.topics.map(g=>'<li>'+esc(g)+'</li>').join('')+'</ul>':'')+(r.wins.length?'<h3>Wins</h3><ul>'+li(r.wins)+'</ul>':'')+(r.work.length?'<h3>Needs more work</h3><ul>'+li(r.work)+'</ul>':'')+(r.hw.length?'<h3>Homework set</h3><ul>'+li(r.hw)+'</ul>':'')+(r.next?'<h3>Next steps</h3><div style="white-space:pre-wrap">'+esc(r.next)+'</div>':'')+(r.count===0?'<p>No lessons logged for this month.</p>':'')+'</div>'+(S.brand.foot?'<div class="ft">'+esc(S.brand.foot)+'</div>':'')+'</div>'; }
+function renderRep(){ const h=repHtml(); const el=$('rep'); el.outerHTML=h.replace('<div id="rep"','<div id="rep"'); $('sheet').innerHTML=repHtml().replace('id="rep"','id="rep2"'); }
+['rsid','rmon'].forEach(i=>$(i).addEventListener('change',()=>{ $('rnext').value=S.next[nextKey()]||''; renderRep(); }));
+$('rnext').addEventListener('input',()=>{ S.next[nextKey()]=$('rnext').value; save(); renderRep(); });
+$('print').onclick=()=>{ renderRep(); window.print(); };
+$('copy').onclick=async()=>{ const r=curReport(); if(!r){ $('msgR').textContent='Add a student first.'; return; } const t=PN.text(r,S.brand); try{ await navigator.clipboard.writeText(t); $('msgR').textContent='Report text copied.'; }catch(e){ $('msgR').textContent='Copy blocked by the browser; use Print instead.'; } };
+function fillBrand(){ $('bname').value=S.brand.name; $('bcol').value=PN.safeColor(S.brand.col); $('bfoot').value=S.brand.foot; }
+$('s-set').addEventListener('input',e=>{ if(e.target.type==='file') return; S.brand.name=$('bname').value; S.brand.col=$('bcol').value; S.brand.foot=$('bfoot').value; save(); });
+$('blogo').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{ const s=Math.min(1,240/Math.max(im.naturalWidth,im.naturalHeight)); const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(im.naturalWidth*s)); c.height=Math.max(1,Math.round(im.naturalHeight*s)); c.getContext('2d').drawImage(im,0,0,c.width,c.height); S.brand.logo=c.toDataURL('image/png'); save(); $('msgB').textContent='Logo added.'; }; im.onerror=()=>{ $('msgB').textContent='That file is not a readable image.'; }; im.src=fr.result; }; fr.readAsDataURL(f); };
+$('bLogoClear').onclick=()=>{ S.brand.logo=''; $('blogo').value=''; save(); $('msgB').textContent='Logo removed.'; };
+$('exp').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'})); a.download='progressnote-backup.json'; a.click(); };
+$('imp').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ try{ const o=JSON.parse(fr.result); if(!o||!Array.isArray(o.students)||!Array.isArray(o.lessons)) throw 0; S={brand:Object.assign({},DEF.brand,o.brand),students:o.students,lessons:o.lessons,next:o.next||{}}; save(); fillBrand(); fillSel(); $('msgB').textContent='Backup restored.'; }catch(x){ alert('That file is not a ProgressNote backup.'); } }; fr.readAsText(f); };
+$('reset').onclick=()=>{ if(confirm('Reset everything to the example data?')){ S=JSON.parse(JSON.stringify(DEF)); save(); fillBrand(); fillSel(); renderStu(); $('msgB').textContent='Reset to examples.'; } };
+load(); $('ldate').value=today(); $('rmon').value=(function(){ const m=today().slice(0,7); const f=S.students[0]; if(f && !PN.monthLessons(S.lessons,f.id,m).length){ const ls=S.lessons.filter(l=>l.sid===f.id).map(l=>l.date).sort(); if(ls.length) return ls[ls.length-1].slice(0,7); } return m; })(); fillBrand(); fillSel(); renderStu(); renderLessons(); $('rnext').value=S.next[nextKey()]||''; renderRep(); showTab('s-stu');
+})();
+</script></body></html>

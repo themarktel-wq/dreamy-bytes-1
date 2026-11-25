@@ -1,0 +1,11 @@
+{
+ "stage": "build2",
+ "date": "2026-11-25",
+ "products": {
+  "d20261125-05": {"slug": "progressnote-parent-report", "name": "ProgressNote: Parent Progress Report Generator", "status": "built", "qa": "pass (25 checks, Chromium only)", "price_usd": 29, "files": ["index.html", "README.md", "cover.png"]},
+  "d20261125-06": {"slug": "tutor-income-package-pricing-sheet", "name": "Tutor Income and Package Pricing Sheet", "status": "built", "qa": "pass (79 formulas, 0 errors, values match independent maths; LibreOffice only)", "price_usd": 24, "files": ["Tutor-Income-and-Package-Pricing-Sheet.xlsx", "README.md", "cover.png"]},
+  "d20261125-07": {"slug": "moveout-ledger-deposit-statement", "name": "MoveOut Ledger: Itemized Deposit Statement Builder", "status": "built", "qa": "pass (25 checks, Chromium only)", "price_usd": 35, "files": ["index.html", "README.md", "cover.png"]},
+  "d20261125-10": {"slug": "small-landlord-notice-addendum-pack", "name": "Small Landlord Notice + Addendum Pack", "status": "built", "qa": "pass (files open, PDFs render; not legal-reviewed)", "price_usd": 29, "files": ["00-06 .docx", "pdf/ (7 PDFs)", "README.md", "cover.png"]}
+ },
+ "summary": {"built": 4, "failed": 0}
+}
