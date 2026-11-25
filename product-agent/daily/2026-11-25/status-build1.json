@@ -1,0 +1,47 @@
+{
+ "stage": "build1",
+ "date": "2026-11-25",
+ "products": [
+  {
+   "id": "d20261125-01",
+   "name": "DetailQuote: Size x Condition x Add-On Quote Builder",
+   "slug": "detailquote-size-condition-addon-quote-builder",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 35,
+   "price_pkr": 9800,
+   "type": "html tool"
+  },
+  {
+   "id": "d20261125-02",
+   "name": "Booking Guard: Detailer Deposit + Access-Check n8n Flow",
+   "slug": "booking-guard-detailer-n8n-flow",
+   "status": "built",
+   "qa": "PASS in local simulator only (see qa-report.md)",
+   "price_usd": 45,
+   "price_pkr": 12600,
+   "type": "n8n"
+  },
+  {
+   "id": "d20261125-03",
+   "name": "Detailer Profit-Per-Job Sheet",
+   "slug": "detailer-profit-per-job-sheet",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 24,
+   "price_pkr": 6720,
+   "type": "xlsx"
+  },
+  {
+   "id": "d20261125-04",
+   "name": "TutorLedger: Lesson Log, Invoices and Late-Cancel Fees (Any Payment Method)",
+   "slug": "tutorledger-lesson-log-invoices-late-cancel",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 35,
+   "price_pkr": 9800,
+   "type": "html tool / micro-CRM"
+  }
+ ],
+ "failed": []
+}

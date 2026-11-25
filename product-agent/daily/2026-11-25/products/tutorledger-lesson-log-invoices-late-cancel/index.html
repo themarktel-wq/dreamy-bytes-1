@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TutorLedger - Lesson Log, Statements and Late-Cancel Fees</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#6d28d9;--acc2:#ede9fe}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:20px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:10px 0}.doc h2{margin:0;font-size:20px}.doc td,.doc th{font-size:14px}
+.neg{color:var(--bad)}.pos{color:var(--ok)}
+@media print{.doc{border:0;padding:0;margin:0}}
+</style></head><body>
+<header class="top"><h1>TutorLedger</h1><p>Lesson log, monthly family statements and your own late-cancel rule. Record payments from Zelle, Venmo, cash or bank transfer: no processing fee built in. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs noprint" id="tabs"><button data-t="dash" class="on">Dashboard</button><button data-t="lessons">Lessons</button><button data-t="money">Payments &amp; packages</button><button data-t="stmt">Statements</button><button data-t="setup">Families &amp; rules</button><button data-t="help">How it works</button></div>
+
+<section id="t-dash">
+ <div class="card"><h2>Who owes what</h2><div class="kpi" id="kpi"></div><p class="note" id="sampleNote"></p><div class="tw"><table id="bal"></table></div></div>
+</section>
+
+<section id="t-lessons" class="hidden">
+ <div class="card"><h2>Log a lesson</h2><div class="grid">
+  <div><label>Family</label><select id="l_fam"></select></div><div><label>Student</label><input id="l_stu"></div><div><label>Date</label><input id="l_date" type="date"></div>
+  <div><label>Minutes</label><input id="l_min" type="number" min="5" step="5" value="60"></div>
+  <div><label>Outcome</label><select id="l_status"><option value="done">Lesson done</option><option value="cancelled">Cancelled by family</option><option value="noshow">No-show</option></select></div>
+  <div id="l_noticeBox" class="hidden"><label>Notice given (hours before lesson)</label><input id="l_notice" type="number" min="0" step="1"></div>
+  <div id="l_pkgBox"><label>Use a prepaid package lesson?</label><select id="l_pkg"><option value="0">No, charge the rate</option><option value="1">Yes, deduct from package</option></select></div>
+  <div><label>Note</label><input id="l_note"></div></div>
+  <div class="row"><button class="btn" id="addLesson">Add lesson</button><span id="l_preview" class="mut"></span></div></div>
+ <div class="card"><h2>Lessons</h2><div class="row"><div><label>Month</label><input id="l_filter" type="month"></div></div><div class="tw"><table id="lessonTbl"></table></div></div>
+</section>
+
+<section id="t-money" class="hidden">
+ <div class="card"><h2>Payment received</h2><div class="grid"><div><label>Family</label><select id="p_fam"></select></div><div><label>Date</label><input id="p_date" type="date"></div><div><label>Amount</label><input id="p_amt" type="number" min="0" step="0.01"></div>
+  <div><label>Method</label><select id="p_method"><option>Zelle</option><option>Venmo</option><option>Cash</option><option>Bank transfer</option><option>Check</option><option>Other</option></select></div><div><label>Note</label><input id="p_note"></div></div><div class="row"><button class="btn" id="addPay">Add payment</button></div>
+  <div class="tw"><table id="payTbl"></table></div></div>
+ <div class="card"><h2>Prepaid package sold</h2><div class="grid"><div><label>Family</label><select id="k_fam"></select></div><div><label>Date</label><input id="k_date" type="date"></div><div><label>Lessons in package</label><input id="k_les" type="number" min="1" value="10"></div><div><label>Package price</label><input id="k_price" type="number" min="0" step="0.01"></div></div>
+  <div class="note">The package price is a charge on the family's account. Record the money you receive separately as a payment. Lessons marked "use package" cost nothing extra and reduce the lessons remaining.</div>
+  <div class="row"><button class="btn" id="addPkg">Add package</button></div><div class="tw"><table id="pkgTbl"></table></div></div>
+</section>
+
+<section id="t-stmt" class="hidden">
+ <div class="card noprint"><h2>Monthly statement</h2><div class="grid"><div><label>Family</label><select id="s_fam"></select></div><div><label>Month</label><input id="s_month" type="month"></div></div>
+  <div class="row"><button class="btn" id="print">Print / save as PDF</button><button class="btn sec" id="copy">Copy statement text</button><button class="btn sec" id="expcsv">Export ledger CSV</button></div></div>
+ <div class="doc printable" id="stmt"></div>
+</section>
+
+<section id="t-setup" class="hidden">
+ <div class="card"><h2>Families</h2><div class="grid"><div><label>Family / payer name</label><input id="f_name"></div><div><label>Students (comma separated)</label><input id="f_stu"></div><div><label>Email / phone</label><input id="f_contact"></div><div><label>Rate per hour</label><input id="f_rate" type="number" min="0" step="0.5"></div></div><div class="row"><button class="btn" id="addFam">Add family</button><button class="btn sec" id="clearSample">Remove sample data</button></div><div class="tw"><table id="famTbl"></table></div></div>
+ <div class="card"><h2>Your cancellation rule and statement text</h2><div class="grid">
+  <div><label>Notice required (hours)</label><input id="s_noticeHours" type="number" min="0"></div><div><label>Late-cancel fee (% of lesson price)</label><input id="s_latePct" type="number" min="0" max="100"></div><div><label>No-show fee (% of lesson price)</label><input id="s_noShowPct" type="number" min="0" max="100"></div><div><label>Currency symbol</label><input id="s_cur" maxlength="3"></div><div><label>Your name / business</label><input id="s_biz"></div></div>
+  <label style="margin-top:8px">How to pay (printed on statements, e.g. your Zelle or Venmo handle)</label><textarea id="s_how"></textarea>
+  <label style="margin-top:8px">Cancellation policy text (printed on statements)</label><textarea id="s_policy"></textarea>
+  <div class="note">Percentages and the notice window are yours to set. Charging for late cancellations may be restricted in some places or by platform rules: check the rules where you work. Template wording is not legal advice.</div>
+  <div class="row"><button class="btn sec" id="expjson">Backup JSON</button><label class="btn sec" style="margin:0;cursor:pointer">Restore JSON<input id="impjson" type="file" accept=".json" class="hidden"></label></div></div>
+</section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How TutorLedger works</h2>
+<p><b>Balance</b> = everything charged to the family minus the payments you recorded. Charges are: lessons done (rate x minutes / 60) unless paid from a package, late-cancel and no-show fees, and package purchases.</p>
+<p><b>Late-cancel rule.</b> If a family cancels with less notice than your threshold (hours), the fee is your fee % x the lesson price. Enough notice costs nothing. A no-show costs your no-show %. If you do not enter the notice given, the app assumes zero hours.</p>
+<p><b>Packages.</b> Lessons remaining = lessons bought - lessons marked "use package".</p>
+<p><b>Payments</b> are just records of money you received by Zelle, Venmo, cash, bank transfer or check, so no payment-processing fee is added by this tool.</p>
+<p><b>Statements</b> show the opening balance, that month's lessons and fees, payments, the closing balance and package lessons remaining, ready to print.</p>
+<p><b>Honest notes.</b> Sample families are fictional. Data is stored in this browser only: use Backup JSON or Export ledger CSV regularly. This is a record-keeping tool, not tax or accounting advice.</p></div></section>
+</main>
+<script>
+//CORE
+var DEFAULT_RULES={noticeHours:24,latePct:50,noShowPct:100,cur:'$',biz:'',how:'Please pay by Zelle, Venmo, bank transfer or cash. Payment details: [add yours here]',policy:'Please give at least 24 hours notice to cancel or reschedule a lesson. Late cancellations are charged at 50% of the lesson price and no-shows at 100%.'};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function round2(x){return Math.round(x*100)/100;}
+function famById(D,id){return (D.families||[]).filter(function(f){return f.id===id;})[0];}
+function lessonPrice(f,l){return num(f&&f.rate)*num(l.minutes)/60;}
+function lessonCharge(S,f,l){var price=lessonPrice(f,l);
+ if(l.status==='done'){return l.usePackage?{charge:0,kind:'package',price:price}:{charge:price,kind:'lesson',price:price};}
+ if(l.status==='noshow'){return {charge:price*num(S.noShowPct)/100,kind:'fee',price:price};}
+ if(l.status==='cancelled'){if(num(l.notice)<num(S.noticeHours)){return {charge:price*num(S.latePct)/100,kind:'fee',price:price};}return {charge:0,kind:'free',price:price};}
+ return {charge:0,kind:'free',price:price};}
+function before(d,limit){return limit==null||d<limit;}
+function charges(D,famId,limit){var f=famById(D,famId),t=0;
+ (D.lessons||[]).forEach(function(l){if(l.fam===famId&&before(l.date,limit))t+=lessonCharge(D.rules,f,l).charge;});
+ (D.packages||[]).forEach(function(p){if(p.fam===famId&&before(p.date,limit))t+=num(p.price);});return t;}
+function payments(D,famId,limit){var t=0;(D.payments||[]).forEach(function(p){if(p.fam===famId&&before(p.date,limit))t+=num(p.amount);});return t;}
+function balance(D,famId,limit){return charges(D,famId,limit)-payments(D,famId,limit);}
+function packageLessons(D,famId,limit){var b=0,u=0;(D.packages||[]).forEach(function(p){if(p.fam===famId&&before(p.date,limit))b+=num(p.lessons);});(D.lessons||[]).forEach(function(l){if(l.fam===famId&&l.status==='done'&&l.usePackage&&before(l.date,limit))u++;});return {bought:b,used:u,left:b-u};}
+function nextMonth(m){var y=+m.slice(0,4),mo=+m.slice(5,7);mo++;if(mo>12){mo=1;y++;}return y+'-'+(mo<10?'0':'')+mo;}
+function statement(D,famId,month){var f=famById(D,famId),start=month+'-01',end=nextMonth(month)+'-01';var items=[];
+ (D.lessons||[]).forEach(function(l){if(l.fam===famId&&l.date>=start&&l.date<end){var c=lessonCharge(D.rules,f,l);items.push({date:l.date,type:'lesson',desc:(l.student||'Lesson')+' - '+num(l.minutes)+' min - '+({done:l.usePackage?'done (package lesson)':'done',cancelled:num(l.notice)<num(D.rules.noticeHours)?'late cancel ('+num(l.notice)+'h notice)':'cancelled ('+num(l.notice)+'h notice, no charge)',noshow:'no-show'})[l.status],charge:c.charge,payment:0});}});
+ (D.packages||[]).forEach(function(p){if(p.fam===famId&&p.date>=start&&p.date<end)items.push({date:p.date,type:'package',desc:'Prepaid package: '+num(p.lessons)+' lessons',charge:num(p.price),payment:0});});
+ (D.payments||[]).forEach(function(p){if(p.fam===famId&&p.date>=start&&p.date<end)items.push({date:p.date,type:'payment',desc:'Payment received ('+p.method+')'+(p.note?' - '+p.note:''),charge:0,payment:num(p.amount)});});
+ items.sort(function(a,b){return a.date<b.date?-1:(a.date>b.date?1:(a.type==='payment'?1:-1));});
+ var ch=0,pay=0;items.forEach(function(i){ch+=i.charge;pay+=i.payment;});var opening=balance(D,famId,start);
+ return {family:f,month:month,opening:opening,items:items,charges:ch,payments:pay,closing:opening+ch-pay,pkg:packageLessons(D,famId,end)};}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function ledgerCSV(D){var rows=[];
+ (D.lessons||[]).forEach(function(l){var f=famById(D,l.fam);rows.push([l.date,f?f.name:'',l.status,(l.student||'')+' '+num(l.minutes)+'min'+(l.usePackage?' (package)':''),round2(lessonCharge(D.rules,f,l).charge),0]);});
+ (D.packages||[]).forEach(function(p){var f=famById(D,p.fam);rows.push([p.date,f?f.name:'','package',num(p.lessons)+' lessons',round2(num(p.price)),0]);});
+ (D.payments||[]).forEach(function(p){var f=famById(D,p.fam);rows.push([p.date,f?f.name:'','payment',p.method+(p.note?' '+p.note:''),0,round2(num(p.amount))]);});
+ rows.sort(function(a,b){return a[0]<b[0]?-1:(a[0]>b[0]?1:0);});rows.unshift(['date','family','type','description','charge','payment']);
+ var q=function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+ return rows.map(function(r){return r.map(q).join(',');}).join('\n');}
+//ENDCORE
+var KEY='tutorledger.v1';function $(id){return document.getElementById(id);}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function ld(){try{var v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function sample(){var t=today(),m=t.slice(0,7),prev=(function(){var y=+m.slice(0,4),mo=+m.slice(5,7)-1;if(mo<1){mo=12;y--;}return y+'-'+(mo<10?'0':'')+mo;})();
+ return {rules:JSON.parse(JSON.stringify(DEFAULT_RULES)),families:[{id:'f1',sample:1,name:'Sample: Rivera family',students:'Mia',contact:'',rate:50},{id:'f2',sample:1,name:'Sample: Chen family',students:'Leo, Ana',contact:'',rate:60},{id:'f3',sample:1,name:'Sample: Okafor family',students:'Tunde',contact:'',rate:45}],
+ lessons:[{id:'l1',fam:'f1',student:'Mia',date:prev+'-03',minutes:60,status:'done',note:''},{id:'l2',fam:'f1',student:'Mia',date:prev+'-10',minutes:60,status:'cancelled',notice:2,note:''},{id:'l3',fam:'f1',student:'Mia',date:m+'-04',minutes:60,status:'done'},{id:'l4',fam:'f1',student:'Mia',date:m+'-11',minutes:90,status:'done'},
+  {id:'l5',fam:'f2',student:'Leo',date:m+'-02',minutes:60,status:'done',usePackage:1},{id:'l6',fam:'f2',student:'Ana',date:m+'-09',minutes:60,status:'done',usePackage:1},{id:'l7',fam:'f2',student:'Leo',date:m+'-16',minutes:60,status:'noshow'},
+  {id:'l8',fam:'f3',student:'Tunde',date:m+'-05',minutes:45,status:'done'},{id:'l9',fam:'f3',student:'Tunde',date:m+'-12',minutes:45,status:'cancelled',notice:30}],
+ packages:[{id:'k1',fam:'f2',date:prev+'-28',lessons:10,price:550}],
+ payments:[{id:'p1',fam:'f1',date:prev+'-15',amount:50,method:'Zelle',note:''},{id:'p2',fam:'f2',date:prev+'-28',amount:550,method:'Venmo',note:'package'},{id:'p3',fam:'f3',date:m+'-06',amount:33.75,method:'Cash',note:''}]};}
+var D=ld()||sample();if(!D.rules)D.rules=JSON.parse(JSON.stringify(DEFAULT_RULES));
+function money(v){return (D.rules.cur||'$')+(Math.round(v*100)/100).toFixed(2);}
+function famOpts(sel){var cur=sel.value;sel.innerHTML=D.families.map(function(f){return '<option value="'+esc(f.id)+'">'+esc(f.name)+'</option>';}).join('');if(cur&&D.families.some(function(f){return f.id===cur;}))sel.value=cur;}
+function render(){['l_fam','p_fam','k_fam','s_fam'].forEach(function(i){famOpts($(i));});
+ var tot=0,ow=0;D.families.forEach(function(f){var b=balance(D,f.id);tot+=b;if(b>0.005)ow++;});
+ var due=0;D.lessons.forEach(function(l){});
+ $('kpi').innerHTML='<div><span class="mut">Total outstanding</span><b class="'+(tot>0.005?'neg':'')+'">'+money(tot)+'</b></div><div><span class="mut">Families owing</span><b>'+ow+'</b></div><div><span class="mut">Families</span><b>'+D.families.length+'</b></div><div><span class="mut">Lessons logged</span><b>'+D.lessons.length+'</b></div>';
+ $('sampleNote').textContent=(D.families.some(function(f){return f.sample;}))?'Sample families (fictional) are loaded so you can see how it works. Remove them in Families & rules.':'';
+ $('bal').innerHTML='<tr><th>Family</th><th class="num">Charged</th><th class="num">Paid</th><th class="num">Balance</th><th class="num">Package lessons left</th></tr>'+(D.families.length?D.families.map(function(f){var c=charges(D,f.id),p=payments(D,f.id),b=c-p,pk=packageLessons(D,f.id);return '<tr><td>'+esc(f.name)+'</td><td class="num">'+money(c)+'</td><td class="num">'+money(p)+'</td><td class="num '+(b>0.005?'neg':(b<-0.005?'pos':''))+'"><b>'+money(b)+'</b></td><td class="num">'+(pk.bought?pk.left:'-')+'</td></tr>';}).join(''):'<tr><td colspan="5" class="mut">Add a family first.</td></tr>');
+ renderLessons();renderMoney();renderSetup();renderStmt();}
+function renderLessons(){var m=$('l_filter').value;var list=D.lessons.filter(function(l){return !m||l.date.slice(0,7)===m;}).sort(function(a,b){return a.date<b.date?1:-1;});
+ $('lessonTbl').innerHTML='<tr><th>Date</th><th>Family</th><th>Student</th><th class="num">Min</th><th>Outcome</th><th class="num">Charge</th><th></th></tr>'+(list.length?list.map(function(l){var f=famById(D,l.fam),c=lessonCharge(D.rules,f,l);var oc=l.status==='done'?(l.usePackage?'done (package)':'done'):(l.status==='noshow'?'no-show':(c.kind==='fee'?'late cancel ('+num(l.notice)+'h)':'cancelled ('+num(l.notice)+'h)'));return '<tr><td>'+esc(l.date)+'</td><td>'+esc(f?f.name:'?')+'</td><td>'+esc(l.student)+'</td><td class="num">'+num(l.minutes)+'</td><td>'+oc+'</td><td class="num">'+money(c.charge)+'</td><td><button class="btn del" data-dl="'+esc(l.id)+'">x</button></td></tr>';}).join(''):'<tr><td colspan="7" class="mut">No lessons for this filter.</td></tr>');}
+function renderMoney(){var fam=function(id){var f=famById(D,id);return esc(f?f.name:'?');};
+ $('payTbl').innerHTML='<tr><th>Date</th><th>Family</th><th>Method</th><th class="num">Amount</th><th></th></tr>'+(D.payments.length?D.payments.slice().sort(function(a,b){return a.date<b.date?1:-1;}).map(function(p){return '<tr><td>'+esc(p.date)+'</td><td>'+fam(p.fam)+'</td><td>'+esc(p.method)+(p.note?' - '+esc(p.note):'')+'</td><td class="num">'+money(num(p.amount))+'</td><td><button class="btn del" data-dp="'+esc(p.id)+'">x</button></td></tr>';}).join(''):'<tr><td colspan="5" class="mut">No payments yet.</td></tr>');
+ $('pkgTbl').innerHTML='<tr><th>Date</th><th>Family</th><th class="num">Lessons</th><th class="num">Price</th><th class="num">Left</th><th></th></tr>'+(D.packages.length?D.packages.map(function(p){return '<tr><td>'+esc(p.date)+'</td><td>'+fam(p.fam)+'</td><td class="num">'+num(p.lessons)+'</td><td class="num">'+money(num(p.price))+'</td><td class="num">'+packageLessons(D,p.fam).left+'</td><td><button class="btn del" data-dk="'+esc(p.id)+'">x</button></td></tr>';}).join(''):'<tr><td colspan="6" class="mut">No packages yet.</td></tr>');}
+function renderSetup(){$('famTbl').innerHTML='<tr><th>Family</th><th>Students</th><th class="num">Rate / hour</th><th></th></tr>'+D.families.map(function(f){return '<tr><td>'+esc(f.name)+'</td><td>'+esc(f.students)+'</td><td class="num"><input type="number" min="0" step="0.5" data-rate="'+esc(f.id)+'" value="'+num(f.rate)+'" style="width:90px"></td><td><button class="btn del" data-df="'+esc(f.id)+'">x</button></td></tr>';}).join('');
+ var R=D.rules;$('s_noticeHours').value=R.noticeHours;$('s_latePct').value=R.latePct;$('s_noShowPct').value=R.noShowPct;$('s_cur').value=R.cur;$('s_biz').value=R.biz;$('s_how').value=R.how;$('s_policy').value=R.policy;}
+function stmtHtml(){var fid=$('s_fam').value,m=$('s_month').value;if(!fid||!m)return '<p class="mut">Pick a family and month.</p>';var s=statement(D,fid,m);var R=D.rules;
+ return '<h2>'+esc(R.biz||'Statement')+'</h2><p><b>Statement for:</b> '+esc(s.family.name)+(s.family.students?' ('+esc(s.family.students)+')':'')+'<br><b>Month:</b> '+m+'</p><table><tr><td>Opening balance</td><td class="num">'+money(s.opening)+'</td></tr></table><table style="margin-top:10px"><tr><th>Date</th><th>Description</th><th class="num">Charge</th><th class="num">Payment</th></tr>'+(s.items.length?s.items.map(function(i){return '<tr><td>'+esc(i.date)+'</td><td>'+esc(i.desc)+'</td><td class="num">'+(i.charge?money(i.charge):'')+'</td><td class="num">'+(i.payment?money(i.payment):'')+'</td></tr>';}).join(''):'<tr><td colspan="4" class="mut">No activity this month.</td></tr>')+'<tr><td></td><td><b>Totals</b></td><td class="num"><b>'+money(s.charges)+'</b></td><td class="num"><b>'+money(s.payments)+'</b></td></tr></table><p style="font-size:18px"><b>Balance due: '+money(s.closing)+'</b>'+(s.closing<-0.005?' (credit)':'')+'</p>'+(s.pkg.bought?'<p>Prepaid package lessons remaining: <b>'+s.pkg.left+'</b> of '+s.pkg.bought+' bought</p>':'')+'<p>'+esc(R.how)+'</p><p class="mut">'+esc(R.policy)+'</p>';}
+function renderStmt(){$('stmt').innerHTML=stmtHtml();}
+function stmtText(){var fid=$('s_fam').value,m=$('s_month').value;if(!fid||!m)return '';var s=statement(D,fid,m);return [(D.rules.biz||'Statement'),'Statement for '+s.family.name+' - '+m,'Opening balance: '+money(s.opening)].concat(s.items.map(function(i){return i.date+' '+i.desc+': '+(i.charge?'+'+money(i.charge):'-'+money(i.payment));})).concat(['Balance due: '+money(s.closing),D.rules.how]).join('\n');}
+function updPreview(){var fid=$('l_fam').value,f=famById(D,fid);if(!f){$('l_preview').textContent='';return;}var l={fam:fid,minutes:num($('l_min').value),status:$('l_status').value,notice:$('l_notice').value,usePackage:$('l_pkg').value==='1'&&$('l_status').value==='done'};var c=lessonCharge(D.rules,f,l);$('l_preview').textContent='Charge for this entry: '+money(c.charge)+(c.kind==='fee'?' (fee)':'')+(c.kind==='package'?' (from package)':'');
+ $('l_noticeBox').classList.toggle('hidden',$('l_status').value!=='cancelled');$('l_pkgBox').classList.toggle('hidden',$('l_status').value!=='done');}
+document.addEventListener('input',function(e){var t=e.target;
+ if(t.dataset.rate){famById(D,t.dataset.rate).rate=num(t.value);sv();render();return;}
+ if(t.id&&t.id.indexOf('s_')===0&&['s_fam','s_month'].indexOf(t.id)<0){var k=t.id.slice(2);D.rules[k]=(k==='cur'||k==='biz'||k==='how'||k==='policy')?t.value:num(t.value);sv();render();return;}
+ if(t.id==='l_filter')renderLessons();if(t.id==='s_fam'||t.id==='s_month')renderStmt();if(/^l_/.test(t.id))updPreview();});
+document.addEventListener('change',function(e){if(/^l_/.test(e.target.id))updPreview();if(e.target.id==='s_fam'||e.target.id==='s_month')renderStmt();});
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['dash','lessons','money','stmt','setup','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});return;}
+ if(d.dl){D.lessons=D.lessons.filter(function(x){return x.id!==d.dl;});sv();render();return;}
+ if(d.dp){D.payments=D.payments.filter(function(x){return x.id!==d.dp;});sv();render();return;}
+ if(d.dk){D.packages=D.packages.filter(function(x){return x.id!==d.dk;});sv();render();return;}
+ if(d.df){if(confirm('Delete this family and all their lessons, packages and payments?')){var id=d.df;D.families=D.families.filter(function(x){return x.id!==id;});['lessons','packages','payments'].forEach(function(k){D[k]=D[k].filter(function(x){return x.fam!==id;});});sv();render();}return;}
+ if(t.id==='addFam'){var nm=$('f_name').value.trim();if(!nm){alert('Enter a family name.');return;}D.families.push({id:uid(),name:nm,students:$('f_stu').value,contact:$('f_contact').value,rate:num($('f_rate').value)});['f_name','f_stu','f_contact','f_rate'].forEach(function(i){$(i).value='';});sv();render();return;}
+ if(t.id==='addLesson'){if(!$('l_fam').value){alert('Add a family first (Families & rules tab).');return;}var st=$('l_status').value;if(st==='cancelled'&&$('l_notice').value===''){alert('Enter how many hours notice the family gave.');return;}
+  D.lessons.push({id:uid(),fam:$('l_fam').value,student:$('l_stu').value,date:$('l_date').value||today(),minutes:num($('l_min').value),status:st,notice:st==='cancelled'?num($('l_notice').value):undefined,usePackage:st==='done'&&$('l_pkg').value==='1',note:$('l_note').value});sv();render();return;}
+ if(t.id==='addPay'){if(!$('p_fam').value||!num($('p_amt').value)){alert('Pick a family and enter an amount.');return;}D.payments.push({id:uid(),fam:$('p_fam').value,date:$('p_date').value||today(),amount:num($('p_amt').value),method:$('p_method').value,note:$('p_note').value});$('p_amt').value='';$('p_note').value='';sv();render();return;}
+ if(t.id==='addPkg'){if(!$('k_fam').value||!num($('k_les').value)){alert('Pick a family and number of lessons.');return;}D.packages.push({id:uid(),fam:$('k_fam').value,date:$('k_date').value||today(),lessons:num($('k_les').value),price:num($('k_price').value)});sv();render();return;}
+ if(t.id==='clearSample'){var ids=D.families.filter(function(f){return f.sample;}).map(function(f){return f.id;});D.families=D.families.filter(function(f){return !f.sample;});['lessons','packages','payments'].forEach(function(k){D[k]=D[k].filter(function(x){return ids.indexOf(x.fam)<0;});});sv();render();return;}
+ if(t.id==='print')window.print();
+ if(t.id==='copy'){var tx=stmtText();if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';setTimeout(function(){t.textContent='Copy statement text';},1500);},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);}
+ if(t.id==='expcsv'||t.id==='expjson'){var c=t.id==='expcsv',b=new Blob([c?ledgerCSV(D):JSON.stringify(D,null,1)],{type:c?'text/csv':'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=c?'tutorledger-ledger.csv':'tutorledger-backup.json';a.click();}
+});
+$('impjson').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(x.families&&x.lessons&&x.payments&&x.packages&&x.rules){D=x;sv();render();}else alert('This file is not a TutorLedger backup.');}catch(err){alert('Could not read that file.');}};r.readAsText(f);});
+(function(){var t=today();$('l_date').value=t;$('p_date').value=t;$('k_date').value=t;$('s_month').value=t.slice(0,7);$('l_filter').value=t.slice(0,7);})();
+render();updPreview();
+</script></body></html>
