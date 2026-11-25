@@ -1,0 +1,398 @@
+{
+ "name": "RentRadar: rent reminders, late notices and owner digest",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "days",
+       "daysInterval": 1,
+       "triggerAtHour": 8,
+       "triggerAtMinute": 0
+      }
+     ]
+    }
+   },
+   "id": "94c96e53-c6bf-5f82-82de-c8f4da0983d5",
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    240,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Business",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "1f75293b-a460-5a47-bb3e-811cfd46f66f",
+       "name": "landlordName",
+       "value": "Your Name (landlord)",
+       "type": "string"
+      },
+      {
+       "id": "fd015371-327b-5f96-bb9d-76bba5ab055a",
+       "name": "paymentInstructions",
+       "value": "Pay by bank transfer to ACCOUNT / or the method in your lease.",
+       "type": "string"
+      },
+      {
+       "id": "4ee3666d-f08d-5047-bde5-4dd4c6c6c822",
+       "name": "currency",
+       "value": "$",
+       "type": "string"
+      },
+      {
+       "id": "7efb0f1d-2485-5fa4-a7a9-c313d37710ca",
+       "name": "reminderDays",
+       "value": "3",
+       "type": "string"
+      },
+      {
+       "id": "ea57d9c1-4cee-5417-b3cf-6105d391bb70",
+       "name": "defaultGraceDays",
+       "value": "3",
+       "type": "string"
+      },
+      {
+       "id": "7dc76280-7cd4-5109-b5eb-fcb7d6f9ef32",
+       "name": "summaryDay",
+       "value": "2",
+       "type": "string"
+      },
+      {
+       "id": "d5ebe719-117d-5ee9-b227-776177f9920a",
+       "name": "testDate",
+       "value": "",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "773c2421-68d8-5297-9109-f8a1dd2cd1b6",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Rent Roll",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "210461b7-2dda-5d1a-aa73-af6542a141f7",
+   "name": "Read rent roll",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    680,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json;\nconst DAY = 864e5, ok = s => /^\\d{4}-\\d{2}-\\d{2}$/.test(String(s || ''));\nlet T;\nif (ok(c.testDate)) { const p = String(c.testDate).split('-').map(Number); T = Date.UTC(p[0], p[1] - 1, p[2]); }\nelse { const n = new Date(); T = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()); }\nconst td = new Date(T), ty = td.getUTCFullYear(), tm = td.getUTCMonth();\nconst cur = c.currency || '$', money = v => cur + Number(v).toFixed(2);\nconst remDays = Number(c.reminderDays || 3), defGrace = Number(c.defaultGraceDays || 3), sumDay = Number(c.summaryDay || 2);\nconst who = c.landlordName || 'Your landlord', pay = c.paymentInstructions || 'Please use your usual payment method.';\nconst iso = t => new Date(t).toISOString().slice(0, 10);\nconst out = [], actions = [], overdue = [], skipped = [], valid = [];\nfor (const it of $input.all()) {\n  const r = it.json;\n  const rent = Number(r.rent), dd = Number(r.due_day);\n  if (!r.unit || !r.email || !(rent > 0) || !(dd >= 1 && dd <= 31)) { if (r.unit || r.email || r.tenant) skipped.push((r.unit || r.tenant || r.email || 'row') + ' (needs unit, email, rent and due_day 1-31)'); continue; }\n  valid.push({ r, rent });\n  const grace = r.grace_days === '' || r.grace_days === undefined ? defGrace : Number(r.grace_days);\n  for (const k of [-1, 0, 1]) {\n    const d = new Date(Date.UTC(ty, tm + k, 1)), y = d.getUTCFullYear(), m = d.getUTCMonth();\n    const dim = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(), due = Date.UTC(y, m, Math.min(dd, dim));\n    const key = y + '-' + String(m + 1).padStart(2, '0');\n    if (String(r.paid_through || '').slice(0, 7) >= key) continue;\n    const diff = Math.round((due - T) / DAY), name = r.tenant || 'there', dueTxt = iso(due);\n    if (diff < 0 && -diff > grace) overdue.push(r.unit + ' ' + (r.tenant || '') + ': ' + money(rent) + ' due ' + dueTxt + ', ' + (-diff) + ' days overdue');\n    if (diff === remDays) { out.push({ json: { kind: 'reminder', email: r.email, unit: r.unit, subject: 'Rent reminder: ' + money(rent) + ' due ' + dueTxt, body: 'Hi ' + name + ',\\n\\nA friendly reminder that rent of ' + money(rent) + ' for ' + r.unit + ' is due on ' + dueTxt + '.\\n\\n' + pay + '\\n\\nThank you,\\n' + who } }); actions.push('Reminder sent: ' + r.unit + ' ' + (r.tenant || '') + ' (' + money(rent) + ' due ' + dueTxt + ')'); }\n    else if (diff === 0) { out.push({ json: { kind: 'due', email: r.email, unit: r.unit, subject: 'Rent due today: ' + money(rent), body: 'Hi ' + name + ',\\n\\nRent of ' + money(rent) + ' for ' + r.unit + ' is due today (' + dueTxt + ').\\n\\n' + pay + '\\n\\nThank you,\\n' + who } }); actions.push('Due-today notice sent: ' + r.unit + ' ' + (r.tenant || '')); }\n    else if (-diff === grace + 1) {\n      let fee = 0; const t = String(r.late_fee_type || '').toLowerCase(), v = Number(r.late_fee_value || 0);\n      if (t === 'flat') fee = v; else if (t === 'percent') fee = Math.round(rent * v) / 100;\n      const cap = Number(r.late_fee_cap || 0); if (cap > 0 && fee > cap) fee = cap;\n      const feeTxt = fee > 0 ? ' A late fee of ' + money(fee) + ' applies as set out in your lease, making the amount now due ' + money(rent + fee) + '.' : '';\n      out.push({ json: { kind: 'late', email: r.email, unit: r.unit, subject: 'Rent is past due: ' + r.unit, body: 'Hi ' + name + ',\\n\\nOur records show rent of ' + money(rent) + ' for ' + r.unit + ', due ' + dueTxt + ', has not been received and the grace period of ' + grace + ' days has ended.' + feeTxt + '\\n\\n' + pay + '\\n\\nIf you have already paid, or need to talk about it, please reply to this email.\\n\\nThank you,\\n' + who } });\n      actions.push('LATE notice sent: ' + r.unit + ' ' + (r.tenant || '') + ' (' + money(rent) + ' due ' + dueTxt + (fee > 0 ? ', late fee ' + money(fee) : ', no late fee') + ')');\n    }\n  }\n}\nconst lines = [];\nif (actions.length) lines.push('Today\\'s actions:', ...actions.map(a => '- ' + a), '');\nif (overdue.length) lines.push('Still unpaid past the grace period:', ...overdue.map(a => '- ' + a), '');\nif (skipped.length) lines.push('Skipped rows:', ...skipped.map(a => '- ' + a), '');\nif (td.getUTCDate() === sumDay) {\n  const pm = new Date(Date.UTC(ty, tm - 1, 1)), key = pm.getUTCFullYear() + '-' + String(pm.getUTCMonth() + 1).padStart(2, '0');\n  const exp = valid.reduce((s, x) => s + x.rent, 0), paid = valid.filter(x => String(x.r.paid_through || '').slice(0, 7) >= key), col = paid.reduce((s, x) => s + x.rent, 0), un = valid.filter(x => !(String(x.r.paid_through || '').slice(0, 7) >= key));\n  lines.push('Monthly summary for ' + key + ':', '- Units: ' + valid.length, '- Expected rent: ' + money(exp), '- Collected: ' + money(col) + (exp > 0 ? ' (' + Math.round(col / exp * 100) + '%)' : ''), '- Outstanding: ' + (un.length ? un.map(x => x.r.unit + ' ' + (x.r.tenant || '') + ' ' + money(x.rent)).join('; ') : 'none'), '');\n}\nif (lines.length) out.push({ json: { kind: 'digest', email: c.ownerEmail, unit: '', subject: 'Rent digest ' + iso(T), body: lines.join('\\n').trim() } });\nreturn out.length ? out : [{ json: { none: true } }];"
+   },
+   "id": "6a3c3dff-e1df-5164-a491-bdc67fa336ba",
+   "name": "Classify",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    900,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "921631f8-61a1-573a-97cf-3d08a273d735",
+       "leftValue": "={{ !!(!$json.none) }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "34287538-076a-5498-9b6b-fb9c069b959d",
+   "name": "Anything to send",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "e5ece901-b063-51ba-9a82-f70cd745dc48",
+       "leftValue": "={{ !!($json.kind === 'digest') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "51604dbc-2f5d-51b0-9507-cef37c7d4beb",
+   "name": "Owner digest or tenant mail",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1340,
+    180
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $json.email }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.body }}",
+    "options": {}
+   },
+   "id": "bc1c3f5a-402b-5686-9d46-2743b4a27925",
+   "name": "Email owner digest",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1560,
+    60
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $json.email }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.body }}",
+    "options": {}
+   },
+   "id": "e0f4ca12-1c8d-5ca7-84e1-3b2dac59e7b4",
+   "name": "Email tenant",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1560,
+    300
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## RentRadar: rent reminders, late notices and owner digest\nEvery morning reads your rent-roll Google Sheet, emails tenants a reminder 3 days before rent is due and on the due date, sends a late notice with the fee YOU configure per lease the day after the grace period ends, and emails you a daily digest plus a monthly collection summary.\n\n**Setup**\n1. Create a Google Sheet with a tab named Rent Roll and these columns: unit, tenant, email, phone, due_day (1-31), rent, grace_days, late_fee_type (flat / percent / none), late_fee_value, late_fee_cap (optional), paid_through (YYYY-MM of the latest month paid, e.g. 2026-11).\n2. Each month when rent arrives, set paid_through for that tenant to the month paid (2026-12). Rows with paid_through on or after a due month are skipped for that month.\n3. Open Config: fill ownerEmail, landlordName, paymentInstructions, currency. Leave testDate blank (put a date like 2026-12-01 to dry-run a given day).\n4. Check your local and lease rules on late-fee amounts and notice before enabling.\n5. Connect Google Sheets OAuth2 and SMTP credentials, test with Execute workflow, then activate. Set GENERIC_TIMEZONE for your area.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "c8a35cfc-6521-57fa-8092-b302757f57a6",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Read rent roll",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read rent roll": {
+   "main": [
+    [
+     {
+      "node": "Classify",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Classify": {
+   "main": [
+    [
+     {
+      "node": "Anything to send",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Anything to send": {
+   "main": [
+    [
+     {
+      "node": "Owner digest or tenant mail",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Owner digest or tenant mail": {
+   "main": [
+    [
+     {
+      "node": "Email owner digest",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Email tenant",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

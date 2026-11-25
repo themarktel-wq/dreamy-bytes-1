@@ -1,0 +1,76 @@
+[
+ {
+  "file": "01-rentradar.json",
+  "title": "RentRadar: rent reminders, late notices and owner digest",
+  "sample": {},
+  "mocks": {
+   "Read rent roll": [
+    {
+     "unit": "Unit A",
+     "tenant": "Ana Reyes",
+     "email": "ana@example.com",
+     "phone": "",
+     "due_day": 28,
+     "rent": 1200,
+     "grace_days": 3,
+     "late_fee_type": "percent",
+     "late_fee_value": 5,
+     "late_fee_cap": "",
+     "paid_through": ""
+    },
+    {
+     "unit": "Unit B",
+     "tenant": "Ben Cho",
+     "email": "ben@example.com",
+     "phone": "",
+     "due_day": 25,
+     "rent": 950,
+     "grace_days": 3,
+     "late_fee_type": "percent",
+     "late_fee_value": 5,
+     "late_fee_cap": "",
+     "paid_through": ""
+    },
+    {
+     "unit": "Unit C",
+     "tenant": "Cara Dole",
+     "email": "cara@example.com",
+     "phone": "",
+     "due_day": 21,
+     "rent": 1200,
+     "grace_days": 3,
+     "late_fee_type": "percent",
+     "late_fee_value": 5,
+     "late_fee_cap": "",
+     "paid_through": ""
+    },
+    {
+     "unit": "Unit D",
+     "tenant": "Dev Rao",
+     "email": "dev@example.com",
+     "phone": "",
+     "due_day": 25,
+     "rent": 800,
+     "grace_days": 3,
+     "late_fee_type": "percent",
+     "late_fee_value": 5,
+     "late_fee_cap": "",
+     "paid_through": "2026-11"
+    },
+    {
+     "unit": "Unit E",
+     "tenant": "No Email",
+     "email": "",
+     "rent": 700,
+     "due_day": 5
+    }
+   ]
+  },
+  "expect": [
+   "Email owner digest",
+   "Email tenant"
+  ],
+  "notexpect": [],
+  "trigger": "cron"
+ }
+]

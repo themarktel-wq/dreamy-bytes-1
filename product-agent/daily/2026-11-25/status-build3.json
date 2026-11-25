@@ -1,0 +1,19 @@
+{
+ "stage": "build3",
+ "date": "2026-11-25",
+ "products": {
+  "d20261125-09": {
+   "slug": "rentradar-rent-reminder-late-fee-n8n-flow",
+   "name": "RentRadar: Rent Reminder + Late Fee n8n Flow",
+   "status": "built",
+   "qa": "pass (simulated, not run live)",
+   "price_usd": 45,
+   "files": [
+    "RentRadar.n8n.json",
+    "rent-roll-sample.csv",
+    "README.md",
+    "cover.png"
+   ]
+  }
+ }
+}

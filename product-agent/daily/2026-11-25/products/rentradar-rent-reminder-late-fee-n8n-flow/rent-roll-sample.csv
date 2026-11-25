@@ -1,0 +1,4 @@
+unit,tenant,email,phone,due_day,rent,grace_days,late_fee_type,late_fee_value,late_fee_cap,paid_through
+Sample 1A,Sample Tenant One,tenant1@example.com,,1,1200,3,percent,5,60,2026-11
+Sample 1B,Sample Tenant Two,tenant2@example.com,,5,950,5,flat,40,,2026-10
+Sample 2A,Sample Tenant Three,tenant3@example.com,,15,1400,3,none,,,2026-11
