@@ -13,9 +13,16 @@ const API = {
     if (!window.LM_DEMO) {
       try {
         const r = await fetch('api/info', { credentials: 'same-origin' });
-        if (r.ok && (r.headers.get('content-type') || '').includes('json')) { this.mode = 'server'; this.info = await r.json(); }
+        const isJson = (r.headers.get('content-type') || '').includes('json');
+        if (r.ok && isJson) { this.mode = 'server'; this.info = await r.json(); }
+        else if (isJson && r.status >= 500) {
+          /* A real server answered but is not ready (for example the owner login is not set up yet).
+             Never fall back to the sample-data demo here: tell the owner what to fix. */
+          const d = await r.json().catch(() => ({}));
+          throw Object.assign(new Error(d.error || 'The store is not ready yet.'), { setup: true });
+        }
         else this.mode = 'demo';
-      } catch { this.mode = 'demo'; }
+      } catch (e) { if (e && e.setup) throw e; this.mode = 'demo'; }
     } else this.mode = 'demo';
     if (this.mode === 'demo') { Demo.start(); this.info = await this.get('/api/info'); }
     await this.refreshMe();

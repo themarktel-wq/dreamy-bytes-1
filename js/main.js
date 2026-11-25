@@ -156,7 +156,11 @@ const Updater = {
 
 /* ---------- Boot ---------- */
 async function boot() {
-  await API.init();
+  try { await API.init(); } catch (e) {
+    $('#demoBar').classList.add('hidden');
+    $('#view').innerHTML = `<div class="wrap"><div class="auth"><div class="box"><h1>Store is not ready yet</h1><p class="muted">${esc(e.message)}</p><p class="muted" style="font-size:14px">If you are the owner: open Netlify, check the environment variables, then redeploy. If you are a customer, please try again in a little while.</p></div></div></div>`;
+    return;
+  }
   Shell.brand(); Shell.render();
   $('#headSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go('#/catalog?q=' + encodeURIComponent(e.target.value.trim())); e.target.blur(); } });
   $('#headSearchBtn').innerHTML = icon('search');
