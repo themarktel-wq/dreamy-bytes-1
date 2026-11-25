@@ -133,6 +133,7 @@ const Updater = {
       this.ready();
     });
     try { this.reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }); } catch { return; }
+    if (!this.reg) return;
     if (this.reg.waiting && navigator.serviceWorker.controller) this.reg.waiting.postMessage('skipWaiting');
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.check(); });
     setInterval(() => this.check(), 10 * 60e3);

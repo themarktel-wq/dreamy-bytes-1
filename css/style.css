@@ -98,8 +98,9 @@ body::before { content: ''; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 /* Category nav */
 .catnav { display: none; background: #fff; border-bottom: 1px solid var(--line); }
-.catnav .wrap { display: flex; align-items: center; gap: 4px; height: 48px; }
-.catnav a { padding: 8px 12px; font-size: 14px; font-weight: 500; color: var(--text); border-radius: 8px; white-space: nowrap; }
+.catnav .wrap { display: flex; align-items: center; gap: 4px; height: 48px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.catnav .wrap::-webkit-scrollbar { display: none; }
+.catnav a { padding: 8px 12px; font-size: 14px; font-weight: 500; color: var(--text); border-radius: 8px; white-space: nowrap; flex: none; }
 .catnav a:hover, .catnav a.on { color: var(--navy); background: var(--navy-50); }
 .catnav .sp { flex: 1; }
 .catnav .phone-pick { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line-2); font-weight: 600; color: var(--navy); }
