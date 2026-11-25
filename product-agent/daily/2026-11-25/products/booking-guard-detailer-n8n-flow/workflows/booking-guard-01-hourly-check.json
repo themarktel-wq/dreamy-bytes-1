@@ -1,0 +1,629 @@
+{
+ "name": "01 Booking Guard 1: deposit, access reminders, weather hold, at-risk alert",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "hours",
+       "hoursInterval": 1
+      }
+     ]
+    }
+   },
+   "id": "f1df85ea-217f-5256-a540-7400d6b7d221",
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    240,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Mobile Detailing",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "c01c218b-d7a7-59ef-8355-adf78c106797",
+       "name": "tzOffset",
+       "value": "+00:00",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "sms",
+       "type": "string"
+      },
+      {
+       "id": "2dfebd07-0447-5b1a-8350-a480592b2e50",
+       "name": "depositRequired",
+       "value": "yes",
+       "type": "string"
+      },
+      {
+       "id": "a4cf7162-3622-5837-b1fa-b57ffe251d43",
+       "name": "depositAmount",
+       "value": "40",
+       "type": "string"
+      },
+      {
+       "id": "dbf65193-c173-5ef5-a959-2129a6580f0a",
+       "name": "depositLink",
+       "value": "https://buy.stripe.com/REPLACE_WITH_YOUR_OWN_PAYMENT_LINK",
+       "type": "string"
+      },
+      {
+       "id": "4ee3666d-f08d-5047-bde5-4dd4c6c6c822",
+       "name": "currency",
+       "value": "$",
+       "type": "string"
+      },
+      {
+       "id": "9aa860c8-430b-563c-8dcd-350489efc6b5",
+       "name": "noticeHours",
+       "value": "24",
+       "type": "string"
+      },
+      {
+       "id": "4a75c9e7-21e4-5a6f-b9f5-c6c1423c4914",
+       "name": "repeatNoShowThreshold",
+       "value": "2",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "fd7cd643-55c5-5299-9a72-9c4f78fa69a0",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "bbf1b0e6-79e1-593c-abfa-47ce021d022a",
+   "name": "Read Bookings",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    680,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json;\nconst now = Date.now();\nconst rows = $input.all().map(i => i.json).filter(r => r && r.booking_id);\nconst st = r => String(r.status || '').trim().toLowerCase();\nconst digits = s => String(s || '').replace(/\\D/g, '').slice(-10);\nconst first = s => String(s || '').trim().split(/\\s+/)[0] || 'there';\nconst ACCESS = \" Please reply YES if all of these will be ready: (1) a water tap within hose reach, (2) a power outlet, (3) the vehicle keys or access, (4) a clear parking spot. Reply NO if any will not be available and we will call you.\";\nconst out = [];\nfor (const r of rows) {\n  const status = st(r);\n  if (status !== 'booked' && status !== 'confirmed') continue;\n  const date = String(r.date || '').slice(0, 10);\n  const time = String(r.time || '09:00').trim().padStart(5, '0');\n  const start = new Date(date + 'T' + time + ':00' + c.tzOffset).getTime();\n  if (isNaN(start)) continue;\n  const h = (start - now) / 36e5;\n  if (h <= 0) continue;\n  const phone = String(r.phone || '').trim(), email = String(r.email || '').trim();\n  const channel = (c.channel === 'sms' && phone) ? 'sms' : (email ? 'email' : (phone ? 'sms' : 'none'));\n  const when = date + ' at ' + time;\n  const veh = String(r.vehicle || '').trim() || 'your vehicle';\n  const prior = rows.filter(x => String(x.booking_id) !== String(r.booking_id) && st(x) === 'no-show' && digits(x.phone) && digits(x.phone) === digits(r.phone)).length;\n  const repeat = prior >= (Number(c.repeatNoShowThreshold) || 2);\n  const f = { deposit_status: String(r.deposit_status || ''), r48_sent: String(r.r48_sent || ''), r24_sent: String(r.r24_sent || ''), risk_flag: String(r.risk_flag || ''), weather_hold: String(r.weather_hold || '') };\n  const base = { booking_id: r.booking_id, client: r.client, vehicle: veh, when, channel, to_phone: phone, to_email: email, prior, repeat, ...f };\n  let item = null;\n  if (channel !== 'none' && f.weather_hold.toLowerCase() === 'yes') {\n    item = { ...base, action: 'weather', weather_hold: 'notified', subject: 'Weather: we need to move your appointment', text: 'Hi ' + first(r.client) + ', bad weather is forecast for your detail on ' + when + ' (' + veh + '). We will move it, not cancel it: your deposit carries over to the new date and nothing is forfeited. Please reply with 2 or 3 dates and times that suit you.' };\n  } else if (channel !== 'none' && (c.depositRequired === 'yes' || repeat) && !f.deposit_status) {\n    item = { ...base, action: 'deposit', deposit_status: repeat ? 'requested (non-refundable)' : 'requested', subject: 'Deposit to hold your detail on ' + when,\n      text: 'Hi ' + first(r.client) + ', thanks for booking ' + c.businessName + ' on ' + when + ' for ' + veh + '. To hold the slot please pay the ' + c.currency + c.depositAmount + ' deposit: ' + c.depositLink + (repeat ? ' Because of earlier missed appointments this deposit is non-refundable if you cancel inside ' + c.noticeHours + ' hours or do not show.' : ' It is applied to your final bill.') };\n  } else if (channel !== 'none' && status === 'booked' && !f.r48_sent && h > 24 && h <= 48) {\n    item = { ...base, action: 'reminder48', r48_sent: 'yes', subject: 'Reminder: ' + veh + ' detail on ' + when,\n      text: 'Hi ' + first(r.client) + ', reminder: ' + c.businessName + ' will detail ' + veh + ' at ' + (r.address || 'your address') + ' on ' + when + '.' + ACCESS };\n  } else if (channel !== 'none' && status === 'booked' && !f.r24_sent && h > 12 && h <= 24) {\n    item = { ...base, action: 'reminder24', r24_sent: 'yes', subject: 'Tomorrow: ' + veh + ' detail', text: 'Hi ' + first(r.client) + ', see you tomorrow: ' + veh + ' on ' + when + '.' + ACCESS };\n  }\n  if (!item && status === 'booked' && !f.risk_flag && String(r.access_confirmed || '').toLowerCase() !== 'yes' && h <= 12) {\n    item = { ...base, action: 'atrisk', channel: 'owner', risk_flag: 'yes', subject: 'AT RISK: access not confirmed, ' + (r.client || '') + ' / ' + veh + ' on ' + when,\n      text: (r.client || 'Client') + ' (' + veh + ', ' + (r.package || 'package') + ') at ' + (r.address || 'address n/a') + ' on ' + when + ' has not confirmed water, power, keys and parking and is within 12 hours. Deposit: ' + (f.deposit_status || 'none') + '. Phone: ' + (phone || 'n/a') + '. Consider calling before driving out.' };\n  }\n  if (item) out.push({ json: item });\n}\nreturn out;"
+   },
+   "id": "44171d18-46ca-582a-b1c7-b9caa54b3bff",
+   "name": "Decide",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    900,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "a1c6eecb-da95-53e0-8b79-0184c80132c4",
+       "leftValue": "={{ !!($json.channel === 'owner') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "148a32bb-4adc-5232-b13e-603ff07b8161",
+   "name": "IF jsonchannel  owner",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.text }}",
+    "options": {}
+   },
+   "id": "9a3d9737-c26f-52fb-9c72-02c22e87bbf3",
+   "name": "Alert owner",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1340,
+    180
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $('Decide').item.json.booking_id }}",
+      "deposit_status": "={{ $('Decide').item.json.deposit_status }}",
+      "r48_sent": "={{ $('Decide').item.json.r48_sent }}",
+      "r24_sent": "={{ $('Decide').item.json.r24_sent }}",
+      "risk_flag": "={{ $('Decide').item.json.risk_flag }}",
+      "weather_hold": "={{ $('Decide').item.json.weather_hold }}"
+     },
+     "matchingColumns": [
+      "booking_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "0f030641-95e9-5f2a-91d1-7048d2269ba3",
+   "name": "Mark flag (owner)",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1560,
+    180
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "d401e746-00dd-53be-a9c7-1830a17c5323",
+       "leftValue": "={{ !!($json.channel === 'sms') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "83cf218b-1ff7-5b44-b37c-6145a802bc3e",
+   "name": "IF jsonchannel  sms",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1340,
+    420
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $json.to_phone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ $json.text }}"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "2897c6dc-521d-5ca5-b786-45d84dc60b7d",
+   "name": "Send SMS",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1560,
+    300
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth: Account SID / Auth Token)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $('Decide').item.json.booking_id }}",
+      "deposit_status": "={{ $('Decide').item.json.deposit_status }}",
+      "r48_sent": "={{ $('Decide').item.json.r48_sent }}",
+      "r24_sent": "={{ $('Decide').item.json.r24_sent }}",
+      "risk_flag": "={{ $('Decide').item.json.risk_flag }}",
+      "weather_hold": "={{ $('Decide').item.json.weather_hold }}"
+     },
+     "matchingColumns": [
+      "booking_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "c83425a0-619e-5e6d-a210-7dd2b081ff1d",
+   "name": "Mark flag (sms)",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1780,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $json.to_email }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.text }}",
+    "options": {}
+   },
+   "id": "1785e2ef-0fd0-5446-885f-4a9e29f308c5",
+   "name": "Send email",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1560,
+    540
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $('Decide').item.json.booking_id }}",
+      "deposit_status": "={{ $('Decide').item.json.deposit_status }}",
+      "r48_sent": "={{ $('Decide').item.json.r48_sent }}",
+      "r24_sent": "={{ $('Decide').item.json.r24_sent }}",
+      "risk_flag": "={{ $('Decide').item.json.risk_flag }}",
+      "weather_hold": "={{ $('Decide').item.json.weather_hold }}"
+     },
+     "matchingColumns": [
+      "booking_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "e9d1e9af-2513-51ae-9dd1-3c8ffe18d390",
+   "name": "Mark flag (email)",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1780,
+    540
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Booking Guard 1: deposit, access reminders, weather hold, at-risk alert\nRuns every hour on your Bookings sheet. Sends the deposit request (repeat no-show clients get a non-refundable note), the 48h and 24h reminders that ask the customer to confirm water, power, keys and parking, the weather-hold message that moves rather than forfeits the deposit, and alerts you when a booking inside 12 hours has no access confirmation.\n\n**Setup**\n1. Create a Google Sheet with tabs Bookings and Report using the CSV headers in the sheet-templates folder; paste its ID into the Config node (sheetId).\n2. Fill in the Config node: business name, owner email, time zone offset (for example -05:00), channel (sms or email), deposit amount and your own Stripe/PayPal payment link, notice hours.\n3. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth: Account SID / Auth Token) if you use SMS.\n4. Execute once with test rows, then activate.\n5. Bookings.date must be YYYY-MM-DD and time 24h HH:MM (format the columns as plain text).\n6. To trigger the weather message, type yes in the weather_hold column of the affected rows.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "4dd1f8d9-292b-5716-8e51-155d6e0fe086",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Read Bookings",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Bookings": {
+   "main": [
+    [
+     {
+      "node": "Decide",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Decide": {
+   "main": [
+    [
+     {
+      "node": "IF jsonchannel  owner",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonchannel  owner": {
+   "main": [
+    [
+     {
+      "node": "Alert owner",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "IF jsonchannel  sms",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Alert owner": {
+   "main": [
+    [
+     {
+      "node": "Mark flag (owner)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonchannel  sms": {
+   "main": [
+    [
+     {
+      "node": "Send SMS",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Send email",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send SMS": {
+   "main": [
+    [
+     {
+      "node": "Mark flag (sms)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send email": {
+   "main": [
+    [
+     {
+      "node": "Mark flag (email)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

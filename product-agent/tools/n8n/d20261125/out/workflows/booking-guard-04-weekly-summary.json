@@ -1,0 +1,355 @@
+{
+ "name": "04 Booking Guard 4: weekly summary",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "weeks",
+       "weeksInterval": 1,
+       "triggerAtDay": [
+        1
+       ],
+       "triggerAtHour": 8,
+       "triggerAtMinute": 0
+      }
+     ]
+    }
+   },
+   "id": "3e0c3213-8adb-5dd4-b6f2-53f237e32998",
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    240,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Mobile Detailing",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "c01c218b-d7a7-59ef-8355-adf78c106797",
+       "name": "tzOffset",
+       "value": "+00:00",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "sms",
+       "type": "string"
+      },
+      {
+       "id": "2dfebd07-0447-5b1a-8350-a480592b2e50",
+       "name": "depositRequired",
+       "value": "yes",
+       "type": "string"
+      },
+      {
+       "id": "a4cf7162-3622-5837-b1fa-b57ffe251d43",
+       "name": "depositAmount",
+       "value": "40",
+       "type": "string"
+      },
+      {
+       "id": "dbf65193-c173-5ef5-a959-2129a6580f0a",
+       "name": "depositLink",
+       "value": "https://buy.stripe.com/REPLACE_WITH_YOUR_OWN_PAYMENT_LINK",
+       "type": "string"
+      },
+      {
+       "id": "4ee3666d-f08d-5047-bde5-4dd4c6c6c822",
+       "name": "currency",
+       "value": "$",
+       "type": "string"
+      },
+      {
+       "id": "9aa860c8-430b-563c-8dcd-350489efc6b5",
+       "name": "noticeHours",
+       "value": "24",
+       "type": "string"
+      },
+      {
+       "id": "4a75c9e7-21e4-5a6f-b9f5-c6c1423c4914",
+       "name": "repeatNoShowThreshold",
+       "value": "2",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "0a7a65e9-6c17-59ac-82ee-ec4034724a05",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "859c7dc2-8138-5db4-8c6f-43f066ce5929",
+   "name": "Read Bookings",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    680,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.booking_id);\nconst today = new Date(); today.setUTCHours(0, 0, 0, 0);\nconst from = new Date(today.getTime() - 7 * 864e5).toISOString().slice(0, 10);\nconst to = today.toISOString().slice(0, 10);\nconst wk = rows.filter(r => { const d = String(r.date).slice(0, 10); return d >= from && d < to; });\nconst st = r => String(r.status || '').trim().toLowerCase();\nconst completed = wk.filter(r => st(r) === 'completed').length;\nconst noshow = wk.filter(r => st(r) === 'no-show');\nconst cancelled = wk.filter(r => st(r) === 'cancelled');\nconst late = cancelled.filter(r => /forfeit/i.test(String(r.deposit_status || ''))).length;\nconst weather = wk.filter(r => /transferred/i.test(String(r.deposit_status || ''))).length;\nconst access = wk.filter(r => String(r.access_confirmed || '').trim().toLowerCase() === 'no').length;\nconst lost = noshow.reduce((s, r) => s + (parseFloat(String(r.price || '').replace(/[^0-9.]/g, '')) || 0), 0);\nconst held = completed + noshow.length;\nconst rate = held ? Math.round(1000 * noshow.length / held) / 10 : 0;\nreturn [{ json: { week_start: from, week_end: to, appointments: wk.length, completed, no_shows: noshow.length, cancellations: cancelled.length, late_cancels: late, weather_moves: weather, access_issues: access, no_show_rate_pct: rate, est_lost_revenue: Math.round(lost * 100) / 100 } }];"
+   },
+   "id": "e594cb6a-fc0c-5e57-9c89-d28186829457",
+   "name": "Report",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    900,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "append",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Report",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "week_start": "={{ $json.week_start }}",
+      "week_end": "={{ $json.week_end }}",
+      "appointments": "={{ $json.appointments }}",
+      "completed": "={{ $json.completed }}",
+      "no_shows": "={{ $json.no_shows }}",
+      "cancellations": "={{ $json.cancellations }}",
+      "late_cancels": "={{ $json.late_cancels }}",
+      "weather_moves": "={{ $json.weather_moves }}",
+      "access_issues": "={{ $json.access_issues }}",
+      "no_show_rate_pct": "={{ $json.no_show_rate_pct }}",
+      "est_lost_revenue": "={{ $json.est_lost_revenue }}"
+     },
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "4137b5d2-9dc7-5527-b327-e10078883770",
+   "name": "Log report",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1120,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Weekly booking report ' + $('Report').first().json.week_start }}",
+    "emailFormat": "text",
+    "text": "={{ 'Last 7 days (' + $('Report').first().json.week_start + ' to ' + $('Report').first().json.week_end + '): ' + $('Report').first().json.completed + ' completed, ' + $('Report').first().json.no_shows + ' no-shows (' + $('Report').first().json.no_show_rate_pct + '%), ' + $('Report').first().json.cancellations + ' cancelled (' + $('Report').first().json.late_cancels + ' late), ' + $('Report').first().json.weather_moves + ' weather moves, ' + $('Report').first().json.access_issues + ' access problems. Estimated revenue lost to no-shows: ' + $('Report').first().json.est_lost_revenue }}",
+    "options": {}
+   },
+   "id": "fa927641-bddc-5f9a-b7d8-ea9faf11eb64",
+   "name": "Email report",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1340,
+    300
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Booking Guard 4: weekly summary\nEvery Monday it counts last week's completed jobs, no-shows, cancellations, late cancellations, weather moves and access problems from your sheet, adds a row to the Report tab and emails you.\n\n**Setup**\n1. Create a Google Sheet with tabs Bookings and Report using the CSV headers in the sheet-templates folder; paste its ID into the Config node (sheetId).\n2. Fill in the Config node: business name, owner email, time zone offset (for example -05:00), channel (sms or email), deposit amount and your own Stripe/PayPal payment link, notice hours.\n3. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth: Account SID / Auth Token) if you use SMS.\n4. Execute once with test rows, then activate.\n5. After each job set the Bookings status to Completed or No-show.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "b7f7a026-0d38-5ef3-88cd-4572117c0ba6",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Read Bookings",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Bookings": {
+   "main": [
+    [
+     {
+      "node": "Report",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Report": {
+   "main": [
+    [
+     {
+      "node": "Log report",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Log report": {
+   "main": [
+    [
+     {
+      "node": "Email report",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

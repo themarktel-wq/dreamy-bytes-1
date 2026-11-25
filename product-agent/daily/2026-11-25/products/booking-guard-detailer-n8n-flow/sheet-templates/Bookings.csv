@@ -1,0 +1,2 @@
+booking_id,date,time,client,phone,email,address,vehicle,package,price,status,deposit_status,access_confirmed,weather_hold,r48_sent,r24_sent,risk_flag
+B001,2026-12-05,10:00,Sample Client,+15551230000,sample@example.com,12 Example St,2019 Sample SUV,Full detail,240,Booked,,,,,,

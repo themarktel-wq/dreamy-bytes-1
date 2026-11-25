@@ -1,0 +1,1456 @@
+[
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "deposit request by SMS (new booking, no deposit yet)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B1",
+     "date": "2026-11-28",
+     "time": "15:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Decide",
+   "Send SMS",
+   "Mark flag (sms)"
+  ],
+  "notexpect": [
+   "Send email",
+   "Alert owner"
+  ],
+  "contains": [
+   [
+    "Send SMS",
+    "REPLACE_WITH_YOUR_OWN_PAYMENT_LINK"
+   ],
+   [
+    "Send SMS",
+    "applied to your final bill"
+   ],
+   [
+    "Mark flag (sms)",
+    "\"deposit_status\":\"requested\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "repeat no-show client (2 earlier no-shows) gets a non-refundable deposit note even when deposits are optional",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B2",
+     "date": "2026-11-28",
+     "time": "15:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "P1",
+     "date": "2026-11-13",
+     "time": "03:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "No-show",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "P2",
+     "date": "2026-11-17",
+     "time": "07:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "No-show",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send SMS",
+    "non-refundable"
+   ],
+   [
+    "Mark flag (sms)",
+    "requested (non-refundable)"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "a single earlier no-show is not enough to count as repeat (threshold 2)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B3",
+     "date": "2026-11-28",
+     "time": "15:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "P1",
+     "date": "2026-11-13",
+     "time": "03:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "No-show",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send SMS",
+    "applied to your final bill"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "48h reminder asks for water, power, keys and parking",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B4",
+     "date": "2026-11-27",
+     "time": "07:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS",
+   "Mark flag (sms)"
+  ],
+  "notexpect": [
+   "Send email",
+   "Alert owner"
+  ],
+  "contains": [
+   [
+    "Send SMS",
+    "water tap"
+   ],
+   [
+    "Send SMS",
+    "power outlet"
+   ],
+   [
+    "Send SMS",
+    "keys"
+   ],
+   [
+    "Send SMS",
+    "parking spot"
+   ],
+   [
+    "Send SMS",
+    "reply YES"
+   ],
+   [
+    "Mark flag (sms)",
+    "\"r48_sent\":\"yes\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "24h reminder falls back to email when no phone",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B5",
+     "date": "2026-11-26",
+     "time": "11:09",
+     "client": "Dana Smith",
+     "phone": "",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send email",
+   "Mark flag (email)"
+  ],
+  "notexpect": [
+   "Send SMS"
+  ],
+  "contains": [
+   [
+    "Send email",
+    "dana@example.com"
+   ],
+   [
+    "Mark flag (email)",
+    "\"r24_sent\":\"yes\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "weather hold message moves, not forfeits, the deposit",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B6",
+     "date": "2026-11-26",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "yes",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS",
+   "Mark flag (sms)"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send SMS",
+    "nothing is forfeited"
+   ],
+   [
+    "Mark flag (sms)",
+    "\"weather_hold\":\"notified\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "weather hold already notified is not sent twice",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B7",
+     "date": "2026-11-26",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "yes",
+     "weather_hold": "notified",
+     "r48_sent": "yes",
+     "r24_sent": "yes",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send SMS",
+   "Alert owner"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "unconfirmed access within 12h alerts the owner (no client message)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B8",
+     "date": "2026-11-25",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "yes",
+     "r24_sent": "yes",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Alert owner",
+   "Mark flag (owner)"
+  ],
+  "notexpect": [
+   "Send SMS",
+   "Send email"
+  ],
+  "contains": [
+   [
+    "Alert owner",
+    "AT RISK"
+   ],
+   [
+    "Alert owner",
+    "Consider calling before driving out"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "confirmed access, already-flagged, past and far-future rows do nothing",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B9",
+     "date": "2026-11-27",
+     "time": "07:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Confirmed",
+     "deposit_status": "paid",
+     "access_confirmed": "yes",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B10",
+     "date": "2026-11-25",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "yes",
+     "r24_sent": "yes",
+     "risk_flag": "yes"
+    },
+    {
+     "booking_id": "B11",
+     "date": "2026-11-25",
+     "time": "10:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B12",
+     "date": "2026-12-03",
+     "time": "23:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B13",
+     "date": "2026-11-26",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Cancelled",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send SMS",
+   "Send email",
+   "Alert owner"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "two rows same action (two 48h reminders)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B14",
+     "date": "2026-11-27",
+     "time": "07:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B15",
+     "date": "2026-11-27",
+     "time": "08:09",
+     "client": "Lee Park",
+     "phone": "+15551230002",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS",
+   "Mark flag (sms)"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send SMS",
+    "Lee"
+   ],
+   [
+    "Send SMS",
+    "Dana"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-01-hourly-check.json",
+  "title": "empty sheet",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {}
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send SMS",
+   "Alert owner"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-02-reply-capture.json",
+  "title": "YES confirms access and the booking",
+  "sample": {
+   "From": "+1 (555) 123-0001",
+   "Body": " yes "
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-26",
+     "time": "11:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-27",
+     "time": "17:09",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Mark confirmed",
+   "Thank you SMS"
+  ],
+  "notexpect": [
+   "Mark cancelled",
+   "Forward reply",
+   "Mark access problem"
+  ],
+  "contains": [
+   [
+    "Mark confirmed",
+    "\"status\":\"Confirmed\""
+   ],
+   [
+    "Mark confirmed",
+    "\"access_confirmed\":\"yes\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-02-reply-capture.json",
+  "title": "NO marks an access problem and alerts the owner (does not cancel)",
+  "sample": {
+   "From": "+15551230001",
+   "Body": "No"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-26",
+     "time": "11:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-27",
+     "time": "17:09",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Mark access problem",
+   "Access problem SMS",
+   "Alert access problem"
+  ],
+  "notexpect": [
+   "Mark cancelled",
+   "Mark confirmed"
+  ],
+  "contains": [
+   [
+    "Mark access problem",
+    "\"access_confirmed\":\"no\""
+   ],
+   [
+    "Alert access problem",
+    "Call before driving out"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-02-reply-capture.json",
+  "title": "CANCEL inside the notice window forfeits the deposit",
+  "sample": {
+   "From": "+15551230001",
+   "Body": "cancel"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-26",
+     "time": "11:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-27",
+     "time": "17:09",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Mark cancelled",
+   "Cancelled SMS",
+   "Cancellation notice"
+  ],
+  "notexpect": [
+   "Mark confirmed"
+  ],
+  "contains": [
+   [
+    "Mark cancelled",
+    "forfeited (late cancel)"
+   ],
+   [
+    "Cancelled SMS",
+    "not refundable"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-02-reply-capture.json",
+  "title": "CANCEL outside the notice window marks the deposit refund due",
+  "sample": {
+   "From": "+15559990000",
+   "Body": "CANCEL please"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-26",
+     "time": "11:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-27",
+     "time": "17:09",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Mark cancelled",
+   "Cancelled SMS"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Mark cancelled",
+    "refund due"
+   ],
+   [
+    "Cancelled SMS",
+    "will be refunded"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-02-reply-capture.json",
+  "title": "CANCEL with no deposit on file leaves the deposit field alone",
+  "sample": {
+   "From": "+15551230001",
+   "Body": "cancel"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B22",
+     "date": "2026-11-26",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Mark cancelled"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Mark cancelled",
+    "\"deposit_status\":\"\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-02-reply-capture.json",
+  "title": "other text is forwarded to the owner",
+  "sample": {
+   "From": "+15551230001",
+   "Body": "Can you come at 3pm instead?"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-26",
+     "time": "11:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-27",
+     "time": "17:09",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Forward reply"
+  ],
+  "notexpect": [
+   "Mark confirmed",
+   "Mark cancelled"
+  ],
+  "contains": [
+   [
+    "Forward reply",
+    "Can you come at 3pm instead?"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-02-reply-capture.json",
+  "title": "unknown number",
+  "sample": {
+   "From": "+15550001111",
+   "Body": "YES"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B20",
+     "date": "2026-11-26",
+     "time": "11:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    },
+    {
+     "booking_id": "B21",
+     "date": "2026-11-27",
+     "time": "17:09",
+     "client": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Unmatched reply"
+  ],
+  "notexpect": [
+   "Mark confirmed"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-03-weather-reschedule.json",
+  "title": "weather reschedule moves the booking, transfers the deposit and resets reminders",
+  "sample": {
+   "booking_id": "B30",
+   "new_date": "2099-03-05",
+   "new_time": "10:30"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B30",
+     "date": "2026-11-26",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "notified",
+     "r48_sent": "yes",
+     "r24_sent": "yes",
+     "risk_flag": "yes"
+    }
+   ]
+  },
+  "expect": [
+   "Move booking",
+   "Confirm by SMS",
+   "Tell owner moved"
+  ],
+  "notexpect": [
+   "Tell owner problem",
+   "Confirm by email"
+  ],
+  "contains": [
+   [
+    "Move booking",
+    "\"date\":\"2099-03-05\""
+   ],
+   [
+    "Move booking",
+    "\"deposit_status\":\"transferred (weather)\""
+   ],
+   [
+    "Move booking",
+    "\"r48_sent\":\"\""
+   ],
+   [
+    "Move booking",
+    "\"weather_hold\":\"\""
+   ],
+   [
+    "Confirm by SMS",
+    "carries over"
+   ],
+   [
+    "Confirm by SMS",
+    "2099-03-05"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-03-weather-reschedule.json",
+  "title": "weather reschedule with no phone uses email",
+  "sample": {
+   "booking_id": "B31",
+   "new_date": "2099-03-05",
+   "new_time": "9:00"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B31",
+     "date": "2026-11-26",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Move booking",
+   "Confirm by email"
+  ],
+  "notexpect": [
+   "Confirm by SMS"
+  ],
+  "contains": [
+   [
+    "Confirm by email",
+    "dana@example.com"
+   ],
+   [
+    "Move booking",
+    "\"time\":\"09:00\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-03-weather-reschedule.json",
+  "title": "weather reschedule without a deposit does not mention one",
+  "sample": {
+   "booking_id": "B32",
+   "new_date": "2099-03-05",
+   "new_time": "10:00"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B32",
+     "date": "2026-11-26",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Move booking",
+   "Confirm by SMS"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Confirm by SMS",
+    "See you then"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-03-weather-reschedule.json",
+  "title": "invalid date tells the owner and changes nothing",
+  "sample": {
+   "booking_id": "B30",
+   "new_date": "next tuesday",
+   "new_time": "10:00"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B30",
+     "date": "2026-11-26",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Tell owner problem"
+  ],
+  "notexpect": [
+   "Move booking",
+   "Confirm by SMS"
+  ],
+  "contains": [
+   [
+    "Tell owner problem",
+    "YYYY-MM-DD"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-03-weather-reschedule.json",
+  "title": "unknown booking id tells the owner",
+  "sample": {
+   "booking_id": "NOPE",
+   "new_date": "2099-03-05",
+   "new_time": "10:00"
+  },
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "B30",
+     "date": "2026-11-26",
+     "time": "21:09",
+     "client": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "vehicle": "2019 Ford F-150",
+     "package": "Full detail",
+     "price": "$240",
+     "status": "Booked",
+     "deposit_status": "paid",
+     "access_confirmed": "",
+     "weather_hold": "",
+     "r48_sent": "",
+     "r24_sent": "",
+     "risk_flag": ""
+    }
+   ]
+  },
+  "expect": [
+   "Tell owner problem"
+  ],
+  "notexpect": [
+   "Move booking"
+  ],
+  "contains": [
+   [
+    "Tell owner problem",
+    "booking not found"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-04-weekly-summary.json",
+  "title": "weekly summary counts only the last 7 full days",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {
+     "booking_id": "R1",
+     "date": "2026-11-23",
+     "status": "Completed",
+     "price": "$240"
+    },
+    {
+     "booking_id": "R2",
+     "date": "2026-11-22",
+     "status": "Completed",
+     "price": "$180"
+    },
+    {
+     "booking_id": "R3",
+     "date": "2026-11-24",
+     "status": "No-show",
+     "price": "$200"
+    },
+    {
+     "booking_id": "R4",
+     "date": "2026-11-21",
+     "status": "Cancelled",
+     "price": "$100",
+     "deposit_status": "forfeited (late cancel)"
+    },
+    {
+     "booking_id": "R5",
+     "date": "2026-11-20",
+     "status": "Cancelled",
+     "price": "$100",
+     "deposit_status": "refund due"
+    },
+    {
+     "booking_id": "R6",
+     "date": "2026-11-23",
+     "status": "Completed",
+     "price": "$150",
+     "deposit_status": "transferred (weather)"
+    },
+    {
+     "booking_id": "R7",
+     "date": "2026-11-19",
+     "status": "Completed",
+     "price": "$90",
+     "access_confirmed": "no"
+    },
+    {
+     "booking_id": "R8",
+     "date": "2026-11-05",
+     "status": "No-show",
+     "price": "$999"
+    }
+   ]
+  },
+  "expect": [
+   "Log report",
+   "Email report"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Log report",
+    "\"no_shows\":1"
+   ],
+   [
+    "Log report",
+    "\"completed\":4"
+   ],
+   [
+    "Log report",
+    "\"cancellations\":2"
+   ],
+   [
+    "Log report",
+    "\"late_cancels\":1"
+   ],
+   [
+    "Log report",
+    "\"weather_moves\":1"
+   ],
+   [
+    "Log report",
+    "\"access_issues\":1"
+   ],
+   [
+    "Log report",
+    "\"no_show_rate_pct\":20"
+   ],
+   [
+    "Log report",
+    "\"est_lost_revenue\":200"
+   ],
+   [
+    "Email report",
+    "1 no-shows (20%)"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "booking-guard-04-weekly-summary.json",
+  "title": "weekly summary with no data does not divide by zero",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Bookings": [
+    {}
+   ]
+  },
+  "expect": [],
+  "notexpect": [],
+  "contains": [],
+  "trigger": "x"
+ }
+]

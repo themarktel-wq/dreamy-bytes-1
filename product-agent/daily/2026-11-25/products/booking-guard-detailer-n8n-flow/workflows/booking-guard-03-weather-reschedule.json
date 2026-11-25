@@ -1,0 +1,575 @@
+{
+ "name": "03 Booking Guard 3: weather reschedule that carries the deposit over",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "detail-reschedule",
+    "options": {},
+    "responseMode": "onReceived"
+   },
+   "id": "85ce0ae8-8ecb-51f5-92ca-3fa2c5e254fb",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    240,
+    300
+   ],
+   "webhookId": "602001d4-28d2-5792-ba94-3dcda2f1ad1a"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Mobile Detailing",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "c01c218b-d7a7-59ef-8355-adf78c106797",
+       "name": "tzOffset",
+       "value": "+00:00",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "sms",
+       "type": "string"
+      },
+      {
+       "id": "2dfebd07-0447-5b1a-8350-a480592b2e50",
+       "name": "depositRequired",
+       "value": "yes",
+       "type": "string"
+      },
+      {
+       "id": "a4cf7162-3622-5837-b1fa-b57ffe251d43",
+       "name": "depositAmount",
+       "value": "40",
+       "type": "string"
+      },
+      {
+       "id": "dbf65193-c173-5ef5-a959-2129a6580f0a",
+       "name": "depositLink",
+       "value": "https://buy.stripe.com/REPLACE_WITH_YOUR_OWN_PAYMENT_LINK",
+       "type": "string"
+      },
+      {
+       "id": "4ee3666d-f08d-5047-bde5-4dd4c6c6c822",
+       "name": "currency",
+       "value": "$",
+       "type": "string"
+      },
+      {
+       "id": "9aa860c8-430b-563c-8dcd-350489efc6b5",
+       "name": "noticeHours",
+       "value": "24",
+       "type": "string"
+      },
+      {
+       "id": "4a75c9e7-21e4-5a6f-b9f5-c6c1423c4914",
+       "name": "repeatNoShowThreshold",
+       "value": "2",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "76a5d056-7d67-5bac-8ad8-7bbd63815e83",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const b = $input.first().json.body || {};\nreturn [{json:{booking_id:String(b.booking_id||''),new_date:String(b.new_date||''),new_time:String(b.new_time||'')}}];"
+   },
+   "id": "b1b9aeb3-e9d8-583b-a2e2-0af2e3bf91da",
+   "name": "Normalize",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    680,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "c1cf1c40-6ff4-5ab1-9418-f35566436a8d",
+   "name": "Read Bookings",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    900,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const b = $('Normalize').first().json;\nconst rows = $input.all().map(i => i.json).filter(r => r && r.booking_id);\nconst r = rows.find(x => String(x.booking_id) === String(b.booking_id));\nif (!r) return [{ json: { ok: false, why: 'booking not found', booking_id: b.booking_id } }];\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(b.new_date) || !/^\\d{1,2}:\\d{2}$/.test(b.new_time)) return [{ json: { ok: false, why: 'new_date must be YYYY-MM-DD and new_time HH:MM', booking_id: b.booking_id } }];\nconst dep = String(r.deposit_status || '');\nconst hasDep = /^(paid|requested)/i.test(dep) && !/forfeit|refund/i.test(dep);\nreturn [{ json: { ok: true, booking_id: r.booking_id, client: r.client, phone: String(r.phone || '').trim(), email: String(r.email || '').trim(), vehicle: String(r.vehicle || '').trim() || 'your vehicle', old_when: String(r.date).slice(0, 10) + ' at ' + r.time, new_date: b.new_date, new_time: String(b.new_time).padStart(5, '0'), new_dep: hasDep ? 'transferred (weather)' : dep, hasDep } }];"
+   },
+   "id": "46591eb0-f697-504c-b2b1-62693d806f2d",
+   "name": "Find booking",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "34937c1a-1218-57b8-a4e4-893d855f4379",
+       "leftValue": "={{ !!(!$json.ok) }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "34f16cbe-1668-5c62-8af4-f0634a8d4f7c",
+   "name": "IF jsonok",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1340,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Weather reschedule failed: ' + $json.booking_id }}",
+    "emailFormat": "text",
+    "text": "={{ $json.why }}",
+    "options": {}
+   },
+   "id": "69d70710-48a0-5d8b-a7ee-3fd595c966f4",
+   "name": "Tell owner problem",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1560,
+    180
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $json.booking_id }}",
+      "date": "={{ $json.new_date }}",
+      "time": "={{ $json.new_time }}",
+      "status": "={{ 'Booked' }}",
+      "deposit_status": "={{ $json.new_dep }}",
+      "access_confirmed": "={{ '' }}",
+      "r48_sent": "={{ '' }}",
+      "r24_sent": "={{ '' }}",
+      "risk_flag": "={{ '' }}",
+      "weather_hold": "={{ '' }}"
+     },
+     "matchingColumns": [
+      "booking_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "9c6a6eed-5cdc-52fe-9755-512bf8497f1d",
+   "name": "Move booking",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1560,
+    420
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Moved for weather: ' + $('Find booking').first().json.client }}",
+    "emailFormat": "text",
+    "text": "={{ $('Find booking').first().json.client + ' moved from ' + $('Find booking').first().json.old_when + ' to ' + $('Find booking').first().json.new_date + ' ' + $('Find booking').first().json.new_time + '. Deposit status: ' + $('Find booking').first().json.new_dep }}",
+    "options": {}
+   },
+   "id": "35a2f966-eeb4-5f08-b495-09eccb06ad64",
+   "name": "Tell owner moved",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1780,
+    420
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "bc657259-eaeb-5e94-9d8d-001c2f5681c4",
+       "leftValue": "={{ !!($('Find booking').first().json.phone !== '') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "94be831a-ebcc-574a-9c1b-c1db418099c5",
+   "name": "IF Find bookingfirstjsonphone",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    2000,
+    420
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $('Find booking').first().json.phone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ 'Hi ' + $('Find booking').first().json.client + ', your detail is moved from ' + $('Find booking').first().json.old_when + ' to ' + $('Find booking').first().json.new_date + ' at ' + $('Find booking').first().json.new_time + ' because of the weather. ' + ($('Find booking').first().json.hasDep ? 'Your deposit carries over to the new date; nothing is forfeited.' : 'See you then.') }}"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "fd0955cb-e804-57f1-b43d-06d89d00e5bb",
+   "name": "Confirm by SMS",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2220,
+    300
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth: Account SID / Auth Token)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Find booking').first().json.email }}",
+    "subject": "={{ 'Your detail has been moved' }}",
+    "emailFormat": "text",
+    "text": "={{ 'Hi ' + $('Find booking').first().json.client + ', your detail is moved from ' + $('Find booking').first().json.old_when + ' to ' + $('Find booking').first().json.new_date + ' at ' + $('Find booking').first().json.new_time + ' because of the weather. ' + ($('Find booking').first().json.hasDep ? 'Your deposit carries over to the new date; nothing is forfeited.' : 'See you then.') }}",
+    "options": {}
+   },
+   "id": "42585352-cada-5ee8-aadf-70af167fe48b",
+   "name": "Confirm by email",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2220,
+    540
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Booking Guard 3: weather reschedule that carries the deposit over\nCall this (webhook POST with booking_id, new_date and new_time) when you and the customer agree a new date after bad weather. It moves the booking, resets the reminders and access check for the new date, marks the deposit as transferred (not forfeited) and tells the customer and you.\n\n**Setup**\n1. Create a Google Sheet with tabs Bookings and Report using the CSV headers in the sheet-templates folder; paste its ID into the Config node (sheetId).\n2. Fill in the Config node: business name, owner email, time zone offset (for example -05:00), channel (sms or email), deposit amount and your own Stripe/PayPal payment link, notice hours.\n3. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth: Account SID / Auth Token) if you use SMS.\n4. Execute once with test rows, then activate.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "75af8c16-3425-5656-8d83-b1d86ca11abe",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Webhook": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Normalize",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalize": {
+   "main": [
+    [
+     {
+      "node": "Read Bookings",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Bookings": {
+   "main": [
+    [
+     {
+      "node": "Find booking",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Find booking": {
+   "main": [
+    [
+     {
+      "node": "IF jsonok",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonok": {
+   "main": [
+    [
+     {
+      "node": "Tell owner problem",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Move booking",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Move booking": {
+   "main": [
+    [
+     {
+      "node": "Tell owner moved",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Tell owner moved": {
+   "main": [
+    [
+     {
+      "node": "IF Find bookingfirstjsonphone",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF Find bookingfirstjsonphone": {
+   "main": [
+    [
+     {
+      "node": "Confirm by SMS",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Confirm by email",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

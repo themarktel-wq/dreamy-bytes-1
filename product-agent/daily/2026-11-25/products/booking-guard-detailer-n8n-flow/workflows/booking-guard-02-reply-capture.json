@@ -1,0 +1,896 @@
+{
+ "name": "02 Booking Guard 2: YES / NO / CANCEL reply handling",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "detail-reply",
+    "options": {},
+    "responseMode": "onReceived"
+   },
+   "id": "24991793-980c-5268-93e8-c73e2aed7f3c",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    240,
+    300
+   ],
+   "webhookId": "24662481-e50a-5a75-bb99-f6e115842dab"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Mobile Detailing",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "c01c218b-d7a7-59ef-8355-adf78c106797",
+       "name": "tzOffset",
+       "value": "+00:00",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "sms",
+       "type": "string"
+      },
+      {
+       "id": "2dfebd07-0447-5b1a-8350-a480592b2e50",
+       "name": "depositRequired",
+       "value": "yes",
+       "type": "string"
+      },
+      {
+       "id": "a4cf7162-3622-5837-b1fa-b57ffe251d43",
+       "name": "depositAmount",
+       "value": "40",
+       "type": "string"
+      },
+      {
+       "id": "dbf65193-c173-5ef5-a959-2129a6580f0a",
+       "name": "depositLink",
+       "value": "https://buy.stripe.com/REPLACE_WITH_YOUR_OWN_PAYMENT_LINK",
+       "type": "string"
+      },
+      {
+       "id": "4ee3666d-f08d-5047-bde5-4dd4c6c6c822",
+       "name": "currency",
+       "value": "$",
+       "type": "string"
+      },
+      {
+       "id": "9aa860c8-430b-563c-8dcd-350489efc6b5",
+       "name": "noticeHours",
+       "value": "24",
+       "type": "string"
+      },
+      {
+       "id": "4a75c9e7-21e4-5a6f-b9f5-c6c1423c4914",
+       "name": "repeatNoShowThreshold",
+       "value": "2",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "456dacce-368e-5094-8ada-b94154db7dad",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const b = $input.first().json.body || {};\nconst raw=String(b.Body||b.body||'').trim().toUpperCase();const from=String(b.From||b.from||'').replace(/\\D/g,'').slice(-10);const intent=/^(Y|YES|YEP|READY|CONFIRM|CONFIRMED)\\b/.test(raw)?'yes':(/^(N|NO|NOPE)\\b/.test(raw)?'no':(/^(CANCEL|CANCELLED|CANCELED)\\b/.test(raw)?'cancel':'other'));return [{json:{from,raw:String(b.Body||b.body||'').trim(),intent}}];"
+   },
+   "id": "66e15af9-3ff5-5f5b-9641-147b9e83694e",
+   "name": "Normalize",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    680,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "78fc3d3a-d55a-54c0-bb10-392cb8309d44",
+   "name": "Read Bookings",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    900,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const n = $('Normalize').first().json;\nconst c = $('Config').first().json;\nconst now = Date.now();\nconst rows = $input.all().map(i => i.json).filter(r => r && r.booking_id);\nconst mine = rows.filter(r => n.from && String(r.phone || '').replace(/\\D/g, '').slice(-10) === n.from && ['booked', 'confirmed'].includes(String(r.status || '').trim().toLowerCase()))\n  .map(r => ({ r, t: new Date(String(r.date).slice(0, 10) + 'T' + String(r.time || '09:00').padStart(5, '0') + ':00' + c.tzOffset).getTime() }))\n  .filter(x => x.t > now).sort((a, b) => a.t - b.t);\nif (!mine.length) return [{ json: { found: false, from: n.from, intent: n.intent, raw: n.raw } }];\nconst r = mine[0].r;\nconst hours = (mine[0].t - now) / 36e5;\nconst notice = Number(c.noticeHours) || 24;\nconst late = hours < notice;\nconst dep = String(r.deposit_status || '');\nconst hasDep = /^(paid|requested)/i.test(dep) && !/forfeit|refund/i.test(dep);\nconst new_dep = late ? (hasDep ? 'forfeited (late cancel)' : dep) : (hasDep ? 'refund due' : dep);\nreturn [{ json: { found: true, booking_id: r.booking_id, client: r.client, vehicle: String(r.vehicle || '').trim() || 'your vehicle', when: String(r.date).slice(0, 10) + ' at ' + r.time, phone: r.phone, intent: n.intent, raw: n.raw, from: n.from, late, notice, hasDep, new_dep, hours: Math.round(hours * 10) / 10 } }];"
+   },
+   "id": "21da6f5d-d94f-59a3-a4cc-518b9e381f87",
+   "name": "Find booking",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "0bec35bd-0260-57b6-9657-c6112dc21d01",
+       "leftValue": "={{ !!(!$json.found) }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "d377aa8f-ed9b-5e72-b937-c97fe4df69b1",
+   "name": "IF jsonfound",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1340,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Unmatched SMS reply from ' + $json.from }}",
+    "emailFormat": "text",
+    "text": "={{ 'Message: ' + $json.raw + '. No upcoming Booked/Confirmed booking found for this number.' }}",
+    "options": {}
+   },
+   "id": "30cb6faf-ab27-5bd4-ad83-fb20da9f0bd0",
+   "name": "Unmatched reply",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1560,
+    180
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "0e8f588b-df2b-563d-a2b1-4d67dff0b427",
+       "leftValue": "={{ !!($json.intent === 'yes') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "0907cc1d-2666-593d-aecc-5a664f838161",
+   "name": "IF jsonintent  yes",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1560,
+    420
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $json.booking_id }}",
+      "status": "={{ 'Confirmed' }}",
+      "access_confirmed": "={{ 'yes' }}"
+     },
+     "matchingColumns": [
+      "booking_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "346a7eaf-1262-568f-ab8c-cacc4c5f1671",
+   "name": "Mark confirmed",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1780,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $('Find booking').first().json.phone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ 'Thanks ' + $('Find booking').first().json.client + '! Access confirmed for ' + $('Find booking').first().json.vehicle + ' on ' + $('Find booking').first().json.when + '. See you then.' }}"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "2742235e-94c6-5748-b45a-de8c6b1e1586",
+   "name": "Thank you SMS",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2000,
+    300
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth: Account SID / Auth Token)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "3f928ce4-f3e0-59c2-95a2-35edfbd14070",
+       "leftValue": "={{ !!($json.intent === 'no') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "190e4d08-2541-5a88-a90c-472658a3398c",
+   "name": "IF jsonintent  no",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1780,
+    540
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $json.booking_id }}",
+      "access_confirmed": "={{ 'no' }}"
+     },
+     "matchingColumns": [
+      "booking_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "156a96ec-a276-5b72-b6e1-349adda14c8a",
+   "name": "Mark access problem",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    2000,
+    420
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $('Find booking').first().json.phone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ 'Thanks ' + $('Find booking').first().json.client + ', we will call you shortly to sort out access for ' + $('Find booking').first().json.when + '.' }}"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "08334f8f-868d-5797-8621-9479a9ca0681",
+   "name": "Access problem SMS",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2220,
+    420
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth: Account SID / Auth Token)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'ACCESS PROBLEM: ' + $('Find booking').first().json.client + ' on ' + $('Find booking').first().json.when }}",
+    "emailFormat": "text",
+    "text": "={{ $('Find booking').first().json.client + ' (' + $('Find booking').first().json.vehicle + ') replied NO to the access check for ' + $('Find booking').first().json.when + '. Call before driving out. Phone: ' + $('Find booking').first().json.phone }}",
+    "options": {}
+   },
+   "id": "57991bac-cfff-5a73-9112-70de9a679061",
+   "name": "Alert access problem",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2440,
+    420
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "8795f13c-8916-5d91-8d16-26e72137da01",
+       "leftValue": "={{ !!($json.intent === 'cancel') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "faac982a-6b76-56b5-9a83-279e139ae13b",
+   "name": "IF jsonintent  cancel",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    2000,
+    660
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Bookings",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "booking_id": "={{ $json.booking_id }}",
+      "status": "={{ 'Cancelled' }}",
+      "deposit_status": "={{ $json.new_dep }}"
+     },
+     "matchingColumns": [
+      "booking_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "7ff20095-f623-50aa-87b5-8b974e39fd8a",
+   "name": "Mark cancelled",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    2220,
+    540
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $('Find booking').first().json.phone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ 'Got it, your ' + $('Find booking').first().json.when + ' appointment is cancelled. ' + ($('Find booking').first().json.late ? 'This is inside our ' + $('Config').first().json.noticeHours + '-hour notice window, so the deposit is not refundable.' : ($('Find booking').first().json.hasDep ? 'You gave enough notice, so your deposit will be refunded, or carried over if you rebook.' : 'Reply to rebook any time.')) }}"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "8b2c057e-4352-5972-a8ad-20e472232da0",
+   "name": "Cancelled SMS",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2440,
+    540
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth: Account SID / Auth Token)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Cancelled: ' + $('Find booking').first().json.client + ' ' + $('Find booking').first().json.when }}",
+    "emailFormat": "text",
+    "text": "={{ $('Find booking').first().json.client + ' cancelled ' + $('Find booking').first().json.hours + ' hours before the appointment (notice window ' + $('Config').first().json.noticeHours + 'h). Deposit status is now: ' + $('Find booking').first().json.new_dep }}",
+    "options": {}
+   },
+   "id": "0341b7a8-c5ad-587a-96d2-f04736d2899e",
+   "name": "Cancellation notice",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2660,
+    540
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Client reply needs you: ' + $json.client }}",
+    "emailFormat": "text",
+    "text": "={{ $json.client + ' (' + $json.vehicle + ', ' + $json.when + ') replied: ' + $json.raw }}",
+    "options": {}
+   },
+   "id": "7672cf3d-cbff-585c-b14b-08a0a0ae7745",
+   "name": "Forward reply",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2220,
+    780
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Booking Guard 2: YES / NO / CANCEL reply handling\nPoint your Twilio number's incoming-message webhook here. YES = water, power, keys and parking are ready (booking becomes Confirmed). NO = something is missing: the row is marked and you are alerted to call. CANCEL cancels and applies your notice rule to the deposit (inside the notice window it is forfeited, outside it is marked refund due). Anything else is forwarded to you.\n\n**Setup**\n1. In Twilio, set your number's \"A message comes in\" webhook (HTTP POST) to this workflow's Production URL.\n2. Create a Google Sheet with tabs Bookings and Report using the CSV headers in the sheet-templates folder; paste its ID into the Config node (sheetId).\n3. Fill in the Config node: business name, owner email, time zone offset (for example -05:00), channel (sms or email), deposit amount and your own Stripe/PayPal payment link, notice hours.\n4. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth: Account SID / Auth Token) if you use SMS.\n5. Execute once with test rows, then activate.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "7ff43cf3-77b9-5594-9e90-9b6b0b967de2",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Webhook": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Normalize",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalize": {
+   "main": [
+    [
+     {
+      "node": "Read Bookings",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Bookings": {
+   "main": [
+    [
+     {
+      "node": "Find booking",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Find booking": {
+   "main": [
+    [
+     {
+      "node": "IF jsonfound",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonfound": {
+   "main": [
+    [
+     {
+      "node": "Unmatched reply",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "IF jsonintent  yes",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonintent  yes": {
+   "main": [
+    [
+     {
+      "node": "Mark confirmed",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "IF jsonintent  no",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark confirmed": {
+   "main": [
+    [
+     {
+      "node": "Thank you SMS",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonintent  no": {
+   "main": [
+    [
+     {
+      "node": "Mark access problem",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "IF jsonintent  cancel",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark access problem": {
+   "main": [
+    [
+     {
+      "node": "Access problem SMS",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Access problem SMS": {
+   "main": [
+    [
+     {
+      "node": "Alert access problem",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonintent  cancel": {
+   "main": [
+    [
+     {
+      "node": "Mark cancelled",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Forward reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark cancelled": {
+   "main": [
+    [
+     {
+      "node": "Cancelled SMS",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Cancelled SMS": {
+   "main": [
+    [
+     {
+      "node": "Cancellation notice",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}
