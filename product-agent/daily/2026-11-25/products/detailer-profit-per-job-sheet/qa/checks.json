@@ -1,0 +1,1315 @@
+{
+ "file": "/home/user/dreamy-bytes-1/product-agent/daily/2026-11-25/products/detailer-profit-per-job-sheet/Detailer-Profit-Per-Job-Sheet.xlsx",
+ "checks": [
+  [
+   "Jobs",
+   "I6",
+   2.3333333333333335,
+   1e-09,
+   "hours"
+  ],
+  [
+   "Jobs",
+   "J6",
+   71.53333333333333,
+   1e-09,
+   "cost"
+  ],
+  [
+   "Jobs",
+   "K6",
+   28.46666666666667,
+   1e-09,
+   "profit"
+  ],
+  [
+   "Jobs",
+   "L6",
+   0.2846666666666667,
+   1e-09,
+   "margin"
+  ],
+  [
+   "Jobs",
+   "M6",
+   37.2,
+   1e-09,
+   "earnings/h before wage"
+  ],
+  [
+   "Jobs",
+   "N6",
+   12.2,
+   1e-09,
+   "profit/h"
+  ],
+  [
+   "Jobs",
+   "P6",
+   110.52066559312938,
+   1e-09,
+   "price needed"
+  ],
+  [
+   "Jobs",
+   "O6",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "I7",
+   1.6666666666666665,
+   1e-09,
+   "hours"
+  ],
+  [
+   "Jobs",
+   "J7",
+   74.13666666666666,
+   1e-09,
+   "cost"
+  ],
+  [
+   "Jobs",
+   "K7",
+   55.863333333333344,
+   1e-09,
+   "profit"
+  ],
+  [
+   "Jobs",
+   "L7",
+   0.42971794871794877,
+   1e-09,
+   "margin"
+  ],
+  [
+   "Jobs",
+   "M7",
+   58.51800000000001,
+   1e-09,
+   "earnings/h before wage"
+  ],
+  [
+   "Jobs",
+   "N7",
+   33.51800000000001,
+   1e-09,
+   "profit/h"
+  ],
+  [
+   "Jobs",
+   "P7",
+   113.3118625872249,
+   1e-09,
+   "price needed"
+  ],
+  [
+   "Jobs",
+   "O7",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "I8",
+   3.5,
+   1e-09,
+   "hours"
+  ],
+  [
+   "Jobs",
+   "J8",
+   116.09,
+   1e-09,
+   "cost"
+  ],
+  [
+   "Jobs",
+   "K8",
+   93.91,
+   1e-09,
+   "profit"
+  ],
+  [
+   "Jobs",
+   "L8",
+   0.4471904761904762,
+   1e-09,
+   "margin"
+  ],
+  [
+   "Jobs",
+   "M8",
+   51.83142857142857,
+   1e-09,
+   "earnings/h before wage"
+  ],
+  [
+   "Jobs",
+   "N8",
+   26.83142857142857,
+   1e-09,
+   "profit/h"
+  ],
+  [
+   "Jobs",
+   "P8",
+   177.13365539452496,
+   1e-09,
+   "price needed"
+  ],
+  [
+   "Jobs",
+   "O8",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "I13",
+   5.916666666666667,
+   1e-09,
+   "hours"
+  ],
+  [
+   "Jobs",
+   "J13",
+   190.6966666666667,
+   1e-09,
+   "cost"
+  ],
+  [
+   "Jobs",
+   "K13",
+   129.3033333333333,
+   1e-09,
+   "profit"
+  ],
+  [
+   "Jobs",
+   "L13",
+   0.4040729166666666,
+   1e-09,
+   "margin"
+  ],
+  [
+   "Jobs",
+   "M13",
+   46.85408450704226,
+   1e-09,
+   "earnings/h before wage"
+  ],
+  [
+   "Jobs",
+   "N13",
+   21.85408450704225,
+   1e-09,
+   "profit/h"
+  ],
+  [
+   "Jobs",
+   "P13",
+   292.13633923778855,
+   1e-09,
+   "price needed"
+  ],
+  [
+   "Jobs",
+   "O13",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "I25",
+   3.166666666666667,
+   1e-09,
+   "hours"
+  ],
+  [
+   "Jobs",
+   "J25",
+   98.65666666666667,
+   1e-09,
+   "cost"
+  ],
+  [
+   "Jobs",
+   "K25",
+   11.343333333333334,
+   1e-09,
+   "profit"
+  ],
+  [
+   "Jobs",
+   "L25",
+   0.10312121212121213,
+   1e-09,
+   "margin"
+  ],
+  [
+   "Jobs",
+   "M25",
+   28.582105263157892,
+   1e-09,
+   "earnings/h before wage"
+  ],
+  [
+   "Jobs",
+   "N25",
+   3.5821052631578945,
+   1e-09,
+   "profit/h"
+  ],
+  [
+   "Jobs",
+   "P25",
+   153.73054213633924,
+   1e-09,
+   "price needed"
+  ],
+  [
+   "Jobs",
+   "O25",
+   "Below floor",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "I35",
+   5.5,
+   1e-09,
+   "hours"
+  ],
+  [
+   "Jobs",
+   "J35",
+   172.28,
+   1e-09,
+   "cost"
+  ],
+  [
+   "Jobs",
+   "K35",
+   147.72,
+   1e-09,
+   "profit"
+  ],
+  [
+   "Jobs",
+   "L35",
+   0.461625,
+   1e-09,
+   "margin"
+  ],
+  [
+   "Jobs",
+   "M35",
+   51.858181818181826,
+   1e-09,
+   "earnings/h before wage"
+  ],
+  [
+   "Jobs",
+   "N35",
+   26.85818181818182,
+   1e-09,
+   "profit/h"
+  ],
+  [
+   "Jobs",
+   "P35",
+   262.47987117552333,
+   1e-09,
+   "price needed"
+  ],
+  [
+   "Jobs",
+   "O35",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O6",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O7",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O8",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O9",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O10",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O11",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O12",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O13",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O14",
+   "Losing money",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O15",
+   "Losing money",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O16",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O17",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O18",
+   "Below floor",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O19",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O20",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O21",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O22",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O23",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O24",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O25",
+   "Below floor",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O26",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O27",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O28",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O29",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O30",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O31",
+   "Below floor",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O32",
+   "Below floor",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O33",
+   "Thin",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O34",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Jobs",
+   "O35",
+   "On target",
+   0,
+   "status"
+  ],
+  [
+   "Packages",
+   "G6",
+   66.4,
+   1e-09,
+   "pkg cost"
+  ],
+  [
+   "Packages",
+   "H6",
+   33.599999999999994,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Packages",
+   "K6",
+   16.799999999999997,
+   1e-09,
+   "pkg profit/h"
+  ],
+  [
+   "Packages",
+   "M6",
+   102.25442834138487,
+   1e-09,
+   "pkg price needed"
+  ],
+  [
+   "Packages",
+   "L6",
+   "Thin",
+   0,
+   "pkg status"
+  ],
+  [
+   "Packages",
+   "O6",
+   6,
+   0,
+   "jobs logged"
+  ],
+  [
+   "Packages",
+   "P6",
+   14.247777777777772,
+   1e-09,
+   "avg profit"
+  ],
+  [
+   "Packages",
+   "G7",
+   112.8,
+   1e-09,
+   "pkg cost"
+  ],
+  [
+   "Packages",
+   "H7",
+   87.2,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Packages",
+   "K7",
+   24.914285714285715,
+   1e-09,
+   "pkg profit/h"
+  ],
+  [
+   "Packages",
+   "M7",
+   172.30273752012883,
+   1e-09,
+   "pkg price needed"
+  ],
+  [
+   "Packages",
+   "L7",
+   "On target",
+   0,
+   "pkg status"
+  ],
+  [
+   "Packages",
+   "O7",
+   6,
+   0,
+   "jobs logged"
+  ],
+  [
+   "Packages",
+   "P7",
+   65.59,
+   1e-09,
+   "avg profit"
+  ],
+  [
+   "Packages",
+   "G8",
+   174.57,
+   1e-09,
+   "pkg cost"
+  ],
+  [
+   "Packages",
+   "H8",
+   155.43,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Packages",
+   "K8",
+   28.26,
+   1e-09,
+   "pkg profit/h"
+  ],
+  [
+   "Packages",
+   "M8",
+   265.7004830917874,
+   1e-09,
+   "pkg price needed"
+  ],
+  [
+   "Packages",
+   "L8",
+   "On target",
+   0,
+   "pkg status"
+  ],
+  [
+   "Packages",
+   "O8",
+   6,
+   0,
+   "jobs logged"
+  ],
+  [
+   "Packages",
+   "P8",
+   134.94777777777776,
+   1e-09,
+   "avg profit"
+  ],
+  [
+   "Packages",
+   "G9",
+   70.98,
+   1e-09,
+   "pkg cost"
+  ],
+  [
+   "Packages",
+   "H9",
+   49.019999999999996,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Packages",
+   "K9",
+   24.509999999999998,
+   1e-09,
+   "pkg profit/h"
+  ],
+  [
+   "Packages",
+   "M9",
+   108.69565217391305,
+   1e-09,
+   "pkg price needed"
+  ],
+  [
+   "Packages",
+   "L9",
+   "On target",
+   0,
+   "pkg status"
+  ],
+  [
+   "Packages",
+   "O9",
+   6,
+   0,
+   "jobs logged"
+  ],
+  [
+   "Packages",
+   "P9",
+   22.78277777777778,
+   1e-09,
+   "avg profit"
+  ],
+  [
+   "Packages",
+   "G10",
+   280.41666666666663,
+   1e-09,
+   "pkg cost"
+  ],
+  [
+   "Packages",
+   "H10",
+   369.58333333333337,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Packages",
+   "K10",
+   42.644230769230774,
+   1e-09,
+   "pkg profit/h"
+  ],
+  [
+   "Packages",
+   "M10",
+   421.20236178207193,
+   1e-09,
+   "pkg price needed"
+  ],
+  [
+   "Packages",
+   "L10",
+   "On target",
+   0,
+   "pkg status"
+  ],
+  [
+   "Packages",
+   "O10",
+   6,
+   0,
+   "jobs logged"
+  ],
+  [
+   "Packages",
+   "P10",
+   360.98611111111114,
+   1e-09,
+   "avg profit"
+  ],
+  [
+   "Summary",
+   "B6",
+   8410,
+   1e-09,
+   "revenue"
+  ],
+  [
+   "Summary",
+   "D6",
+   3591.326666666667,
+   1e-09,
+   "profit"
+  ],
+  [
+   "Summary",
+   "F6",
+   0.42703051922314705,
+   1e-09,
+   "margin"
+  ],
+  [
+   "Summary",
+   "H6",
+   30,
+   0,
+   "jobs"
+  ],
+  [
+   "Summary",
+   "B9",
+   49.17045429052159,
+   1e-09,
+   "earnings/h before wage"
+  ],
+  [
+   "Summary",
+   "D9",
+   24.170454290521594,
+   1e-09,
+   "profit/h"
+  ],
+  [
+   "Summary",
+   "F9",
+   2,
+   0,
+   "losing jobs"
+  ],
+  [
+   "Summary",
+   "C22",
+   19,
+   0,
+   "month jobs"
+  ],
+  [
+   "Summary",
+   "D22",
+   5490,
+   1e-09,
+   "month revenue"
+  ],
+  [
+   "Summary",
+   "F22",
+   2353.0233333333335,
+   1e-09,
+   "month profit"
+  ],
+  [
+   "Summary",
+   "C23",
+   11,
+   0,
+   "month jobs"
+  ],
+  [
+   "Summary",
+   "D23",
+   2920,
+   1e-09,
+   "month revenue"
+  ],
+  [
+   "Summary",
+   "F23",
+   1238.3033333333333,
+   1e-09,
+   "month profit"
+  ],
+  [
+   "Summary",
+   "C13",
+   0,
+   0,
+   "empty month jobs"
+  ],
+  [
+   "Summary",
+   "H9",
+   "Paint correction (1-step)",
+   0,
+   "best package"
+  ],
+  [
+   "Summary",
+   "C28",
+   6,
+   0,
+   "pkg jobs"
+  ],
+  [
+   "Summary",
+   "E28",
+   85.48666666666664,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Summary",
+   "F28",
+   5.233877551020406,
+   1e-09,
+   "pkg profit/h"
+  ],
+  [
+   "Summary",
+   "C29",
+   6,
+   0,
+   "pkg jobs"
+  ],
+  [
+   "Summary",
+   "E29",
+   393.54,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Summary",
+   "F29",
+   15.900606060606062,
+   1e-09,
+   "pkg profit/h"
+  ],
+  [
+   "Summary",
+   "C30",
+   6,
+   0,
+   "pkg jobs"
+  ],
+  [
+   "Summary",
+   "E30",
+   809.6866666666666,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Summary",
+   "F30",
+   22.13266514806378,
+   1e-09,
+   "pkg profit/h"
+  ],
+  [
+   "Summary",
+   "C31",
+   6,
+   0,
+   "pkg jobs"
+  ],
+  [
+   "Summary",
+   "E31",
+   136.6966666666667,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Summary",
+   "F31",
+   7.886346153846156,
+   1e-09,
+   "pkg profit/h"
+  ],
+  [
+   "Summary",
+   "C32",
+   6,
+   0,
+   "pkg jobs"
+  ],
+  [
+   "Summary",
+   "E32",
+   2165.916666666667,
+   1e-09,
+   "pkg profit"
+  ],
+  [
+   "Summary",
+   "F32",
+   40.42146189735615,
+   1e-09,
+   "pkg profit/h"
+  ]
+ ],
+ "jobs": [
+  [
+   "2026-10-01",
+   "Reyes (sample)",
+   "Maintenance wash",
+   "100",
+   "1.5",
+   "50",
+   "10",
+   "4"
+  ],
+  [
+   "2026-10-02",
+   "Walker (sample)",
+   "Headlight restoration",
+   "130",
+   "1.0",
+   "40",
+   "34",
+   "8"
+  ],
+  [
+   "2026-10-04",
+   "Kim (sample)",
+   "Interior detail",
+   "210",
+   "3.0",
+   "30",
+   "12",
+   "15"
+  ],
+  [
+   "2026-10-06",
+   "Patel (sample)",
+   "Paint correction (1-step)",
+   "650",
+   "7.5",
+   "40",
+   "16",
+   "41"
+  ],
+  [
+   "2026-10-07",
+   "Okafor (sample)",
+   "Full detail",
+   "330",
+   "4.5",
+   "75",
+   "12",
+   "20"
+  ],
+  [
+   "2026-10-09",
+   "Novak (sample)",
+   "Interior detail",
+   "220",
+   "4.0",
+   "30",
+   "34",
+   "18"
+  ],
+  [
+   "2026-10-11",
+   "Brooks (sample)",
+   "Paint correction (1-step)",
+   "650",
+   "7.5",
+   "40",
+   "16",
+   "41"
+  ],
+  [
+   "2026-10-12",
+   "Silva (sample)",
+   "Full detail",
+   "320",
+   "5.0",
+   "55",
+   "12",
+   "26"
+  ],
+  [
+   "2026-10-14",
+   "Haddad (sample)",
+   "Maintenance wash",
+   "80",
+   "2.5",
+   "35",
+   "32",
+   "6"
+  ],
+  [
+   "2026-10-16",
+   "Moore (sample)",
+   "Headlight restoration",
+   "100",
+   "2.5",
+   "75",
+   "12",
+   "10"
+  ],
+  [
+   "2026-10-18",
+   "Lin (sample)",
+   "Full detail",
+   "310",
+   "6.0",
+   "30",
+   "34",
+   "18"
+  ],
+  [
+   "2026-10-19",
+   "Costa (sample)",
+   "Maintenance wash",
+   "110",
+   "1.5",
+   "50",
+   "32",
+   "9"
+  ],
+  [
+   "2026-10-21",
+   "Reyes (sample)",
+   "Headlight restoration",
+   "120",
+   "2.0",
+   "75",
+   "22",
+   "10"
+  ],
+  [
+   "2026-10-23",
+   "Walker (sample)",
+   "Interior detail",
+   "200",
+   "3.0",
+   "30",
+   "12",
+   "10"
+  ],
+  [
+   "2026-10-24",
+   "Kim (sample)",
+   "Paint correction (1-step)",
+   "660",
+   "8.0",
+   "85",
+   "26",
+   "35"
+  ],
+  [
+   "2026-10-26",
+   "Patel (sample)",
+   "Headlight restoration",
+   "140",
+   "2.0",
+   "40",
+   "34",
+   "8"
+  ],
+  [
+   "2026-10-28",
+   "Okafor (sample)",
+   "Interior detail",
+   "180",
+   "4.0",
+   "55",
+   "12",
+   "12"
+  ],
+  [
+   "2026-10-29",
+   "Novak (sample)",
+   "Paint correction (1-step)",
+   "640",
+   "8.5",
+   "65",
+   "16",
+   "33"
+  ],
+  [
+   "2026-10-31",
+   "Brooks (sample)",
+   "Full detail",
+   "340",
+   "6.0",
+   "40",
+   "16",
+   "20"
+  ],
+  [
+   "2026-11-02",
+   "Silva (sample)",
+   "Maintenance wash",
+   "110",
+   "2.0",
+   "70",
+   "20",
+   "4"
+  ],
+  [
+   "2026-11-04",
+   "Haddad (sample)",
+   "Paint correction (1-step)",
+   "630",
+   "8.0",
+   "65",
+   "16",
+   "33"
+  ],
+  [
+   "2026-11-05",
+   "Moore (sample)",
+   "Full detail",
+   "350",
+   "5.0",
+   "75",
+   "22",
+   "20"
+  ],
+  [
+   "2026-11-07",
+   "Lin (sample)",
+   "Maintenance wash",
+   "120",
+   "2.0",
+   "35",
+   "10",
+   "9"
+  ],
+  [
+   "2026-11-09",
+   "Costa (sample)",
+   "Headlight restoration",
+   "120",
+   "1.5",
+   "75",
+   "12",
+   "13"
+  ],
+  [
+   "2026-11-10",
+   "Reyes (sample)",
+   "Interior detail",
+   "180",
+   "3.0",
+   "40",
+   "12",
+   "12"
+  ],
+  [
+   "2026-11-12",
+   "Walker (sample)",
+   "Maintenance wash",
+   "100",
+   "2.0",
+   "50",
+   "10",
+   "6"
+  ],
+  [
+   "2026-11-14",
+   "Kim (sample)",
+   "Headlight restoration",
+   "120",
+   "2.0",
+   "75",
+   "16",
+   "10"
+  ],
+  [
+   "2026-11-15",
+   "Patel (sample)",
+   "Interior detail",
+   "200",
+   "4.0",
+   "40",
+   "22",
+   "12"
+  ],
+  [
+   "2026-11-17",
+   "Okafor (sample)",
+   "Paint correction (1-step)",
+   "670",
+   "8.5",
+   "40",
+   "16",
+   "33"
+  ],
+  [
+   "2026-11-19",
+   "Novak (sample)",
+   "Full detail",
+   "320",
+   "5.0",
+   "30",
+   "12",
+   "18"
+  ]
+ ],
+ "losing": 2,
+ "statuses": {
+  "Losing money": 2,
+  "Below floor": 4,
+  "Thin": 9,
+  "On target": 15
+ }
+}
