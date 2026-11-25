@@ -1,0 +1,455 @@
+{
+ "date": "2026-11-26",
+ "timezone": "Asia/Karachi",
+ "niches": [
+  "restaurants-food-trucks",
+  "fitness-trainers",
+  "bookkeepers"
+ ],
+ "total": 12,
+ "software_count": 7,
+ "software_share": 0.58,
+ "products": [
+  {
+   "id": "d20261126-01",
+   "niche": "restaurants-food-trucks",
+   "name": "PlateCost: Menu Item Cost and Price Calculator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 35,
+   "unique_concept": "Plate-costing tool that adds packaging, waste/trim yield and non-ingredient overhead to ingredient cost, and shows the price needed for a target margin rather than only a food-cost percentage.",
+   "persona": "Food truck/cafe owner",
+   "pain_points": "Prices set by gut; ingredient cost jumps; costing software $15-250/mo",
+   "pitch_points": "Know true plate cost; reprice when suppliers change; no subscription",
+   "features": [
+    "Ingredient library (unit, pack price, yield %)",
+    "Recipe builder with portions, packaging, waste %",
+    "Overhead per plate (user-entered) and target margin",
+    "Price needed = total cost / (1 - target margin) and resulting food-cost %",
+    "Bulk supplier price change (+x%) re-cost of all items",
+    "Printable cost sheet, CSV/JSON export, localStorage"
+   ],
+   "build_spec": "Single-file HTML. ingredient_cost_per_unit = pack_price/(pack_qty x yield); plate_cost = sum(qty x unit_cost) + packaging + overhead_per_plate; price = plate_cost/(1 - margin); food_cost_pct = ingredient_part/price. No assumed benchmark % (30% shown only as editable example). Unit tests + phone width.",
+   "evidence_refs": [
+    "R4",
+    "R5",
+    "R6"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "Kostly",
+     "Recipe Costing (Software Advice)",
+     "MarketMan/Meez"
+    ]
+   },
+   "score_out_of_40": 26,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261126-02",
+   "niche": "restaurants-food-trucks",
+   "name": "Lean Par and Order Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build2",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that turns a weekly sales forecast into prep quantities, par levels and a supplier order list, aimed at the operators moving to leaner inventory.",
+   "persona": "Cafe/food truck owner",
+   "pain_points": "Over-ordering and waste; no par levels",
+   "pitch_points": "Order what you need; fewer write-offs; one sheet per week",
+   "features": [
+    "Items sheet (unit, pack size, supplier, shelf life days, cost)",
+    "Forecast sheet (units sold per menu item per day)",
+    "Recipe usage matrix",
+    "Auto par and order quantity with on-hand input",
+    "Waste log summary"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc. order_qty = max(0, ceil((forecast_usage + safety%)  - on_hand) / pack_size) x pack_size. Expected-value tests in Python.",
+   "evidence_refs": [
+    "R1",
+    "R3"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "MarketMan (paid)",
+     "generic restaurant inventory sheets (Etsy)",
+     "Meez"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence is trend-level (survey share managing leaner inventory), not complaint-level"
+  },
+  {
+   "id": "d20261126-03",
+   "niche": "restaurants-food-trucks",
+   "name": "Price Hike Reality Check",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 29,
+   "unique_concept": "Calculator showing how many covers/orders you can lose before a menu price increase hurts profit, and the profit change under your own volume-drop assumption; no elasticity claims.",
+   "persona": "Independent restaurant owner/manager",
+   "pain_points": "Fear of the pricing ceiling; unsure whether to raise prices",
+   "pitch_points": "Decide price moves with numbers; break-even volume loss at a glance",
+   "features": [
+    "Inputs: price, unit cost, weekly units, proposed increase %",
+    "Break-even volume loss % = 1 - (old margin / new margin)",
+    "Scenario table with user volume-drop %",
+    "Whole-menu mode (weighted by units)",
+    "Printable one-page summary"
+   ],
+   "build_spec": "Single-file HTML. unit_margin = price - cost; new_margin = price(1+h) - cost; break_even_loss = 1 - unit_margin/new_margin; profit_new = new_margin x units x (1-drop). Unit tests. README states: James Beard report says >10% hikes were linked with lower expected profit (survey, not causation).",
+   "evidence_refs": [
+    "R2",
+    "R1"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "Toast free margin calculator",
+     "Square blog calculators",
+     "spreadsheet templates"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "Free calculators exist; differentiation is whole-menu weighted mode and printed summary"
+  },
+  {
+   "id": "d20261126-04",
+   "niche": "restaurants-food-trucks",
+   "name": "Labor Cost vs Sales Planner",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build1",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that plans weekly shifts against forecast sales and shows labor-cost % per day with a flag when wage costs rise.",
+   "persona": "Cafe/restaurant manager",
+   "pain_points": "Wage costs rising; schedule not tied to sales",
+   "pitch_points": "See labor % per day; test wage increase effects",
+   "features": [
+    "Settings (wage rates, payroll burden %)",
+    "Week grid (sales forecast, shift hours by role)",
+    "Labor % per day and week, flags vs user target",
+    "Wage increase what-if (%)",
+    "Sales per labor hour"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc. labor_cost = sum(hours x rate) x (1 + burden); labor_pct = labor_cost / forecast_sales. Expected-value tests.",
+   "evidence_refs": [
+    "R3",
+    "R4"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "7shifts (not verified)",
+     "generic scheduling sheets",
+     "Toast reports"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261126-05",
+   "niche": "fitness-trainers",
+   "name": "PT Pack Keeper: Session Packs, Expiry and Renewals",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 29,
+   "unique_concept": "Tracks each client's prepaid session pack balance, expiry date, late-cancel rule and renewal reminders, with a 'who is about to run out or ghost' list for the week.",
+   "persona": "Solo personal trainer",
+   "pain_points": "Chasing renewals; clients disappear; software client caps/fees",
+   "pitch_points": "Never miss a renewal; clear pack balance; no per-client fee",
+   "features": [
+    "Clients with pack size, price, expiry rule (days)",
+    "Session log (done, late-cancel, no-show)",
+    "Late-cancel policy applied per rule",
+    "Dashboard: low balance, expiring, no session in N days",
+    "Renewal message templates",
+    "CSV export, localStorage"
+   ],
+   "build_spec": "Single-file HTML. balance = pack - sessions_used; expiry = start + days; flag 'ghost risk' when days_since_last > threshold (user-set). Unit tests + phone width. Heuristic flag, no retention-rate claims.",
+   "evidence_refs": [
+    "F3",
+    "F4"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "PT Distinction",
+     "TrueCoach",
+     "Trainerize"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "Evidence on package expiry not found; kept on admin-burden and seat-pricing evidence (Low-Med)"
+  },
+  {
+   "id": "d20261126-06",
+   "niche": "fitness-trainers",
+   "name": "Comeback Nudge: Ghosted-Client Re-engagement n8n Flow",
+   "type": "n8n",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 45,
+   "unique_concept": "n8n workflow that watches a Google Sheet of client sessions and sends escalating, polite check-ins when someone has gone quiet or a pack is nearly used up.",
+   "persona": "Solo trainer / small studio",
+   "pain_points": "Clients ghost; manual follow-ups skipped",
+   "pitch_points": "Automatic check-ins; owner notified; no new platform",
+   "features": [
+    "Clients sheet (name, contact, last session, pack balance, goal)",
+    "Daily check: days since last session > N -> friendly message",
+    "Pack nearly used -> renewal message",
+    "Owner digest of at-risk clients",
+    "Credentials as placeholders; email-first, SMS optional"
+   ],
+   "build_spec": "tools/n8n workflow JSON validated by sim.js; QA states not run on live email/SMS/Sheets.",
+   "evidence_refs": [
+    "F4",
+    "F6"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "Mindbody automations",
+     "Trainerize messaging",
+     "PT Distinction"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Retention evidence is vendor-sourced (Low)"
+  },
+  {
+   "id": "d20261126-07",
+   "niche": "fitness-trainers",
+   "name": "Trainer True Income Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build2",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that includes cancellations, admin hours and software/client-seat costs (user-entered) to show a trainer's real hourly income and package price for a target income.",
+   "persona": "Solo personal trainer",
+   "pain_points": "Hidden admin and cancellation losses",
+   "pitch_points": "See real hourly rate; price packs accordingly",
+   "features": [
+    "Inputs (sessions/week, rate, late-cancel %, admin hrs, software cost, gym/rent fees)",
+    "True hourly income",
+    "Package price needed for target",
+    "Client-count scenarios with per-client software fees (user-entered)",
+    "Annual summary"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests. No benchmark claims.",
+   "evidence_refs": [
+    "F1",
+    "F3"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "generic Etsy trainer sheets",
+     "PT Distinction reports",
+     "Trainerize"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261126-08",
+   "niche": "fitness-trainers",
+   "name": "Class Overbook Planner",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build3",
+   "price_usd": 25,
+   "unique_concept": "Class-capacity calculator that, from your own no-show rate, shows the probability of turning people away or running under capacity for each overbooking level (binomial model).",
+   "persona": "Yoga/boutique studio owner",
+   "pain_points": "Empty spots from no-shows vs overflow risk",
+   "pitch_points": "Choose overbooking level with numbers; printable policy",
+   "features": [
+    "Inputs: capacity, bookings, user no-show %",
+    "Distribution of attendees (binomial) and chance attendance > capacity",
+    "Expected empty spots and expected turned-away",
+    "Overbook level comparison table",
+    "Revenue per spot to value the trade-off"
+   ],
+   "build_spec": "Single-file HTML. attendees ~ Binomial(bookings, 1 - noshow); P(over)=sum_{k>cap}; E[empty]=sum (cap-k)+ . Unit tests against hand-computed values. README states the independence assumption.",
+   "evidence_refs": [
+    "F5",
+    "F6"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "TeamUp",
+     "Mindbody",
+     "Momence (not verified)"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence Low (single vendor anecdote); the tool's value is mathematical, flagged as lowest-confidence"
+  },
+  {
+   "id": "d20261126-09",
+   "niche": "bookkeepers",
+   "name": "DocChase: Client Document Request Tracker",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 35,
+   "unique_concept": "Month-by-month grid of what each client still owes (statements, receipts, payroll) with due dates, status, reminder wording and 'days overdue' ranking; sold without per-seat fees.",
+   "persona": "Freelance bookkeeper (5-25 clients)",
+   "pain_points": "Chasing client documents is the top workflow problem",
+   "pitch_points": "One screen of who owes what; paste-ready reminders; no per-seat fee",
+   "features": [
+    "Clients and recurring document checklist per client",
+    "Monthly request cycle with due dates and statuses (requested/received/overdue)",
+    "Overdue ranking and reminder templates (gentle/firm/final)",
+    "Month-end close readiness % per client",
+    "CSV import/export, localStorage"
+   ],
+   "build_spec": "Single-file HTML. readiness = received / required; overdue = today > due and status != received. Unit tests + phone width.",
+   "evidence_refs": [
+    "B2",
+    "B3",
+    "B5"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "Financial Cents",
+     "TaxDome",
+     "Karbon"
+    ]
+   },
+   "score_out_of_40": 27,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261126-10",
+   "niche": "bookkeepers",
+   "name": "Month-End Close Tracker",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build3",
+   "price_usd": 24,
+   "unique_concept": "Client x task grid with due dates and conditional formatting that shows close progress, blocked items and workload per week for a small bookkeeping practice.",
+   "persona": "Freelance bookkeeper / small practice",
+   "pain_points": "Close managed in spreadsheets, sticky notes and email",
+   "pitch_points": "One grid for all clients; see blockers; weekly workload",
+   "features": [
+    "Clients sheet (cadence, fee, contact)",
+    "Tasks template (reconcile, categorize, review, report)",
+    "Grid with status/ due date/ assignee",
+    "Progress % and overdue flags",
+    "Weekly workload summary (hours entered by user)"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; data validation lists; expected-value tests for progress %.",
+   "evidence_refs": [
+    "B3",
+    "B6"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "Financial Cents (paid)",
+     "Karbon (paid)",
+     "generic practice sheets (Etsy)"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261126-11",
+   "niche": "bookkeepers",
+   "name": "Doc Chase Reminder n8n Flow",
+   "type": "n8n",
+   "is_software": true,
+   "assigned_stage": "build3",
+   "price_usd": 45,
+   "unique_concept": "n8n workflow reading a Google Sheet of document requests and sending escalating reminders to clients, with a summary of what is still missing for the owner; no per-seat practice-software fee.",
+   "persona": "Freelance bookkeeper / small practice",
+   "pain_points": "Manual chasing; late month-end",
+   "pitch_points": "Automatic chasing; consistent tone; time saved",
+   "features": [
+    "Requests sheet (client, email, document, due, status)",
+    "Reminder at due-2, due, due+3 with tone ladder",
+    "Status 'received' stops reminders",
+    "Owner digest of overdue items",
+    "Credentials placeholders; email via Gmail/SMTP node"
+   ],
+   "build_spec": "tools/n8n workflow JSON validated by sim.js; QA states not run live.",
+   "evidence_refs": [
+    "B2",
+    "B4"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "TaxDome reminders",
+     "Financial Cents automations",
+     "Karbon"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261126-12",
+   "niche": "bookkeepers",
+   "name": "Bookkeeping Fee and Capacity Calculator",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build3",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that works out the effective hourly rate per client (including chasing and admin time) and how many clients fit in a month at target income.",
+   "persona": "Freelance bookkeeper",
+   "pain_points": "Underpriced clients who take too long",
+   "pitch_points": "Reprice or drop low-yield clients; plan capacity",
+   "features": [
+    "Clients (monthly fee, hours bookkeeping, hours chasing/admin)",
+    "Effective hourly rate per client with red flag below target",
+    "Capacity: hours/month vs booked",
+    "Reprice suggestion for target rate",
+    "Software cost per seat (user-entered) impact"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests: rate = fee/(hours total).",
+   "evidence_refs": [
+    "B2",
+    "B5"
+   ],
+   "novelty_check": {
+    "vs_memory": "no overlap with memory/products.json or daily 2026-11-24/25 products (builder-menumaker is a restaurant website builder, not costing)",
+    "competitors": [
+     "generic Etsy bookkeeper sheets",
+     "Financial Cents reports",
+     "Karbon reports"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  }
+ ],
+ "stage_counts": {
+  "build1": 4,
+  "build2": 4,
+  "build3": 4
+ },
+ "stage_software": {
+  "build1": 3,
+  "build2": 2,
+  "build3": 2
+ },
+ "blocked_or_missing": [
+  "Reddit/Facebook group threads not returned by WebSearch",
+  "Meta Ad Library not reachable",
+  "No direct WebFetch tool: research used search-result summaries only",
+  "NRA, IBISWorld, vendor survey reports not read in full",
+  "No complaint data for restaurant costing tools; no package-expiry evidence for trainers; no food-truck event-fee data"
+ ]
+}
