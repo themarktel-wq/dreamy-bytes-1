@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PT Pack Keeper - Session Packs, Expiry and Renewals</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#0f766e;--acc2:#ccfbf1}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:22px}
+.script{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px;margin:4px 0;font-size:13px;white-space:pre-wrap}
+</style></head><body>
+<header class="top"><h1>PT Pack Keeper</h1><p>Prepaid session packs, expiry dates, late-cancel rule and renewal reminders for personal trainers. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs" id="tabs"><button data-t="dash" class="on">This week</button><button data-t="clients">Clients</button><button data-t="settings">My rules</button><button data-t="help">How it works</button></div>
+
+<section id="t-dash">
+ <div class="card"><h2>Overview</h2><div class="kpi" id="kpi"></div><p class="note" id="sampleNote"></p></div>
+ <div class="card"><h2>Needs attention</h2><div id="attn"></div></div>
+</section>
+
+<section id="t-clients" class="hidden">
+ <div class="card"><h2>Add a client with a pack</h2><div class="grid">
+  <div><label>Name</label><input id="n_name"></div><div><label>Contact</label><input id="n_contact"></div><div><label>Sessions in pack</label><input id="n_size" type="number" min="1" value="10"></div>
+  <div><label>Pack price</label><input id="n_price" type="number" min="0" step="1"></div><div><label>Pack start date</label><input id="n_start" type="date"></div><div><label>Expires after (days)</label><input id="n_days" type="number" min="1" value="90"></div></div>
+  <div class="row"><button class="btn" id="addClient">Add client</button><button class="btn sec" id="clearSample">Remove sample clients</button></div></div>
+ <div class="card"><h2>Clients</h2><div class="row"><button class="btn sec" id="expcsv">Export CSV</button><button class="btn sec" id="expjson">Backup JSON</button><label class="btn sec" style="margin:0;cursor:pointer">Restore JSON<input id="impjson" type="file" accept=".json" class="hidden"></label></div><div class="tw"><table id="clientTbl"></table></div></div>
+ <div class="card hidden" id="detail"></div>
+</section>
+
+<section id="t-settings" class="hidden"><div class="card"><h2>Your rules</h2><div class="grid">
+ <div><label>Notice required to cancel (hours)</label><input id="s_noticeHours" type="number" min="0"></div>
+ <div><label>Late cancel uses a session? (1 = yes, 0 = no)</label><input id="s_lateUses" type="number" min="0" max="1"></div>
+ <div><label>No-show uses a session? (1 = yes, 0 = no)</label><input id="s_noShowUses" type="number" min="0" max="1"></div>
+ <div><label>"Low balance" at or below (sessions)</label><input id="s_lowAt" type="number" min="0"></div>
+ <div><label>"Expiring soon" within (days)</label><input id="s_expWarn" type="number" min="0"></div>
+ <div><label>"Ghost risk" after this many days with no session</label><input id="s_ghostDays" type="number" min="1"></div>
+ <div><label>Your name (used in messages)</label><input id="s_biz"></div><div><label>Currency symbol</label><input id="s_cur" maxlength="3"></div></div>
+ <div class="note">All thresholds are your own settings. The ghost-risk flag is a simple rule of thumb (days since the last session), not a prediction and not based on any retention statistic. Check local rules before charging late-cancel fees or letting sessions expire.</div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How PT Pack Keeper works</h2>
+<p><b>Balance</b> = sessions in the pack - sessions used since the pack start date. A session is used when it is done, when a cancellation comes with less notice than your rule (if you set late cancels to use a session), or on a no-show (if you set no-shows to use a session).</p>
+<p><b>Expiry</b> = pack start + expiry days. <b>Ghost risk</b> = the client still has sessions but it has been more than your set number of days since their last completed session (or since the pack start if none).</p>
+<p><b>This week</b> lists clients who are low on sessions, out of sessions, expiring soon, expired with sessions left, or at ghost risk, each with a ready renewal or check-in message you can copy.</p>
+<p><b>Renew</b> starts a new pack for the client from a date you choose; old sessions stay in the log but no longer count against the new pack.</p>
+<p><b>Honest notes.</b> Sample clients are fictional. Data is stored in this browser only: use Backup JSON or Export CSV regularly. This is a record-keeping tool.</p></div></section>
+</main>
+<script>
+//CORE
+var DEFAULT_RULES={noticeHours:24,lateUses:1,noShowUses:1,lowAt:2,expWarn:14,ghostDays:14,biz:'',cur:'$'};
+var MSG={low:'Hi {name}, this is {biz}. You have {left} session(s) left in your pack. Want me to hold your next sessions and set up a new pack so you do not lose momentum?',
+ exhausted:'Hi {name}, {biz} here. You have used all the sessions in your pack. Shall we renew? Reply and I will send the new pack details and book your next session.',
+ expiring:'Hi {name}, {biz} here. Your pack has {left} session(s) left and expires on {expiry}. Let us book them in before then?',
+ expired:'Hi {name}, {biz} here. Your pack expired on {expiry} with {left} session(s) unused. Reply if you want to talk about options for getting back on track.',
+ ghost:'Hi {name}, {biz} here. It has been a while since our last session. How are you doing? No pressure: I would love to help you get back into your routine whenever you are ready.'};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function dayDiff(a,b){return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);}
+function addDays(d,n){return new Date(Date.parse(d+'T00:00:00Z')+n*86400000).toISOString().slice(0,10);}
+function usesSession(R,s){if(s.status==='done')return true;if(s.status==='noshow')return num(R.noShowUses)===1;if(s.status==='cancelled')return num(R.lateUses)===1&&num(s.notice)<num(R.noticeHours);return false;}
+function sessionsFor(D,c){return (D.sessions||[]).filter(function(s){return s.client===c.id&&s.date>=c.start;});}
+function status(D,c,today){var R=D.rules,ss=sessionsFor(D,c),used=0,lastDone=null;ss.forEach(function(s){if(usesSession(R,s))used++;if(s.status==='done'&&(!lastDone||s.date>lastDone))lastDone=s.date;});
+ var left=num(c.packSize)-used,expiry=addDays(c.start,num(c.expiryDays)),toExp=dayDiff(today,expiry),since=dayDiff(lastDone||c.start,today);
+ var flags=[];if(left<=0)flags.push('exhausted');else{if(left<=num(R.lowAt))flags.push('low');if(toExp<0)flags.push('expired');else if(toExp<=num(R.expWarn))flags.push('expiring');if(since>num(R.ghostDays))flags.push('ghost');}
+ return {used:used,left:left,expiry:expiry,daysToExpiry:toExp,lastDone:lastDone,daysSince:since,flags:flags};}
+function message(D,c,st,flag){var t=MSG[flag]||MSG.low;return t.replace(/\{name\}/g,(c.name||'there').split(/\s+/)[0]).replace(/\{biz\}/g,D.rules.biz||'your trainer').replace(/\{left\}/g,Math.max(0,st.left)).replace(/\{expiry\}/g,st.expiry);}
+function attention(D,today){var out=[];(D.clients||[]).forEach(function(c){var st=status(D,c,today);if(st.flags.length)out.push({c:c,st:st,primary:st.flags[0]});});
+ var order={expired:0,exhausted:1,expiring:2,low:3,ghost:4};out.sort(function(a,b){return order[a.primary]-order[b.primary]||a.st.daysToExpiry-b.st.daysToExpiry;});return out;}
+function renew(D,c,start,size,price,days){c.history=c.history||[];var st=status(D,c,start);c.history.push({start:c.start,packSize:c.packSize,used:st.used,price:c.packPrice});c.start=start;c.packSize=num(size);c.packPrice=num(price);c.expiryDays=num(days);}
+function clientsCSV(D,today){var q=function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};var rows=[['name','contact','pack_size','pack_price','start','expires','used','left','days_to_expiry','days_since_last_session','flags']];
+ (D.clients||[]).forEach(function(c){var s=status(D,c,today);rows.push([c.name,c.contact,c.packSize,c.packPrice,c.start,s.expiry,s.used,s.left,s.daysToExpiry,s.daysSince,s.flags.join(' ')]);});
+ return rows.map(function(r){return r.map(q).join(',');}).join('\n');}
+//ENDCORE
+var KEY='ptpack.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+var TODAY=todayStr();
+function ld(){try{var v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function sample(){var a=function(n){return addDays(TODAY,-n);};
+ return {rules:JSON.parse(JSON.stringify(DEFAULT_RULES)),
+ clients:[{id:'c1',sample:1,name:'Jordan Lee (sample)',contact:'',packSize:10,packPrice:600,start:a(60),expiryDays:90},{id:'c2',sample:1,name:'Priya Shah (sample)',contact:'',packSize:12,packPrice:660,start:a(50),expiryDays:60},{id:'c3',sample:1,name:'Marcus Webb (sample)',contact:'',packSize:8,packPrice:520,start:a(40),expiryDays:120},{id:'c4',sample:1,name:'Elena Ruiz (sample)',contact:'',packSize:10,packPrice:580,start:a(20),expiryDays:90}],
+ sessions:[].concat([55,48,41,34,27,20,13,6,3].map(function(n,i){return {id:'s1'+i,client:'c1',date:a(n),status:'done'};}),[{id:'s2a',client:'c2',date:a(45),status:'done'},{id:'s2b',client:'c2',date:a(38),status:'done'},{id:'s2c',client:'c2',date:a(31),status:'cancelled',notice:3},{id:'s2d',client:'c2',date:a(24),status:'done'},{id:'s2e',client:'c2',date:a(17),status:'noshow'},{id:'s2f',client:'c2',date:a(10),status:'done'}],
+  [{id:'s3a',client:'c3',date:a(36),status:'done'},{id:'s3b',client:'c3',date:a(33),status:'done'},{id:'s3c',client:'c3',date:a(30),status:'done'}],[{id:'s4a',client:'c4',date:a(18),status:'done'},{id:'s4b',client:'c4',date:a(11),status:'done'},{id:'s4c',client:'c4',date:a(4),status:'cancelled',notice:48}])};}
+var D=ld()||sample();if(!D.rules)D.rules=JSON.parse(JSON.stringify(DEFAULT_RULES));var OPEN=null;
+function money(v){return (D.rules.cur||'$')+(Math.round(v*100)/100).toFixed(2);}
+var FL={exhausted:['r','Out of sessions'],expired:['r','Expired'],expiring:['a','Expiring soon'],low:['a','Low balance'],ghost:['a','Ghost risk']};
+function pills(f){return f.map(function(x){return '<span class="pill '+FL[x][0]+'">'+FL[x][1]+'</span> ';}).join('');}
+function render(){var at=attention(D,TODAY),act=D.clients.length;
+ var cnt=function(f){return at.filter(function(x){return x.st.flags.indexOf(f)>=0;}).length;};
+ $('kpi').innerHTML='<div><span class="mut">Clients</span><b>'+act+'</b></div><div><span class="mut">Need attention</span><b>'+at.length+'</b></div><div><span class="mut">Low / out</span><b>'+(cnt('low')+cnt('exhausted'))+'</b></div><div><span class="mut">Expiring / expired</span><b>'+(cnt('expiring')+cnt('expired'))+'</b></div><div><span class="mut">Ghost risk</span><b>'+cnt('ghost')+'</b></div>';
+ $('sampleNote').textContent=D.clients.some(function(c){return c.sample;})?'Sample clients (fictional) are loaded so you can see how it works. Remove them in the Clients tab.':'';
+ window.__msgs=[];$('attn').innerHTML=at.length?at.map(function(x,i){var m=message(D,x.c,x.st,x.primary);window.__msgs.push(m);return '<div class="card"><b>'+esc(x.c.name)+'</b> '+pills(x.st.flags)+'<div class="mut">'+x.st.left+' of '+num(x.c.packSize)+' sessions left - expires '+x.st.expiry+' ('+x.st.daysToExpiry+' days) - last session '+(x.st.lastDone?x.st.daysSince+' days ago':'none yet, pack started '+x.st.daysSince+' days ago')+'</div><div class="script">'+esc(m)+'</div><div class="row"><button class="btn sec" data-copy="'+i+'">Copy message</button><button class="btn sec" data-open="'+esc(x.c.id)+'">Open client</button></div></div>';}).join(''):'<p class="mut">Nobody needs attention right now.</p>';
+ $('clientTbl').innerHTML='<tr><th>Client</th><th class="num">Left</th><th>Expires</th><th>Last session</th><th>Flags</th><th></th></tr>'+(D.clients.length?D.clients.map(function(c){var s=status(D,c,TODAY);return '<tr><td>'+esc(c.name)+'</td><td class="num">'+s.left+' / '+num(c.packSize)+'</td><td>'+s.expiry+'</td><td>'+(s.lastDone||'-')+'</td><td>'+(s.flags.length?pills(s.flags):'<span class="pill g">OK</span>')+'</td><td><button class="btn sec" data-open="'+esc(c.id)+'">Open</button></td></tr>';}).join(''):'<tr><td colspan="6" class="mut">No clients yet.</td></tr>');
+ var R=D.rules;['noticeHours','lateUses','noShowUses','lowAt','expWarn','ghostDays','biz','cur'].forEach(function(k){if(document.activeElement!==$('s_'+k))$('s_'+k).value=R[k];});
+ renderDetail();}
+function cl(id){return D.clients.filter(function(c){return c.id===id;})[0];}
+function renderDetail(){var el=$('detail');if(!OPEN||!cl(OPEN)){el.classList.add('hidden');return;}var c=cl(OPEN),s=status(D,c,TODAY);el.classList.remove('hidden');
+ var ss=sessionsFor(D,c).sort(function(a,b){return a.date<b.date?1:-1;});
+ el.innerHTML='<h2>'+esc(c.name)+' '+pills(s.flags)+'</h2><p class="mut">'+s.left+' of '+num(c.packSize)+' sessions left - pack '+money(num(c.packPrice))+' - '+c.start+' to '+s.expiry+'</p>'
+ +'<h3>Log a session</h3><div class="row"><input type="date" id="d_date" value="'+TODAY+'" style="width:auto"><select id="d_status" style="width:auto"><option value="done">Done</option><option value="cancelled">Cancelled by client</option><option value="noshow">No-show</option></select><input type="number" id="d_notice" min="0" placeholder="notice (hours)" style="width:130px" class="hidden"><button class="btn" id="addSession">Add</button></div><div id="d_hint" class="mut"></div>'
+ +'<div class="tw"><table><tr><th>Date</th><th>Outcome</th><th>Uses a session?</th><th></th></tr>'+(ss.length?ss.map(function(x){return '<tr><td>'+x.date+'</td><td>'+(x.status==='cancelled'?'cancelled ('+num(x.notice)+'h notice)':x.status)+'</td><td>'+(usesSession(D.rules,x)?'yes':'no')+'</td><td><button class="btn del" data-ds="'+esc(x.id)+'">x</button></td></tr>';}).join(''):'<tr><td colspan="4" class="mut">No sessions in this pack yet.</td></tr>')+'</table></div>'
+ +'<h3>Renew pack</h3><div class="grid"><div><label>New start</label><input type="date" id="r_start" value="'+TODAY+'"></div><div><label>Sessions</label><input type="number" id="r_size" min="1" value="'+num(c.packSize)+'"></div><div><label>Price</label><input type="number" id="r_price" min="0" value="'+num(c.packPrice)+'"></div><div><label>Expires after (days)</label><input type="number" id="r_days" min="1" value="'+num(c.expiryDays)+'"></div></div><div class="row"><button class="btn sec" id="doRenew">Renew pack</button><button class="btn del" id="delClient">Delete client</button></div>'
+ +(c.history&&c.history.length?'<h3>Previous packs</h3><div class="tw"><table><tr><th>Start</th><th>Size</th><th>Used</th><th>Price</th></tr>'+c.history.map(function(h){return '<tr><td>'+h.start+'</td><td>'+h.packSize+'</td><td>'+h.used+'</td><td>'+money(num(h.price))+'</td></tr>';}).join('')+'</table></div>':'');
+ updHint();}
+function updHint(){var st=$('d_status'),h=$('d_hint');if(!st||!h)return;$('d_notice').classList.toggle('hidden',st.value!=='cancelled');var s={status:st.value,notice:$('d_notice').value},u=usesSession(D.rules,s);h.textContent=u?'This will use one session from the pack.':'This will NOT use a session.';}
+document.addEventListener('input',function(e){var t=e.target;if(t.id&&t.id.indexOf('s_')===0){var k=t.id.slice(2);D.rules[k]=(k==='biz'||k==='cur')?t.value:num(t.value);sv();render();return;}if(t.id==='d_notice')updHint();});
+document.addEventListener('change',function(e){if(e.target.id==='d_status')updHint();});
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['dash','clients','settings','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});return;}
+ if(d.open){OPEN=d.open;document.querySelector('[data-t=clients]').click();render();$('detail').scrollIntoView();return;}
+ if(d.copy!==undefined){var tx=window.__msgs[+d.copy];if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);return;}
+ if(d.ds){D.sessions=D.sessions.filter(function(x){return x.id!==d.ds;});sv();render();return;}
+ if(t.id==='addSession'){var stv=$('d_status').value;if(stv==='cancelled'&&$('d_notice').value===''){alert('Enter how many hours notice the client gave.');return;}D.sessions.push({id:uid(),client:OPEN,date:$('d_date').value||TODAY,status:stv,notice:stv==='cancelled'?num($('d_notice').value):undefined});sv();render();return;}
+ if(t.id==='doRenew'){renew(D,cl(OPEN),$('r_start').value||TODAY,$('r_size').value,$('r_price').value,$('r_days').value);sv();render();return;}
+ if(t.id==='delClient'){if(confirm('Delete this client and their sessions?')){D.clients=D.clients.filter(function(c){return c.id!==OPEN;});D.sessions=D.sessions.filter(function(s){return s.client!==OPEN;});OPEN=null;sv();render();}return;}
+ if(t.id==='addClient'){var nm=$('n_name').value.trim();if(!nm||!$('n_start').value){alert('Enter a name and a start date.');return;}D.clients.unshift({id:uid(),name:nm,contact:$('n_contact').value,packSize:num($('n_size').value,10),packPrice:num($('n_price').value),start:$('n_start').value,expiryDays:num($('n_days').value,90)});['n_name','n_contact','n_price'].forEach(function(i){$(i).value='';});sv();render();return;}
+ if(t.id==='clearSample'){var ids=D.clients.filter(function(c){return c.sample;}).map(function(c){return c.id;});D.clients=D.clients.filter(function(c){return !c.sample;});D.sessions=D.sessions.filter(function(s){return ids.indexOf(s.client)<0;});if(OPEN&&ids.indexOf(OPEN)>=0)OPEN=null;sv();render();return;}
+ if(t.id==='expcsv'||t.id==='expjson'){var c=t.id==='expcsv',b=new Blob([c?clientsCSV(D,TODAY):JSON.stringify(D,null,1)],{type:c?'text/csv':'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=c?'ptpack-clients.csv':'ptpack-backup.json';a.click();}
+});
+$('impjson').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(x.clients&&x.sessions&&x.rules){D=x;OPEN=null;sv();render();}else alert('This file is not a PT Pack Keeper backup.');}catch(err){alert('Could not read that file.');}};r.readAsText(f);});
+$('n_start').value=TODAY;render();
+</script></body></html>
