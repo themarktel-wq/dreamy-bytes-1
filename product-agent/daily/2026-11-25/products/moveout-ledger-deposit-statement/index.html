@@ -115,7 +115,7 @@ function renderStm(){ $('stm').innerHTML=stmHtml(); $('sheet').innerHTML=stmHtml
 $('print').onclick=()=>{ renderStm(); window.print(); };
 $('copy').onclick=async()=>{ const t=ML.statementText(S.info,S.items,S.info.cur); try{ await navigator.clipboard.writeText(t); $('msg').textContent='Statement text copied.'; }catch(e){ $('msg').textContent='Copy blocked by the browser; use Print instead.'; } };
 $('export').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'})); a.download='moveout-ledger-data.json'; a.click(); };
-$('import').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const o=JSON.parse(r.result); if(!o||!o.info||!Array.isArray(o.items)) throw 0; S={info:Object.assign({},DEF.info,o.info),items:o.items}; save(); fill(); renderItems(); renderStm(); $('msg').textContent='Data imported.'; }catch(x){ alert('That file is not a MoveOut Ledger data file.'); } }; r.readAsText(f); };
+$('import').onchange=e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const o=JSON.parse(r.result); if(!o||!o.info||!Array.isArray(o.items)) throw 0; S={info:Object.assign({},DEF.info,o.info),items:o.items}; save(); fill(); renderItems(); renderStm(); $('msg').textContent='Data imported.'; }catch(x){ alert('That file is not a MoveOut Ledger data file.'); } }; r.readAsText(f); };
 $('reset').onclick=()=>{ if(confirm('Reset everything to the example data?')){ S=JSON.parse(JSON.stringify(DEF)); save(); fill(); renderItems(); renderStm(); } };
 load(); fill(); renderItems(); showTab('s-info');
 })();

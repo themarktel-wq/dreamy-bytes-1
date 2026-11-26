@@ -193,7 +193,7 @@ $('clearRows').onclick = () => { S.rows = []; save(); renderRoute(); };
 $('rt').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if(b){ S.rows.splice(+b.dataset.del,1); save(); renderRoute(); } });
 $('printBtn').onclick = () => { renderSheet(); window.print(); };
 $('exportBtn').onclick = () => { const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'})); a.download='walkwise-data.json'; a.click(); };
-$('importFile').onchange = e => { const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ S=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(rd.result)); save(); fill(); all(); }catch(x){ alert('That file is not a WalkWise data file.'); } }; rd.readAsText(f); };
+$('importFile').onchange = e => { const f=e.target.files[0]; e.target.value=''; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ S=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(rd.result)); save(); fill(); all(); }catch(x){ alert('That file is not a WalkWise data file.'); } }; rd.readAsText(f); };
 $('resetBtn').onclick = () => { if(confirm('Reset everything to the example numbers?')){ S=JSON.parse(JSON.stringify(DEF)); save(); fill(); all(); } };
 load(); fill(); showTab('s-rates'); all();
 })();

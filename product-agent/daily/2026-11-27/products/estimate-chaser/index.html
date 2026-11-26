@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estimate Chaser: Unsold Estimate Follow-Up Tracker</title>
+<style>
+:root{--ink:#1f2a33;--mut:#5b6872;--bg:#f4f6f8;--line:#d7dee5;--acc:#0b6e99;--ok:#157347;--bad:#b42318;--warn:#b45309}
+*{box-sizing:border-box}html,body{margin:0}body{font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden}
+header{background:var(--acc);color:#fff;padding:14px 16px}header h1{margin:0;font-size:20px}header p{margin:2px 0 0;font-size:13px;opacity:.93}
+nav{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:0;z-index:5}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:20px;padding:8px 14px;font:inherit;color:var(--ink);cursor:pointer}nav button[aria-selected=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{max-width:1000px;margin:0 auto;padding:14px 12px 40px}section{display:none}section.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}.card h2{margin:0 0 8px;font-size:17px}
+.note{color:var(--mut);font-size:13px;margin:4px 0 10px}.warn{background:#fff7e6;border:1px solid #f0c36d;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #b7c2cc;border-radius:8px;font:inherit;background:#fff;color:var(--ink);min-width:0}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:6px 5px;font-size:13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}th{color:var(--mut);white-space:nowrap}td.r,th.r{text-align:right}
+#et{min-width:900px}#et td input,#et td select{padding:6px;font-size:13px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:6px}.kpi div{background:#e8f3f9;border-radius:10px;padding:10px}.kpi b{display:block;font-size:20px}.kpi span{font-size:12px;color:var(--mut)}
+.good{color:var(--ok)}.bad{color:var(--bad)}.amber{color:var(--warn)}
+button.btn,label.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 13px;font:inherit;font-size:14px;cursor:pointer;display:inline-block;margin:0}button.btn.alt,label.btn.alt{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.msg{font-size:13px;color:var(--mut);min-height:18px}
+.fu{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}.fu pre{white-space:pre-wrap;font:inherit;background:#f6f8fa;border-radius:8px;padding:8px;margin:8px 0}
+</style></head><body>
+<header><h1>Estimate Chaser</h1><p>Never let an open estimate die in a text thread. Works offline; nothing is uploaded.</p></header>
+<nav id="tabs" role="tablist"></nav>
+<main>
+<div class="warn">Starting entries are <b>examples</b>. This tracker keeps your list and reminders; it does not claim that following up closes any particular share of estimates.</div>
+<section id="s-est" class="on"><div class="card"><h2>Add an estimate</h2><div class="grid">
+ <div><label for="ncust">Customer</label><input id="ncust"></div><div><label for="ncon">Phone / email</label><input id="ncon"></div><div><label for="njob">Job</label><input id="njob"></div><div><label for="namt">Amount</label><input id="namt" type="number" min="0" step="0.01"></div><div><label for="nsent">Date sent</label><input id="nsent" type="date"></div></div>
+ <div class="row"><button class="btn" id="addEst">Add estimate</button></div><p class="msg" id="msgE" role="status"></p></div>
+ <div class="card"><h2>All estimates</h2><div class="tw"><table id="et"><thead><tr><th>Customer</th><th>Job</th><th>Amount</th><th>Sent</th><th>Age</th><th>Status</th><th>Reason (if lost)</th><th>Follow-ups done</th><th>Next follow-up</th><th></th></tr></thead><tbody></tbody></table></div></div></section>
+<section id="s-fu"><div class="card"><h2>Follow up today</h2><p class="note">Open estimates whose next follow-up date is today or earlier, oldest first. Tap "Done" after you send the message.</p><div id="fuList"></div></div></section>
+<section id="s-pipe"><div class="card"><h2>Pipeline</h2><div class="kpi" id="pk"></div><h2 style="margin-top:14px">Aging of open estimates</h2><div class="tw"><table id="ag"><thead><tr><th>Age</th><th class="r">Estimates</th><th class="r">Value</th></tr></thead><tbody></tbody></table></div><h2 style="margin-top:14px">Biggest open estimates (money at risk)</h2><div class="tw"><table id="rk"><thead><tr><th>Customer</th><th>Job</th><th class="r">Amount</th><th class="r">Age (days)</th></tr></thead><tbody></tbody></table></div></div></section>
+<section id="s-wl"><div class="card"><h2>Win / loss</h2><div class="kpi" id="wk"></div><div class="tw" style="margin-top:10px"><table id="wm"><thead><tr><th>Month closed</th><th class="r">Won</th><th class="r">Lost</th><th class="r">Win rate</th><th class="r">Won value</th></tr></thead><tbody></tbody></table></div><h2 style="margin-top:14px">Why estimates were lost</h2><div class="tw"><table id="wr"><thead><tr><th>Reason</th><th class="r">Count</th><th class="r">Value</th></tr></thead><tbody></tbody></table></div><p class="note">Win rate = won / (won + lost). Open estimates are not counted. Small samples swing a lot.</p></div></section>
+<section id="s-set"><div class="card"><h2>Settings and messages</h2><div class="grid"><div><label for="shop">Your business name</label><input id="shop"></div><div><label for="cur">Currency symbol</label><input id="cur" maxlength="4"></div><div><label for="cad">Follow-up days after sending (comma separated)</label><input id="cad"></div></div>
+ <label for="tpl" style="margin-top:10px">Follow-up message (use {customer} {job} {amount} {shop} {days})</label><textarea id="tpl" rows="4"></textarea>
+ <div class="row"><button class="btn alt" id="csv">Export estimates (CSV)</button><button class="btn alt" id="exp">Back up (JSON)</button><label class="btn alt">Restore backup<input id="imp" type="file" accept="application/json" hidden></label><button class="btn alt" id="reset">Reset to examples</button></div><p class="msg" id="msgS" role="status"></p></div></section>
+</main>
+<script id="logic">
+const EC = (function(){
+  const n = x => { x = parseFloat(x); return isFinite(x) ? x : 0; };
+  const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+  const toT = s => { const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return null; const t = Date.UTC(+m[1], +m[2] - 1, +m[3]); return new Date(t).getUTCMonth() === +m[2] - 1 ? t : null; };
+  const fmt = t => t === null ? '' : new Date(t).toISOString().slice(0, 10);
+  const daysBetween = (a, b) => { const x = toT(a), y = toT(b); return x === null || y === null ? null : Math.round((y - x) / 864e5); };
+  const addDays = (s, d) => { const t = toT(s); return t === null ? '' : fmt(t + d * 864e5); };
+  function parseCadence(txt){ const out = []; String(txt || '').split(/[,;\s]+/).forEach(x => { const v = parseInt(x, 10); if (v > 0 && v < 1000 && out.indexOf(v) < 0) out.push(v); }); return out.sort((a, b) => a - b); }
+  const isOpen = e => e.status === 'open';
+  function openValue(list){ return r2(list.filter(isOpen).reduce((s, e) => s + n(e.amount), 0)); }
+  function next(e, cad){ if (!isOpen(e)) return ''; const d = (e.followups || []).length; return d < cad.length ? addDays(e.sent, cad[d]) : ''; }
+  function due(list, cad, today){ return list.filter(isOpen).map(e => { const nx = next(e, cad); const od = nx ? daysBetween(nx, today) : null; return { e, next: nx, overdue: od }; }).filter(x => x.next && x.overdue >= 0).sort((a, b) => b.overdue - a.overdue || n(b.e.amount) - n(a.e.amount)); }
+  function aging(list, today){ const B = [['0-7 days', 0, 7], ['8-14 days', 8, 14], ['15-30 days', 15, 30], ['31+ days', 31, 1e9]]; return B.map(b => { const it = list.filter(isOpen).filter(e => { const a = daysBetween(e.sent, today); return a !== null && a >= b[1] && a <= b[2]; }); return { label: b[0], count: it.length, value: r2(it.reduce((s, e) => s + n(e.amount), 0)) }; }); }
+  function atRisk(list, today){ return list.filter(isOpen).map(e => ({ e, age: daysBetween(e.sent, today) })).sort((a, b) => n(b.e.amount) - n(a.e.amount)); }
+  function winLoss(list){ const won = list.filter(e => e.status === 'won'), lost = list.filter(e => e.status === 'lost'); const months = {}; list.filter(e => (e.status === 'won' || e.status === 'lost') && toT(e.closed) !== null).forEach(e => { const m = String(e.closed).slice(0, 7); months[m] = months[m] || { won: 0, lost: 0, wonValue: 0 }; if (e.status === 'won') { months[m].won++; months[m].wonValue += n(e.amount); } else months[m].lost++; });
+    const rows = Object.keys(months).sort().map(m => ({ month: m, won: months[m].won, lost: months[m].lost, rate: months[m].won + months[m].lost ? months[m].won / (months[m].won + months[m].lost) : null, wonValue: r2(months[m].wonValue) }));
+    const reasons = {}; lost.forEach(e => { const k = e.reason || 'No reason given'; reasons[k] = reasons[k] || { count: 0, value: 0 }; reasons[k].count++; reasons[k].value += n(e.amount); });
+    return { won: won.length, lost: lost.length, rate: won.length + lost.length ? won.length / (won.length + lost.length) : null, wonValue: r2(won.reduce((s, e) => s + n(e.amount), 0)), lostValue: r2(lost.reduce((s, e) => s + n(e.amount), 0)), rows, reasons: Object.keys(reasons).map(k => ({ reason: k, count: reasons[k].count, value: r2(reasons[k].value) })).sort((a, b) => b.count - a.count || b.value - a.value) }; }
+  function message(tpl, e, shop, cur, today){ const days = daysBetween(e.sent, today); return String(tpl).replace(/\{customer\}/g, String(e.customer || 'there').trim().split(/\s+/)[0] || 'there').replace(/\{job\}/g, e.job || 'your project').replace(/\{amount\}/g, (cur || '') + n(e.amount).toFixed(2)).replace(/\{shop\}/g, shop || '').replace(/\{days\}/g, days === null ? '' : String(days)); }
+  const csvCell = v => { let s = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };
+  function toCsv(list){ const head = ['customer', 'contact', 'job', 'amount', 'sent', 'status', 'closed', 'reason', 'followups_done']; return [head.join(',')].concat(list.map(e => [e.customer, e.contact, e.job, n(e.amount), e.sent, e.status, e.closed, e.reason, (e.followups || []).length].map(csvCell).join(','))).join('\n'); }
+  const pct = x => x === null ? 'n/a' : (Math.round(x * 1000) / 10).toFixed(1) + '%';
+  return { n, r2, toT, daysBetween, addDays, parseCadence, openValue, next, due, aging, atRisk, winLoss, message, toCsv, pct };
+})();
+if (typeof module !== 'undefined') module.exports = EC;
+</script>
+<script id="ui">
+(function(){
+const today = () => { const d = new Date(), p = x => String(x).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+const ago = k => EC.addDays(today(), -k);
+const REASONS = ['', 'Price', 'Went with another company', 'No response', 'Project cancelled', 'Timing', 'Other'];
+const DEFT = 'Hi {customer}, just checking in on the estimate we sent for {job} ({amount}). Any questions I can answer? Happy to adjust the scope. Thanks, {shop}';
+function defaults(){ const mk = (id, c, con, j, a, k, st, cl, rs, f) => ({ id, customer: c, contact: con, job: j, amount: a, sent: ago(k), status: st, closed: cl === null ? '' : ago(cl), reason: rs, followups: f.map(x => ago(x)) });
+  return { shop: 'Your Service Co.', cur: '$', cad: '2, 7, 14', tpl: DEFT, est: [mk('e1', 'Ana Lopez', '555-0101 (example)', 'Water heater replacement', 2400, 9, 'open', null, '', []), mk('e2', 'Ben Carter', '555-0102 (example)', 'AC tune-up and repair', 850, 3, 'open', null, '', []), mk('e3', 'Cora Singh', '555-0103 (example)', 'Bathroom repipe', 5200, 20, 'open', null, '', [18, 13]), mk('e4', 'Dan Wu', '555-0104 (example)', 'Panel upgrade', 3100, 30, 'won', 21, '', [28]), mk('e5', 'Eli Ford', '555-0105 (example)', 'Furnace install', 7400, 40, 'lost', 25, 'Price', [38, 33])] }; }
+let S; const KEY = 'estimatechaser-v1'; const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function load(){ try{ const t = localStorage.getItem(KEY); if (t){ const o = JSON.parse(t); S = Object.assign(defaults(), o); if (!Array.isArray(S.est)) S.est = []; return; } }catch(e){} S = defaults(); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+const money = x => (S.cur || '') + (Math.round(x * 100) / 100).toFixed(2);
+const cad = () => EC.parseCadence(S.cad);
+const tabs = [['s-est', 'Estimates'], ['s-fu', 'Follow up today'], ['s-pipe', 'Pipeline'], ['s-wl', 'Win / loss'], ['s-set', 'Settings']];
+function showTab(id){ tabs.forEach(t => $(t[0]).classList.toggle('on', t[0] === id)); [...$('tabs').children].forEach(b => b.setAttribute('aria-selected', b.dataset.t === id)); renderAll(); }
+tabs.forEach(t => { const b = document.createElement('button'); b.textContent = t[1]; b.dataset.t = t[0]; b.setAttribute('role', 'tab'); b.onclick = () => showTab(t[0]); $('tabs').appendChild(b); });
+const kpi = (l, v, c) => '<div><b class="' + (c || '') + '">' + v + '</b><span>' + l + '</span></div>';
+function renderList(){ const c = cad(); const rows = S.est.slice().sort((a, b) => (a.status === 'open' ? 0 : 1) - (b.status === 'open' ? 0 : 1) || (a.sent < b.sent ? 1 : -1));
+  $('et').querySelector('tbody').innerHTML = rows.length ? rows.map(e => { const nx = EC.next(e, c); const od = nx ? EC.daysBetween(nx, today()) : null; const age = EC.daysBetween(e.sent, today());
+    return '<tr data-id="' + esc(e.id) + '"><td>' + esc(e.customer) + '<br><small>' + esc(e.contact) + '</small></td><td>' + esc(e.job) + '</td><td>' + money(EC.n(e.amount)) + '</td><td>' + esc(e.sent) + '</td><td>' + (age === null ? '' : age + ' d') + '</td><td><select data-f="status"><option value="open"' + (e.status === 'open' ? ' selected' : '') + '>Open</option><option value="won"' + (e.status === 'won' ? ' selected' : '') + '>Won</option><option value="lost"' + (e.status === 'lost' ? ' selected' : '') + '>Lost</option></select></td><td><select data-f="reason">' + REASONS.map(r => '<option' + (e.reason === r ? ' selected' : '') + '>' + esc(r) + '</option>').join('') + '</select></td><td>' + (e.followups || []).length + ' of ' + c.length + '</td><td class="' + (od !== null && od >= 0 ? 'bad' : '') + '">' + (e.status !== 'open' ? '' : nx ? esc(nx) + (od >= 0 ? ' (due)' : '') : 'cadence finished') + '</td><td><button class="btn alt" data-del="' + esc(e.id) + '" aria-label="Delete estimate">x</button></td></tr>'; }).join('') : '<tr><td colspan="10">No estimates yet.</td></tr>'; }
+function renderFu(){ const list = EC.due(S.est, cad(), today()); $('fuList').innerHTML = list.length ? list.map(x => { const msg = EC.message(S.tpl, x.e, S.shop, S.cur, today()); return '<div class="fu" data-id="' + esc(x.e.id) + '"><b>' + esc(x.e.customer) + '</b> &middot; ' + esc(x.e.job) + ' &middot; ' + money(EC.n(x.e.amount)) + '<br><small>Due ' + esc(x.next) + (x.overdue > 0 ? ' (' + x.overdue + ' day' + (x.overdue === 1 ? '' : 's') + ' overdue)' : ' (today)') + ' &middot; follow-up ' + ((x.e.followups || []).length + 1) + ' of ' + cad().length + '</small><pre>' + esc(msg) + '</pre><button class="btn" data-copy="' + esc(x.e.id) + '">Copy message</button> <button class="btn alt" data-done="' + esc(x.e.id) + '">Done</button></div>'; }).join('') : '<p>Nothing due today. Nice.</p>'; }
+function renderPipe(){ const open = S.est.filter(e => e.status === 'open'); $('pk').innerHTML = kpi('Open estimates', open.length) + kpi('Open value', money(EC.openValue(S.est))) + kpi('Follow-ups due now', EC.due(S.est, cad(), today()).length, EC.due(S.est, cad(), today()).length ? 'amber' : 'good');
+  $('ag').querySelector('tbody').innerHTML = EC.aging(S.est, today()).map(a => '<tr><td>' + a.label + '</td><td class="r">' + a.count + '</td><td class="r">' + money(a.value) + '</td></tr>').join('');
+  const rk = EC.atRisk(S.est, today()).slice(0, 8); $('rk').querySelector('tbody').innerHTML = rk.length ? rk.map(x => '<tr><td>' + esc(x.e.customer) + '</td><td>' + esc(x.e.job) + '</td><td class="r">' + money(EC.n(x.e.amount)) + '</td><td class="r">' + (x.age === null ? '' : x.age) + '</td></tr>').join('') : '<tr><td colspan="4">No open estimates.</td></tr>'; }
+function renderWl(){ const w = EC.winLoss(S.est); $('wk').innerHTML = kpi('Won', w.won) + kpi('Lost', w.lost) + kpi('Win rate', EC.pct(w.rate)) + kpi('Won value', money(w.wonValue)) + kpi('Lost value', money(w.lostValue));
+  $('wm').querySelector('tbody').innerHTML = w.rows.length ? w.rows.map(r => '<tr><td>' + esc(r.month) + '</td><td class="r">' + r.won + '</td><td class="r">' + r.lost + '</td><td class="r">' + EC.pct(r.rate) + '</td><td class="r">' + money(r.wonValue) + '</td></tr>').join('') : '<tr><td colspan="5">No closed estimates yet.</td></tr>';
+  $('wr').querySelector('tbody').innerHTML = w.reasons.length ? w.reasons.map(r => '<tr><td>' + esc(r.reason) + '</td><td class="r">' + r.count + '</td><td class="r">' + money(r.value) + '</td></tr>').join('') : '<tr><td colspan="3">No lost estimates.</td></tr>'; }
+function fillSet(){ $('shop').value = S.shop; $('cur').value = S.cur; $('cad').value = S.cad; $('tpl').value = S.tpl; }
+function renderAll(){ renderList(); renderFu(); renderPipe(); renderWl(); }
+$('addEst').onclick = () => { const c = $('ncust').value.trim(); if (!c){ $('msgE').textContent = 'Enter the customer name.'; return; } const sent = $('nsent').value || today(); if (EC.toT(sent) === null){ $('msgE').textContent = 'Enter a valid date.'; return; }
+  S.est.push({ id: uid(), customer: c, contact: $('ncon').value.trim(), job: $('njob').value.trim(), amount: $('namt').value, sent, status: 'open', closed: '', reason: '', followups: [] }); save(); ['ncust', 'ncon', 'njob', 'namt'].forEach(i => $(i).value = ''); $('msgE').textContent = 'Estimate added.'; renderAll(); };
+$('et').addEventListener('change', e => { const tr = e.target.closest('tr'); const f = e.target.dataset.f; if (!tr || !f) return; const est = S.est.find(x => x.id === tr.dataset.id); est[f] = e.target.value; if (f === 'status'){ est.closed = est.status === 'open' ? '' : (est.closed || today()); if (est.status !== 'lost') est.reason = est.status === 'won' ? '' : est.reason; } save(); renderAll(); });
+$('et').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b && confirm('Delete this estimate?')){ S.est = S.est.filter(x => x.id !== b.dataset.del); save(); renderAll(); } });
+$('fuList').addEventListener('click', async e => { const d = e.target.closest('[data-done]'), c = e.target.closest('[data-copy]');
+  if (d){ const est = S.est.find(x => x.id === d.dataset.done); est.followups = (est.followups || []).concat([today()]); save(); renderAll(); }
+  if (c){ const est = S.est.find(x => x.id === c.dataset.copy); try{ await navigator.clipboard.writeText(EC.message(S.tpl, est, S.shop, S.cur, today())); c.textContent = 'Copied'; }catch(x){ c.textContent = 'Select the text above'; } } });
+$('s-set').addEventListener('input', () => { S.shop = $('shop').value; S.cur = $('cur').value; S.cad = $('cad').value; S.tpl = $('tpl').value; save(); });
+$('csv').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([EC.toCsv(S.est)], { type: 'text/csv' })); a.download = 'estimates.csv'; a.click(); };
+$('exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' })); a.download = 'estimate-chaser-backup.json'; a.click(); };
+$('imp').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const r = new FileReader(); r.onload = () => { try{ const o = JSON.parse(r.result); if (!o || !Array.isArray(o.est)) throw 0; S = Object.assign(defaults(), o); save(); fillSet(); renderAll(); $('msgS').textContent = 'Backup restored.'; }catch(x){ alert('That file is not an Estimate Chaser backup.'); } }; r.readAsText(f); };
+$('reset').onclick = () => { if (confirm('Reset everything to the example data?')){ S = defaults(); save(); fillSet(); renderAll(); } };
+load(); $('nsent').value = today(); fillSet(); showTab('s-est');
+})();
+</script></body></html>

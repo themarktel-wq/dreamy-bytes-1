@@ -140,10 +140,10 @@ $('ht').addEventListener('click', e => { const o = e.target.closest('[data-o]'),
 $('hClear').onclick = () => { if (confirm('Delete all saved reports on this device?')){ H = []; persist(); renderHist(); } };
 function fillBrand(){ $('bname').value = B.name; $('bcol').value = PR.safeColor(B.col); $('bfoot').value = B.foot; }
 $('s-brand').addEventListener('input', e => { if (e.target.type === 'file') return; B.name = $('bname').value; B.col = $('bcol').value; B.foot = $('bfoot').value; persist(); renderPreview(); });
-$('blogo').onchange = e => { const f = e.target.files[0]; if (!f) return; readImage(f, 240, d => { B.logo = d; persist(true); renderPreview(); }); };
+$('blogo').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; readImage(f, 240, d => { B.logo = d; persist(true); renderPreview(); }); };
 $('bLogoClear').onclick = () => { B.logo = ''; $('blogo').value = ''; persist(); renderPreview(); };
 $('bExport').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({ brand: B, hist: H }, null, 1)], { type: 'application/json' })); a.download = 'pawreport-backup.json'; a.click(); };
-$('bImport').onchange = e => { const f = e.target.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => { try{ const t = JSON.parse(fr.result); if (!t || typeof t !== 'object' || (!t.brand && !t.hist)) throw 0; if (t.brand) B = Object.assign({}, DEFB, t.brand); if (Array.isArray(t.hist)) H = t.hist; persist(true); fillBrand(); renderPreview(); renderHist(); say('Backup restored.'); }catch(x){ alert('That file is not a PawReport backup.'); } }; fr.readAsText(f); };
+$('bImport').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const fr = new FileReader(); fr.onload = () => { try{ const t = JSON.parse(fr.result); if (!t || typeof t !== 'object' || (!t.brand && !t.hist)) throw 0; if (t.brand) B = Object.assign({}, DEFB, t.brand); if (Array.isArray(t.hist)) H = t.hist; persist(true); fillBrand(); renderPreview(); renderHist(); say('Backup restored.'); }catch(x){ alert('That file is not a PawReport backup.'); } }; fr.readAsText(f); };
 load(); R = blank(); fillForm(); fillBrand(); renderPreview(); showTab('s-make');
 })();
 </script></body></html>
