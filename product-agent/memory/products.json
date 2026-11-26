@@ -338,5 +338,235 @@
   "status": "built, delivered in pack.zip, untested in market",
   "market_results": null,
   "notes": "QA: pass"
+ },
+ {
+  "id": "d20261125-01",
+  "type": "html tool",
+  "niche": "auto-detailing: DetailQuote: Size x Condition x Add-On Quote Builder",
+  "price_usd": 35,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261125-02",
+  "type": "n8n",
+  "niche": "auto-detailing: Booking Guard: Detailer Deposit + Access-Check n8n Flow",
+  "price_usd": 45,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS in local simulator only (see qa-report.md)"
+ },
+ {
+  "id": "d20261125-03",
+  "type": "xlsx",
+  "niche": "auto-detailing: Detailer Profit-Per-Job Sheet",
+  "price_usd": 24,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261125-04",
+  "type": "html tool / micro-CRM",
+  "niche": "private-tutors: TutorLedger: Lesson Log, Invoices and Late-Cancel Fees (Any Payment Method)",
+  "price_usd": 35,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261125-05",
+  "type": "html tool",
+  "niche": "private-tutors: ProgressNote: Parent Progress Report Generator",
+  "price_usd": 29,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (25 checks, Chromium only)"
+ },
+ {
+  "id": "d20261125-06",
+  "type": "xlsx",
+  "niche": "private-tutors: Tutor Income and Package Pricing Sheet",
+  "price_usd": 24,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (79 formulas, 0 errors, values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261125-07",
+  "type": "html tool",
+  "niche": "small-landlords: MoveOut Ledger: Itemized Deposit Statement Builder",
+  "price_usd": 35,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (25 checks, Chromium only)"
+ },
+ {
+  "id": "d20261125-08",
+  "type": "html tool",
+  "niche": "small-landlords: FixLog: Maintenance Request Tracker + Tenant Request Link",
+  "price_usd": 35,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass"
+ },
+ {
+  "id": "d20261125-09",
+  "type": "n8n",
+  "niche": "small-landlords: RentRadar: Rent Reminder + Late Fee n8n Flow",
+  "price_usd": 45,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (simulated, not run live)"
+ },
+ {
+  "id": "d20261125-10",
+  "type": "docx",
+  "niche": "small-landlords: Small Landlord Notice + Addendum Pack",
+  "price_usd": 29,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (files open, PDFs render; not legal-reviewed)"
+ },
+ {
+  "id": "d20261125-11",
+  "type": "xlsx",
+  "niche": "small-landlords: Rent vs Cost Reality Planner",
+  "price_usd": 24,
+  "built": "2026-11-25",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass"
+ },
+ {
+  "id": "d20261126-01",
+  "type": "html tool",
+  "niche": "restaurants-food-trucks: PlateCost: Menu Item Cost and Price Calculator",
+  "price_usd": 35,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261126-02",
+  "type": "xlsx",
+  "niche": "restaurants-food-trucks: Lean Par and Order Sheet",
+  "price_usd": 24,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (522 formulas, 0 errors, values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261126-03",
+  "type": "html tool",
+  "niche": "restaurants-food-trucks: Price Hike Reality Check",
+  "price_usd": 29,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (24 checks, Chromium only)"
+ },
+ {
+  "id": "d20261126-04",
+  "type": "xlsx",
+  "niche": "restaurants-food-trucks: Labor Cost vs Sales Planner",
+  "price_usd": 24,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261126-05",
+  "type": "html tool",
+  "niche": "fitness-trainers: PT Pack Keeper: Session Packs, Expiry and Renewals",
+  "price_usd": 29,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261126-06",
+  "type": "n8n",
+  "niche": "fitness-trainers: Comeback Nudge: Ghosted-Client Re-engagement n8n Flow",
+  "price_usd": 45,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (simulator only; not run on live n8n/email/SMS/Sheets)"
+ },
+ {
+  "id": "d20261126-07",
+  "type": "xlsx",
+  "niche": "fitness-trainers: Trainer True Income Sheet",
+  "price_usd": 24,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (67 formulas, 0 errors, values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261126-08",
+  "type": "html tool",
+  "niche": "fitness-trainers: Class Overbook Planner",
+  "price_usd": 25,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (24 unit assertions, Chromium only)"
+ },
+ {
+  "id": "d20261126-09",
+  "type": "html tool",
+  "niche": "bookkeepers: DocChase: Client Document Request Tracker",
+  "price_usd": 35,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261126-10",
+  "type": "xlsx",
+  "niche": "bookkeepers: Month-End Close Tracker",
+  "price_usd": 24,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (182 formulas, 0 errors, 73 values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261126-11",
+  "type": "n8n",
+  "niche": "bookkeepers: Doc Chase Reminder n8n Flow",
+  "price_usd": 45,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (simulated + 28 logic tests; not run live)"
+ },
+ {
+  "id": "d20261126-12",
+  "type": "xlsx",
+  "niche": "bookkeepers: Bookkeeping Fee and Capacity Calculator",
+  "price_usd": 24,
+  "built": "2026-11-26",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (203 formulas, 0 errors, 94 values match independent maths; LibreOffice only)"
  }
 ]
