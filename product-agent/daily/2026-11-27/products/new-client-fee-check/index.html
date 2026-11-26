@@ -1,0 +1,72 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>New-Client Fee Check</title>
+<style>
+:root{--bg:#f7f3f4;--card:#fff;--ink:#222a33;--mut:#6b7280;--acc:#a23b5d;--line:#eadfe3;--grn:#1f8a4c;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:var(--acc);color:#fff;padding:16px}header h1{margin:0;font-size:20px}header p{margin:4px 0 0;font-size:13px;opacity:.92}
+main{max-width:1100px;margin:0 auto;padding:10px 12px 60px}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}h2{font-size:16px;margin:0 0 8px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.row>label{flex:1 1 150px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+input,button{font:inherit}input{border:1px solid var(--line);border-radius:6px;padding:7px 8px;background:#fff;color:var(--ink);width:100%}button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer}button.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:760px}th,td{border-bottom:1px solid var(--line);padding:6px;text-align:right;font-size:13px;vertical-align:middle}th{font-size:11px;text-transform:uppercase;color:var(--mut)}th:first-child,td:first-child{text-align:left}td input{padding:5px 6px;font-size:13px;text-align:right}td:first-child input{text-align:left}
+tr.best td{background:#fbeff3}tr.best td:first-child:after{content:" (highest monthly net)";font-size:11px;color:var(--grn)}.neg{color:var(--red)}
+.note{font-size:12px;color:var(--mut)}.banner{background:#fff8e1;border:1px solid #f0d98a;border-radius:8px;padding:8px 10px;font-size:13px;margin:10px 0}
+@media(max-width:640px){.row>label{flex:1 1 45%}}@media print{header,.noprint{display:none!important}body{background:#fff}.card{border:0}}
+</style></head><body>
+<header><h1>New-Client Fee Check</h1><p>Does a marketplace's new-client fee pay off for you? Compare platforms using your own ticket, margin and rebooking numbers. Runs in your browser; nothing is sent anywhere.</p></header>
+<main>
+<div class="banner">Platform fees below are <b>editable presets, as reported by competitor-written comparison sites, and may be out of date. Check each platform's current terms before deciding.</b> Your own numbers matter more than the presets.</div>
+<section class="card"><h2>1. Your numbers</h2><div class="row">
+<label>Average ticket (price per visit)<input id="ticket" type="number" min="0" step="1"></label><label>Share of ticket you keep after supplies / chair costs %<input id="margin" type="number" min="0" max="100" step="1"></label>
+<label>New client rebook rate %<input id="rebook" type="number" min="0" max="100" step="1"></label><label>Extra visits in 12 months from a client who rebooks<input id="repeat" type="number" min="0" step="0.5"></label>
+<label>% of marketplace clients who would have booked you anyway<input id="anyway" type="number" min="0" max="100" step="1"></label></div>
+<p class="note">Expected visits in 12 months = 1 + rebook rate x extra visits. Value of a new client = ticket x share you keep x expected visits. Set "share you keep" to 100 to compare on revenue instead of margin. The fee is charged on the first visit only.</p></section>
+<section class="card"><h2>2. Platforms (edit freely)</h2><div class="tw"><table style="min-width:720px"><thead><tr><th>Platform</th><th>Monthly price</th><th>New-client fee %</th><th>Minimum fee</th><th>New clients per month it brings you</th></tr></thead><tbody id="plat"></tbody></table></div>
+<div class="row noprint" style="margin-top:8px"><button class="sec" id="reset">Reset presets</button><span class="note">Leave a name blank to ignore that row. Set "new clients per month" to how many new clients that platform really brings you (marketplaces bring clients you pay for; a subscription-only or direct-booking setup brings only the clients your own marketing finds, so enter 0 to see its price alone). Monthly net is the extra monthly value of the clients each platform brings, after its fees.</span></div></section>
+<section class="card"><h2>3. Result per platform</h2><div class="tw"><table><thead><tr><th>Platform</th><th>First-visit fee</th><th>All-in cost per new client</th><th>12-month value per new client</th><th>Net per new client</th><th>Monthly net</th><th>Fee as % of value</th><th>Visits needed to cover cost</th><th>Rebook rate needed</th></tr></thead><tbody id="res"></tbody></table></div>
+<p class="note" id="foot"></p><p class="note">All-in cost = first-visit fee + monthly price / new clients per month (shown as the fee alone when it brings no clients). Monthly net = genuinely new clients x value - fees on all clients it brings - monthly price. "Highest monthly net" is a simple arithmetic ranking, not advice: it ignores whether the marketplace would really send you those clients, tips, retail, and your time.</p>
+<div class="row noprint"><button id="print">Print summary</button></div></section>
+</main>
+<script>
+// ---- CORE (pure functions, unit-tested in Node) ----
+function num(v, d) { var n = Number(v); return (v === '' || v === null || v === undefined || !isFinite(n)) ? (d === undefined ? 0 : d) : n; }
+function expectedVisits(rebookPct, repeatVisits) { var r = Math.min(100, Math.max(0, num(rebookPct))) / 100; return 1 + r * Math.max(0, num(repeatVisits)); }
+function firstVisitFee(ticket, feePct, minFee) { var f = Math.max(0, num(feePct)), m = Math.max(0, num(minFee)); if (f === 0 && m === 0) return 0; return Math.max(m, f / 100 * Math.max(0, num(ticket))); }
+// inp: {ticket, marginPct, rebookPct, repeatVisits, newPerMonth, anywayPct}; pf: {name, monthly, feePct, minFee}
+function evaluate(pf, inp) {
+  var ticket = Math.max(0, num(inp.ticket)), margin = Math.min(100, Math.max(0, num(inp.marginPct, 100))) / 100, n = Math.max(0, num(pf.newPerMonth !== undefined && pf.newPerMonth !== '' ? pf.newPerMonth : inp.newPerMonth)), any = Math.min(100, Math.max(0, num(inp.anywayPct))) / 100;
+  var visits = expectedVisits(inp.rebookPct, inp.repeatVisits), fee = firstVisitFee(ticket, pf.feePct, pf.minFee), sub = Math.max(0, num(pf.monthly));
+  var perVisit = ticket * margin, value = perVisit * visits;            // 12-month contribution from one new client
+  var allIn = n > 0 ? fee + sub / n : fee;                                // fee plus subscription spread over the new clients per month
+  var trulyNew = n * (1 - any);
+  var costPerTrulyNew = trulyNew > 0 ? (n * fee + sub) / trulyNew : null; // what each genuinely new client costs
+  var monthlyNet = trulyNew * value - n * fee - sub;
+  var be = perVisit > 0 ? allIn / perVisit : null;                        // visits (incl. the first) needed to cover the all-in cost
+  var beRebook = null, beNote = '';
+  if (be === null) beNote = 'No margin per visit';
+  else if (be <= 1) beNote = 'First visit already covers it';
+  else { var rv = Math.max(0, num(inp.repeatVisits)); if (rv === 0) beNote = 'Needs repeat visits'; else { beRebook = (be - 1) / rv * 100; beNote = beRebook > 100 ? 'Not reachable at these inputs' : ''; } }
+  return { name: pf.name, fee: fee, sub: sub, visits: visits, value: value, allIn: allIn, costPerTrulyNew: costPerTrulyNew, netPerClient: value - allIn, monthlyNet: monthlyNet, feePctOfValue: value > 0 ? fee / value * 100 : null, breakEvenVisits: be, breakEvenRebookPct: beRebook, breakEvenNote: beNote };
+}
+function evaluateAll(platforms, inp) { var rows = platforms.filter(function (p) { return p.name !== ''; }).map(function (p) { return evaluate(p, inp); }); var best = -1; rows.forEach(function (r, i) { if (best < 0 || r.monthlyNet > rows[best].monthlyNet + 1e-9) best = i; }); return { rows: rows, bestIndex: best }; }
+if (false && typeof module !== 'undefined') module.exports = { num: num, expectedVisits: expectedVisits, firstVisitFee: firstVisitFee, evaluate: evaluate, evaluateAll: evaluateAll };
+
+(function(){
+var KEY='ncfc.v1',$=function(i){return document.getElementById(i)},S;
+function presets(){return [{name:'Fresha-style (as reported)',monthly:19.95,feePct:20,minFee:6,newPerMonth:10},{name:'Booksy-style Boost (as reported, opt-in)',monthly:29.99,feePct:30,minFee:0,newPerMonth:10},{name:'Vagaro-style (as reported)',monthly:24,feePct:20,minFee:0,newPerMonth:10},{name:'Square-style free plan (as reported)',monthly:0,feePct:0,minFee:0,newPerMonth:0},{name:'Direct booking (no marketplace)',monthly:0,feePct:0,minFee:0,newPerMonth:0},{name:'',monthly:0,feePct:0,minFee:0,newPerMonth:0}]}
+function load(){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}if(!S||!S.inp||!S.pf)S={inp:{ticket:60,marginPct:60,rebookPct:50,repeatVisits:4,anywayPct:0},pf:presets()}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function m(x){return x===null?'n/a':(x<0?'-':'')+Math.abs(x).toFixed(2)}
+var IDS={ticket:'ticket',marginPct:'margin',rebookPct:'rebook',repeatVisits:'repeat',anywayPct:'anyway'};
+function render(rebuild){
+ Object.keys(IDS).forEach(function(k){if(document.activeElement!==$(IDS[k]))$(IDS[k]).value=S.inp[k]});
+ if(rebuild)$('plat').innerHTML=S.pf.map(function(p,i){return '<tr><td><input data-i="'+i+'" data-f="name" value="'+esc(p.name)+'"></td><td><input type="number" min="0" step="0.01" data-i="'+i+'" data-f="monthly" value="'+esc(p.monthly)+'"></td><td><input type="number" min="0" step="0.5" data-i="'+i+'" data-f="feePct" value="'+esc(p.feePct)+'"></td><td><input type="number" min="0" step="0.5" data-i="'+i+'" data-f="minFee" value="'+esc(p.minFee)+'"></td><td><input type="number" min="0" step="1" data-i="'+i+'" data-f="newPerMonth" value="'+esc(p.newPerMonth)+'"></td></tr>'}).join('');
+ var ev=evaluateAll(S.pf,S.inp);
+ $('res').innerHTML=ev.rows.map(function(r,i){var be=r.breakEvenNote||(r.breakEvenRebookPct===null?'':r.breakEvenRebookPct.toFixed(1)+'%');return '<tr class="'+(i===ev.bestIndex?'best':'')+'"><td>'+esc(r.name)+'</td><td>'+m(r.fee)+'</td><td>'+m(r.allIn)+'</td><td>'+m(r.value)+'</td><td class="'+(r.netPerClient<0?'neg':'')+'">'+m(r.netPerClient)+'</td><td class="'+(r.monthlyNet<0?'neg':'')+'">'+m(r.monthlyNet)+'</td><td>'+(r.feePctOfValue===null?'n/a':r.feePctOfValue.toFixed(1)+'%')+'</td><td>'+(r.breakEvenVisits===null?'n/a':r.breakEvenVisits.toFixed(2))+'</td><td>'+esc(be)+'</td></tr>'}).join('')||'<tr><td colspan="9" class="note">Add a platform name above.</td></tr>';
+ $('foot').textContent='Expected visits in 12 months for a new client: '+expectedVisits(S.inp.rebookPct,S.inp.repeatVisits).toFixed(2)+'.';save()}
+document.addEventListener('input',function(e){var t=e.target;
+ if(t.dataset&&t.dataset.f){var p=S.pf[t.dataset.i];if(p){p[t.dataset.f]=t.dataset.f==='name'?t.value:(t.value===''?'':Number(t.value));render(false)}}
+ else{Object.keys(IDS).forEach(function(k){if(IDS[k]===t.id){S.inp[k]=t.value===''?'':Number(t.value);render(false)}})}});
+$('reset').onclick=function(){if(confirm('Reset the platform table to the presets?')){S.pf=presets();render(true)}};$('print').onclick=function(){window.print()};
+load();render(true);
+})();
+</script></body></html>

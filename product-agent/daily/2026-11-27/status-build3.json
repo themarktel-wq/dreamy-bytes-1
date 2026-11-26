@@ -1,0 +1,18 @@
+{
+ "stage": "build3",
+ "date": "2026-11-27",
+ "products": {
+  "d20261127-08": {
+   "slug": "new-client-fee-check",
+   "name": "New-Client Fee Check: Marketplace Fee Calculator",
+   "status": "built",
+   "qa": "pass (45 unit assertions, Chromium only)",
+   "price_usd": 25,
+   "files": [
+    "index.html",
+    "README.md",
+    "cover.png"
+   ]
+  }
+ }
+}
