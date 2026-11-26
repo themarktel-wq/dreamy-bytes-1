@@ -41,6 +41,7 @@ def build(v, name):
              12: '=IF(OR(A{r}="",G{r}=0),"",IF(K{r}>=%s,"OK","Below target"))' % T, 13: '=IF(OR(A{r}="",G{r}=0,%s>=1),"",(%s*G{r}+C{r}+I{r})/(1-%s))' % (FE, T, FE), 14: '=IF(N{r}="","",E{r}-N{r})'}
     bk.table(sv, 5, 1, ['Service', 'Minutes', 'Product cost (typical)', 'Product cost (heavy use)', 'Price', 'Per month', 'Hours', 'Fee', 'Overhead share', 'Profit', 'Profit per chair hour', 'Profit per hour (heavy use)', 'vs target', 'Suggested price for target', 'Your price minus suggested'],
              rows, [26, 9, 12, 12, 10, 9, 8, 9, 11, 10, 13, 15, 13, 15, 16], {1: INT, 2: MONEY, 3: MONEY, 4: MONEY, 5: INT, 6: '0.00;-0.00;;', 7: MONEY, 8: MONEY, 9: MONEY, 10: MONEY, 11: MONEY, 13: MONEY, 14: MONEY}, forms, extra=20 - len(rows))
+    sv.row_dimensions[5].height = 50
     bk.cf_neg(sv, 'J6:L25'); bk.cf_neg(sv, 'O6:O25'); bk.cf_formula(sv, 'M6:M25', 'M6="Below target"')
     p = bk.save(OUT); fn = os.path.join(OUT, name); os.replace(p, fn); return fn, R
 def verify(fn, v, R):
