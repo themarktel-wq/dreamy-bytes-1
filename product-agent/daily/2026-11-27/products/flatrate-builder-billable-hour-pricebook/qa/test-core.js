@@ -1,0 +1,18 @@
+const core=require('./corejs.js')(__dirname+'/../index.html');const assert=require('assert');let n=0;function t(name,f){f();n++;console.log('ok',name);}
+const near=(a,b,e=1e-9)=>assert(Math.abs(a-b)<e,a+' vs '+b);
+const S={wages:100000,burden:20,vehicle:0,hours:1200,techs:1,insurance:0,tools:0,rent:0,admin:0,other:0,margin:40,round:0,cur:'$',tiers:[{from:0,pct:100},{from:50,pct:60},{from:200,pct:40},{from:1000,pct:25}]};
+t('plan example: $120,000 labor cost / 1,200 billable hours = $100 per hour',()=>{const r=core.rates(S);near(r.laborAnnual,120000);near(r.loaded,100);near(r.overheadHr,0);near(r.hourly,100);});
+t('vehicle cost is part of the loaded rate: (wages x 1.25 + 12000)/1200',()=>{const r=core.rates(Object.assign({},S,{wages:70000,burden:25,vehicle:12000}));near(r.loaded,(70000*1.25+12000)/1200);});
+t('overhead per BILLABLE hour = yearly overhead / (hours x techs); 2 techs halves it',()=>{const s=Object.assign({},S,{insurance:6000,tools:3000,rent:9000,admin:9000});near(core.rates(s).overheadHr,27000/1200);near(core.rates(Object.assign({},s,{techs:2})).overheadHr,27000/2400);});
+t('billable hours drive the rate: 1,000 billable hours -> $120/h',()=>{near(core.rates(Object.assign({},S,{hours:1000})).loaded,120);});
+t('markup tier chosen by line cost: 49.99->100, 50->60, 199->60, 200->40, 5000->25',()=>{[[0,100],[49.99,100],[50,60],[199,60],[200,40],[999,40],[1000,25],[5000,25]].forEach(([c,p])=>near(core.markupFor(S,c),p));});
+t('tiers are order independent',()=>{const s=Object.assign({},S,{tiers:S.tiers.slice().reverse()});near(core.markupFor(s,500),40);});
+t('hand calc: 2 h at $100 + parts $100 (markup 60%) -> (200+160)/0.6 = 600; margin 40%',()=>{const c=core.optionPrice(S,{hours:2,parts:[{name:'p',cost:100,qty:1}]});near(c.labor,200);near(c.partsPrice,160);near(c.raw,600);near(c.price,600);near(c.marginOnPrice,0.4);near(c.perHour,300);});
+t('markup applies per line on extended cost: 4 x $30 = $120 line -> 60%',()=>{const c=core.optionPrice(S,{hours:0,parts:[{cost:30,qty:4}]});near(c.partsPrice,192);near(c.lines[0].pct,60);});
+t('profit over true cost: price 600 - labor 200 - parts at cost 100 = 300',()=>{const c=core.optionPrice(S,{hours:2,parts:[{cost:100,qty:1}]});near(c.profitOnCost,300);near(c.trueMargin,0.5);});
+t('rounding up to nearest $5 never lowers margin below target',()=>{const s=Object.assign({},S,{round:5});const c=core.optionPrice(s,{hours:1.37,parts:[{cost:23,qty:1}]});assert(c.price%5===0&&c.price>=c.raw&&c.price-c.raw<5);assert(c.marginOnPrice>=0.4-1e-9);const e=core.optionPrice(s,{hours:2,parts:[{cost:100,qty:1}]});near(e.price,600);});
+t('labor-only job (no parts) and zero hours job have no NaN',()=>{const a=core.optionPrice(S,{hours:1.5,parts:[]});near(a.price,150/0.6);const z=core.optionPrice(S,{hours:0,parts:[]});assert(isFinite(z.price)&&z.perHour===null);});
+t('margin capped at 95%; margin 0 -> price = cost',()=>{near(core.optionPrice(Object.assign({},S,{margin:99}),{hours:1,parts:[]}).raw,100/0.05);near(core.optionPrice(Object.assign({},S,{margin:0}),{hours:1,parts:[]}).price,100);});
+t('zero billable hours input is guarded (treated as 1)',()=>{assert(isFinite(core.rates(Object.assign({},S,{hours:0})).loaded));});
+t('CSV: header, one row per offered option, quoting',()=>{const jobs=[{name:'Fix, "pipe"',options:[{label:'Good',on:true,hours:2,parts:[{cost:100,qty:1}]},{label:'Better',on:false,hours:3,parts:[]}]}];const L=core.pricebookCSV(S,jobs).split('\n');assert.strictEqual(L.length,2);assert(/^job,option,hours/.test(L[0]));assert(L[1].startsWith('"Fix, ""pipe""",Good,2,100.00,160.00,200.00,600.00,40.0,300.00'));});
+console.log(n,'tests passed');

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FlatRate Builder - Billable-Hour Pricebook Calculator</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#b91c1c;--acc2:#fee2e2}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:20px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:10px 0}.doc h2{margin:0;font-size:20px}.doc td,.doc th{font-size:13px}
+.opt{border:1px solid var(--line);border-radius:8px;padding:10px;margin:8px 0}
+td input[type=text],td input[data-n]{min-width:120px}
+@media print{.doc{border:0;padding:0;margin:0}}
+</style></head><body>
+<header class="top"><h1>FlatRate Builder</h1><p>Build a good / better / best flat-rate pricebook from your real cost per BILLABLE hour. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs" id="tabs"><button data-t="book" class="on">Pricebook</button><button data-t="rates">My cost per hour</button><button data-t="parts">Parts markup</button><button data-t="help">How it works</button></div>
+
+<section id="t-book">
+ <div class="card"><h2>Your rates at a glance</h2><div class="kpi" id="kpi"></div><p class="note" id="sampleNote"></p></div>
+ <div class="card"><div class="row"><button class="btn" id="newJob">+ New job</button><button class="btn sec" id="printBook">Print pricebook</button><button class="btn sec" id="expcsv">Export CSV</button><button class="btn sec" id="expjson">Backup JSON</button><label class="btn sec" style="margin:0;cursor:pointer">Restore JSON<input id="impjson" type="file" accept=".json" class="hidden"></label><button class="btn del" id="clearSample">Remove sample jobs</button></div><div class="tw"><table id="jobTbl"></table></div></div>
+ <div class="card hidden" id="editor"></div>
+ <div class="doc printable hidden" id="sheet"></div>
+</section>
+
+<section id="t-rates" class="hidden">
+ <div class="card"><h2>Labor cost per billable hour</h2><div class="note">Starting numbers are examples only. Replace each with your own annual figures. Billable hours are hours you can actually invoice (not paid hours): many shops get far fewer than 2,080 a year per technician.</div>
+  <div class="grid"><div><label>Annual wages per technician (or your owner draw as tech)</label><input id="s_wages" type="number" min="0"></div><div><label>Payroll taxes, workers comp, benefits (% of wages)</label><input id="s_burden" type="number" min="0"></div><div><label>Vehicle cost per technician per year</label><input id="s_vehicle" type="number" min="0"></div><div><label>Billable hours per technician per year</label><input id="s_hours" type="number" min="1"></div><div><label>Number of billable technicians</label><input id="s_techs" type="number" min="1"></div></div></div>
+ <div class="card"><h2>Overhead (shop-wide, per year)</h2><div class="grid"><div><label>Insurance</label><input id="s_insurance" type="number" min="0"></div><div><label>Tools &amp; equipment</label><input id="s_tools" type="number" min="0"></div><div><label>Rent, utilities, software</label><input id="s_rent" type="number" min="0"></div><div><label>Office / admin / marketing</label><input id="s_admin" type="number" min="0"></div><div><label>Other overhead</label><input id="s_other" type="number" min="0"></div></div></div>
+ <div class="card"><h2>Pricing rules</h2><div class="grid"><div><label>Target margin on price (%)</label><input id="s_margin" type="number" min="0" max="95"></div><div><label>Round prices UP to the nearest (0 = no rounding)</label><input id="s_round" type="number" min="0" step="1"></div><div><label>Currency symbol</label><input id="s_cur" maxlength="3"></div><div><label>Business name (printed)</label><input id="s_biz"></div></div><div class="kpi" id="rateKpi" style="margin-top:10px"></div></div>
+</section>
+
+<section id="t-parts" class="hidden"><div class="card"><h2>Parts markup tiers</h2><div class="note">Markup is chosen by the cost of each parts line (unit cost x quantity). Enter your own tiers: the examples are not industry standards. The last tier with a "from" at or below the line cost applies.</div><div class="tw"><table id="tierTbl"></table></div><div class="row"><button class="btn sec" id="addTier">+ Add tier</button></div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How FlatRate Builder works</h2>
+<p><b>Loaded labor rate</b> = (annual wages x (1 + burden %) + vehicle cost) / billable hours per technician.</p>
+<p><b>Overhead per billable hour</b> = total yearly overhead / (billable hours per technician x number of technicians).</p>
+<p><b>Cost of an hour</b> = loaded rate + overhead per hour. Example: $120,000 of labor cost / 1,200 billable hours = $100 per hour before overhead.</p>
+<p><b>Job cost</b> = hours x cost of an hour + parts at cost x (1 + markup for that line). <b>Flat price</b> = job cost / (1 - target margin), rounded up if you set rounding. The margin shown is measured on labor plus marked-up parts at the final (rounded) price; the editor also shows profit over labor and parts at cost.</p>
+<p><b>Good / better / best:</b> each job has up to three options with their own hours and parts; the customer picks one.</p>
+<p><b>Honest notes.</b> Example inputs follow publicly described flat-rate methods (vendor guides) and are not an industry standard or advice on what to charge. Prices ignore taxes, permits, warranties and local licensing rules unless you add them as parts lines. Data is stored in this browser only: use Backup JSON or Export CSV regularly.</p></div></section>
+</main>
+<script>
+//CORE
+var DEFAULTS={wages:70000,burden:25,vehicle:12000,hours:1200,techs:1,insurance:6000,tools:3000,rent:9000,admin:9000,other:0,margin:40,round:5,cur:'$',biz:'',
+ tiers:[{from:0,pct:100},{from:50,pct:60},{from:200,pct:40},{from:1000,pct:25}]};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function rates(S){var h=Math.max(1,num(S.hours,1)),t=Math.max(1,num(S.techs,1));var labor=num(S.wages)*(1+num(S.burden)/100)+num(S.vehicle);var ovAnnual=num(S.insurance)+num(S.tools)+num(S.rent)+num(S.admin)+num(S.other);
+ var loaded=labor/h,ovHr=ovAnnual/(h*t);return {laborAnnual:labor,overheadAnnual:ovAnnual,loaded:loaded,overheadHr:ovHr,hourly:loaded+ovHr};}
+function markupFor(S,lineCost){var tiers=(S.tiers||[]).slice().sort(function(a,b){return num(a.from)-num(b.from);}),pct=0;tiers.forEach(function(t){if(lineCost>=num(t.from))pct=num(t.pct);});return pct;}
+function roundUp(x,step){step=num(step);if(step<=0)return x;return Math.ceil(x/step-1e-9)*step;}
+function optionPrice(S,o){var r=rates(S),hours=num(o.hours),labor=hours*r.hourly,partsCost=0,partsPrice=0,lines=[];
+ (o.parts||[]).forEach(function(p){var c=num(p.cost)*num(p.qty,1),pct=markupFor(S,c),pr=c*(1+pct/100);partsCost+=c;partsPrice+=pr;lines.push({name:p.name,cost:c,pct:pct,price:pr});});
+ var jobCost=labor+partsCost;var m=Math.min(Math.max(num(S.margin)/100,0),0.95);var raw=(labor+partsPrice)/(1-m);
+ // job_cost in the plan = labor cost + parts at cost x (1 + markup); price = job_cost / (1 - margin)
+ var price=roundUp(raw,S.round);var profit=price-(labor+partsCost);
+ return {hours:hours,labor:labor,partsCost:partsCost,partsPrice:partsPrice,markupAmt:partsPrice-partsCost,lines:lines,planCost:labor+partsPrice,raw:raw,price:price,profitOnCost:profit,marginOnPrice:price>0?(price-(labor+partsPrice))/price:0,trueMargin:price>0?profit/price:0,perHour:hours>0?price/hours:null,profitPerHour:hours>0?profit/hours:null};}
+function pricebookCSV(S,jobs){var q=function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};var rows=[['job','option','hours','parts_cost','parts_price_after_markup','labor_cost','flat_price','margin_pct','price_per_labor_hour']];
+ jobs.forEach(function(j){(j.options||[]).forEach(function(o){if(!o.on)return;var c=optionPrice(S,o);rows.push([j.name,o.label,c.hours,c.partsCost.toFixed(2),c.partsPrice.toFixed(2),c.labor.toFixed(2),c.price.toFixed(2),(c.marginOnPrice*100).toFixed(1),c.perHour==null?'':c.perHour.toFixed(2)]);});});
+ return rows.map(function(r){return r.map(q).join(',');}).join('\n');}
+//ENDCORE
+var KEY='flatrate.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function ld(){try{var v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function opt(label,hours,parts,on){return {label:label,on:on!==false,hours:hours,parts:parts||[]};}
+function sample(){return {S:JSON.parse(JSON.stringify(DEFAULTS)),jobs:[
+ {id:'j1',sample:1,name:'Water heater replacement, 40 gal (sample)',options:[opt('Good',3.5,[{name:'40-gal standard tank',cost:520,qty:1},{name:'Fittings and supply lines',cost:45,qty:1}]),opt('Better',4,[{name:'40-gal longer-warranty tank',cost:690,qty:1},{name:'Fittings and supply lines',cost:45,qty:1},{name:'Expansion tank',cost:60,qty:1}]),opt('Best',5,[{name:'Power-vent / efficient unit',cost:1250,qty:1},{name:'Venting and fittings',cost:140,qty:1},{name:'Expansion tank',cost:60,qty:1}])]},
+ {id:'j2',sample:1,name:'AC capacitor replacement (sample)',options:[opt('Good',0.75,[{name:'Run capacitor',cost:22,qty:1}]),opt('Better',1,[{name:'Run capacitor (heavy duty)',cost:34,qty:1},{name:'Contactor check kit',cost:18,qty:1}]),opt('Best',1.5,[{name:'Capacitor + contactor',cost:68,qty:1},{name:'Hard start kit',cost:45,qty:1}])]},
+ {id:'j3',sample:1,name:'Main drain clearing (sample)',options:[opt('Good',1,[]),opt('Better',1.5,[{name:'Camera inspection consumables',cost:12,qty:1}]),opt('Best',2.5,[{name:'Jetting consumables',cost:30,qty:1}])]}]};}
+var D=ld()||sample();var EDIT=null;
+function money(v,d){return (D.S.cur||'$')+(Math.round(v*100)/100).toLocaleString(undefined,{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d});}
+function jobById(id){return D.jobs.filter(function(j){return j.id===id;})[0];}
+function render(){var S=D.S,r=rates(S);
+ $('kpi').innerHTML='<div><span class="mut">Loaded labor rate / billable hr</span><b>'+money(r.loaded)+'</b></div><div><span class="mut">Overhead / billable hr</span><b>'+money(r.overheadHr)+'</b></div><div><span class="mut">Cost of one hour</span><b>'+money(r.hourly)+'</b></div><div><span class="mut">Target margin</span><b>'+num(S.margin)+'%</b></div>';
+ $('rateKpi').innerHTML=$('kpi').innerHTML;
+ $('sampleNote').textContent=D.jobs.some(function(j){return j.sample;})?'Sample jobs and numbers (fictional examples) are loaded so you can see how it works. Replace the inputs on "My cost per hour" with your own.':'';
+ var rows=D.jobs.map(function(j){var os=(j.options||[]).filter(function(o){return o.on;});return '<tr><td>'+esc(j.name)+'</td>'+[0,1,2].map(function(k){var o=(j.options||[])[k];if(!o||!o.on)return '<td class="num">-</td>';var c=optionPrice(S,o);return '<td class="num"><b>'+money(c.price,0)+'</b><br><span class="mut">'+(c.marginOnPrice*100).toFixed(0)+'% margin</span></td>';}).join('')+'<td><button class="btn sec" data-edit="'+esc(j.id)+'">Open</button></td></tr>';}).join('');
+ $('jobTbl').innerHTML='<tr><th>Job</th><th class="num">Good</th><th class="num">Better</th><th class="num">Best</th><th></th></tr>'+(rows||'<tr><td colspan="5" class="mut">No jobs yet.</td></tr>');
+ ['wages','burden','vehicle','hours','techs','insurance','tools','rent','admin','other','margin','round','cur','biz'].forEach(function(k){if(document.activeElement!==$('s_'+k))$('s_'+k).value=S[k];});
+ $('tierTbl').innerHTML='<tr><th>Parts line cost from</th><th>Markup %</th><th></th></tr>'+S.tiers.map(function(t,i){return '<tr><td><input type="number" min="0" data-tf="from" data-i="'+i+'" value="'+num(t.from)+'" style="width:110px"></td><td><input type="number" min="0" data-tf="pct" data-i="'+i+'" value="'+num(t.pct)+'" style="width:90px"></td><td><button class="btn del" data-rt="'+i+'">x</button></td></tr>';}).join('');
+ renderEditor();}
+function renderEditor(){var ed=$('editor'),sh=$('sheet');var j=EDIT&&jobById(EDIT);if(!j){ed.classList.add('hidden');sh.classList.add('hidden');return;}ed.classList.remove('hidden');sh.classList.remove('hidden');
+ ed.innerHTML='<h2>Edit job</h2><div class="grid"><div><label>Job name</label><input data-jn value="'+esc(j.name)+'"></div></div>'+(j.options||[]).map(function(o,k){return '<div class="opt"><div class="grid"><div><label>Option name</label><input data-of="label" data-o="'+k+'" value="'+esc(o.label)+'"></div><div><label>Labor hours</label><input type="number" min="0" step="0.25" data-of="hours" data-o="'+k+'" value="'+num(o.hours)+'"></div><div><label>Offer this option?</label><select data-of="on" data-o="'+k+'"><option value="1"'+(o.on?' selected':'')+'>Yes</option><option value="0"'+(o.on?'':' selected')+'>No</option></select></div></div><div class="tw"><table><tr><th>Part</th><th>Unit cost</th><th>Qty</th><th class="num">Markup</th><th></th></tr>'+(o.parts||[]).map(function(p,i){var c=num(p.cost)*num(p.qty,1);return '<tr><td><input type="text" data-pf="name" data-o="'+k+'" data-p="'+i+'" value="'+esc(p.name)+'"></td><td><input type="number" min="0" step="0.01" data-pf="cost" data-o="'+k+'" data-p="'+i+'" value="'+num(p.cost)+'" style="width:90px"></td><td><input type="number" min="0" data-pf="qty" data-o="'+k+'" data-p="'+i+'" value="'+num(p.qty,1)+'" style="width:60px"></td><td class="num">'+markupFor(D.S,c)+'%</td><td><button class="btn del" data-rp="'+k+'|'+i+'">x</button></td></tr>';}).join('')+'</table></div><div class="row"><button class="btn sec" data-ap="'+k+'">+ Add part</button></div><div class="kpi" data-ok="'+k+'"></div></div>';}).join('')+'<div class="row"><button class="btn" id="print">Print this job</button><button class="btn del" id="delJob">Delete job</button></div>';
+ updEditor();}
+function updEditor(){var j=EDIT&&jobById(EDIT);if(!j)return;(j.options||[]).forEach(function(o,k){var c=optionPrice(D.S,o),el=document.querySelector('[data-ok="'+k+'"]');if(el)el.innerHTML='<div><span class="mut">Labor cost</span><b>'+money(c.labor)+'</b></div><div><span class="mut">Parts cost / with markup</span><b>'+money(c.partsCost)+' / '+money(c.partsPrice)+'</b></div><div><span class="mut">Flat price</span><b>'+money(c.price,0)+'</b></div><div><span class="mut">Margin on labor + marked-up parts</span><b>'+(c.marginOnPrice*100).toFixed(1)+'%</b></div><div><span class="mut">Profit over labor + parts at cost</span><b>'+money(c.profitOnCost)+' ('+(c.trueMargin*100).toFixed(0)+'%)</b></div><div><span class="mut">Price per labor hour</span><b>'+(c.perHour==null?'-':money(c.perHour,0))+'</b></div>';});
+ var S=D.S,r=rates(S);$('sheet').innerHTML='<h2>'+esc(S.biz||'Flat-rate price sheet')+'</h2><p><b>'+esc(j.name)+'</b></p><table><tr><th>Option</th><th class="num">Labor hrs</th><th class="num">Flat price</th></tr>'+(j.options||[]).filter(function(o){return o.on;}).map(function(o){var c=optionPrice(S,o);return '<tr><td>'+esc(o.label)+(c.lines.length?'<div class="mut">'+c.lines.map(function(l){return esc(l.name);}).join(', ')+'</div>':'')+'</td><td class="num">'+c.hours+'</td><td class="num"><b>'+money(c.price,0)+'</b></td></tr>';}).join('')+'</table>';}
+function pricebookHtml(){var S=D.S;return '<h2>'+esc(S.biz||'Flat-rate pricebook')+'</h2><p class="mut">'+new Date().toLocaleDateString()+'</p><table><tr><th>Job</th><th class="num">Good</th><th class="num">Better</th><th class="num">Best</th></tr>'+D.jobs.map(function(j){return '<tr><td>'+esc(j.name)+'</td>'+[0,1,2].map(function(k){var o=(j.options||[])[k];return '<td class="num">'+(o&&o.on?money(optionPrice(S,o).price,0)+'<div class="mut">'+esc(o.label)+'</div>':'-')+'</td>';}).join('')+'</tr>';}).join('')+'</table>';}
+document.addEventListener('input',function(e){var t=e.target,d=t.dataset;
+ if(t.id&&t.id.indexOf('s_')===0){var k=t.id.slice(2);D.S[k]=(k==='cur'||k==='biz')?t.value:num(t.value);sv();render0();return;}
+ if(d.tf){D.S.tiers[+d.i][d.tf]=num(t.value);sv();render0();return;}
+ var j=EDIT&&jobById(EDIT);if(!j)return;
+ if(d.jn!==undefined){j.name=t.value;sv();render0();return;}
+ if(d.of){var o=j.options[+d.o];if(d.of==='on'){o.on=t.value==='1';}else o[d.of]=d.of==='label'?t.value:num(t.value);sv();render0();return;}
+ if(d.pf){var p=j.options[+d.o].parts[+d.p];p[d.pf]=d.pf==='name'?t.value:num(t.value);sv();render0();return;}});
+function render0(){var S=D.S,r=rates(S);$('kpi').innerHTML='<div><span class="mut">Loaded labor rate / billable hr</span><b>'+money(r.loaded)+'</b></div><div><span class="mut">Overhead / billable hr</span><b>'+money(r.overheadHr)+'</b></div><div><span class="mut">Cost of one hour</span><b>'+money(r.hourly)+'</b></div><div><span class="mut">Target margin</span><b>'+num(S.margin)+'%</b></div>';$('rateKpi').innerHTML=$('kpi').innerHTML;
+ $('jobTbl').innerHTML='<tr><th>Job</th><th class="num">Good</th><th class="num">Better</th><th class="num">Best</th><th></th></tr>'+(D.jobs.map(function(j){return '<tr><td>'+esc(j.name)+'</td>'+[0,1,2].map(function(k){var o=(j.options||[])[k];if(!o||!o.on)return '<td class="num">-</td>';var c=optionPrice(S,o);return '<td class="num"><b>'+money(c.price,0)+'</b><br><span class="mut">'+(c.marginOnPrice*100).toFixed(0)+'% margin</span></td>';}).join('')+'<td><button class="btn sec" data-edit="'+esc(j.id)+'">Open</button></td></tr>';}).join('')||'<tr><td colspan="5" class="mut">No jobs yet.</td></tr>');updEditor();}
+document.addEventListener('change',function(e){if(e.target.dataset.of==='on')renderEditor();});
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['book','rates','parts','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});return;}
+ if(d.edit){EDIT=d.edit;document.body.classList.remove('pb');renderEditor();$('editor').scrollIntoView();return;}
+ if(d.rt!==undefined){D.S.tiers.splice(+d.rt,1);sv();render();return;}
+ if(d.ap!==undefined){jobById(EDIT).options[+d.ap].parts.push({name:'New part',cost:0,qty:1});sv();renderEditor();return;}
+ if(d.rp){var p=d.rp.split('|');jobById(EDIT).options[+p[0]].parts.splice(+p[1],1);sv();renderEditor();render0();return;}
+ if(t.id==='addTier'){D.S.tiers.push({from:0,pct:0});sv();render();return;}
+ if(t.id==='newJob'){var j={id:uid(),name:'New job',options:[opt('Good',1,[]),opt('Better',1.5,[]),opt('Best',2,[])]};D.jobs.push(j);EDIT=j.id;sv();render();$('editor').scrollIntoView();return;}
+ if(t.id==='delJob'){if(confirm('Delete this job?')){D.jobs=D.jobs.filter(function(j){return j.id!==EDIT;});EDIT=null;sv();render();}return;}
+ if(t.id==='print'){document.body.classList.remove('pb');window.print();return;}
+ if(t.id==='printBook'){var s=$('sheet');s.classList.remove('hidden');s.innerHTML=pricebookHtml();document.body.classList.add('pb');window.print();document.body.classList.remove('pb');renderEditor();if(!EDIT)s.classList.add('hidden');return;}
+ if(t.id==='clearSample'){D.jobs=D.jobs.filter(function(j){return !j.sample;});if(EDIT&&!jobById(EDIT))EDIT=null;sv();render();return;}
+ if(t.id==='expcsv'||t.id==='expjson'){var c=t.id==='expcsv',b=new Blob([c?pricebookCSV(D.S,D.jobs):JSON.stringify(D,null,1)],{type:c?'text/csv':'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=c?'flatrate-pricebook.csv':'flatrate-backup.json';a.click();}
+});
+$('impjson').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(x.S&&x.jobs&&x.S.tiers){D=x;EDIT=null;sv();render();}else alert('This file is not a FlatRate Builder backup.');}catch(err){alert('Could not read that file.');}};r.readAsText(f);});
+render();
+</script></body></html>
