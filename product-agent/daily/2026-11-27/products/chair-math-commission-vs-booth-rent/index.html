@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chair Math - Commission vs Booth Rent Calculator</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#9d174d;--acc2:#fce7f3}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:20px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:10px 0}.doc h2{margin:0;font-size:20px}.doc td,.doc th{font-size:14px}
+.best{background:var(--okbg)}
+.seg button{border:1px solid var(--line);background:#fff;padding:8px 14px;cursor:pointer;font:inherit}.seg button:first-child{border-radius:8px 0 0 8px}.seg button:last-child{border-radius:0 8px 8px 0}.seg button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+@media print{.doc{border:0;padding:0;margin:0}}
+</style></head><body>
+<header class="top"><h1>Chair Math</h1><p>Commission vs booth rent vs hybrid, worked out from your own numbers, for stylists and salon owners. Works offline; nothing leaves this browser.</p></header>
+<main>
+<div class="tabs noprint" id="tabs"><button data-t="calc" class="on">Compare deals</button><button data-t="help">How it works</button></div>
+<section id="t-calc">
+ <div class="card noprint"><h2>1. Your numbers (per week)</h2>
+  <div class="grid"><div><label>Your weekly service revenue</label><input id="R" type="number" min="0"></div><div><label>Product / supplies cost (% of service revenue)</label><input id="p" type="number" min="0" max="100"></div><div><label>Weekly retail sales</label><input id="RS" type="number" min="0"></div><div><label>Retail profit margin (%)</label><input id="m" type="number" min="0" max="100"></div><div><label>Weeks worked per year</label><input id="weeks" type="number" min="1" max="52"></div></div>
+  <h3>Deal A: commission</h3><div class="grid"><div><label>Stylist share of services (%)</label><input id="c" type="number" min="0" max="100"></div><div><label>Stylist share of retail profit (%)</label><input id="kc" type="number" min="0" max="100"></div><div><label>Who pays product cost?</label><select id="payC"><option value="0">Salon</option><option value="1">Stylist</option></select></div></div>
+  <h3>Deal B: booth rent</h3><div class="grid"><div><label>Weekly booth rent</label><input id="B" type="number" min="0"></div><div><label>Stylist share of retail profit (%)</label><input id="kr" type="number" min="0" max="100"></div><div><label>Who pays product cost?</label><select id="payR"><option value="1">Stylist</option><option value="0">Salon</option></select></div></div>
+  <h3>Deal C: hybrid (lower rent + commission)</h3><div class="grid"><div><label>Weekly rent</label><input id="Bh" type="number" min="0"></div><div><label>Stylist share of services (%)</label><input id="h" type="number" min="0" max="100"></div><div><label>Stylist share of retail profit (%)</label><input id="kh" type="number" min="0" max="100"></div><div><label>Who pays product cost?</label><select id="payH"><option value="1">Stylist</option><option value="0">Salon</option></select></div></div>
+  <h3>Salon owner side</h3><div class="grid"><div><label>Owner's weekly cost of providing the chair (space, utilities, front desk share)</label><input id="Ch" type="number" min="0"></div><div><label>Business name (printed)</label><input id="biz"></div></div>
+  <div class="note">All starting numbers are examples. Splits, rents and percentages vary by market and by salon: type your own offers. No market percentage is assumed.</div></div>
+ <div class="card noprint"><h2>2. Result</h2><div class="row seg" id="view"><button data-v="stylist" class="on">Stylist view</button><button data-v="owner">Salon owner view</button></div><div class="kpi" id="kpi"></div><div class="tw"><table id="cmp"></table></div><div id="xover"></div>
+  <h3>What if your revenue changes?</h3><div class="tw"><table id="sweep"></table></div><div class="row"><button class="btn" id="print">Print comparison</button></div></div>
+ <div class="doc printable" id="doc"></div>
+</section>
+<section id="t-help" class="hidden"><div class="card"><h2>How Chair Math works</h2>
+<p>For every deal the weekly result is a straight line in your service revenue R: <b>net = slope x R + intercept</b>.</p>
+<p><b>Commission:</b> stylist net = R x commission % + retail share - (R x product % if the stylist pays product). <b>Booth rent:</b> stylist net = R - rent + retail share - (R x product % if the stylist pays product). <b>Hybrid:</b> stylist net = R x commission % - rent + retail share - product cost if the stylist pays.</p>
+<p>Retail share = weekly retail sales x retail margin % x your share %. The salon owner gets the rest of the retail profit.</p>
+<p><b>Break-even revenue</b> between two deals is the revenue where the two lines cross: R = (intercept2 - intercept1) / (slope1 - slope2). Above or below it, the other deal pays the stylist more.</p>
+<p><b>Salon owner net</b> = what the salon receives (its share of services, rent, its share of retail profit) minus product it pays for and the cost of providing the chair. Stylist net + owner net always equals revenue + retail profit - product cost - chair cost: a built-in check on the maths.</p>
+<p><b>Honest notes.</b> This is arithmetic on the numbers you type, not advice on what a fair deal is. It ignores taxes, tips, insurance, employment-law differences between employees and renters (rules vary by country and state), and slow or fully booked weeks. Your inputs are saved in this browser only.</p></div></section>
+</main>
+<script>
+//CORE
+var DEFAULTS={R:1200,p:8,RS:300,m:40,weeks:48,c:50,kc:30,payC:0,B:450,kr:100,payR:1,Bh:200,h:65,kh:50,payH:1,Ch:90,biz:''};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function lin(S){var p=num(S.p)/100,RP=num(S.RS)*num(S.m)/100;
+ return {comm:{a:num(S.c)/100-num(S.payC)*p,b:RP*num(S.kc)/100},rent:{a:1-num(S.payR)*p,b:-num(S.B)+RP*num(S.kr)/100},hyb:{a:num(S.h)/100-num(S.payH)*p,b:-num(S.Bh)+RP*num(S.kh)/100}};}
+function stylistNet(S,deal,R){var L=lin(S)[deal];return L.a*R+L.b;}
+function ownerNet(S,deal,R){var p=num(S.p)/100,RP=num(S.RS)*num(S.m)/100,Ch=num(S.Ch);
+ if(deal==='comm')return R*(1-num(S.c)/100)+RP*(1-num(S.kc)/100)-(1-num(S.payC))*R*p-Ch;
+ if(deal==='rent')return num(S.B)+RP*(1-num(S.kr)/100)-(1-num(S.payR))*R*p-Ch;
+ return num(S.Bh)+R*(1-num(S.h)/100)+RP*(1-num(S.kh)/100)-(1-num(S.payH))*R*p-Ch;}
+function crossover(S,x,y){var L=lin(S),X=L[x],Y=L[y],da=X.a-Y.a;if(Math.abs(da)<1e-12)return null;var R=(Y.b-X.b)/da;return R>0?R:null;}
+function best(S,R){var d=['comm','rent','hyb'],bd=d[0],bv=-Infinity;d.forEach(function(k){var v=stylistNet(S,k,R);if(v>bv+1e-9){bv=v;bd=k;}});return bd;}
+function poolCheck(S,deal,R){var p=num(S.p)/100,RP=num(S.RS)*num(S.m)/100;return stylistNet(S,deal,R)+ownerNet(S,deal,R)-(R+RP-R*p-num(S.Ch));}
+//ENDCORE
+var KEY='chairmath.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function ld(){try{var v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+var S=Object.assign({},DEFAULTS,ld()||{});var VIEW='stylist';
+var NAMES={comm:'A: Commission',rent:'B: Booth rent',hyb:'C: Hybrid'};var KEYS=['comm','rent','hyb'];
+function money(v){return (v<0?'-':'')+'$'+Math.abs(Math.round(v)).toLocaleString();}
+function net(d,R){return VIEW==='owner'?ownerNet(S,d,R):stylistNet(S,d,R);}
+function render(){var R=num(S.R),w=num(S.weeks,48);var who=VIEW==='owner'?'Salon owner':'Stylist';var bd=VIEW==='stylist'?best(S,R):KEYS.slice().sort(function(a,b){return ownerNet(S,b,R)-ownerNet(S,a,R);})[0];
+ $('kpi').innerHTML=KEYS.map(function(d){return '<div'+(d===bd?' class="best"':'')+'><span class="mut">'+NAMES[d]+(d===bd?' (highest)':'')+'</span><b>'+money(net(d,R))+' / wk</b><span class="mut">'+money(net(d,R)*w)+' / year</span></div>';}).join('');
+ $('cmp').innerHTML='<tr><th>'+who+' view</th><th class="num">Per week</th><th class="num">Per month (4.33 wk)</th><th class="num">Per year</th></tr>'+KEYS.map(function(d){var v=net(d,R);return '<tr'+(d===bd?' class="best"':'')+'><td>'+NAMES[d]+'</td><td class="num">'+money(v)+'</td><td class="num">'+money(v*4.33)+'</td><td class="num">'+money(v*w)+'</td></tr>';}).join('');
+ var pairs=[['comm','rent'],['comm','hyb'],['rent','hyb']];
+ $('xover').innerHTML='<h3>Break-even revenue (stylist view)</h3><div class="tw"><table><tr><th>Between</th><th class="num">Weekly revenue where they pay the same</th><th>Above that revenue</th></tr>'+pairs.map(function(pr){var r=crossover(S,pr[0],pr[1]);var L=lin(S);var above=r==null?'-':(L[pr[0]].a>L[pr[1]].a?NAMES[pr[0]]:NAMES[pr[1]]);return '<tr><td>'+NAMES[pr[0]]+' vs '+NAMES[pr[1]]+'</td><td class="num">'+(r==null?'no crossover above $0':money(r))+'</td><td>'+(r==null?(L[pr[0]].b>L[pr[1]].b&&L[pr[0]].a>=L[pr[1]].a?NAMES[pr[0]]+' always pays more':(L[pr[1]].b>L[pr[0]].b&&L[pr[1]].a>=L[pr[0]].a?NAMES[pr[1]]+' always pays more':'-')):'pays more: '+above)+'</td></tr>';}).join('')+'</table></div>';
+ var mult=[0.5,0.75,1,1.25,1.5,2];$('sweep').innerHTML='<tr><th>Weekly service revenue</th>'+KEYS.map(function(d){return '<th class="num">'+NAMES[d]+'</th>';}).join('')+'</tr>'+mult.map(function(x){var r=R*x;var b2=VIEW==='stylist'?best(S,r):KEYS.slice().sort(function(a,b){return ownerNet(S,b,r)-ownerNet(S,a,r);})[0];return '<tr><td>'+money(r)+(x===1?' (yours)':'')+'</td>'+KEYS.map(function(d){return '<td class="num'+(d===b2?'" style="background:var(--okbg);font-weight:600':'')+'">'+money(net(d,r))+'</td>';}).join('')+'</tr>';}).join('');
+ var p=lin(S);$('doc').innerHTML='<h2>'+esc(S.biz||'Chair comparison')+'</h2><p class="mut">'+new Date().toLocaleDateString()+' - weekly service revenue '+money(R)+', product cost '+num(S.p)+'% of services, retail sales '+money(num(S.RS))+' at '+num(S.m)+'% margin</p><table><tr><th>Deal</th><th>Terms</th><th class="num">Stylist / week</th><th class="num">Owner / week</th></tr>'
+  +'<tr><td>'+NAMES.comm+'</td><td>Stylist keeps '+num(S.c)+'% of services, '+num(S.kc)+'% of retail profit; '+(num(S.payC)?'stylist':'salon')+' pays product</td><td class="num">'+money(stylistNet(S,'comm',R))+'</td><td class="num">'+money(ownerNet(S,'comm',R))+'</td></tr>'
+  +'<tr><td>'+NAMES.rent+'</td><td>Rent '+money(num(S.B))+'/wk; stylist keeps all services, '+num(S.kr)+'% of retail profit; '+(num(S.payR)?'stylist':'salon')+' pays product</td><td class="num">'+money(stylistNet(S,'rent',R))+'</td><td class="num">'+money(ownerNet(S,'rent',R))+'</td></tr>'
+  +'<tr><td>'+NAMES.hyb+'</td><td>Rent '+money(num(S.Bh))+'/wk + stylist keeps '+num(S.h)+'% of services, '+num(S.kh)+'% of retail profit; '+(num(S.payH)?'stylist':'salon')+' pays product</td><td class="num">'+money(stylistNet(S,'hyb',R))+'</td><td class="num">'+money(ownerNet(S,'hyb',R))+'</td></tr></table><p class="mut">Arithmetic on the numbers entered; not advice on what a fair deal is. Ignores taxes, tips, insurance and employment rules.</p>';}
+function load(){['R','p','RS','m','weeks','c','kc','payC','B','kr','payR','Bh','h','kh','payH','Ch','biz'].forEach(function(k){$(k).value=S[k];});}
+document.addEventListener('input',function(e){var t=e.target;if(t.id&&Object.prototype.hasOwnProperty.call(DEFAULTS,t.id)){S[t.id]=t.id==='biz'?t.value:num(t.value);sv();render();}});
+document.addEventListener('change',function(e){var t=e.target;if(t.id&&Object.prototype.hasOwnProperty.call(DEFAULTS,t.id)){S[t.id]=t.id==='biz'?t.value:num(t.value);sv();render();}});
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['calc','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});return;}
+ if(d.v){VIEW=d.v;Array.prototype.forEach.call(document.querySelectorAll('#view button'),function(b){b.classList.toggle('on',b===t);});render();return;}
+ if(t.id==='print')window.print();});
+load();render();
+</script></body></html>
