@@ -1,0 +1,427 @@
+{
+ "date": "2026-11-27",
+ "timezone": "Asia/Karachi",
+ "niches": [
+  "trades-hvac-plumbing",
+  "salons-barbers",
+  "event-planners"
+ ],
+ "total": 11,
+ "software_count": 7,
+ "software_share": 0.64,
+ "products": [
+  {
+   "id": "d20261127-01",
+   "niche": "trades-hvac-plumbing",
+   "name": "FlatRate Builder: Billable-Hour Pricebook Calculator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 39,
+   "unique_concept": "Pricing tool that derives loaded labor rate and overhead per BILLABLE hour (not paid hour), marks parts up in tiers and outputs good/better/best flat-rate prices with a margin check; a pricebook builder without per-user software fees.",
+   "persona": "Solo/2-van plumber or HVAC tech-owner",
+   "pain_points": "Pricing by feel; overhead forgotten; per-user software fees",
+   "pitch_points": "Price every job from your real costs; consistent pricebook; no subscription",
+   "features": [
+    "Cost inputs (wages, burden, vehicle, insurance, tools, annual billable hours)",
+    "Overhead per billable hour calculator",
+    "Parts markup tiers (user-entered)",
+    "Job template library (labor hours + parts) with good/better/best options",
+    "Flat price = total cost/(1 - target margin); margin and effective $/hr shown",
+    "Pricebook export (CSV) and print sheet, localStorage"
+   ],
+   "build_spec": "Single-file HTML. loaded_rate = annual_cost/billable_hours; overhead_per_hr = overhead/billable_hours; job_cost = hours x (loaded_rate+overhead_per_hr) + parts x (1+markup); price = job_cost/(1-margin). Defaults shown as editable examples sourced H3; no claim of industry standard. Unit tests (e.g. $120,000/1,200 = $100/hr) + phone width.",
+   "evidence_refs": [
+    "H3",
+    "H2"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "Housecall Pro",
+     "ServiceTitan pricebook",
+     "Jobber"
+    ]
+   },
+   "score_out_of_40": 27,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261127-02",
+   "niche": "trades-hvac-plumbing",
+   "name": "Estimate Chaser: Unsold Estimate Follow-Up Tracker",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 29,
+   "unique_concept": "Tracks every open estimate with value, age and next follow-up date, ranks the money at risk and supplies short follow-up messages; built for estimates that die in a text thread.",
+   "persona": "Small shop owner (3-8 techs)",
+   "pain_points": "Estimates forgotten; no follow-up routine",
+   "pitch_points": "See open-estimate value; follow up on schedule; scripts ready",
+   "features": [
+    "Estimate list (customer, job, amount, date sent, status)",
+    "Follow-up cadence (day 2/7/14, user-editable)",
+    "Pipeline value and aging report",
+    "Message templates (text/email)",
+    "Win/loss log with reason, win rate by month",
+    "CSV export, localStorage"
+   ],
+   "build_spec": "Single-file HTML. open_value = sum(amount where status=open); next_follow_up = sent + cadence step; win_rate = won/(won+lost). No claim that follow-up closes X% (README cites vendor claims as unverified). Unit tests + phone width.",
+   "evidence_refs": [
+    "H4"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "Jobber quotes",
+     "Housecall Pro estimates",
+     "spreadsheets"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "Evidence is Low-Med (one trade study + vendor claims)"
+  },
+  {
+   "id": "d20261127-03",
+   "niche": "trades-hvac-plumbing",
+   "name": "Missed Call Text-Back n8n Flow",
+   "type": "n8n",
+   "is_software": true,
+   "assigned_stage": "build3",
+   "price_usd": 45,
+   "unique_concept": "n8n flow that texts back missed calls, collects job type and address into a Google Sheet and alerts the owner, using the contractor's own Twilio account instead of a monthly call-answering service.",
+   "persona": "Solo/small contractor",
+   "pain_points": "Missed calls go to competitors (vendor claims)",
+   "pitch_points": "Immediate text-back; leads logged; owner alerted",
+   "features": [
+    "Webhook trigger from Twilio missed call",
+    "Auto text with short intake questions",
+    "Replies parsed into Leads sheet (name, address, job type, urgency)",
+    "Owner alert (email/SMS)",
+    "Weekly lead summary row",
+    "Credentials placeholders"
+   ],
+   "build_spec": "tools/n8n workflow JSON validated by sim.js; QA states not run on live Twilio/Sheets; README notes consent/telemarketing rules vary by region (no legal advice).",
+   "evidence_refs": [
+    "H5"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "Signpost / answering-service tools",
+     "Housecall Pro missed-call features",
+     "Jobber"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence all vendor-sourced (Low)"
+  },
+  {
+   "id": "d20261127-04",
+   "niche": "trades-hvac-plumbing",
+   "name": "Billable Hours and Overhead Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build1",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet showing real billable hours per tech, overhead per billable hour, and break-even calls per day.",
+   "persona": "Solo/small shop owner",
+   "pain_points": "Don't know overhead per billable hour",
+   "pitch_points": "See break-even and weak weeks",
+   "features": [
+    "Overhead sheet (rent, insurance, trucks, software, admin)",
+    "Tech hours: scheduled vs billable",
+    "Overhead per billable hour",
+    "Break-even jobs per day at average ticket",
+    "What-if: billable hours +/-"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests ($120,000/1,200 = $100).",
+   "evidence_refs": [
+    "H3"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "generic contractor Etsy sheets",
+     "ServiceTitan labor-rate calculator (free web)",
+     "Housecall Pro guides"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261127-05",
+   "niche": "salons-barbers",
+   "name": "Chair Math: Commission vs Booth Rent Calculator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 25,
+   "unique_concept": "Break-even calculator for stylists and owners comparing commission, booth rent and hybrid deals from the person's own numbers, with a printable side-by-side.",
+   "persona": "Independent stylist / small salon owner",
+   "pain_points": "Unsure which deal pays; vendor blogs give ranges not math",
+   "pitch_points": "Decide with your numbers; shareable comparison",
+   "features": [
+    "Inputs: weekly services revenue, product cost %, commission %, booth rent, retail share",
+    "Net income under commission vs rent vs hybrid",
+    "Break-even revenue where deals cross",
+    "Stylist and owner views",
+    "Printable comparison"
+   ],
+   "build_spec": "Single-file HTML. commission_net = revenue x commission%; rent_net = revenue - rent - product; crossover = rent/(1 - commission% ...) formulas derived in spec and unit-tested. No assumed market percentages (ranges shown only as example).",
+   "evidence_refs": [
+    "S4"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "Zenoti/Mangomint/StyleSeat blog formulas",
+     "Square article",
+     "spreadsheets"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Free blog formulas exist; value is the interactive side-by-side"
+  },
+  {
+   "id": "d20261127-06",
+   "niche": "salons-barbers",
+   "name": "Rebook Radar: Rebooking and Retention Tracker",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 29,
+   "unique_concept": "Tracks rebooking at checkout per stylist and flags clients overdue for their usual interval, using targets the owner sets (vendor benchmarks shown as references only).",
+   "persona": "Small salon owner / barber",
+   "pain_points": "Rebooking tracked by feel; clients drift",
+   "pitch_points": "See rebook % per stylist; overdue client list; message templates",
+   "features": [
+    "Clients with usual interval (weeks) and last visit",
+    "Visit log with rebooked yes/no",
+    "Rebook % per stylist/month vs user target",
+    "Overdue list and message templates",
+    "CSV export, localStorage"
+   ],
+   "build_spec": "Single-file HTML. rebook_pct = rebooked_visits/visits; overdue = today > last_visit + interval + grace. Benchmarks S3 displayed as 'vendor reference, definitions differ'. Unit tests + phone width.",
+   "evidence_refs": [
+    "S3"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "Fresha/Booksy/Vagaro reports",
+     "Zenoti",
+     "Square Appointments"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "Benchmarks are vendor-sourced (Low-Med)"
+  },
+  {
+   "id": "d20261127-07",
+   "niche": "salons-barbers",
+   "name": "Service Price and Chair-Hour Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build2",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that prices each service from time, product cost and the chair's required hourly income, including colour services where product use varies (user-entered).",
+   "persona": "Independent stylist / salon owner",
+   "pain_points": "Prices not tied to time and product cost",
+   "pitch_points": "Reprice services; see profit per chair hour",
+   "features": [
+    "Settings (target hourly, rent, overhead per chair hour)",
+    "Services (minutes, product cost, price)",
+    "Profit per chair hour and flag",
+    "Suggested price for target",
+    "Monthly mix scenario"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests.",
+   "evidence_refs": [
+    "S4",
+    "S1"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "generic Etsy salon sheets",
+     "Fresha/Booksy menus (no calculator found)",
+     "Square"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261127-08",
+   "niche": "salons-barbers",
+   "name": "New-Client Fee Check: Marketplace Fee Calculator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build3",
+   "price_usd": 25,
+   "unique_concept": "Calculator that shows whether marketplace new-client fees (e.g. 20-30% first-visit fees) beat a subscription-only platform, using the stylist's own lifetime-value and rebooking inputs.",
+   "persona": "Independent stylist / barber",
+   "pain_points": "Hard to compare new-client fees vs subscriptions",
+   "pitch_points": "See the real cost per acquired client and break-even rebooks",
+   "features": [
+    "Platform presets with editable fee % / minimum / monthly price (labelled 'check current terms')",
+    "Inputs: avg ticket, visits per client per year, rebook rate",
+    "Cost per acquired client vs value over 12 months",
+    "Break-even number of repeat visits",
+    "Printable summary"
+   ],
+   "build_spec": "Single-file HTML. first_visit_fee = max(min_fee, fee% x ticket); client_value = ticket x expected_visits; net = client_value - first_visit_fee. Presets from S2 flagged as 'as reported by comparison sites, may be outdated'. Unit tests.",
+   "evidence_refs": [
+    "S2",
+    "S3"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "Fresha",
+     "Booksy",
+     "Vagaro"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "Fee terms change; preset values must stay editable"
+  },
+  {
+   "id": "d20261127-09",
+   "niche": "event-planners",
+   "name": "Run Sheet Builder: Multi-Vendor Day-Of Timeline",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 29,
+   "unique_concept": "Builds a day-of timeline for all vendors at once and prints a per-vendor run sheet (arrival, setup, contact, load-in notes) with buffer checks.",
+   "persona": "Independent wedding/event planner",
+   "pain_points": "Many vendors on one timeline; arrival conflicts",
+   "pitch_points": "One master timeline; per-vendor sheets; conflicts flagged",
+   "features": [
+    "Vendor list (role, contact, arrival, setup minutes, load-in notes)",
+    "Master timeline with buffers and overlap warnings",
+    "Per-vendor printable sheet",
+    "Emergency contacts block",
+    "localStorage, JSON export"
+   ],
+   "build_spec": "Single-file HTML. conflict when two vendors share location/time window beyond capacity set by user; buffer = arrival minus previous end. Unit tests. Distinct from photographer Shot List & Timeline Builder (d20261124-13): multi-vendor logistics, no shot lists.",
+   "evidence_refs": [
+    "E3"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "Aisle Planner timelines",
+     "HoneyBook",
+     "Planning Pod"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence Low-Med, general event-planning sources"
+  },
+  {
+   "id": "d20261127-10",
+   "niche": "event-planners",
+   "name": "Planner Package and Hourly Rate Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build2",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that works out the real hourly rate for full-service, partial and day-of packages from hours per phase, and the price needed for a target income.",
+   "persona": "Independent wedding/event planner",
+   "pain_points": "Underpricing because hours are hidden",
+   "pitch_points": "Know true hourly rate per package; price accordingly",
+   "features": [
+    "Packages with hours by phase (design, vendor mgmt, day-of, admin)",
+    "True hourly rate per package",
+    "Price needed for target hourly",
+    "Annual capacity and income",
+    "Software cost (user-entered)"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests. Average planner cost ($2,100, E1) shown only as context note.",
+   "evidence_refs": [
+    "E1",
+    "E2"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "generic Etsy planner sheets",
+     "HoneyBook",
+     "Aisle Planner"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261127-11",
+   "niche": "event-planners",
+   "name": "Vendor Payment and Deadline Tracker",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build3",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet listing each vendor's deposit, balance due dates, amounts paid and contract deadlines across events, with overdue and due-this-week flags.",
+   "persona": "Independent planner / day-of coordinator",
+   "pain_points": "Vendor payment deadlines scattered",
+   "pitch_points": "One view of what is due; fewer missed deadlines",
+   "features": [
+    "Events and vendors sheet",
+    "Payment schedule (deposit, balance, due dates)",
+    "Auto status: paid, due soon, overdue",
+    "Contract deadline column (menu, final count, timeline)",
+    "Weekly due list"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests for status logic.",
+   "evidence_refs": [
+    "E4",
+    "E3"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (57 entries) and daily 2026-11-24/25/26 products; no duplicate",
+    "competitors": [
+     "Aisle Planner payments",
+     "HoneyBook",
+     "generic sheets"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence Low (weak source E4)"
+  }
+ ],
+ "stage_counts": {
+  "build1": 4,
+  "build2": 4,
+  "build3": 3
+ },
+ "stage_software": {
+  "build1": 3,
+  "build2": 2,
+  "build3": 2
+ },
+ "dropped_below_gate": [
+  {
+   "name": "Wedding Planner Proposal + Contract Pack",
+   "score": 23,
+   "reason": "common template type, HoneyBook/Aisle Planner cover it"
+  },
+  {
+   "name": "Client Change Order Log",
+   "score": 22,
+   "reason": "only a passing source (Splento FAQ)"
+  }
+ ],
+ "stage_note": "Only 11 products pass the 24/40 gate; stages hold 4/4/3 rather than padding with weak ideas.",
+ "blocked_or_missing": [
+  "Reddit/Facebook group threads not returned by WebSearch",
+  "Meta Ad Library not reachable",
+  "No direct WebFetch tool: research used search-result summaries only",
+  "IBISWorld/Zenoti/ACHR reports not read in full",
+  "No independent data on missed calls or estimate follow-up (vendor claims only)",
+  "No wedding-planner-specific survey; share of couples using planners not found"
+ ]
+}
