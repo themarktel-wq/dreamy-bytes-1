@@ -1,0 +1,606 @@
+{
+ "name": "Missed call text-back",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "missed-call",
+    "options": {},
+    "responseMode": "responseNode"
+   },
+   "id": "b7accf76-ffe8-5042-b8df-b60cc64fc92e",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    240,
+    300
+   ],
+   "webhookId": "98032349-64bc-5502-bba2-502686ef9016"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Business",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXX",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "bb73591f-4111-5b3f-85b0-61d74b88e467",
+       "name": "ownerPhone",
+       "value": "+15550000001",
+       "type": "string"
+      },
+      {
+       "id": "96be0acb-46a1-5f06-8317-53eb13def575",
+       "name": "responseWindow",
+       "value": "within the hour",
+       "type": "string"
+      },
+      {
+       "id": "9cda4b0a-d6c8-5f22-9d9b-5695dcf64a2c",
+       "name": "cooldownHours",
+       "value": "12",
+       "type": "string"
+      },
+      {
+       "id": "402c9e17-60ee-5ba1-92a1-b02d5a7de7dc",
+       "name": "ignoreNumbers",
+       "value": "",
+       "type": "string"
+      },
+      {
+       "id": "a3526079-4555-58e5-8dd5-e11e9b5d5f07",
+       "name": "urgentWords",
+       "value": "emergency,flood,flooding,burst,no heat,no hot water,gas smell,gas leak,sparks,smoke,asap,urgent",
+       "type": "string"
+      },
+      {
+       "id": "dce0b3c8-0e5b-5c97-aa72-bbaec54f45cb",
+       "name": "ackText",
+       "value": "Thanks! We have your details and will contact you shortly.",
+       "type": "string"
+      },
+      {
+       "id": "9001e77e-ea4d-5f0d-aa34-4d097e704dc2",
+       "name": "testNow",
+       "value": "",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "e91f45c0-07d8-5c42-bbc1-807e1e57ac44",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "text",
+    "responseBody": "=<Response></Response>",
+    "options": {
+     "responseHeaders": {
+      "entries": [
+       {
+        "name": "Content-Type",
+        "value": "text/xml"
+       }
+      ]
+     }
+    }
+   },
+   "id": "b8423fbf-f818-5aaf-a6e3-b84591c21756",
+   "name": "Reply to Twilio",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    680,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const b = $('Webhook').first().json.body || {};\nreturn [{json:{from:String(b.From||'').trim(), to:String(b.To||'').trim(), callStatus:String(b.DialCallStatus||b.CallStatus||'').toLowerCase()}}];"
+   },
+   "id": "9a5f509a-a063-5ccf-afb2-602f3b16f30c",
+   "name": "Normalize",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    900,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Leads",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "7ff90f92-f21d-595a-918b-f4798e39176a",
+   "name": "Read leads",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1120,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Replies",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "c5819d2e-d622-5db0-8131-276dec617dd8",
+   "name": "Read replies",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1340,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json, b = $('Normalize').first().json;\nconst digits = s => String(s || '').replace(/\\D/g, '');\nconst now = /^\\d{4}-\\d{2}-\\d{2}/.test(String(c.testNow || '')) ? new Date(c.testNow).getTime() : Date.now();\nconst MISSED = ['no-answer', 'busy', 'failed', 'canceled', 'cancelled'];\nconst none = reason => [{ json: { none: true, reason } }];\nconst from = digits(b.from);\nif (from.length < 7 || from.length > 15) return none('invalid number');\nif (!MISSED.includes(String(b.callStatus || '').toLowerCase())) return none('not a missed call');\nconst ignore = String(c.ignoreNumbers || '').split(',').map(digits).filter(Boolean).concat([digits(c.twilioFrom)]);\nif (ignore.includes(from)) return none('ignored number');\nconst replies = $('Read replies').all().map(i => i.json), leads = $('Read leads').all().map(i => i.json);\nif (replies.some(r => digits(r.phone) === from && String(r.status || '').toLowerCase() === 'opted_out')) return none('opted out');\nconst cool = Number(c.cooldownHours || 12) * 36e5;\nif (leads.some(r => digits(r.phone) === from && r.received_at && now - new Date(r.received_at).getTime() < cool && now >= new Date(r.received_at).getTime())) return none('already texted recently');\nconst biz = c.businessName || 'our team', win = c.responseWindow || 'as soon as we can';\nconst text = 'Hi, this is ' + biz + '. Sorry we missed your call! To get help fast, reply with: 1) your name 2) the address 3) what you need done 4) is it urgent? (yes/no). We will get back to you ' + win + '. Reply STOP to opt out.';\nreturn [{ json: { send: true, to: String(b.from).trim(), fromNumber: c.twilioFrom, text, receivedAt: new Date(now).toISOString() } }];"
+   },
+   "id": "a0ab2c43-089f-5522-bcb8-b0bb31400fdc",
+   "name": "Decide",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1560,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "03576f8c-fb3a-572b-b4e6-e7e0b05ef707",
+       "leftValue": "={{ !!(!$json.none) }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "2c8c4764-36a4-5f4f-be8f-19672114fe66",
+   "name": "Anything to send",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1780,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "options": {},
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $json.to }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $json.fromNumber }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ $json.text }}"
+      }
+     ]
+    }
+   },
+   "id": "92385079-6a22-5ac4-9963-b0108ba4a464",
+   "name": "Send text-back SMS",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2000,
+    180
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const d = $('Decide').first().json;\nreturn [{json:{received_at:d.receivedAt, phone:d.to, status:'Texted back', note:'Missed call, intake questions sent'}}];"
+   },
+   "id": "c00074c7-7ec7-52e4-a858-a52a2f65844a",
+   "name": "Row: lead",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2220,
+    180
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "append",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Leads",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "910c2034-ab04-507b-9379-9d91cecc1bd5",
+   "name": "Append lead",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    2440,
+    180
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Missed call from ' + $('Decide').first().json.to }}",
+    "emailFormat": "text",
+    "text": "={{ 'A call from ' + $('Decide').first().json.to + ' was missed. They were texted four intake questions. Their reply will appear in your Replies sheet.' }}",
+    "options": {}
+   },
+   "id": "38913760-38c6-5d3f-ba48-0ed891611793",
+   "name": "Alert owner (email)",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2660,
+    180
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "options": {},
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $('Config').first().json.ownerPhone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ 'Missed call from ' + $('Decide').first().json.to + ' texted back.' }}"
+      }
+     ]
+    }
+   },
+   "id": "3d499cb4-8f7d-5baa-9d76-69de72b74846",
+   "name": "Alert owner (SMS, optional)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2880,
+    180
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth)"
+    }
+   },
+   "disabled": true
+  },
+  {
+   "parameters": {
+    "content": "## Missed call text-back\nTwilio calls this webhook when a call to your business number ends. If it was missed (no answer, busy or failed) and the caller has not opted out and was not texted in the last 12 hours, it texts them four short intake questions, logs the call in your Leads sheet and emails you.\n\n**Setup**\n1. Copy the Production URL of the Webhook node into the sending app (POST JSON).\n2. Open the Config node and fill in your values; connect the credentials shown on each node.\n3. Activate the workflow.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "32ce3f5c-8ac4-53ea-b59c-bef657610543",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Webhook": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Reply to Twilio",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Reply to Twilio": {
+   "main": [
+    [
+     {
+      "node": "Normalize",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalize": {
+   "main": [
+    [
+     {
+      "node": "Read leads",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read leads": {
+   "main": [
+    [
+     {
+      "node": "Read replies",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read replies": {
+   "main": [
+    [
+     {
+      "node": "Decide",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Decide": {
+   "main": [
+    [
+     {
+      "node": "Anything to send",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Anything to send": {
+   "main": [
+    [
+     {
+      "node": "Send text-back SMS",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send text-back SMS": {
+   "main": [
+    [
+     {
+      "node": "Row: lead",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Row: lead": {
+   "main": [
+    [
+     {
+      "node": "Append lead",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Append lead": {
+   "main": [
+    [
+     {
+      "node": "Alert owner (email)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Alert owner (email)": {
+   "main": [
+    [
+     {
+      "node": "Alert owner (SMS, optional)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

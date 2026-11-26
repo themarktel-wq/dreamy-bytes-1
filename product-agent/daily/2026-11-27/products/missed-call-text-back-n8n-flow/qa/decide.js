@@ -1,0 +1,17 @@
+const c = $('Config').first().json, b = $('Normalize').first().json;
+const digits = s => String(s || '').replace(/\D/g, '');
+const now = /^\d{4}-\d{2}-\d{2}/.test(String(c.testNow || '')) ? new Date(c.testNow).getTime() : Date.now();
+const MISSED = ['no-answer', 'busy', 'failed', 'canceled', 'cancelled'];
+const none = reason => [{ json: { none: true, reason } }];
+const from = digits(b.from);
+if (from.length < 7 || from.length > 15) return none('invalid number');
+if (!MISSED.includes(String(b.callStatus || '').toLowerCase())) return none('not a missed call');
+const ignore = String(c.ignoreNumbers || '').split(',').map(digits).filter(Boolean).concat([digits(c.twilioFrom)]);
+if (ignore.includes(from)) return none('ignored number');
+const replies = $('Read replies').all().map(i => i.json), leads = $('Read leads').all().map(i => i.json);
+if (replies.some(r => digits(r.phone) === from && String(r.status || '').toLowerCase() === 'opted_out')) return none('opted out');
+const cool = Number(c.cooldownHours || 12) * 36e5;
+if (leads.some(r => digits(r.phone) === from && r.received_at && now - new Date(r.received_at).getTime() < cool && now >= new Date(r.received_at).getTime())) return none('already texted recently');
+const biz = c.businessName || 'our team', win = c.responseWindow || 'as soon as we can';
+const text = 'Hi, this is ' + biz + '. Sorry we missed your call! To get help fast, reply with: 1) your name 2) the address 3) what you need done 4) is it urgent? (yes/no). We will get back to you ' + win + '. Reply STOP to opt out.';
+return [{ json: { send: true, to: String(b.from).trim(), fromNumber: c.twilioFrom, text, receivedAt: new Date(now).toISOString() } }];

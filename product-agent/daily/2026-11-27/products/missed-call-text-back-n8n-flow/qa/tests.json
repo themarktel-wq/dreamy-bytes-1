@@ -1,0 +1,91 @@
+[
+ {
+  "file": "01-missed-call-text-back.json",
+  "title": "Missed call text-back",
+  "sample": {
+   "From": "+15550001111",
+   "To": "+15550009999",
+   "CallStatus": "completed",
+   "DialCallStatus": "no-answer"
+  },
+  "mocks": {
+   "Read leads": [],
+   "Read replies": []
+  },
+  "expect": [
+   "Send text-back SMS",
+   "Append lead",
+   "Alert owner (email)",
+   "Alert owner (SMS, optional)"
+  ],
+  "notexpect": [],
+  "trigger": "webhook"
+ },
+ {
+  "file": "02-reply-intake.json",
+  "title": "Text reply intake and owner alert",
+  "sample": {
+   "From": "+15550001111",
+   "Body": "1) Dana Cole 2) 12 Oak St 3) kitchen sink leaking badly 4) yes"
+  },
+  "mocks": {},
+  "expect": [
+   "Append reply",
+   "Alert owner (email)",
+   "Alert owner (SMS, optional)"
+  ],
+  "notexpect": [],
+  "trigger": "webhook"
+ },
+ {
+  "file": "03-weekly-lead-summary.json",
+  "title": "Weekly lead summary",
+  "sample": {},
+  "mocks": {
+   "Read leads": [
+    {
+     "received_at": "2026-11-25T23:27:02Z",
+     "phone": "+15550001111",
+     "status": "Texted back"
+    },
+    {
+     "received_at": "2026-11-23T23:27:02Z",
+     "phone": "+15550002222",
+     "status": "Texted back"
+    },
+    {
+     "received_at": "2026-11-06T23:27:02Z",
+     "phone": "+15550003333",
+     "status": "Texted back"
+    }
+   ],
+   "Read replies": [
+    {
+     "received_at": "2026-11-26T03:27:02Z",
+     "phone": "+15550001111",
+     "job_type": "Plumbing",
+     "urgency": "URGENT",
+     "status": "Reply received"
+    },
+    {
+     "received_at": "2026-11-24T23:27:02Z",
+     "phone": "+15550002222",
+     "job_type": "HVAC",
+     "urgency": "normal",
+     "status": "Reply received"
+    },
+    {
+     "received_at": "2026-11-22T23:27:02Z",
+     "phone": "+15550004444",
+     "status": "opted_out"
+    }
+   ]
+  },
+  "expect": [
+   "Append summary",
+   "Email weekly summary"
+  ],
+  "notexpect": [],
+  "trigger": "cron"
+ }
+]

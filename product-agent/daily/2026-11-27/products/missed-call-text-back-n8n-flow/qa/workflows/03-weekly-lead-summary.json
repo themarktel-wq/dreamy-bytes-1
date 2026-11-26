@@ -1,0 +1,404 @@
+{
+ "name": "Weekly lead summary",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "weeks",
+       "weeksInterval": 1,
+       "triggerAtDay": [
+        1
+       ],
+       "triggerAtHour": 8,
+       "triggerAtMinute": 0
+      }
+     ]
+    }
+   },
+   "id": "2f623efa-4ef3-54df-91aa-712c881f2c86",
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    240,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Business",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXX",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "bb73591f-4111-5b3f-85b0-61d74b88e467",
+       "name": "ownerPhone",
+       "value": "+15550000001",
+       "type": "string"
+      },
+      {
+       "id": "96be0acb-46a1-5f06-8317-53eb13def575",
+       "name": "responseWindow",
+       "value": "within the hour",
+       "type": "string"
+      },
+      {
+       "id": "9cda4b0a-d6c8-5f22-9d9b-5695dcf64a2c",
+       "name": "cooldownHours",
+       "value": "12",
+       "type": "string"
+      },
+      {
+       "id": "402c9e17-60ee-5ba1-92a1-b02d5a7de7dc",
+       "name": "ignoreNumbers",
+       "value": "",
+       "type": "string"
+      },
+      {
+       "id": "a3526079-4555-58e5-8dd5-e11e9b5d5f07",
+       "name": "urgentWords",
+       "value": "emergency,flood,flooding,burst,no heat,no hot water,gas smell,gas leak,sparks,smoke,asap,urgent",
+       "type": "string"
+      },
+      {
+       "id": "dce0b3c8-0e5b-5c97-aa72-bbaec54f45cb",
+       "name": "ackText",
+       "value": "Thanks! We have your details and will contact you shortly.",
+       "type": "string"
+      },
+      {
+       "id": "9001e77e-ea4d-5f0d-aa34-4d097e704dc2",
+       "name": "testNow",
+       "value": "",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "f0b73fab-3f60-59b9-a587-ada96e64b751",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Leads",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "1a7f2f2e-cf48-5db6-9bdd-d436ba1d9f51",
+   "name": "Read leads",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    680,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Replies",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "95b03ddd-7044-5ac6-ad4f-0ed8593b4218",
+   "name": "Read replies",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    900,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json;\nconst now = /^\\d{4}-\\d{2}-\\d{2}/.test(String(c.testNow || '')) ? new Date(c.testNow).getTime() : Date.now();\nconst since = now - 7 * 864e5, inWeek = r => r.received_at && new Date(r.received_at).getTime() >= since && new Date(r.received_at).getTime() <= now;\nconst leads = $('Read leads').all().map(i => i.json).filter(inWeek), replies = $('Read replies').all().map(i => i.json).filter(inWeek);\nconst real = replies.filter(r => String(r.status || '').toLowerCase() !== 'opted_out');\nconst urgent = real.filter(r => String(r.urgency || '').toUpperCase() === 'URGENT').length, optouts = replies.length - real.length;\nconst types = {}; real.forEach(r => { const k = r.job_type || 'Other'; types[k] = (types[k] || 0) + 1; });\nconst top = Object.entries(types).sort((a, b) => b[1] - a[1]).map(e => e[0] + ' (' + e[1] + ')').join(', ') || 'none';\nconst dg = x => String(x || '').replace(/\\D/g, ''), allReal = $('Read replies').all().map(i => i.json).filter(r => String(r.status || '').toLowerCase() !== 'opted_out' && r.received_at);\nconst answered = leads.filter(l => allReal.some(r => dg(r.phone) && dg(r.phone) === dg(l.phone) && new Date(r.received_at).getTime() >= new Date(l.received_at).getTime())).length;\nconst rate = leads.length ? Math.round(answered / leads.length * 100) : 0;\nconst week = new Date(now).toISOString().slice(0, 10);\nconst body = 'Missed-call text-back summary for the 7 days to ' + week + ':\\n\\n- Missed calls texted back: ' + leads.length + '\\n- Replies received with details: ' + real.length + '\\n- Texted-back calls that got a reply: ' + answered + (leads.length ? ' (' + rate + '%)' : '') + '\\n- Marked urgent: ' + urgent + '\\n- Opted out: ' + optouts + '\\n- Job types: ' + top + '\\n\\nThese counts come only from the Leads and Replies tabs of your sheet.';\nreturn [{ json: { week, missed: leads.length, replied: real.length, urgent, optouts, top, rate, subject: 'Weekly lead summary: ' + leads.length + ' missed calls texted, ' + real.length + ' replies', body } }];"
+   },
+   "id": "3ab33b13-83e5-5763-87d3-ed7fa29735d8",
+   "name": "Summary",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const s = $('Summary').first().json;\nreturn [{json:{week:s.week, missed_calls_texted:s.missed, replies:s.replied, urgent:s.urgent, opted_out:s.optouts, reply_rate_percent:s.rate, job_types:s.top}}];"
+   },
+   "id": "c84105bc-ff4a-555d-9c01-a9ceb365af10",
+   "name": "Row: summary",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1340,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "append",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Weekly Summary",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "3e443064-b637-5a6c-8214-c6d1ab4970bc",
+   "name": "Append summary",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1560,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ $('Summary').first().json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $('Summary').first().json.body }}",
+    "options": {}
+   },
+   "id": "5a3f3bf7-f635-5b7a-b45f-c676bed25986",
+   "name": "Email weekly summary",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1780,
+    300
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Weekly lead summary\nEvery Monday morning counts last week's texted-back missed calls and replies from your sheet, adds a row to a Weekly Summary tab and emails you the totals.\n\n**Setup**\n1. Needs the Leads and Replies tabs written by the other two workflows.\n2. Open the Config node and fill in your values; connect the credentials shown on each node.\n3. Activate the workflow.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "aa04d4d1-9ec5-5bfc-be4d-b7d879dec58c",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Read leads",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read leads": {
+   "main": [
+    [
+     {
+      "node": "Read replies",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read replies": {
+   "main": [
+    [
+     {
+      "node": "Summary",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Summary": {
+   "main": [
+    [
+     {
+      "node": "Row: summary",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Row: summary": {
+   "main": [
+    [
+     {
+      "node": "Append summary",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Append summary": {
+   "main": [
+    [
+     {
+      "node": "Email weekly summary",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

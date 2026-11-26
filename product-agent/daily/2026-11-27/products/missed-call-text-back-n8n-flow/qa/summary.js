@@ -1,0 +1,14 @@
+const c = $('Config').first().json;
+const now = /^\d{4}-\d{2}-\d{2}/.test(String(c.testNow || '')) ? new Date(c.testNow).getTime() : Date.now();
+const since = now - 7 * 864e5, inWeek = r => r.received_at && new Date(r.received_at).getTime() >= since && new Date(r.received_at).getTime() <= now;
+const leads = $('Read leads').all().map(i => i.json).filter(inWeek), replies = $('Read replies').all().map(i => i.json).filter(inWeek);
+const real = replies.filter(r => String(r.status || '').toLowerCase() !== 'opted_out');
+const urgent = real.filter(r => String(r.urgency || '').toUpperCase() === 'URGENT').length, optouts = replies.length - real.length;
+const types = {}; real.forEach(r => { const k = r.job_type || 'Other'; types[k] = (types[k] || 0) + 1; });
+const top = Object.entries(types).sort((a, b) => b[1] - a[1]).map(e => e[0] + ' (' + e[1] + ')').join(', ') || 'none';
+const dg = x => String(x || '').replace(/\D/g, ''), allReal = $('Read replies').all().map(i => i.json).filter(r => String(r.status || '').toLowerCase() !== 'opted_out' && r.received_at);
+const answered = leads.filter(l => allReal.some(r => dg(r.phone) && dg(r.phone) === dg(l.phone) && new Date(r.received_at).getTime() >= new Date(l.received_at).getTime())).length;
+const rate = leads.length ? Math.round(answered / leads.length * 100) : 0;
+const week = new Date(now).toISOString().slice(0, 10);
+const body = 'Missed-call text-back summary for the 7 days to ' + week + ':\n\n- Missed calls texted back: ' + leads.length + '\n- Replies received with details: ' + real.length + '\n- Texted-back calls that got a reply: ' + answered + (leads.length ? ' (' + rate + '%)' : '') + '\n- Marked urgent: ' + urgent + '\n- Opted out: ' + optouts + '\n- Job types: ' + top + '\n\nThese counts come only from the Leads and Replies tabs of your sheet.';
+return [{ json: { week, missed: leads.length, replied: real.length, urgent, optouts, top, rate, subject: 'Weekly lead summary: ' + leads.length + ' missed calls texted, ' + real.length + ' replies', body } }];

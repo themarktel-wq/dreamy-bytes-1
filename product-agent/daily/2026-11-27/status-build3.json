@@ -25,6 +25,23 @@
     "README.md",
     "cover.png"
    ]
+  },
+  "d20261127-03": {
+   "slug": "missed-call-text-back-n8n-flow",
+   "name": "Missed Call Text-Back n8n Flow",
+   "status": "built",
+   "qa": "pass (simulated + 54 logic tests; not run on live Twilio/n8n/Sheets)",
+   "price_usd": 45,
+   "files": [
+    "workflows/ (3 n8n JSON files)",
+    "sheet-templates/ (3 CSV headers)",
+    "README.md",
+    "cover.png"
+   ]
   }
+ },
+ "summary": {
+  "built": 3,
+  "failed": 0
  }
 }

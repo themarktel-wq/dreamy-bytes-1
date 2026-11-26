@@ -1,0 +1,467 @@
+{
+ "name": "Text reply intake and owner alert",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "sms-reply",
+    "options": {},
+    "responseMode": "responseNode"
+   },
+   "id": "c81ff732-4bc1-5896-923a-17aa891959b4",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    240,
+    300
+   ],
+   "webhookId": "dd7926af-63a0-5b5d-ab91-00976cb8834c"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Business",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXX",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "bb73591f-4111-5b3f-85b0-61d74b88e467",
+       "name": "ownerPhone",
+       "value": "+15550000001",
+       "type": "string"
+      },
+      {
+       "id": "96be0acb-46a1-5f06-8317-53eb13def575",
+       "name": "responseWindow",
+       "value": "within the hour",
+       "type": "string"
+      },
+      {
+       "id": "9cda4b0a-d6c8-5f22-9d9b-5695dcf64a2c",
+       "name": "cooldownHours",
+       "value": "12",
+       "type": "string"
+      },
+      {
+       "id": "402c9e17-60ee-5ba1-92a1-b02d5a7de7dc",
+       "name": "ignoreNumbers",
+       "value": "",
+       "type": "string"
+      },
+      {
+       "id": "a3526079-4555-58e5-8dd5-e11e9b5d5f07",
+       "name": "urgentWords",
+       "value": "emergency,flood,flooding,burst,no heat,no hot water,gas smell,gas leak,sparks,smoke,asap,urgent",
+       "type": "string"
+      },
+      {
+       "id": "dce0b3c8-0e5b-5c97-aa72-bbaec54f45cb",
+       "name": "ackText",
+       "value": "Thanks! We have your details and will contact you shortly.",
+       "type": "string"
+      },
+      {
+       "id": "9001e77e-ea4d-5f0d-aa34-4d097e704dc2",
+       "name": "testNow",
+       "value": "",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "63f30ca5-5bf7-54f7-859b-5e2d7d8c4e73",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "text",
+    "responseBody": "=<Response><Message>{{ $('Config').first().json.ackText }}</Message></Response>",
+    "options": {
+     "responseHeaders": {
+      "entries": [
+       {
+        "name": "Content-Type",
+        "value": "text/xml"
+       }
+      ]
+     }
+    }
+   },
+   "id": "077e92f6-5b1d-5d43-9603-d1439beba184",
+   "name": "Reply to Twilio",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    680,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const b = $('Webhook').first().json.body || {};\nreturn [{json:{from:String(b.From||'').trim(), text:String(b.Body||'')}}];"
+   },
+   "id": "f651c912-b2df-5c7c-be34-95cc1b4ce829",
+   "name": "Normalize",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    900,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json, b = $('Normalize').first().json;\nconst text = String(b.text || '').trim().slice(0, 1000), lower = text.toLowerCase();\nconst now = /^\\d{4}-\\d{2}-\\d{2}/.test(String(c.testNow || '')) ? new Date(c.testNow).toISOString() : new Date().toISOString();\nif (/^\\s*(stop|stopall|unsubscribe|cancel|end|quit)\\s*$/i.test(text)) return [{ json: { optOut: true, row: { received_at: now, phone: b.from, name: '', address: '', job_type: '', details: text, urgency: '', status: 'opted_out' } } }];\nconst parts = text.split(/(?:^|\\s)([1-4])[).:\\-]\\s*/), f = {};\nfor (let i = 1; i + 1 < parts.length; i += 2) f[parts[i]] = parts[i + 1].trim();\nconst words = String(c.urgentWords || 'emergency,flood,flooding,burst,no heat,no hot water,gas smell,gas leak,sparks,smoke,asap,urgent').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);\nconst yes = /^(y|yes|yeah|urgent|asap)\\b/i.test(f['4'] || '');\nconst urgent = yes || words.some(w => lower.includes(w));\nconst jobText = f['3'] || text;\nconst groups = { Plumbing: ['leak', 'pipe', 'drain', 'clog', 'toilet', 'faucet', 'tap', 'water heater', 'sewer', 'sink'], HVAC: ['heat', 'furnace', 'a/c', 'air condition', 'cooling', 'thermostat', 'boiler', ' ac '], Electrical: ['outlet', 'breaker', 'wiring', 'power', 'panel', 'sparks'] };\nlet job = 'Other'; const jl = (' ' + jobText.toLowerCase() + ' ');\nfor (const [k, ws] of Object.entries(groups)) { if (ws.some(w => jl.includes(w))) { job = k; break; } }\nconst row = { received_at: now, phone: b.from, name: f['1'] || '', address: f['2'] || '', job_type: job, details: jobText.slice(0, 300), urgency: urgent ? 'URGENT' : 'normal', status: Object.keys(f).length ? 'Reply received' : 'Reply received (unstructured)' };\nreturn [{ json: { optOut: false, row } }];"
+   },
+   "id": "8a0952c7-d1dd-5e3f-b260-bd98a72cb5be",
+   "name": "Parse reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "return [{json:$('Parse reply').first().json.row}];"
+   },
+   "id": "738a9d58-7ef0-541c-837a-8bdd8123623e",
+   "name": "Row: reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1340,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "append",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Replies",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "autoMapInputData",
+     "value": {},
+     "matchingColumns": [],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "44033ca2-2c45-5125-b9e7-0e8c869dd345",
+   "name": "Append reply",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1560,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "ab01624c-854e-524e-8917-26f4de4fe022",
+       "leftValue": "={{ !!(!$('Parse reply').first().json.optOut) }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "f1edb87c-bb5a-5a2b-9961-980e280265a3",
+   "name": "IF Parse replyfirstjsonoptOut",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1780,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ ($('Parse reply').first().json.row.urgency === 'URGENT' ? 'URGENT lead: ' : 'New lead: ') + $('Parse reply').first().json.row.job_type + ' - ' + $('Parse reply').first().json.row.phone }}",
+    "emailFormat": "text",
+    "text": "={{ 'Name: ' + $('Parse reply').first().json.row.name + '\\nPhone: ' + $('Parse reply').first().json.row.phone + '\\nAddress: ' + $('Parse reply').first().json.row.address + '\\nJob type: ' + $('Parse reply').first().json.row.job_type + '\\nUrgency: ' + $('Parse reply').first().json.row.urgency + '\\nDetails: ' + $('Parse reply').first().json.row.details }}",
+    "options": {}
+   },
+   "id": "fae35064-4339-5099-a4f8-8d2b3415b35a",
+   "name": "Alert owner (email)",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2000,
+    180
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "options": {},
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $('Config').first().json.ownerPhone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ $('Parse reply').first().json.row.urgency + ' lead: ' + $('Parse reply').first().json.row.job_type + ' at ' + $('Parse reply').first().json.row.address + ' - ' + $('Parse reply').first().json.row.phone }}"
+      }
+     ]
+    }
+   },
+   "id": "bcf88be3-e0e3-5a4c-b649-6915a699ee0a",
+   "name": "Alert owner (SMS, optional)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2220,
+    180
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth)"
+    }
+   },
+   "disabled": true
+  },
+  {
+   "parameters": {
+    "content": "## Text reply intake and owner alert\nTwilio calls this webhook when a customer replies to your number. It reads the numbered answers (name, address, job, urgent), classifies the job type and urgency with plain keyword rules, logs the reply in your Replies sheet and emails you. STOP replies are logged as opted out and never texted again.\n\n**Setup**\n1. Copy the Production URL of the Webhook node into the sending app (POST JSON).\n2. Open the Config node and fill in your values; connect the credentials shown on each node.\n3. Activate the workflow.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "638124e0-5674-5a3b-8874-d31b74d020e6",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Webhook": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Reply to Twilio",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Reply to Twilio": {
+   "main": [
+    [
+     {
+      "node": "Normalize",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalize": {
+   "main": [
+    [
+     {
+      "node": "Parse reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Parse reply": {
+   "main": [
+    [
+     {
+      "node": "Row: reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Row: reply": {
+   "main": [
+    [
+     {
+      "node": "Append reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Append reply": {
+   "main": [
+    [
+     {
+      "node": "IF Parse replyfirstjsonoptOut",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF Parse replyfirstjsonoptOut": {
+   "main": [
+    [
+     {
+      "node": "Alert owner (email)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Alert owner (email)": {
+   "main": [
+    [
+     {
+      "node": "Alert owner (SMS, optional)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}
