@@ -1,0 +1,47 @@
+{
+ "stage": "build1",
+ "date": "2026-11-27",
+ "products": [
+  {
+   "id": "d20261127-01",
+   "name": "FlatRate Builder: Billable-Hour Pricebook Calculator",
+   "slug": "flatrate-builder-billable-hour-pricebook",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 39,
+   "price_pkr": 10920,
+   "type": "html tool"
+  },
+  {
+   "id": "d20261127-04",
+   "name": "Billable Hours and Overhead Sheet",
+   "slug": "billable-hours-overhead-sheet",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 24,
+   "price_pkr": 6720,
+   "type": "xlsx"
+  },
+  {
+   "id": "d20261127-05",
+   "name": "Chair Math: Commission vs Booth Rent Calculator",
+   "slug": "chair-math-commission-vs-booth-rent",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 25,
+   "price_pkr": 7000,
+   "type": "html tool"
+  },
+  {
+   "id": "d20261127-09",
+   "name": "Run Sheet Builder: Multi-Vendor Day-Of Timeline",
+   "slug": "run-sheet-builder-multi-vendor-timeline",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 29,
+   "price_pkr": 8120,
+   "type": "html tool"
+  }
+ ],
+ "failed": []
+}

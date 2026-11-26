@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Run Sheet Builder - Multi-Vendor Day-Of Timeline</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#115e59;--acc2:#ccfbf1}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:22px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:10px 0}.doc h2{margin:0;font-size:20px}.doc td,.doc th{font-size:14px}
+.warn{background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:8px;margin:6px 0;font-size:13px}.warn.r{background:#fef2f2;border-color:#ef4444}
+.sheet{page-break-after:always}.sheet:last-child{page-break-after:auto}
+td input[type=text],td input[type=time],td input[type=tel]{min-width:90px}
+@media print{.doc{border:0;padding:0;margin:0 0 20px}}
+</style></head><body>
+<header class="top"><h1>Run Sheet Builder</h1><p>One day-of timeline for all vendors, with arrival conflict and buffer checks, and a printable run sheet for each vendor. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs noprint" id="tabs"><button data-t="vendors" class="on">Vendors</button><button data-t="timeline">Master timeline</button><button data-t="sheets">Run sheets</button><button data-t="setup">Event &amp; locations</button><button data-t="help">How it works</button></div>
+
+<section id="t-vendors">
+ <div class="card noprint"><h2>Vendors</h2><p class="note" id="sampleNote"></p><div class="row"><button class="btn" id="addVendor">+ Add vendor</button><button class="btn sec" id="expjson">Export JSON</button><label class="btn sec" style="margin:0;cursor:pointer">Import JSON<input id="impjson" type="file" accept=".json" class="hidden"></label><button class="btn del" id="clearSample">Remove sample data</button></div>
+  <div class="kpi" id="kpi" style="margin:10px 0"></div><div class="tw"><table id="vtbl"></table></div></div>
+</section>
+
+<section id="t-timeline" class="hidden"><div class="card"><h2>Warnings</h2><div id="warnings"></div></div>
+ <div class="card"><h2>Master timeline</h2><div class="row"><button class="btn sec" id="copyTl">Copy as text</button></div><div class="tw"><table id="tl"></table></div></div></section>
+
+<section id="t-sheets" class="hidden"><div class="card noprint"><h2>Per-vendor run sheets</h2><div class="row"><div><label>Show</label><select id="sheetSel"></select></div><button class="btn" id="print">Print</button></div><div class="note">Choose one vendor or "All vendors" (one page each).</div></div><div id="sheets"></div></section>
+
+<section id="t-setup" class="hidden">
+ <div class="card"><h2>Event</h2><div class="grid"><div><label>Event name</label><input id="e_name"></div><div><label>Date</label><input id="e_date" type="date"></div><div><label>Venue</label><input id="e_venue"></div><div><label>Planner name</label><input id="e_planner"></div><div><label>Planner phone</label><input id="e_phone"></div>
+  <div><label>Minimum buffer between vendors in one location (minutes)</label><input id="e_buffer" type="number" min="0"></div><div><label>Venue load-in opens (optional)</label><input id="e_loadFrom" type="time"></div><div><label>Venue load-in closes (optional)</label><input id="e_loadTo" type="time"></div></div></div>
+ <div class="card"><h2>Locations and how many vendors can work there at once</h2><div class="tw"><table id="locTbl"></table></div><div class="row"><button class="btn sec" id="addLoc">+ Add location</button></div></div>
+ <div class="card"><h2>Key moments (shown on the timeline and run sheets)</h2><div class="tw"><table id="msTbl"></table></div><div class="row"><button class="btn sec" id="addMs">+ Add moment</button></div></div>
+ <div class="card"><h2>Emergency contacts (printed on every run sheet)</h2><div class="tw"><table id="ecTbl"></table></div><div class="row"><button class="btn sec" id="addEc">+ Add contact</button></div></div>
+</section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How Run Sheet Builder works</h2>
+<p><b>1.</b> In "Event &amp; locations" enter the event, each location and how many vendors can work there at once (capacity), your key moments (ceremony, dinner) and emergency contacts.</p>
+<p><b>2.</b> Add each vendor with their role, contact, location, arrival time, setup minutes, the time they must be ready by (optional) and load-in notes.</p>
+<p><b>3.</b> A vendor occupies their location from arrival until arrival + setup. A <b>conflict</b> is any time when more vendors are in a location than its capacity. A <b>tight buffer</b> is when the next vendor arrives less than your minimum buffer after the previous one finishes. Other warnings: setup ends after the vendor's ready-by time, arrival outside the venue's load-in window, or a vendor with no arrival time.</p>
+<p><b>4.</b> "Run sheets" prints a one-page sheet per vendor with their times, who else is in the same location, key moments and emergency contacts.</p>
+<p><b>Honest notes.</b> The checks only know what you enter (travel time, traffic, elevators and venue rules are not modelled). Sample event data is fictional. Data is stored in this browser only: use Export JSON to back up.</p></div></section>
+</main>
+<script>
+//CORE
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function toMin(s){var m=/^(\d{1,2}):(\d{2})$/.exec(String(s||'').trim());if(!m)return null;var h=+m[1],mi=+m[2];if(h>23||mi>59)return null;return h*60+mi;}
+function fmt(m){if(m==null)return '--:--';m=((Math.round(m)%1440)+1440)%1440;return (Math.floor(m/60)<10?'0':'')+Math.floor(m/60)+':'+(m%60<10?'0':'')+(m%60);}
+function win(v){var a=toMin(v.arrival);if(a==null)return null;return {start:a,end:a+Math.max(0,num(v.setupMin))};}
+function capOf(D,loc){var l=(D.locations||[]).filter(function(x){return x.name===loc;})[0];return l?Math.max(1,num(l.capacity,1)):1;}
+function conflicts(D){var out=[];var locs={};(D.vendors||[]).forEach(function(v){var w=win(v);if(!w||w.end<=w.start)return;(locs[v.location||'']=locs[v.location||'']||[]).push({v:v,w:w});});
+ Object.keys(locs).forEach(function(loc){var cap=capOf(D,loc),L=locs[loc],pts=[];L.forEach(function(x){pts.push([x.w.start,1,x]);pts.push([x.w.end,-1,x]);});
+  pts.sort(function(a,b){return a[0]-b[0]||a[1]-b[1];});var act=[],segStart=null,involved={};
+  pts.forEach(function(p){var before=act.length;if(p[1]===1)act.push(p[2]);else act=act.filter(function(x){return x!==p[2];});
+   if(act.length>cap&&before<=cap){segStart=p[0];involved={};}
+   if(act.length>cap)act.forEach(function(x){involved[x.v.id]=x.v.role+(x.v.name?' ('+x.v.name+')':'');});
+   if(before>cap&&act.length<=cap&&segStart!=null){out.push({location:loc,from:segStart,to:p[0],capacity:cap,vendors:Object.keys(involved).map(function(k){return involved[k];})});segStart=null;}});});
+ out.sort(function(a,b){return a.from-b.from;});return out;}
+function buffers(D){var out=[];var min=num(D.event&&D.event.buffer,15);var locs={};(D.vendors||[]).forEach(function(v){var w=win(v);if(!w)return;(locs[v.location||'']=locs[v.location||'']||[]).push({v:v,w:w});});
+ Object.keys(locs).forEach(function(loc){var L=locs[loc].sort(function(a,b){return a.w.start-b.w.start;});for(var i=1;i<L.length;i++){var prevEnd=Math.max.apply(null,L.slice(0,i).map(function(x){return x.w.end;}));var gap=L[i].w.start-prevEnd;if(gap>=0&&gap<min)out.push({location:loc,after:L[i-1].v,next:L[i].v,gap:gap,min:min});}});return out;}
+function late(D){var out=[];(D.vendors||[]).forEach(function(v){var w=win(v),r=toMin(v.readyBy);if(w&&r!=null&&w.end>r)out.push({v:v,by:w.end-r,ready:r,done:w.end});});return out;}
+function windowIssues(D){var out=[];var f=toMin(D.event&&D.event.loadFrom),t=toMin(D.event&&D.event.loadTo);(D.vendors||[]).forEach(function(v){var a=toMin(v.arrival);if(a==null)return;if(f!=null&&a<f)out.push({v:v,why:'arrives '+fmt(a)+', before load-in opens at '+fmt(f)});else if(t!=null&&a>t)out.push({v:v,why:'arrives '+fmt(a)+', after load-in closes at '+fmt(t)});});return out;}
+function missing(D){return (D.vendors||[]).filter(function(v){return toMin(v.arrival)==null;});}
+function timeline(D){var ev=[];(D.vendors||[]).forEach(function(v){var w=win(v);if(!w)return;var who=v.role+(v.name?' ('+v.name+')':'');ev.push({t:w.start,kind:'arrive',text:who+' arrives, '+(v.location||'no location')});if(w.end>w.start)ev.push({t:w.end,kind:'done',text:who+' setup complete'});});
+ (D.milestones||[]).forEach(function(m){var t=toMin(m.time);if(t!=null)ev.push({t:t,kind:'moment',text:m.label});});
+ var o={arrive:1,done:0,moment:2};ev.sort(function(a,b){return a.t-b.t||o[a.kind]-o[b.kind];});return ev;}
+function neighbors(D,v){var w=win(v);if(!w)return [];var out=[];(D.vendors||[]).forEach(function(x){if(x===v||x.id===v.id||(x.location||'')!==(v.location||''))return;var xw=win(x);if(!xw)return;var gap=Math.max(xw.start-w.end,w.start-xw.end);if(gap<=60)out.push({v:x,w:xw,overlap:xw.start<w.end&&w.start<xw.end});});out.sort(function(a,b){return a.w.start-b.w.start;});return out;}
+//ENDCORE
+var KEY='runsheet.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function ld(){try{var v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function sample(){return {sample:1,event:{name:'Sample: Garden Wedding',date:'',venue:'Rosewood Estate (fictional)',planner:'Your name',phone:'',buffer:15,loadFrom:'11:00',loadTo:'17:00'},
+ locations:[{name:'Loading dock',capacity:2},{name:'Ballroom',capacity:1},{name:'Garden',capacity:2},{name:'Kitchen',capacity:1}],
+ milestones:[{time:'16:30',label:'Guests arrive'},{time:'17:00',label:'Ceremony'},{time:'18:30',label:'Dinner service'}],
+ contacts:[{name:'Venue manager',role:'Venue',phone:''},{name:'Your name',role:'Lead planner',phone:''}],
+ vendors:[{id:'v1',role:'Florist',name:'Petal & Co',phone:'',location:'Ballroom',arrival:'12:30',setupMin:90,readyBy:'14:00',notes:'Use the dock; arrangements on carts.'},
+ {id:'v2',role:'DJ',name:'Beat Box',phone:'',location:'Ballroom',arrival:'13:00',setupMin:60,readyBy:'16:00',notes:'Needs two power outlets near the stage.'},
+ {id:'v3',role:'Caterer',name:'Table Fare',phone:'',location:'Kitchen',arrival:'12:00',setupMin:60,readyBy:'15:00',notes:'Cold storage needed on arrival.'},
+ {id:'v4',role:'Rentals',name:'Chairs & More',phone:'',location:'Loading dock',arrival:'11:15',setupMin:30,readyBy:'',notes:'Unload before other trucks.'},
+ {id:'v5',role:'Cake delivery',name:'Sweet Layers',phone:'',location:'Loading dock',arrival:'11:30',setupMin:20,readyBy:'',notes:'Keep cool, deliver to kitchen.'},
+ {id:'v6',role:'Linens',name:'Fine Linens',phone:'',location:'Loading dock',arrival:'11:40',setupMin:20,readyBy:'',notes:''},
+ {id:'v7',role:'Photographer',name:'Frame Studio',phone:'',location:'Garden',arrival:'15:30',setupMin:15,readyBy:'15:40',notes:'Scout ceremony light.'}]};}
+var D=ld()||sample();if(!D.event)D.event={};if(!D.milestones)D.milestones=[];if(!D.contacts)D.contacts=[];
+function render(){var cf=conflicts(D),bf=buffers(D),lt=late(D),wi=windowIssues(D),ms=missing(D);
+ $('sampleNote').textContent=D.sample?'A sample event (fictional) is loaded so you can see how it works. Remove it with the button, then add your own.':'';
+ $('kpi').innerHTML='<div><span class="mut">Vendors</span><b>'+D.vendors.length+'</b></div><div><span class="mut">Conflicts</span><b style="color:'+(cf.length?'var(--bad)':'var(--ok)')+'">'+cf.length+'</b></div><div><span class="mut">Tight buffers</span><b>'+bf.length+'</b></div><div><span class="mut">Ready-by problems</span><b>'+lt.length+'</b></div><div><span class="mut">Other warnings</span><b>'+(wi.length+ms.length)+'</b></div>';
+ var locOpts=function(sel){return D.locations.map(function(l){return '<option'+(l.name===sel?' selected':'')+'>'+esc(l.name)+'</option>';}).join('')+(D.locations.some(function(l){return l.name===sel;})||!sel?'':'<option selected>'+esc(sel)+'</option>');};
+ $('vtbl').innerHTML='<tr><th>Role</th><th>Name</th><th>Phone</th><th>Location</th><th>Arrival</th><th>Setup (min)</th><th>Ready by</th><th>Load-in notes</th><th></th></tr>'+D.vendors.map(function(v){return '<tr><td><input type="text" data-v="role" data-id="'+esc(v.id)+'" value="'+esc(v.role)+'"></td><td><input type="text" data-v="name" data-id="'+esc(v.id)+'" value="'+esc(v.name)+'"></td><td><input type="tel" data-v="phone" data-id="'+esc(v.id)+'" value="'+esc(v.phone)+'"></td><td><select data-v="location" data-id="'+esc(v.id)+'"><option value=""></option>'+locOpts(v.location)+'</select></td><td><input type="time" data-v="arrival" data-id="'+esc(v.id)+'" value="'+esc(v.arrival)+'"></td><td><input type="number" min="0" step="5" data-v="setupMin" data-id="'+esc(v.id)+'" value="'+num(v.setupMin)+'" style="width:80px"></td><td><input type="time" data-v="readyBy" data-id="'+esc(v.id)+'" value="'+esc(v.readyBy)+'"></td><td><input type="text" data-v="notes" data-id="'+esc(v.id)+'" value="'+esc(v.notes)+'" style="min-width:200px"></td><td><button class="btn del" data-rmv="'+esc(v.id)+'">x</button></td></tr>';}).join('');
+ var W=[];cf.forEach(function(c){W.push('<div class="warn r"><b>Conflict in '+esc(c.location||'(no location)')+'</b> '+fmt(c.from)+' to '+fmt(c.to)+': '+c.vendors.length+' vendors at once, capacity '+c.capacity+' ('+esc(c.vendors.join(', '))+')</div>');});
+ bf.forEach(function(b){W.push('<div class="warn"><b>Tight buffer in '+esc(b.location)+'</b>: '+esc(b.next.role)+' arrives '+b.gap+' min after '+esc(b.after.role)+' finishes (minimum '+b.min+' min)</div>');});
+ lt.forEach(function(l){W.push('<div class="warn r"><b>'+esc(l.v.role)+' will not be ready on time</b>: setup ends '+fmt(l.done)+', needed by '+fmt(l.ready)+' ('+l.by+' min late)</div>');});
+ wi.forEach(function(x){W.push('<div class="warn"><b>'+esc(x.v.role)+'</b> '+esc(x.why)+'</div>');});
+ ms.forEach(function(v){W.push('<div class="warn"><b>'+esc(v.role||'Vendor')+'</b> has no valid arrival time</div>');});
+ $('warnings').innerHTML=W.length?W.join(''):'<div class="warn" style="background:#ecfdf5;border-color:#10b981">No conflicts or warnings.</div>';
+ var tl=timeline(D);$('tl').innerHTML='<tr><th>Time</th><th>What</th></tr>'+(tl.length?tl.map(function(e){return '<tr><td><b>'+fmt(e.t)+'</b></td><td>'+(e.kind==='moment'?'<span class="pill g">moment</span> ':'')+esc(e.text)+'</td></tr>';}).join(''):'<tr><td colspan="2" class="mut">Add vendors with arrival times.</td></tr>');
+ var sel=$('sheetSel'),cur=sel.value;sel.innerHTML='<option value="all">All vendors</option>'+D.vendors.map(function(v){return '<option value="'+esc(v.id)+'">'+esc(v.role)+(v.name?' - '+esc(v.name):'')+'</option>';}).join('');if(cur&&Array.prototype.some.call(sel.options,function(o){return o.value===cur;}))sel.value=cur;
+ renderSheets();renderSetup();}
+function sheetHtml(v){var e=D.event,w=win(v),nb=neighbors(D,v),tl=timeline(D).filter(function(x){return x.kind==='moment';});
+ return '<div class="doc sheet"><h2>'+esc(e.name||'Run sheet')+'</h2><p class="mut">'+esc(e.date||'')+(e.venue?' - '+esc(e.venue):'')+'</p><h3>'+esc(v.role)+(v.name?' - '+esc(v.name):'')+'</h3>'
+ +'<table><tr><td><b>Arrive</b></td><td><b>'+fmt(w?w.start:null)+'</b></td><td><b>Location</b></td><td>'+esc(v.location||'-')+'</td></tr><tr><td>Setup time</td><td>'+num(v.setupMin)+' min (done '+fmt(w?w.end:null)+')</td><td>Ready by</td><td>'+(toMin(v.readyBy)!=null?fmt(toMin(v.readyBy)):'-')+'</td></tr><tr><td>Your phone</td><td>'+esc(v.phone||'-')+'</td><td>Planner</td><td>'+esc(e.planner||'-')+' '+esc(e.phone||'')+'</td></tr></table>'
+ +'<h3>Load-in notes</h3><p>'+esc(v.notes||'None')+'</p>'+(e.loadFrom||e.loadTo?'<p class="mut">Venue load-in window: '+(e.loadFrom||'?')+' to '+(e.loadTo||'?')+'</p>':'')
+ +(nb.length?'<h3>Also in this location around your time</h3><table>'+nb.map(function(x){return '<tr><td>'+esc(x.v.role)+'</td><td>'+fmt(x.w.start)+' - '+fmt(x.w.end)+'</td><td>'+(x.overlap?'overlaps with your setup':'')+'</td></tr>';}).join('')+'</table>':'')
+ +(tl.length?'<h3>Key moments</h3><table>'+tl.map(function(x){return '<tr><td><b>'+fmt(x.t)+'</b></td><td>'+esc(x.text)+'</td></tr>';}).join('')+'</table>':'')
+ +'<h3>Emergency contacts</h3><table>'+(D.contacts.length?D.contacts.map(function(c){return '<tr><td>'+esc(c.name)+'</td><td>'+esc(c.role)+'</td><td>'+esc(c.phone||'-')+'</td></tr>';}).join(''):'<tr><td class="mut">None entered</td></tr>')+'</table></div>';}
+function renderSheets(){var s=$('sheetSel').value||'all';var list=s==='all'?D.vendors:D.vendors.filter(function(v){return v.id===s;});$('sheets').innerHTML=list.length?list.map(sheetHtml).join(''):'<div class="card mut">Add vendors first.</div>';}
+function renderSetup(){var e=D.event;['name','date','venue','planner','phone','buffer','loadFrom','loadTo'].forEach(function(k){if(document.activeElement!==$('e_'+k))$('e_'+k).value=e[k]==null?'':e[k];});
+ $('locTbl').innerHTML='<tr><th>Location</th><th>Vendors at once</th><th></th></tr>'+D.locations.map(function(l,i){return '<tr><td><input type="text" data-l="name" data-i="'+i+'" value="'+esc(l.name)+'"></td><td><input type="number" min="1" data-l="capacity" data-i="'+i+'" value="'+num(l.capacity,1)+'" style="width:80px"></td><td><button class="btn del" data-rml="'+i+'">x</button></td></tr>';}).join('');
+ $('msTbl').innerHTML='<tr><th>Time</th><th>Moment</th><th></th></tr>'+D.milestones.map(function(m,i){return '<tr><td><input type="time" data-m="time" data-i="'+i+'" value="'+esc(m.time)+'"></td><td><input type="text" data-m="label" data-i="'+i+'" value="'+esc(m.label)+'"></td><td><button class="btn del" data-rmm="'+i+'">x</button></td></tr>';}).join('');
+ $('ecTbl').innerHTML='<tr><th>Name</th><th>Role</th><th>Phone</th><th></th></tr>'+D.contacts.map(function(c,i){return '<tr><td><input type="text" data-c="name" data-i="'+i+'" value="'+esc(c.name)+'"></td><td><input type="text" data-c="role" data-i="'+i+'" value="'+esc(c.role)+'"></td><td><input type="tel" data-c="phone" data-i="'+i+'" value="'+esc(c.phone)+'"></td><td><button class="btn del" data-rmc="'+i+'">x</button></td></tr>';}).join('');}
+function vById(id){return D.vendors.filter(function(v){return v.id===id;})[0];}
+document.addEventListener('input',function(e){var t=e.target,d=t.dataset;
+ if(d.v){vById(d.id)[d.v]=d.v==='setupMin'?num(t.value):t.value;sv();softRender();return;}
+ if(d.l){D.locations[+d.i][d.l]=d.l==='capacity'?num(t.value,1):t.value;sv();softRender();return;}
+ if(d.m){D.milestones[+d.i][d.m]=t.value;sv();softRender();return;}
+ if(d.c){D.contacts[+d.i][d.c]=t.value;sv();softRender();return;}
+ if(t.id&&t.id.indexOf('e_')===0){var k=t.id.slice(2);D.event[k]=k==='buffer'?num(t.value):t.value;sv();softRender();}});
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset.v==='location'){vById(t.dataset.id).location=t.value;sv();softRender();}if(t.id==='sheetSel')renderSheets();});
+function softRender(){var c=conflicts(D),b=buffers(D),l=late(D),w=windowIssues(D),m=missing(D);
+ $('kpi').innerHTML='<div><span class="mut">Vendors</span><b>'+D.vendors.length+'</b></div><div><span class="mut">Conflicts</span><b style="color:'+(c.length?'var(--bad)':'var(--ok)')+'">'+c.length+'</b></div><div><span class="mut">Tight buffers</span><b>'+b.length+'</b></div><div><span class="mut">Ready-by problems</span><b>'+l.length+'</b></div><div><span class="mut">Other warnings</span><b>'+(w.length+m.length)+'</b></div>';render2();}
+function render2(){var W=[];var cf=conflicts(D),bf=buffers(D),lt=late(D),wi=windowIssues(D),ms=missing(D);
+ cf.forEach(function(c){W.push('<div class="warn r"><b>Conflict in '+esc(c.location||'(no location)')+'</b> '+fmt(c.from)+' to '+fmt(c.to)+': '+c.vendors.length+' vendors at once, capacity '+c.capacity+' ('+esc(c.vendors.join(', '))+')</div>');});
+ bf.forEach(function(b){W.push('<div class="warn"><b>Tight buffer in '+esc(b.location)+'</b>: '+esc(b.next.role)+' arrives '+b.gap+' min after '+esc(b.after.role)+' finishes (minimum '+b.min+' min)</div>');});
+ lt.forEach(function(l){W.push('<div class="warn r"><b>'+esc(l.v.role)+' will not be ready on time</b>: setup ends '+fmt(l.done)+', needed by '+fmt(l.ready)+' ('+l.by+' min late)</div>');});
+ wi.forEach(function(x){W.push('<div class="warn"><b>'+esc(x.v.role)+'</b> '+esc(x.why)+'</div>');});
+ ms.forEach(function(v){W.push('<div class="warn"><b>'+esc(v.role||'Vendor')+'</b> has no valid arrival time</div>');});
+ $('warnings').innerHTML=W.length?W.join(''):'<div class="warn" style="background:#ecfdf5;border-color:#10b981">No conflicts or warnings.</div>';
+ var tl=timeline(D);$('tl').innerHTML='<tr><th>Time</th><th>What</th></tr>'+(tl.length?tl.map(function(e){return '<tr><td><b>'+fmt(e.t)+'</b></td><td>'+(e.kind==='moment'?'<span class="pill g">moment</span> ':'')+esc(e.text)+'</td></tr>';}).join(''):'<tr><td colspan="2" class="mut">Add vendors with arrival times.</td></tr>');
+ renderSheets();}
+function tlText(){return timeline(D).map(function(e){return fmt(e.t)+'  '+e.text;}).join('\n');}
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['vendors','timeline','sheets','setup','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});return;}
+ if(d.rmv){D.vendors=D.vendors.filter(function(v){return v.id!==d.rmv;});sv();render();return;}
+ if(d.rml!==undefined){D.locations.splice(+d.rml,1);sv();render();return;}
+ if(d.rmm!==undefined){D.milestones.splice(+d.rmm,1);sv();render();return;}
+ if(d.rmc!==undefined){D.contacts.splice(+d.rmc,1);sv();render();return;}
+ if(t.id==='addVendor'){D.vendors.push({id:uid(),role:'New vendor',name:'',phone:'',location:D.locations[0]?D.locations[0].name:'',arrival:'',setupMin:30,readyBy:'',notes:''});sv();render();return;}
+ if(t.id==='addLoc'){D.locations.push({name:'New location',capacity:1});sv();render();return;}
+ if(t.id==='addMs'){D.milestones.push({time:'',label:'New moment'});sv();render();return;}
+ if(t.id==='addEc'){D.contacts.push({name:'',role:'',phone:''});sv();render();return;}
+ if(t.id==='clearSample'){D={event:{buffer:15},locations:[{name:'Main area',capacity:1}],milestones:[],contacts:[],vendors:[]};sv();render();return;}
+ if(t.id==='print'){window.print();return;}
+ if(t.id==='copyTl'){var tx=tlText();if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';setTimeout(function(){t.textContent='Copy as text';},1500);},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);return;}
+ if(t.id==='expjson'){var b=new Blob([JSON.stringify(D,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='runsheet-backup.json';a.click();}
+});
+$('impjson').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(x.vendors&&x.locations&&x.event){D=x;if(!D.milestones)D.milestones=[];if(!D.contacts)D.contacts=[];sv();render();}else alert('This file is not a Run Sheet Builder backup.');}catch(err){alert('Could not read that file.');}};r.readAsText(f);});
+render();
+</script></body></html>
