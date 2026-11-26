@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rebook Radar: Rebooking and Retention Tracker</title>
+<style>
+:root{--ink:#2a2230;--mut:#6a6272;--bg:#f8f5f9;--line:#e0d8e6;--acc:#a61e6a;--ok:#157347;--bad:#b42318}
+*{box-sizing:border-box}html,body{margin:0}body{font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden}
+header{background:var(--acc);color:#fff;padding:14px 16px}header h1{margin:0;font-size:20px}header p{margin:2px 0 0;font-size:13px;opacity:.93}
+nav{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:0;z-index:5}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:20px;padding:8px 14px;font:inherit;color:var(--ink);cursor:pointer}nav button[aria-selected=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{max-width:1000px;margin:0 auto;padding:14px 12px 40px}section{display:none}section.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}.card h2{margin:0 0 8px;font-size:17px}
+.note{color:var(--mut);font-size:13px;margin:4px 0 10px}.warn{background:#fff7e6;border:1px solid #f0c36d;border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #c6bccf;border-radius:8px;font:inherit;background:#fff;color:var(--ink);min-width:0}input[type=checkbox]{width:auto}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:6px 5px;font-size:13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}th{color:var(--mut);white-space:nowrap}td.r,th.r{text-align:right}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:6px}.kpi div{background:#f8eaf2;border-radius:10px;padding:10px}.kpi b{display:block;font-size:20px}.kpi span{font-size:12px;color:var(--mut)}
+.good{color:var(--ok)}.bad{color:var(--bad)}
+button.btn,label.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 13px;font:inherit;font-size:14px;cursor:pointer;display:inline-block;margin:0}button.btn.alt,label.btn.alt{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.msg{font-size:13px;color:var(--mut);min-height:18px}
+.fu{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}.fu pre{white-space:pre-wrap;font:inherit;background:#f7f3f9;border-radius:8px;padding:8px;margin:8px 0}
+</style></head><body>
+<header><h1>Rebook Radar</h1><p>See who rebooks, who is overdue, and who to message today. Works offline; nothing is uploaded.</p></header>
+<nav id="tabs" role="tablist"></nav>
+<main>
+<div class="warn">Starting entries are <b>examples</b>. Rebooking percentages are your own numbers from your own log. Any industry figures shown are vendor references only and are defined differently by different sources.</div>
+<section id="s-cl" class="on"><div class="card"><h2>Add a client</h2><div class="grid">
+ <div><label for="cn">Name</label><input id="cn"></div><div><label for="cc">Phone / email</label><input id="cc"></div><div><label for="cs">Usual stylist</label><select id="cs"></select></div><div><label for="ci">Usual interval (weeks)</label><input id="ci" type="number" min="1" max="52" step="1" value="6"></div><div><label for="cl">Last visit</label><input id="cl" type="date"></div></div>
+ <div class="row"><button class="btn" id="addC">Add client</button></div><p class="msg" id="msgC" role="status"></p></div>
+ <div class="card"><h2>Clients</h2><div class="tw"><table id="ct"><thead><tr><th>Name</th><th>Stylist</th><th>Interval</th><th>Last visit</th><th>Expected back</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div></section>
+<section id="s-log"><div class="card"><h2>Log a visit</h2><p class="note">Pick the client, record whether they rebooked at checkout. Logging a visit also updates their last visit date.</p><div class="grid">
+ <div><label for="vc">Client</label><select id="vc"></select></div><div><label for="vd">Visit date</label><input id="vd" type="date"></div><div><label for="vr">Rebooked at checkout?</label><select id="vr"><option value="yes">Yes</option><option value="no">No</option></select></div></div>
+ <div class="row"><button class="btn" id="addV">Save visit</button></div><p class="msg" id="msgV" role="status"></p>
+ <h2 style="margin-top:14px">Recent visits</h2><div class="tw"><table id="vt"><thead><tr><th>Date</th><th>Client</th><th>Stylist</th><th>Rebooked</th><th></th></tr></thead><tbody></tbody></table></div></div></section>
+<section id="s-reb"><div class="card"><h2>Rebooking %</h2><div class="grid"><div><label for="rm">Month (blank = all time)</label><input id="rm" type="month"></div><div><label for="tg">Your target % (optional)</label><input id="tg" type="number" min="0" max="100" step="1"></div></div>
+ <div class="kpi" id="rk"></div><div class="tw" style="margin-top:10px"><table id="rt"><thead><tr><th>Stylist</th><th class="r">Visits</th><th class="r">Rebooked</th><th class="r">Rebook %</th><th>vs your target</th></tr></thead><tbody></tbody></table></div>
+ <p class="note">Rebook % = visits where the client rebooked / all logged visits. <b>Vendor reference only:</b> a 2025 Zenoti benchmark piece describes top-performing salons as above about 65% rebooking, another Zenoti piece uses 60% as a target and 55% as a floor; definitions differ, so set your own target.</p></div></section>
+<section id="s-od"><div class="card"><h2>Overdue and due soon</h2><p class="note">Overdue = today is past the expected return date (last visit + interval) plus your grace days. Due soon = expected within 7 days.</p><div id="odList"></div></div></section>
+<section id="s-set"><div class="card"><h2>Settings and messages</h2><div class="grid"><div><label for="shop">Salon / business name</label><input id="shop"></div><div><label for="sty">Stylists (comma separated)</label><input id="sty"></div><div><label for="gr">Grace days after expected date</label><input id="gr" type="number" min="0" step="1"></div></div>
+ <label for="tpl" style="margin-top:10px">Message (use {name} {stylist} {shop} {weeks})</label><textarea id="tpl" rows="4"></textarea>
+ <div class="row"><button class="btn alt" id="csv">Export visits (CSV)</button><button class="btn alt" id="exp">Back up (JSON)</button><label class="btn alt">Restore backup<input id="imp" type="file" accept="application/json" hidden></label><button class="btn alt" id="reset">Reset to examples</button></div><p class="msg" id="msgS" role="status"></p></div></section>
+</main>
+<script id="logic">
+const RR = (function(){
+  const n = x => { x = parseFloat(x); return isFinite(x) ? x : 0; };
+  const toT = s => { const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return null; const t = Date.UTC(+m[1], +m[2] - 1, +m[3]); return new Date(t).getUTCMonth() === +m[2] - 1 ? t : null; };
+  const fmt = t => new Date(t).toISOString().slice(0, 10);
+  const daysBetween = (a, b) => { const x = toT(a), y = toT(b); return x === null || y === null ? null : Math.round((y - x) / 864e5); };
+  const addDays = (s, d) => { const t = toT(s); return t === null ? '' : fmt(t + d * 864e5); };
+  const wk = c => Math.max(1, Math.round(n(c.interval)) || 1);
+  const expected = c => c.last ? addDays(c.last, wk(c) * 7) : '';
+  function status(c, today, grace){ const ex = expected(c); if (!ex) return { state: 'no visit', days: null, expected: '' }; const d = daysBetween(ex, today); const g = Math.max(0, Math.round(n(grace)));
+    if (d > g) return { state: 'overdue', days: d, expected: ex }; if (d >= 0) return { state: 'due now', days: d, expected: ex }; if (d >= -7) return { state: 'due soon', days: d, expected: ex }; return { state: 'ok', days: d, expected: ex }; }
+  function overdue(clients, today, grace){ return clients.map(c => ({ c, s: status(c, today, grace) })).filter(x => x.s.state === 'overdue').sort((a, b) => b.s.days - a.s.days); }
+  function dueSoon(clients, today, grace){ return clients.map(c => ({ c, s: status(c, today, grace) })).filter(x => x.s.state === 'due soon' || x.s.state === 'due now').sort((a, b) => b.s.days - a.s.days); }
+  function stats(visits, month, stylists){ const vs = visits.filter(v => toT(v.date) !== null && (!month || String(v.date).slice(0, 7) === month)); const names = []; (stylists || []).forEach(s => { if (s && names.indexOf(s) < 0) names.push(s); }); vs.forEach(v => { if (v.stylist && names.indexOf(v.stylist) < 0) names.push(v.stylist); });
+    const row = (name, list) => ({ stylist: name, visits: list.length, rebooked: list.filter(v => v.rebooked === true || v.rebooked === 'yes').length, pct: list.length ? list.filter(v => v.rebooked === true || v.rebooked === 'yes').length / list.length : null });
+    return { rows: names.map(s => row(s, vs.filter(v => v.stylist === s))).filter(r => r.visits > 0), overall: row('All stylists', vs) }; }
+  function vsTarget(pct, target){ if (pct === null || target === '' || target === null || target === undefined || !isFinite(parseFloat(target))) return ''; return pct * 100 >= parseFloat(target) ? 'At or above target' : 'Below target'; }
+  function logVisit(clients, visits, v){ const c = clients.find(x => x.id === v.clientId); const rec = { id: v.id, date: v.date, clientId: v.clientId, client: c ? c.name : '', stylist: c ? c.stylist : '', rebooked: v.rebooked === 'yes' || v.rebooked === true }; if (c && toT(v.date) !== null && (!c.last || v.date > c.last)) c.last = v.date; visits.push(rec); return rec; }
+  function message(tpl, c, shop){ return String(tpl).replace(/\{name\}/g, String(c.name || 'there').trim().split(/\s+/)[0] || 'there').replace(/\{stylist\}/g, c.stylist || 'your stylist').replace(/\{shop\}/g, shop || '').replace(/\{weeks\}/g, String(wk(c))); }
+  const csvCell = v => { let s = String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };
+  function toCsv(visits){ return ['date,client,stylist,rebooked'].concat(visits.map(v => [v.date, v.client, v.stylist, v.rebooked ? 'yes' : 'no'].map(csvCell).join(','))).join('\n'); }
+  const pct = x => x === null ? 'n/a' : (Math.round(x * 1000) / 10).toFixed(1) + '%';
+  return { toT, daysBetween, addDays, expected, status, overdue, dueSoon, stats, vsTarget, logVisit, message, toCsv, pct };
+})();
+if (typeof module !== 'undefined') module.exports = RR;
+</script>
+<script id="ui">
+(function(){
+const today = () => { const d = new Date(), p = x => String(x).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+const ago = k => RR.addDays(today(), -k);
+const DEFT = 'Hi {name}, it is about {weeks} weeks since your last visit at {shop}. {stylist} has openings coming up: want me to book your next appointment? Reply with a day that suits you.';
+function defaults(){ const cl = [['c1', 'Mia Rossi', '555-0201 (example)', 'Alex', 6, 60], ['c2', 'Noah Park', '555-0202 (example)', 'Sam', 4, 22], ['c3', 'Olive Grant', '555-0203 (example)', 'Alex', 8, 70], ['c4', 'Pete Nash', '555-0204 (example)', 'Sam', 6, 30], ['c5', 'Quinn Ray', '555-0205 (example)', 'Alex', 5, 38]].map(x => ({ id: x[0], name: x[1], contact: x[2], stylist: x[3], interval: x[4], last: ago(x[5]) }));
+  const vv = [['c1', 102, 'Alex', 1], ['c1', 60, 'Alex', 1], ['c3', 126, 'Alex', 0], ['c3', 70, 'Alex', 0], ['c5', 73, 'Alex', 1], ['c5', 38, 'Alex', 1], ['c2', 50, 'Sam', 1], ['c2', 22, 'Sam', 0], ['c4', 72, 'Sam', 1], ['c4', 30, 'Sam', 1]].map((x, i) => ({ id: 'v' + i, date: ago(x[1]), clientId: x[0], client: cl.find(c => c.id === x[0]).name, stylist: x[2], rebooked: !!x[3] }));
+  return { shop: 'Your Salon', stylists: 'Alex, Sam', grace: 7, target: '', tpl: DEFT, clients: cl, visits: vv }; }
+let S; const KEY = 'rebookradar-v1'; const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function load(){ try{ const t = localStorage.getItem(KEY); if (t){ const o = JSON.parse(t); S = Object.assign(defaults(), o); if (!Array.isArray(S.clients)) S.clients = []; if (!Array.isArray(S.visits)) S.visits = []; return; } }catch(e){} S = defaults(); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+const stylists = () => String(S.stylists).split(',').map(s => s.trim()).filter(Boolean);
+const tabs = [['s-cl', 'Clients'], ['s-log', 'Log visit'], ['s-reb', 'Rebooking %'], ['s-od', 'Overdue'], ['s-set', 'Settings']];
+function showTab(id){ tabs.forEach(t => $(t[0]).classList.toggle('on', t[0] === id)); [...$('tabs').children].forEach(b => b.setAttribute('aria-selected', b.dataset.t === id)); renderAll(); }
+tabs.forEach(t => { const b = document.createElement('button'); b.textContent = t[1]; b.dataset.t = t[0]; b.setAttribute('role', 'tab'); b.onclick = () => showTab(t[0]); $('tabs').appendChild(b); });
+const kpi = (l, v, c) => '<div><b class="' + (c || '') + '">' + v + '</b><span>' + l + '</span></div>';
+function fillSel(){ const ss = stylists(); const cur = $('cs').value; $('cs').innerHTML = ss.map(s => '<option>' + esc(s) + '</option>').join('') || '<option value="">(add stylists in Settings)</option>'; if (ss.indexOf(cur) >= 0) $('cs').value = cur; const cv = $('vc').value; $('vc').innerHTML = S.clients.map(c => '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>').join('') || '<option value="">(add a client first)</option>'; if (S.clients.some(c => c.id === cv)) $('vc').value = cv; }
+function renderClients(){ const rows = S.clients.map(c => ({ c, s: RR.status(c, today(), S.grace) })).sort((a, b) => (b.s.days === null ? -1e9 : b.s.days) - (a.s.days === null ? -1e9 : a.s.days));
+  $('ct').querySelector('tbody').innerHTML = rows.length ? rows.map(x => '<tr><td>' + esc(x.c.name) + '<br><small>' + esc(x.c.contact) + '</small></td><td>' + esc(x.c.stylist) + '</td><td>' + esc(x.c.interval) + ' wk</td><td>' + esc(x.c.last || '') + '</td><td>' + esc(x.s.expected) + '</td><td class="' + (x.s.state === 'overdue' ? 'bad' : '') + '">' + esc(x.s.state === 'overdue' ? 'Overdue ' + (x.s.days) + ' d' : x.s.state) + '</td><td><button class="btn alt" data-del="' + esc(x.c.id) + '" aria-label="Delete client">x</button></td></tr>').join('') : '<tr><td colspan="7">No clients yet.</td></tr>'; }
+function renderVisits(){ const vs = S.visits.slice().sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 25); $('vt').querySelector('tbody').innerHTML = vs.length ? vs.map(v => '<tr><td>' + esc(v.date) + '</td><td>' + esc(v.client) + '</td><td>' + esc(v.stylist) + '</td><td>' + (v.rebooked ? 'Yes' : 'No') + '</td><td><button class="btn alt" data-delv="' + esc(v.id) + '" aria-label="Delete visit">x</button></td></tr>').join('') : '<tr><td colspan="5">No visits logged yet.</td></tr>'; }
+function renderReb(){ const st = RR.stats(S.visits, $('rm').value, stylists()); const t = $('tg').value; $('rk').innerHTML = kpi('Visits logged', st.overall.visits) + kpi('Rebooked', st.overall.rebooked) + kpi('Rebook % (all stylists)', RR.pct(st.overall.pct), RR.vsTarget(st.overall.pct, t) === 'Below target' ? 'bad' : RR.vsTarget(st.overall.pct, t) ? 'good' : '');
+  $('rt').querySelector('tbody').innerHTML = st.rows.length ? st.rows.map(r => { const v = RR.vsTarget(r.pct, t); return '<tr><td>' + esc(r.stylist) + '</td><td class="r">' + r.visits + '</td><td class="r">' + r.rebooked + '</td><td class="r">' + RR.pct(r.pct) + '</td><td class="' + (v === 'Below target' ? 'bad' : v ? 'good' : '') + '">' + v + '</td></tr>'; }).join('') : '<tr><td colspan="5">No visits for this period.</td></tr>'; }
+function renderOd(){ const od = RR.overdue(S.clients, today(), S.grace), soon = RR.dueSoon(S.clients, today(), S.grace); const card = (x, label) => '<div class="fu" data-id="' + esc(x.c.id) + '"><b>' + esc(x.c.name) + '</b> &middot; ' + esc(x.c.stylist) + '<br><small>' + label + ' &middot; last visit ' + esc(x.c.last) + ', usual ' + esc(x.c.interval) + ' weeks</small><pre>' + esc(RR.message(S.tpl, x.c, S.shop)) + '</pre><button class="btn" data-copy="' + esc(x.c.id) + '">Copy message</button></div>';
+  $('odList').innerHTML = '<h3>Overdue (' + od.length + ')</h3>' + (od.length ? od.map(x => card(x, x.s.days + ' days past expected return')).join('') : '<p>Nobody is overdue.</p>') + '<h3>Due soon (' + soon.length + ')</h3>' + (soon.length ? soon.map(x => card(x, x.s.days >= 0 ? 'expected back now' : 'expected in ' + (-x.s.days) + ' days')).join('') : '<p>Nobody due in the next 7 days.</p>'); }
+function renderAll(){ fillSel(); renderClients(); renderVisits(); renderReb(); renderOd(); }
+function fillSet(){ $('shop').value = S.shop; $('sty').value = S.stylists; $('gr').value = S.grace; $('tpl').value = S.tpl; $('tg').value = S.target; }
+$('addC').onclick = () => { const nme = $('cn').value.trim(); if (!nme){ $('msgC').textContent = 'Enter the client name.'; return; } const last = $('cl').value; if (last && RR.toT(last) === null){ $('msgC').textContent = 'Enter a valid date.'; return; } S.clients.push({ id: uid(), name: nme, contact: $('cc').value.trim(), stylist: $('cs').value, interval: $('ci').value || 6, last }); save(); ['cn', 'cc', 'cl'].forEach(i => $(i).value = ''); $('msgC').textContent = 'Client added.'; renderAll(); };
+$('ct').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b && confirm('Delete this client and their logged visits?')){ S.clients = S.clients.filter(c => c.id !== b.dataset.del); S.visits = S.visits.filter(v => v.clientId !== b.dataset.del); save(); renderAll(); } });
+$('addV').onclick = () => { const cid = $('vc').value; if (!cid){ $('msgV').textContent = 'Add a client first.'; return; } const d = $('vd').value; if (RR.toT(d) === null){ $('msgV').textContent = 'Pick the visit date.'; return; } RR.logVisit(S.clients, S.visits, { id: uid(), date: d, clientId: cid, rebooked: $('vr').value }); save(); $('msgV').textContent = 'Visit saved.'; renderAll(); };
+$('vt').addEventListener('click', e => { const b = e.target.closest('[data-delv]'); if (b){ S.visits = S.visits.filter(v => v.id !== b.dataset.delv); save(); renderAll(); } });
+$('s-reb').addEventListener('input', () => { S.target = $('tg').value; save(); renderReb(); });
+$('odList').addEventListener('click', async e => { const c = e.target.closest('[data-copy]'); if (!c) return; const cl = S.clients.find(x => x.id === c.dataset.copy); try{ await navigator.clipboard.writeText(RR.message(S.tpl, cl, S.shop)); c.textContent = 'Copied'; }catch(x){ c.textContent = 'Select the text above'; } });
+$('s-set').addEventListener('input', () => { S.shop = $('shop').value; S.stylists = $('sty').value; S.grace = $('gr').value; S.tpl = $('tpl').value; save(); });
+$('csv').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([RR.toCsv(S.visits)], { type: 'text/csv' })); a.download = 'visits.csv'; a.click(); };
+$('exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' })); a.download = 'rebook-radar-backup.json'; a.click(); };
+$('imp').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; const r = new FileReader(); r.onload = () => { try{ const o = JSON.parse(r.result); if (!o || !Array.isArray(o.clients) || !Array.isArray(o.visits)) throw 0; S = Object.assign(defaults(), o); save(); fillSet(); renderAll(); $('msgS').textContent = 'Backup restored.'; }catch(x){ alert('That file is not a Rebook Radar backup.'); } }; r.readAsText(f); };
+$('reset').onclick = () => { if (confirm('Reset everything to the example data?')){ S = defaults(); save(); fillSet(); renderAll(); } };
+load(); $('vd').value = today(); fillSet(); showTab('s-cl');
+})();
+</script></body></html>

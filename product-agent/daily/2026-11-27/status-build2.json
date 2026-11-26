@@ -1,0 +1,11 @@
+{
+ "stage": "build2",
+ "date": "2026-11-27",
+ "products": {
+  "d20261127-02": {"slug": "estimate-chaser", "name": "Estimate Chaser: Unsold Estimate Follow-Up Tracker", "status": "built", "qa": "pass (27 checks, Chromium only)", "price_usd": 29, "files": ["index.html", "README.md", "cover.png"]},
+  "d20261127-06": {"slug": "rebook-radar", "name": "Rebook Radar: Rebooking and Retention Tracker", "status": "built", "qa": "pass (29 checks, Chromium only)", "price_usd": 29, "files": ["index.html", "README.md", "cover.png"]},
+  "d20261127-07": {"slug": "service-price-chair-hour-sheet", "name": "Service Price and Chair-Hour Sheet", "status": "built", "qa": "pass (191 formulas, 0 errors, values match independent maths; LibreOffice only)", "price_usd": 24, "files": ["Service-Price-and-Chair-Hour-Sheet.xlsx", "README.md", "cover.png"]},
+  "d20261127-10": {"slug": "planner-package-hourly-rate-sheet", "name": "Planner Package and Hourly Rate Sheet", "status": "built", "qa": "pass (91 formulas, 0 errors, values match independent maths; LibreOffice only)", "price_usd": 24, "files": ["Planner-Package-and-Hourly-Rate-Sheet.xlsx", "README.md", "cover.png"]}
+ },
+ "summary": {"built": 4, "failed": 0}
+}
