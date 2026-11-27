@@ -568,5 +568,115 @@
   "status": "built, delivered in pack.zip, untested in market",
   "market_results": null,
   "notes": "QA: pass (203 formulas, 0 errors, 94 values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261127-01",
+  "type": "html tool",
+  "niche": "trades-hvac-plumbing: FlatRate Builder: Billable-Hour Pricebook Calculator",
+  "price_usd": 39,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261127-02",
+  "type": "html tool",
+  "niche": "trades-hvac-plumbing: Estimate Chaser: Unsold Estimate Follow-Up Tracker",
+  "price_usd": 29,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (27 checks, Chromium only)"
+ },
+ {
+  "id": "d20261127-03",
+  "type": "n8n",
+  "niche": "trades-hvac-plumbing: Missed Call Text-Back n8n Flow",
+  "price_usd": 45,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (simulated + 54 logic tests; not run on live Twilio/n8n/Sheets)"
+ },
+ {
+  "id": "d20261127-04",
+  "type": "xlsx",
+  "niche": "trades-hvac-plumbing: Billable Hours and Overhead Sheet",
+  "price_usd": 24,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261127-05",
+  "type": "html tool",
+  "niche": "salons-barbers: Chair Math: Commission vs Booth Rent Calculator",
+  "price_usd": 25,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261127-06",
+  "type": "html tool",
+  "niche": "salons-barbers: Rebook Radar: Rebooking and Retention Tracker",
+  "price_usd": 29,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (29 checks, Chromium only)"
+ },
+ {
+  "id": "d20261127-07",
+  "type": "xlsx",
+  "niche": "salons-barbers: Service Price and Chair-Hour Sheet",
+  "price_usd": 24,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (191 formulas, 0 errors, values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261127-08",
+  "type": "html tool",
+  "niche": "salons-barbers: New-Client Fee Check: Marketplace Fee Calculator",
+  "price_usd": 25,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (45 unit assertions, Chromium only)"
+ },
+ {
+  "id": "d20261127-09",
+  "type": "html tool",
+  "niche": "event-planners: Run Sheet Builder: Multi-Vendor Day-Of Timeline",
+  "price_usd": 29,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261127-10",
+  "type": "xlsx",
+  "niche": "event-planners: Planner Package and Hourly Rate Sheet",
+  "price_usd": 24,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (91 formulas, 0 errors, values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261127-11",
+  "type": "xlsx",
+  "niche": "event-planners: Vendor Payment and Deadline Tracker",
+  "price_usd": 24,
+  "built": "2026-11-27",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (718 formulas, 0 errors, 148 values match independent maths; LibreOffice only)"
  }
 ]
