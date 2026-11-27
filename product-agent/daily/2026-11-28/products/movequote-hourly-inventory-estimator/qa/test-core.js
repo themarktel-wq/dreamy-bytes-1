@@ -1,0 +1,20 @@
+const core=require('./corejs.js')(__dirname+'/../index.html');const assert=require('assert');let n=0;function t(name,f){f();n++;console.log('ok',name);}
+const near=(a,b,e=1e-9)=>assert(Math.abs(a-b)<e,a+' vs '+b);
+const S=JSON.parse(JSON.stringify(core.DEFAULTS));   // rate 55, min 3 h, truck 0, range -10% / +20%, 45 cu ft per mover-hour
+const base={mode:'hourly',hours:4,crew:2,travel:1,travelBilled:1,addons:{},inv:{}};
+t('hand calc: (4 h work + 1 h travel) x 2 movers x $55 = $550',()=>{const c=core.calc(S,base);near(c.raw,5);near(c.billable,5);near(c.labor,550);near(c.total,550);assert.strictEqual(c.minApplied,false);});
+t('extras: 2 flights of stairs x $40 = 80 -> total 630; range 567 to 756',()=>{const c=core.calc(S,Object.assign({},base,{addons:{0:2}}));near(c.extrasTotal,80);near(c.total,630);near(c.low,567);near(c.high,756);assert.strictEqual(c.extras[0].qty,2);});
+t('minimum hours applies: 1 h work + 0.5 h travel -> billed 3 h = 330',()=>{const c=core.calc(S,Object.assign({},base,{hours:1,travel:0.5}));near(c.billable,3);near(c.labor,330);assert.strictEqual(c.minApplied,true);});
+t('exactly at the minimum is not flagged as minimum applied',()=>{const c=core.calc(S,Object.assign({},base,{hours:2,travel:1}));near(c.billable,3);assert.strictEqual(c.minApplied,false);});
+t('travel not billed: only working hours count toward billable hours',()=>{const c=core.calc(S,Object.assign({},base,{travelBilled:0}));near(c.travel,0);near(c.billable,4);near(c.labor,440);});
+t('crew size scales labor: crew 3 -> 5 h x 3 x 55 = 825; crew below 1 is treated as 1',()=>{near(core.calc(S,Object.assign({},base,{crew:3})).labor,825);assert.strictEqual(core.calc(S,Object.assign({},base,{crew:0})).crew,1);});
+t('truck fee is added once',()=>{const s=Object.assign({},S,{truck:120});near(core.calc(s,base).total,670);});
+const inv={0:1,1:1,4:20,2:1};   // sofa 70 + bed 60 + 20 boxes x 3 + dresser 30 = 220 cu ft
+t('inventory totals: 220 cu ft, 150+140+20x30+120 = 1010 lb',()=>{const x=core.invTotals(S,inv,2);near(x.cuft,220);near(x.lb,150+140+600+120);near(x.hours,220/90);});
+t('inventory mode: hours = cu ft / (45 x crew); labor uses the same formula; per cu ft price shown',()=>{const c=core.calc(S,{mode:'inventory',hours:99,crew:2,travel:1,travelBilled:1,addons:{},inv});near(c.work,220/90);near(c.billable,220/90+1);near(c.labor,(220/90+1)*2*55);near(c.perCuft,c.total/220);});
+t('inventory mode ignores the typed hours; more movers means fewer hours but the same cost before minimums',()=>{const a=core.calc(S,{mode:'inventory',crew:2,travel:0,travelBilled:0,addons:{},inv:{4:300}}),b=core.calc(S,{mode:'inventory',crew:4,travel:0,travelBilled:0,addons:{},inv:{4:300}});near(a.work,2*b.work);near(a.labor,b.labor);});
+t('productivity of 0 or empty inventory gives zero hours (no NaN) and the minimum applies',()=>{const c=core.calc(Object.assign({},S,{prod:0}),{mode:'inventory',crew:2,travel:0,travelBilled:0,addons:{},inv});near(c.work,0);near(c.billable,3);const e=core.calc(S,{mode:'inventory',crew:2,travel:0,travelBilled:0,addons:{},inv:{}});near(e.work,0);assert.strictEqual(e.perCuft,null);});
+t('range percentages are user-set; low side capped at 90%',()=>{const s=Object.assign({},S,{lowPct:25,highPct:0});const c=core.calc(s,base);near(c.low,412.5);near(c.high,550);near(core.calc(Object.assign({},S,{lowPct:200}),base).low,55);});
+t('quote text includes crew, hours, total, range and the chosen wording; no undefined',()=>{const c=core.calc(S,Object.assign({},base,{addons:{0:2}}));const tx=core.quoteText(S,base,c,{biz:'Fleet Movers',cust:'Pat',from:'A St',to:'B St',etype:'binding'});assert(/Fleet Movers/.test(tx)&&/Crew: 2 movers at \$55.00/.test(tx)&&/Estimated total: \$630.00/.test(tx)&&/Range: \$567.00 to \$756.00/.test(tx)&&/Binding estimate: /.test(tx)&&/revised estimate/.test(tx)&&!/undefined/.test(tx));});
+t('garbage input is safe',()=>{const c=core.calc({},{mode:'hourly',hours:'x',crew:'',travel:null,addons:{a:'b'},inv:{}});assert(isFinite(c.total)&&isFinite(c.low)&&isFinite(c.high));});
+console.log(n,'tests passed');

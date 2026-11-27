@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MoveQuote - Hourly and Inventory Estimator</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#1d4ed8;--acc2:#dbeafe}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:20px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:10px 0}.doc h2{margin:0;font-size:20px}.doc td,.doc th{font-size:14px}
+.seg button{border:1px solid var(--line);background:#fff;padding:8px 14px;cursor:pointer;font:inherit}.seg button:first-child{border-radius:8px 0 0 8px}.seg button:last-child{border-radius:0 8px 8px 0}.seg button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.wording{border:1px solid #999;border-radius:6px;padding:10px;margin:10px 0;font-size:13px}
+td input[data-n]{min-width:140px}
+@media print{.doc{border:0;padding:0;margin:0}}
+</style></head><body>
+<header class="top"><h1>MoveQuote</h1><p>Hourly and inventory estimates for local movers, with low / likely / high range and estimate-type wording on a printable quote. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs noprint" id="tabs"><button data-t="quote" class="on">Quote</button><button data-t="items">Item table</button><button data-t="rates">Rates &amp; wording</button><button data-t="saved">Saved quotes</button><button data-t="help">How it works</button></div>
+
+<section id="t-quote">
+ <div class="card noprint"><h2>1. The move</h2><div class="grid"><div><label>Customer</label><input id="cust"></div><div><label>Phone / email</label><input id="contact"></div><div><label>Move date</label><input id="date" type="date"></div><div><label>From address</label><input id="from"></div><div><label>To address</label><input id="to"></div></div>
+  <h3>How to estimate the work</h3><div class="row seg" id="mode"><button data-m="hourly" class="on">Hourly (I enter the hours)</button><button data-m="inventory">From inventory (item table)</button></div>
+  <div class="grid"><div id="hoursBox"><label>Estimated working hours (loading, driving between sites, unloading)</label><input id="hours" type="number" min="0" step="0.25"></div><div><label>Crew size (movers)</label><input id="crew" type="number" min="1"></div><div><label>Travel time to and from the job (hours)</label><input id="travel" type="number" min="0" step="0.25"></div><div><label>Bill travel time?</label><select id="travelBilled"><option value="1">Yes, at the hourly rate</option><option value="0">No</option></select></div></div>
+  <div id="invBox" class="hidden"><h3>Inventory (quantities)</h3><div class="tw"><table id="invTbl"></table></div></div>
+  <h3>Access and extras</h3><div class="tw"><table id="addons"></table></div></div>
+ <div class="card noprint"><h2>2. Estimate</h2><div class="kpi" id="kpi"></div>
+  <div class="grid" style="margin-top:10px"><div><label>Estimate type shown on the quote</label><select id="etype"><option value="nonbinding">Non-binding estimate</option><option value="binding">Binding estimate</option><option value="cap">Not-to-exceed estimate</option></select></div><div><label>Your business name</label><input id="biz"></div><div><label>Note to customer</label><input id="cnote"></div></div>
+  <div class="row"><button class="btn" id="print">Print / save as PDF</button><button class="btn sec" id="copy">Copy quote text</button><button class="btn sec" id="save">Save quote</button></div></div>
+ <div class="doc printable" id="doc"></div>
+</section>
+
+<section id="t-items" class="hidden"><div class="card"><h2>Your item table</h2><div class="note">Enter the cubic feet (and weight, if you use it) of each item in YOUR experience. No industry table is built in: the starting rows are fictional examples. The productivity number below turns total volume into crew hours.</div><div class="tw"><table id="itemTbl"></table></div><div class="row"><button class="btn sec" id="addItem">+ Add item</button></div>
+ <div class="grid" style="margin-top:10px"><div><label>Cubic feet one mover loads, moves and unloads per hour (your own figure)</label><input id="s_prod" type="number" min="1"></div></div></div></section>
+
+<section id="t-rates" class="hidden">
+ <div class="card"><h2>Rates</h2><div class="grid"><div><label>Hourly rate per mover ($)</label><input id="s_rate" type="number" min="0" step="1"></div><div><label>Truck / equipment fee per job ($)</label><input id="s_truck" type="number" min="0"></div><div><label>Minimum billable hours</label><input id="s_minHours" type="number" min="0" step="0.5"></div><div><label>Range: low side (% below likely)</label><input id="s_lowPct" type="number" min="0" max="90"></div><div><label>Range: high side (% above likely)</label><input id="s_highPct" type="number" min="0"></div></div><div class="note">Starting numbers are examples, not market rates. Set your own.</div></div>
+ <div class="card"><h2>Access and extra charges</h2><div class="tw"><table id="addcfg"></table></div><div class="row"><button class="btn sec" id="addAdd">+ Add charge</button></div></div>
+ <div class="card"><h2>Estimate-type wording (printed on the quote)</h2><label>Non-binding</label><textarea id="w_nonbinding"></textarea><label style="margin-top:6px">Binding</label><textarea id="w_binding"></textarea><label style="margin-top:6px">Not-to-exceed</label><textarea id="w_cap"></textarea>
+  <div class="note">The wording is a placeholder for you to replace. Estimate and tariff rules differ by country, state and by local versus interstate moves: check the rules that apply to you. This tool does not cover interstate regulations and is not legal advice.</div>
+  <div class="row"><button class="btn del" id="reset">Reset rates and wording to examples</button><button class="btn sec" id="exp">Export JSON backup</button><label class="btn sec" style="margin:0;cursor:pointer">Import JSON<input id="imp" type="file" accept=".json" class="hidden"></label></div></div></section>
+
+<section id="t-saved" class="hidden"><div class="card"><h2>Saved quotes</h2><div class="tw"><table id="savedTbl"></table></div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How MoveQuote works</h2>
+<p><b>Hourly total</b> = billable hours x crew x rate per mover + truck fee + extras. Billable hours = the larger of your minimum hours and (working hours + billed travel hours).</p>
+<p><b>Inventory mode</b> converts your item table into working hours: hours = total cubic feet / (cubic feet per mover-hour x crew). Then the same hourly formula applies. The item volumes and the productivity figure are your own numbers.</p>
+<p><b>Range</b> = likely total x (1 - low %) to likely total x (1 + high %), with the percentages you set.</p>
+<p><b>Estimate type</b> (non-binding, binding, not-to-exceed) selects the wording block printed on the quote. Replace the placeholder wording with text that fits the rules where you operate.</p>
+<p><b>Honest notes.</b> Starting rates, items and wording are fictional examples. Estimate rules vary by jurisdiction and interstate moves have federal rules that this tool does not cover. Estimates can be wrong: the range is only as good as the numbers you enter. Data is stored in this browser only: use Export JSON to back up.</p></div></section>
+</main>
+<script>
+//CORE
+var DEFAULTS={rate:55,truck:0,minHours:3,lowPct:10,highPct:20,prod:45,
+ items:[{n:'Sofa (3-seat)',cuft:70,lb:150},{n:'Queen bed and frame',cuft:60,lb:140},{n:'Dresser',cuft:30,lb:120},{n:'Dining table + chairs',cuft:55,lb:160},{n:'Standard box',cuft:3,lb:30},{n:'Wardrobe box',cuft:10,lb:35},{n:'TV (large)',cuft:12,lb:50},{n:'Washer or dryer',cuft:35,lb:180}],
+ addons:[{n:'Stairs (per flight)',p:40},{n:'Long carry (over 75 ft)',p:60},{n:'Heavy item over 250 lb',p:100},{n:'Packing materials',p:75}],
+ wording:{nonbinding:'This is a non-binding estimate based on the information you gave us. The final charge is based on the actual time used at the hourly rate above, plus any extras that apply.',binding:'This is a binding estimate for the services and inventory described. If the inventory or access changes we will give you a revised estimate before work continues.',cap:'The final charge will not exceed the high end of the range shown for the services described, unless you ask for additional services.'}};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function invTotals(S,inv,crew){var cuft=0,lb=0;(S.items||[]).forEach(function(it,i){var q=num((inv||{})[i]);cuft+=q*num(it.cuft);lb+=q*num(it.lb);});var cap=num(S.prod)*Math.max(1,num(crew,1));return {cuft:cuft,lb:lb,hours:cap>0?cuft/cap:0};}
+function calc(S,q){var crew=Math.max(1,num(q.crew,1)),inv=invTotals(S,q.inv,crew),work=q.mode==='inventory'?inv.hours:num(q.hours);
+ var travel=num(q.travelBilled)?num(q.travel):0,raw=work+travel,billable=Math.max(num(S.minHours),raw);
+ var labor=billable*crew*num(S.rate),truck=num(S.truck),ex=[],exT=0;(S.addons||[]).forEach(function(a,i){var n=num((q.addons||{})[i]);if(n>0){ex.push({n:a.n,qty:n,p:num(a.p),t:n*num(a.p)});exT+=n*num(a.p);}});
+ var total=labor+truck+exT;return {crew:crew,work:work,travel:travel,raw:raw,billable:billable,minApplied:num(S.minHours)>raw,labor:labor,truck:truck,extras:ex,extrasTotal:exT,total:total,low:total*(1-Math.min(90,num(S.lowPct))/100),high:total*(1+num(S.highPct)/100),inv:inv,perCuft:inv.cuft>0?total/inv.cuft:null};}
+function quoteText(S,q,c,meta){var f=function(v){return '$'+(Math.round(v*100)/100).toFixed(2);};var L=[(meta.biz||'Moving estimate'),'For: '+(meta.cust||'Customer'),(meta.from||meta.to?(meta.from||'?')+' to '+(meta.to||'?'):''),'Crew: '+c.crew+' movers at '+f(num(S.rate))+' per mover per hour','Billable hours: '+c.billable.toFixed(2)+(c.minApplied?' (minimum '+num(S.minHours)+' hours applies)':'')];
+ if(c.truck)L.push('Truck / equipment: '+f(c.truck));c.extras.forEach(function(a){L.push(a.n+(a.qty>1?' x'+a.qty:'')+': '+f(a.t));});L.push('Estimated total: '+f(c.total),'Range: '+f(c.low)+' to '+f(c.high),({nonbinding:'Non-binding estimate',binding:'Binding estimate',cap:'Not-to-exceed estimate'})[meta.etype]+': '+S.wording[meta.etype]);return L.filter(Boolean).join('\n');}
+//ENDCORE
+var KEY='movequote.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function ld(k,d){try{var v=localStorage.getItem(KEY+'.'+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function st(k,v){try{localStorage.setItem(KEY+'.'+k,JSON.stringify(v));}catch(e){}}
+var S=ld('settings',JSON.parse(JSON.stringify(DEFAULTS)));var SAVED=ld('saved',[]);var MODE='hourly',ADD={},INV={};var LAST=null;
+function money(v){return '$'+(Math.round(v*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+function q(){return {mode:MODE,hours:$('hours').value,crew:$('crew').value,travel:$('travel').value,travelBilled:$('travelBilled').value,addons:ADD,inv:INV};}
+function meta(){return {cust:$('cust').value,contact:$('contact').value,date:$('date').value,from:$('from').value,to:$('to').value,etype:$('etype').value,biz:$('biz').value,cnote:$('cnote').value};}
+function renderPick(){$('addons').innerHTML='<tr><th>Charge</th><th class="num">Price</th><th style="width:90px">Qty</th></tr>'+S.addons.map(function(a,i){return '<tr><td>'+esc(a.n)+'</td><td class="num">'+money(num(a.p))+'</td><td><input type="number" min="0" data-q="'+i+'" value="'+(ADD[i]||0)+'"></td></tr>';}).join('');
+ $('invTbl').innerHTML='<tr><th>Item</th><th class="num">Cu ft each</th><th style="width:90px">Qty</th></tr>'+S.items.map(function(it,i){return '<tr><td>'+esc(it.n)+'</td><td class="num">'+num(it.cuft)+'</td><td><input type="number" min="0" data-iq="'+i+'" value="'+(INV[i]||0)+'"></td></tr>';}).join('');}
+function renderSettings(){['rate','truck','minHours','lowPct','highPct','prod'].forEach(function(k){if(document.activeElement!==$('s_'+k))$('s_'+k).value=S[k];});['nonbinding','binding','cap'].forEach(function(k){if(document.activeElement!==$('w_'+k))$('w_'+k).value=S.wording[k];});
+ $('addcfg').innerHTML='<tr><th>Charge</th><th>Price</th><th></th></tr>'+S.addons.map(function(a,i){return '<tr><td><input data-a="n" data-i="'+i+'" value="'+esc(a.n)+'" style="min-width:180px"></td><td><input type="number" min="0" data-a="p" data-i="'+i+'" value="'+num(a.p)+'" style="width:90px"></td><td><button class="btn del" data-rma="'+i+'">x</button></td></tr>';}).join('');
+ $('itemTbl').innerHTML='<tr><th>Item</th><th>Cu ft each</th><th>Weight lb each</th><th></th></tr>'+S.items.map(function(it,i){return '<tr><td><input data-n data-it="n" data-i="'+i+'" value="'+esc(it.n)+'"></td><td><input type="number" min="0" data-it="cuft" data-i="'+i+'" value="'+num(it.cuft)+'" style="width:90px"></td><td><input type="number" min="0" data-it="lb" data-i="'+i+'" value="'+num(it.lb)+'" style="width:90px"></td><td><button class="btn del" data-rmi="'+i+'">x</button></td></tr>';}).join('');}
+function render(){var Q=q(),c=calc(S,Q),m=meta();LAST={Q:Q,c:c,m:m};
+ $('hoursBox').classList.toggle('hidden',MODE==='inventory');$('invBox').classList.toggle('hidden',MODE!=='inventory');
+ $('kpi').innerHTML='<div><span class="mut">Billable hours</span><b>'+c.billable.toFixed(2)+'</b>'+(c.minApplied?'<span class="mut">minimum applies</span>':'')+'</div><div><span class="mut">Labor</span><b>'+money(c.labor)+'</b></div><div><span class="mut">Extras + truck</span><b>'+money(c.extrasTotal+c.truck)+'</b></div><div><span class="mut">Likely total</span><b>'+money(c.total)+'</b></div><div><span class="mut">Range</span><b>'+money(c.low)+' - '+money(c.high)+'</b></div>'+(MODE==='inventory'?'<div><span class="mut">Inventory</span><b>'+Math.round(c.inv.cuft)+' cu ft</b><span class="mut">'+c.inv.hours.toFixed(2)+' h of work</span></div>':'');
+ var typ={nonbinding:'Non-binding estimate',binding:'Binding estimate',cap:'Not-to-exceed estimate'}[m.etype];
+ $('doc').innerHTML='<h2>'+esc(m.biz||'Moving estimate')+'</h2><p class="mut">'+new Date().toLocaleDateString()+(m.date?' - move date '+esc(m.date):'')+'</p><p><b>For:</b> '+esc(m.cust||'Customer')+(m.contact?' ('+esc(m.contact)+')':'')+'<br><b>From:</b> '+esc(m.from||'-')+'<br><b>To:</b> '+esc(m.to||'-')+'</p>'
+ +'<table><tr><th>Item</th><th class="num">Amount</th></tr><tr><td>Crew of '+c.crew+' at '+money(num(S.rate))+' per mover per hour x '+c.billable.toFixed(2)+' billable hours'+(c.minApplied?' (minimum '+num(S.minHours)+' hours)':'')+(c.travel?'<br><span class="mut">includes '+c.travel+' h billed travel</span>':'')+'</td><td class="num">'+money(c.labor)+'</td></tr>'+(c.truck?'<tr><td>Truck / equipment</td><td class="num">'+money(c.truck)+'</td></tr>':'')+c.extras.map(function(a){return '<tr><td>'+esc(a.n)+(a.qty>1?' x'+a.qty:'')+'</td><td class="num">'+money(a.t)+'</td></tr>';}).join('')+'<tr><td><b>Estimated total</b></td><td class="num"><b>'+money(c.total)+'</b></td></tr><tr><td>Expected range</td><td class="num">'+money(c.low)+' to '+money(c.high)+'</td></tr></table>'
+ +(MODE==='inventory'&&c.inv.cuft>0?'<p class="mut">Based on an inventory of about '+Math.round(c.inv.cuft)+' cubic feet.</p>':'')+'<div class="wording"><b>'+typ+'</b><br>'+esc(S.wording[m.etype])+'</div>'+(m.cnote?'<p>'+esc(m.cnote)+'</p>':'')+'<p class="mut">Estimate rules vary by location. Not legal advice.</p>';}
+function sv(){st('settings',S);}
+document.addEventListener('input',function(e){var t=e.target,d=t.dataset;
+ if(d.q!==undefined){ADD[d.q]=num(t.value);render();return;}if(d.iq!==undefined){INV[d.iq]=num(t.value);render();return;}
+ if(d.a){S.addons[+d.i][d.a]=d.a==='p'?num(t.value):t.value;sv();renderPick();render();return;}
+ if(d.it){S.items[+d.i][d.it]=d.it==='n'?t.value:num(t.value);sv();renderPick();render();return;}
+ if(t.id&&t.id.indexOf('s_')===0){S[t.id.slice(2)]=num(t.value);sv();render();return;}
+ if(t.id&&t.id.indexOf('w_')===0){S.wording[t.id.slice(2)]=t.value;sv();render();return;}
+ try{localStorage.setItem(KEY+'.biz',$('biz').value);}catch(x){}render();});
+document.addEventListener('change',function(e){if(['etype','travelBilled'].indexOf(e.target.id)>=0)render();});
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['quote','items','rates','saved','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});if(d.t==='saved')renderSaved();return;}
+ if(d.m){MODE=d.m;Array.prototype.forEach.call(document.querySelectorAll('#mode button'),function(b){b.classList.toggle('on',b===t);});render();return;}
+ if(d.rma!==undefined){S.addons.splice(+d.rma,1);ADD={};sv();renderSettings();renderPick();render();return;}
+ if(d.rmi!==undefined){S.items.splice(+d.rmi,1);INV={};sv();renderSettings();renderPick();render();return;}
+ if(d.del!==undefined){SAVED.splice(+d.del,1);st('saved',SAVED);renderSaved();return;}
+ if(t.id==='addAdd'){S.addons.push({n:'New charge',p:50});sv();renderSettings();renderPick();render();}
+ if(t.id==='addItem'){S.items.push({n:'New item',cuft:10,lb:20});sv();renderSettings();renderPick();render();}
+ if(t.id==='print')window.print();
+ if(t.id==='copy'){var tx=quoteText(S,LAST.Q,LAST.c,LAST.m);if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';setTimeout(function(){t.textContent='Copy quote text';},1500);},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);}
+ if(t.id==='save'){SAVED.unshift({date:new Date().toLocaleString(),cust:LAST.m.cust,from:LAST.m.from,to:LAST.m.to,type:LAST.m.etype,total:LAST.c.total,low:LAST.c.low,high:LAST.c.high});st('saved',SAVED);t.textContent='Saved';setTimeout(function(){t.textContent='Save quote';},1500);}
+ if(t.id==='reset'){if(confirm('Reset rates, charges, items and wording to the examples?')){S=JSON.parse(JSON.stringify(DEFAULTS));sv();ADD={};INV={};init();}}
+ if(t.id==='exp'){var b=new Blob([JSON.stringify({settings:S,saved:SAVED},null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='movequote-backup.json';a.click();}});
+$('imp').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(x.settings&&x.settings.items&&x.settings.addons&&x.settings.wording){S=x.settings;SAVED=x.saved||[];sv();st('saved',SAVED);ADD={};INV={};init();}else alert('This file is not a MoveQuote backup.');}catch(err){alert('Could not read that file.');}};r.readAsText(f);});
+function renderSaved(){var T={nonbinding:'non-binding',binding:'binding',cap:'not-to-exceed'};$('savedTbl').innerHTML='<tr><th>Date</th><th>Customer</th><th>Move</th><th>Type</th><th class="num">Likely</th><th class="num">Range</th><th></th></tr>'+(SAVED.length?SAVED.map(function(x,i){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.cust)+'</td><td>'+esc(x.from)+' to '+esc(x.to)+'</td><td>'+T[x.type]+'</td><td class="num">'+money(x.total)+'</td><td class="num">'+money(x.low)+' - '+money(x.high)+'</td><td><button class="btn del" data-del="'+i+'">x</button></td></tr>';}).join(''):'<tr><td colspan="7" class="mut">No saved quotes yet.</td></tr>');}
+function init(){$('crew').value=2;$('hours').value=4;$('travel').value=1;try{$('biz').value=localStorage.getItem(KEY+'.biz')||'';}catch(e){}renderPick();renderSettings();render();}
+init();
+</script></body></html>

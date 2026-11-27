@@ -1,0 +1,47 @@
+{
+ "stage": "build1",
+ "date": "2026-11-28",
+ "products": [
+  {
+   "id": "d20261128-01",
+   "name": "MowRoute Pricer: Per-Stop Cost and Route Density Calculator",
+   "slug": "mowroute-pricer-per-stop-cost-route-density",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 29,
+   "price_pkr": 8120,
+   "type": "html tool"
+  },
+  {
+   "id": "d20261128-04",
+   "name": "Lead Clock: Inquiry Response Timer and Callback Queue",
+   "slug": "lead-clock-inquiry-response-timer",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 29,
+   "price_pkr": 8120,
+   "type": "html tool"
+  },
+  {
+   "id": "d20261128-06",
+   "name": "Agent Net Income and Expense Sheet",
+   "slug": "agent-net-income-expense-sheet",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 24,
+   "price_pkr": 6720,
+   "type": "xlsx"
+  },
+  {
+   "id": "d20261128-08",
+   "name": "MoveQuote: Hourly and Inventory Estimator",
+   "slug": "movequote-hourly-inventory-estimator",
+   "status": "built",
+   "qa": "PASS (see qa-report.md)",
+   "price_usd": 35,
+   "price_pkr": 9800,
+   "type": "html tool"
+  }
+ ],
+ "failed": []
+}
