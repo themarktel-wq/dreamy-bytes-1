@@ -1,0 +1,18 @@
+{
+ "stage": "build3",
+ "date": "2026-11-28",
+ "products": {
+  "d20261128-10": {
+   "slug": "mover-job-profit-sheet",
+   "name": "Mover Job Profit Sheet",
+   "status": "built",
+   "qa": "pass (889 formulas, 0 errors, 216 values match independent maths + 3 round trips; LibreOffice only)",
+   "price_usd": 24,
+   "files": [
+    "Mover-Job-Profit-Sheet.xlsx",
+    "README.md",
+    "cover.png"
+   ]
+  }
+ }
+}
