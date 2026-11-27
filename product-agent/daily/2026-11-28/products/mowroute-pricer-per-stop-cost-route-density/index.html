@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MowRoute Pricer - Per-Stop Cost and Route Density Calculator</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#15803d;--acc2:#dcfce7}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:20px}
+.doc{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:10px 0}.doc h2{margin:0;font-size:20px}.doc td,.doc th{font-size:14px}
+td input[type=text]{min-width:130px}
+@media print{.doc{border:0;padding:0;margin:0}}
+</style></head><body>
+<header class="top"><h1>MowRoute Pricer</h1><p>Price every lawn stop from its real cost, including the drive to it, and see how dense your route is. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs" id="tabs"><button data-t="stops" class="on">Stops</button><button data-t="route">Route summary</button><button data-t="costs">My costs</button><button data-t="list">Price list</button><button data-t="help">How it works</button></div>
+
+<section id="t-stops">
+ <div class="card"><h2>Your hourly cost</h2><div class="kpi" id="rateKpi"></div><p class="note" id="sampleNote"></p></div>
+ <div class="card"><div class="row"><button class="btn" id="addStop">+ Add stop</button><button class="btn sec" id="expcsv">Export CSV</button><button class="btn sec" id="expjson">Backup JSON</button><label class="btn sec" style="margin:0;cursor:pointer">Restore JSON<input id="impjson" type="file" accept=".json" class="hidden"></label><button class="btn del" id="clearSample">Remove sample stops</button></div>
+  <div class="tw"><table id="stopTbl"></table></div></div>
+</section>
+
+<section id="t-route" class="hidden"><div class="card"><h2>Route summary</h2><div class="kpi" id="routeKpi"></div></div>
+ <div class="card"><h2>Stops ranked by revenue per hour</h2><div class="tw"><table id="rankTbl"></table></div><div class="note">Revenue per hour = what the stop pays per visit / (mow + extra + drive minutes) x 60. "Needed" is the revenue per hour a stop must earn to hit your target margin at your costs (materials ignored). Flagged stops earn below that at today's price.</div></div></section>
+
+<section id="t-costs" class="hidden"><div class="card"><h2>Cost per hour</h2><div class="note">Starting numbers are examples, not industry figures. Replace each with your own.</div>
+ <div class="grid"><div><label>Labor cost per person per hour (wages + payroll costs)</label><input id="s_labor" type="number" min="0" step="0.5"></div><div><label>People on the crew</label><input id="s_crew" type="number" min="1"></div><div><label>Equipment, fuel and truck per hour</label><input id="s_equip" type="number" min="0" step="0.5"></div><div><label>Overhead per hour (insurance, software, admin)</label><input id="s_over" type="number" min="0" step="0.5"></div></div></div>
+ <div class="card"><h2>Pricing rules</h2><div class="grid"><div><label>Target margin on price (%)</label><input id="s_margin" type="number" min="0" max="95"></div><div><label>Round prices UP to the nearest ($, 0 = none)</label><input id="s_round" type="number" min="0" step="0.5"></div><div><label>Minimum price per visit</label><input id="s_min" type="number" min="0"></div><div><label>Business name (printed)</label><input id="s_biz"></div></div></div></section>
+
+<section id="t-list" class="hidden"><div class="card noprint"><h2>Customer price list</h2><div class="note">Shows the price needed for your target margin at each stop (or your current price if you tick "show current"). Costs and margins are never printed.</div><div class="row"><label style="margin:0"><input type="checkbox" id="showCur"> Show current price instead</label><button class="btn" id="print">Print price list</button></div></div><div class="doc printable" id="doc"></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How MowRoute Pricer works</h2>
+<p><b>Cost per hour</b> = labor per person x crew + equipment and fuel + overhead.</p>
+<p><b>Stop cost</b> = (mow minutes + extra minutes + drive minutes to the stop) / 60 x cost per hour + materials. <b>Price needed</b> = stop cost / (1 - target margin), rounded up if you set rounding and never below your minimum.</p>
+<p><b>Margin at current price</b> = (current price - stop cost) / current price. <b>Route revenue per hour</b> = total of current prices / total route hours.</p>
+<p>Because drive time is part of every stop's cost, a far-away property needs a higher price than one next door, and dense routes (short drives) earn more per hour.</p>
+<p><b>Honest notes.</b> All starting numbers and sample stops are fictional examples. Vendor guides show example visit prices, but this tool assumes no market price. It ignores taxes, seasonality and weather days. Data is stored in this browser only: use Backup JSON or Export CSV regularly.</p></div></section>
+</main>
+<script>
+//CORE
+var DEFAULTS={labor:18,crew:1,equip:9,over:7,margin:30,round:1,min:25,biz:''};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function hourly(S){return num(S.labor)*Math.max(1,num(S.crew,1))+num(S.equip)+num(S.over);}
+function roundUp(x,step){step=num(step);return step>0?Math.ceil(x/step-1e-9)*step:x;}
+function stop(S,s){var min=num(s.mow)+num(s.extra)+num(s.drive),h=hourly(S),cost=min/60*h+num(s.materials);
+ var m=Math.min(Math.max(num(S.margin)/100,0),0.95),raw=cost/(1-m),price=Math.max(roundUp(raw,S.round),num(S.min));var cur=num(s.price);
+ var needHr=h/(1-m);
+ return {minutes:min,hours:min/60,cost:cost,raw:raw,price:price,current:cur,curMargin:cur>0?(cur-cost)/cur:null,gap:cur>0?price-cur:null,yieldNow:min>0&&cur>0?cur/(min/60):null,yieldNeed:needHr,driveShare:min>0?num(s.drive)/min:0,low:cur>0&&cost>0&&(cur-cost)/cur<m-1e-9};}
+function route(S,stops){var T={stops:stops.length,minutes:0,mow:0,drive:0,revenue:0,cost:0,needed:0,low:0};stops.forEach(function(s){var c=stop(S,s);T.minutes+=c.minutes;T.mow+=num(s.mow)+num(s.extra);T.drive+=num(s.drive);T.revenue+=c.current;T.cost+=c.cost;T.needed+=c.price;if(c.low)T.low++;});
+ T.hours=T.minutes/60;T.revPerHour=T.hours>0?T.revenue/T.hours:null;T.neededPerHour=T.hours>0?T.needed/T.hours:null;T.margin=T.revenue>0?(T.revenue-T.cost)/T.revenue:null;T.driveShare=T.minutes>0?T.drive/T.minutes:0;return T;}
+function stopsCSV(S,stops){var q=function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};var rows=[['stop','mow_min','extra_min','drive_min','materials','cost','price_needed','current_price','current_margin_pct']];
+ stops.forEach(function(s){var c=stop(S,s);rows.push([s.name,num(s.mow),num(s.extra),num(s.drive),num(s.materials),c.cost.toFixed(2),c.price.toFixed(2),c.current||'',c.curMargin==null?'':(c.curMargin*100).toFixed(1)]);});return rows.map(function(r){return r.map(q).join(',');}).join('\n');}
+//ENDCORE
+var KEY='mowroute.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function ld(){try{var v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function sample(){var n=function(name,mow,extra,drive,mat,price){return {id:uid()+Math.random().toString(36).slice(2,5),sample:1,name:name+' (sample)',mow:mow,extra:extra,drive:drive,materials:mat,price:price};};
+ return {S:JSON.parse(JSON.stringify(DEFAULTS)),stops:[n('12 Maple Ct',25,5,4,0.5,38),n('14 Maple Ct',25,5,2,0.5,38),n('30 Oak Ave',40,10,6,1,55),n('7 Ridge Rd',30,5,18,0.5,38),n('88 Hill Farm Ln',55,15,26,1.5,60),n('3 Birch St',20,0,5,0.5,32),n('41 Lake View',35,10,14,1,45),n('9 Cedar Way',30,5,3,0.5,40)]};}
+var D=ld()||sample();var S=function(){return D.S;};
+function money(v,d){return '$'+(Math.round(v*100)/100).toFixed(d==null?2:d);}
+function render(){var s=D.S,h=hourly(s);
+ $('rateKpi').innerHTML='<div><span class="mut">Cost per hour</span><b>'+money(h)+'</b></div><div><span class="mut">Target margin</span><b>'+num(s.margin)+'%</b></div><div><span class="mut">Revenue / hour needed</span><b>'+money(h/(1-Math.min(num(s.margin)/100,0.95)))+'</b></div><div><span class="mut">Stops</span><b>'+D.stops.length+'</b></div>';
+ $('sampleNote').textContent=D.stops.some(function(x){return x.sample;})?'Sample stops and numbers (fictional examples) are loaded so you can see how it works. Replace the costs on "My costs" with your own.':'';
+ $('stopTbl').innerHTML='<tr><th>Stop</th><th>Mow min</th><th>Extra min</th><th>Drive min to stop</th><th>Materials $</th><th>Current price</th><th class="num">Cost</th><th class="num">Price needed</th><th class="num">Margin now</th><th></th></tr>'+(D.stops.length?D.stops.map(function(x){var c=stop(s,x);return '<tr><td><input type="text" data-f="name" data-id="'+esc(x.id)+'" value="'+esc(x.name)+'"></td><td><input type="number" min="0" data-f="mow" data-id="'+esc(x.id)+'" value="'+num(x.mow)+'" style="width:70px"></td><td><input type="number" min="0" data-f="extra" data-id="'+esc(x.id)+'" value="'+num(x.extra)+'" style="width:70px"></td><td><input type="number" min="0" data-f="drive" data-id="'+esc(x.id)+'" value="'+num(x.drive)+'" style="width:70px"></td><td><input type="number" min="0" step="0.25" data-f="materials" data-id="'+esc(x.id)+'" value="'+num(x.materials)+'" style="width:70px"></td><td><input type="number" min="0" step="1" data-f="price" data-id="'+esc(x.id)+'" value="'+(num(x.price)||'')+'" style="width:80px"></td><td class="num" data-c="'+esc(x.id)+'">'+money(c.cost)+'</td><td class="num" data-p="'+esc(x.id)+'"><b>'+money(c.price)+'</b></td><td class="num" data-m="'+esc(x.id)+'">'+marginCell(c)+'</td><td><button class="btn del" data-rm="'+esc(x.id)+'">x</button></td></tr>';}).join(''):'<tr><td colspan="10" class="mut">No stops yet.</td></tr>');
+ for(var k in {labor:1,crew:1,equip:1,over:1,margin:1,round:1,min:1,biz:1}){if(document.activeElement!==$('s_'+k))$('s_'+k).value=s[k];}
+ renderRoute();renderDoc();}
+function marginCell(c){return c.curMargin==null?'-':'<span class="pill '+(c.low?(c.curMargin<0?'r':'a'):'g')+'">'+(c.curMargin*100).toFixed(1)+'%</span>';}
+function renderRoute(){var s=D.S,T=route(s,D.stops);
+ $('routeKpi').innerHTML='<div><span class="mut">Route hours</span><b>'+T.hours.toFixed(2)+'</b></div><div><span class="mut">Drive share of time</span><b>'+(T.driveShare*100).toFixed(0)+'%</b></div><div><span class="mut">Revenue per visit-day</span><b>'+money(T.revenue)+'</b></div><div><span class="mut">Revenue per route hour</span><b>'+(T.revPerHour==null?'-':money(T.revPerHour))+'</b></div><div><span class="mut">Needed per route hour</span><b>'+(T.neededPerHour==null?'-':money(T.neededPerHour))+'</b></div><div><span class="mut">Margin at current prices</span><b>'+(T.margin==null?'-':(T.margin*100).toFixed(1)+'%')+'</b></div><div><span class="mut">Low-yield stops</span><b style="color:'+(T.low?'var(--bad)':'var(--ok)')+'">'+T.low+'</b></div>';
+ var rows=D.stops.map(function(x){return {x:x,c:stop(s,x)};}).filter(function(r){return r.c.yieldNow!=null;}).sort(function(a,b){return a.c.yieldNow-b.c.yieldNow;});
+ $('rankTbl').innerHTML='<tr><th>Stop</th><th class="num">Revenue / hour</th><th class="num">Drive share</th><th class="num">Price needed</th><th class="num">Underpriced by</th><th></th></tr>'+(rows.length?rows.map(function(r){return '<tr><td>'+esc(r.x.name)+'</td><td class="num">'+money(r.c.yieldNow)+'</td><td class="num">'+(r.c.driveShare*100).toFixed(0)+'%</td><td class="num">'+money(r.c.price)+'</td><td class="num">'+(r.c.gap>0.005?money(r.c.gap):'-')+'</td><td>'+(r.c.low?'<span class="pill r">low yield</span>':'<span class="pill g">ok</span>')+'</td></tr>';}).join(''):'<tr><td colspan="6" class="mut">Enter current prices to rank stops.</td></tr>');}
+function renderDoc(){var s=D.S,cur=$('showCur').checked;$('doc').innerHTML='<h2>'+esc(s.biz||'Lawn care price list')+'</h2><p class="mut">'+new Date().toLocaleDateString()+' - price per visit</p><table><tr><th>Property</th><th class="num">Price per visit</th></tr>'+D.stops.map(function(x){var c=stop(s,x);var p=cur&&c.current?c.current:c.price;return '<tr><td>'+esc(x.name.replace(/ \(sample\)$/,''))+'</td><td class="num"><b>'+money(p)+'</b></td></tr>';}).join('')+'</table>';}
+document.addEventListener('input',function(e){var t=e.target,d=t.dataset;
+ if(d.f){var x=D.stops.filter(function(s){return s.id===d.id;})[0];x[d.f]=d.f==='name'?t.value:num(t.value);sv();var c=stop(D.S,x);var q=function(a){return document.querySelector('['+a+'="'+d.id+'"]');};if(q('data-c'))q('data-c').textContent=money(c.cost);if(q('data-p'))q('data-p').innerHTML='<b>'+money(c.price)+'</b>';if(q('data-m'))q('data-m').innerHTML=marginCell(c);renderRoute();renderDoc();return;}
+ if(t.id&&t.id.indexOf('s_')===0){var k=t.id.slice(2);D.S[k]=k==='biz'?t.value:num(t.value);sv();render();return;}});
+document.addEventListener('change',function(e){if(e.target.id==='showCur')renderDoc();});
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['stops','route','costs','list','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});return;}
+ if(d.rm){D.stops=D.stops.filter(function(s){return s.id!==d.rm;});sv();render();return;}
+ if(t.id==='addStop'){D.stops.push({id:uid(),name:'New stop',mow:30,extra:0,drive:5,materials:0,price:0});sv();render();return;}
+ if(t.id==='clearSample'){D.stops=D.stops.filter(function(s){return !s.sample;});sv();render();return;}
+ if(t.id==='print'){window.print();return;}
+ if(t.id==='expcsv'||t.id==='expjson'){var c=t.id==='expcsv',b=new Blob([c?stopsCSV(D.S,D.stops):JSON.stringify(D,null,1)],{type:c?'text/csv':'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=c?'mowroute-stops.csv':'mowroute-backup.json';a.click();}});
+$('impjson').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(x.S&&x.stops){D=x;sv();render();}else alert('This file is not a MowRoute Pricer backup.');}catch(err){alert('Could not read that file.');}};r.readAsText(f);});
+render();
+</script></body></html>
