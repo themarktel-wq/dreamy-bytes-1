@@ -1,0 +1,10 @@
+{
+ "stage": "build2",
+ "date": "2026-11-28",
+ "products": {
+  "d20261128-02": {"slug": "rain-check-n8n", "name": "Rain Check: Weather Reschedule Notice n8n Flow", "status": "built", "qa": "pass (simulator only; not run on live n8n/Twilio/email/Sheets/weather API)", "price_usd": 45, "files": ["workflows/ (4 n8n JSON files)", "sheet-templates/Schedule.csv", "SETUP.md", "README.md", "cover.png"]},
+  "d20261128-03": {"slug": "seasonal-cash-flow-winter-planner", "name": "Seasonal Cash Flow and Winter Planner", "status": "built", "qa": "pass (182 formulas, 0 errors, values match independent maths; LibreOffice only)", "price_usd": 24, "files": ["Seasonal-Cash-Flow-and-Winter-Planner.xlsx", "README.md", "cover.png"]},
+  "d20261128-05": {"slug": "past-client-touch-planner", "name": "Past-Client Touch Planner", "status": "built", "qa": "pass (26 checks, Chromium only)", "price_usd": 29, "files": ["index.html", "README.md", "cover.png"]}
+ },
+ "summary": {"built": 3, "failed": 0}
+}
