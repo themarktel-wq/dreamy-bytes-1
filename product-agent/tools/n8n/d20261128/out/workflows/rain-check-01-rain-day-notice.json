@@ -1,0 +1,513 @@
+{
+ "name": "01 Rain Check 1: reschedule notice for a rain day",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "rain-day",
+    "options": {}
+   },
+   "id": "bf480dbf-863f-5f63-b489-c4811caf0855",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    240,
+    300
+   ],
+   "webhookId": "70c73fd4-5240-5b1a-82c2-042c808f569c"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Lawn Care",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "sms",
+       "type": "string"
+      },
+      {
+       "id": "ecaaf021-5c8b-5554-83e9-59659a0ce2b1",
+       "name": "workDays",
+       "value": "mon,tue,wed,thu,fri",
+       "type": "string"
+      },
+      {
+       "id": "28658c77-b72f-551c-97a1-58071de09947",
+       "name": "rainThreshold",
+       "value": "70",
+       "type": "string"
+      },
+      {
+       "id": "71b75743-6331-5a51-8c4e-1cfb7b71593e",
+       "name": "autoSend",
+       "value": "no",
+       "type": "string"
+      },
+      {
+       "id": "88cb2620-08d7-50cc-91c0-c2b463064694",
+       "name": "weatherLat",
+       "value": "40.7128",
+       "type": "string"
+      },
+      {
+       "id": "63836f6b-53e4-5a56-83df-b2b38ee1df95",
+       "name": "weatherLon",
+       "value": "-74.0060",
+       "type": "string"
+      },
+      {
+       "id": "24a77157-5891-5a75-8a66-c024a768f491",
+       "name": "weatherApiKey",
+       "value": "PASTE_YOUR_OPENWEATHERMAP_KEY",
+       "type": "string"
+      },
+      {
+       "id": "6d5194cb-de34-5d67-9396-aa21ed2f99da",
+       "name": "rainWebhookUrl",
+       "value": "https://YOUR-N8N-HOST/webhook/rain-day",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "d6ce7a55-85cb-5918-9a2c-ad6ea832a909",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const b = $input.first().json.body || {};\nconst today = new Date().toISOString().slice(0, 10);return [{json:{day:String(b.day||today).slice(0,10),newDay:String(b.newDay||'').slice(0,10),reason:String(b.reason||'rain')}}];"
+   },
+   "id": "b7f90795-ee52-5611-a8ca-21dc3f5a9c2a",
+   "name": "Normalize",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    680,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Schedule",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "cb0fe028-7ce9-5965-a282-04fde45dd749",
+   "name": "Read Schedule",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    900,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json, n = $('Normalize').first().json;\nconst toT = s => { const m = String(s || '').match(/^(\\d{4})-(\\d{2})-(\\d{2})$/); if (!m) return null; const t = Date.UTC(+m[1], +m[2] - 1, +m[3]); return new Date(t).getUTCMonth() === +m[2] - 1 ? t : null; };\nconst names = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];\nconst work = String(c.workDays).toLowerCase().split(/[,\\s]+/).filter(Boolean);\nlet newDay = n.newDay;\nif (!toT(newDay)) { const t0 = toT(n.day); newDay = ''; if (t0 !== null) for (let i = 1; i <= 14; i++) { const t = t0 + i * 864e5; if (work.includes(names[new Date(t).getUTCDay()])) { newDay = new Date(t).toISOString().slice(0, 10); break; } } }\nif (!newDay) return [];\nconst first = s => String(s || '').trim().split(/\\s+/)[0] || 'there';\nconst out = [];\nfor (const r of $input.all().map(i => i.json)) {\n  if (!r || !r.job_id || String(r.day).slice(0, 10) !== n.day) continue;\n  if (String(r.status || 'scheduled').trim().toLowerCase() !== 'scheduled') continue;\n  const phone = String(r.phone || '').trim(), email = String(r.email || '').trim();\n  const channel = (c.channel === 'sms' && phone) ? 'sms' : (email ? 'email' : (phone ? 'sms' : 'none'));\n  if (channel === 'none') continue;\n  const text = 'Hi ' + first(r.customer) + ', ' + c.businessName + ' here. Because of the weather we are moving your ' + (r.service || 'service') + ' at ' + (r.address || 'your address') + ' from ' + n.day + ' to ' + newDay + '. There is no fee for weather reschedules. Reply OK to confirm or CALL if that day does not work and we will phone you.';\n  out.push({ json: { job_id: r.job_id, channel, to_phone: phone, to_email: email, subject: 'Weather reschedule: ' + n.day + ' to ' + newDay, text, status: 'rain-rescheduled', new_day: newDay, notified_at: new Date().toISOString().slice(0, 10) } });\n}\nreturn out;"
+   },
+   "id": "a285e47e-bc8a-5442-a44e-4e16b0717d62",
+   "name": "Pick customers",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "790beadd-6a99-592e-b256-f5f9b4d00872",
+       "leftValue": "={{ !!($json.channel === 'sms') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "b5a2d1fa-bcb5-598a-8f55-3737acdf5bbb",
+   "name": "IF jsonchannel  sms",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1340,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $json.to_phone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ $json.text }}"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "5871eb95-7f11-56bf-a699-bcbdb3a6becb",
+   "name": "Send SMS",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1560,
+    180
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth: Account SID / Auth Token)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Schedule",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "job_id": "={{ $('Pick customers').item.json.job_id }}",
+      "status": "={{ $('Pick customers').item.json.status }}",
+      "new_day": "={{ $('Pick customers').item.json.new_day }}",
+      "notified_at": "={{ $('Pick customers').item.json.notified_at }}"
+     },
+     "matchingColumns": [
+      "job_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "b5eea441-a5c2-5c03-901f-08b993d25610",
+   "name": "Mark rescheduled (sms)",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1780,
+    180
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $json.to_email }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.text }}",
+    "options": {}
+   },
+   "id": "ef848fe6-e792-5521-9060-9258dc6964f9",
+   "name": "Send email",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1560,
+    420
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Schedule",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "job_id": "={{ $('Pick customers').item.json.job_id }}",
+      "status": "={{ $('Pick customers').item.json.status }}",
+      "new_day": "={{ $('Pick customers').item.json.new_day }}",
+      "notified_at": "={{ $('Pick customers').item.json.notified_at }}"
+     },
+     "matchingColumns": [
+      "job_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "288fa1a3-ed95-5dfc-b2bd-c7fcf21fba55",
+   "name": "Mark rescheduled (email)",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1780,
+    420
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Rain Check 1: reschedule notice for a rain day\nPOST a rain day to the webhook (or let workflow 3 do it). Every scheduled customer on that day gets a polite no-fee reschedule notice with the next working day, and their row is marked rain-rescheduled with the new date.\n\n**Setup**\n1. Create a Google Sheet with a tab named Schedule using the header row in sheet-templates/Schedule.csv; paste its ID into the Config node (sheetId).\n2. In Config set your business name, owner email, channel (sms or email), the weekdays you work (workDays) and, only if you use workflow 3, your weather location and key.\n3. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth) if you use SMS.\n4. Dates are YYYY-MM-DD (format the day / new_day columns as plain text). Run with test rows (your own phone or email) before activating.\n5. Trigger it by POSTing {\"day\":\"2026-12-01\"} (optional \"newDay\") to the Production URL, for example from a bookmark or a phone shortcut.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "a13c7e0e-59fc-5ff4-b5f7-a2894564fa61",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Webhook": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Normalize",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalize": {
+   "main": [
+    [
+     {
+      "node": "Read Schedule",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Schedule": {
+   "main": [
+    [
+     {
+      "node": "Pick customers",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Pick customers": {
+   "main": [
+    [
+     {
+      "node": "IF jsonchannel  sms",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonchannel  sms": {
+   "main": [
+    [
+     {
+      "node": "Send SMS",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Send email",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send SMS": {
+   "main": [
+    [
+     {
+      "node": "Mark rescheduled (sms)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send email": {
+   "main": [
+    [
+     {
+      "node": "Mark rescheduled (email)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

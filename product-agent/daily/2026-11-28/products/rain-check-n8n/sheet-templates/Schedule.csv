@@ -1,0 +1,2 @@
+job_id,customer,phone,email,address,day,time,service,status,new_day,notified_at,reply
+SAMPLE-1,Sample Customer,+15550000001,sample@example.com,1 Example Street,2030-01-08,09:00,Lawn mowing,scheduled,,,

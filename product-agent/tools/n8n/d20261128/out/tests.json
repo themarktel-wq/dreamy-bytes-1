@@ -1,0 +1,801 @@
+[
+ {
+  "file": "rain-check-01-rain-day-notice.json",
+  "title": "Tuesday rain day moves to Wednesday (SMS)",
+  "sample": {
+   "day": "2026-12-01"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "J1",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS",
+   "Mark rescheduled (sms)"
+  ],
+  "notexpect": [
+   "Send email"
+  ],
+  "contains": [
+   [
+    "Send SMS",
+    "from 2026-12-01 to 2026-12-02"
+   ],
+   [
+    "Send SMS",
+    "no fee"
+   ],
+   [
+    "Send SMS",
+    "Reply OK"
+   ],
+   [
+    "Mark rescheduled (sms)",
+    "\"status\":\"rain-rescheduled\""
+   ],
+   [
+    "Mark rescheduled (sms)",
+    "\"new_day\":\"2026-12-02\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-01-rain-day-notice.json",
+  "title": "Friday rain day skips the weekend to Monday",
+  "sample": {
+   "day": "2026-12-04"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "J2",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-04",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send SMS",
+    "to 2026-12-07"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-01-rain-day-notice.json",
+  "title": "explicit newDay overrides the rule",
+  "sample": {
+   "day": "2026-12-01",
+   "newDay": "2026-12-10"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "J3",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send SMS",
+    "to 2026-12-10"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-01-rain-day-notice.json",
+  "title": "other days, done jobs and no-contact rows are ignored",
+  "sample": {
+   "day": "2026-12-01"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "J4",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-02",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    },
+    {
+     "job_id": "J5",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "done",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    },
+    {
+     "job_id": "J6",
+     "customer": "Dana Smith",
+     "phone": "",
+     "email": "",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    },
+    {
+     "job_id": "J7",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "rain-rescheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send SMS",
+   "Send email"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-01-rain-day-notice.json",
+  "title": "email-only customer gets email",
+  "sample": {
+   "day": "2026-12-01"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "J8",
+     "customer": "Dana Smith",
+     "phone": "",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send email",
+   "Mark rescheduled (email)"
+  ],
+  "notexpect": [
+   "Send SMS"
+  ],
+  "contains": [
+   [
+    "Send email",
+    "dana@example.com"
+   ],
+   [
+    "Send email",
+    "Weather reschedule: 2026-12-01 to 2026-12-02"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-01-rain-day-notice.json",
+  "title": "two customers same day",
+  "sample": {
+   "day": "2026-12-01"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "J9",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    },
+    {
+     "job_id": "J10",
+     "customer": "Lee Park",
+     "phone": "+15551230002",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Send SMS"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Send SMS",
+    "Lee"
+   ],
+   [
+    "Send SMS",
+    "Dana"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-01-rain-day-notice.json",
+  "title": "invalid day stops without crashing",
+  "sample": {
+   "day": "not-a-date"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "J11",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send SMS",
+   "Send email"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-01-rain-day-notice.json",
+  "title": "empty schedule",
+  "sample": {
+   "day": "2026-12-01"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {}
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Send SMS"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-02-reply-capture.json",
+  "title": "OK confirms",
+  "sample": {
+   "From": "+1 (555) 123-0001",
+   "Body": " ok "
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "K1",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "rain-rescheduled",
+     "new_day": "2026-12-02",
+     "notified_at": "",
+     "reply": ""
+    },
+    {
+     "job_id": "K2",
+     "customer": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Mark confirmed",
+   "Thank you SMS"
+  ],
+  "notexpect": [
+   "Mark call requested",
+   "Forward reply"
+  ],
+  "contains": [
+   [
+    "Mark confirmed",
+    "\"status\":\"confirmed\""
+   ],
+   [
+    "Thank you SMS",
+    "2026-12-02"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-02-reply-capture.json",
+  "title": "CALL flags job and emails owner",
+  "sample": {
+   "From": "+15551230001",
+   "Body": "Call me"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "K1",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "rain-rescheduled",
+     "new_day": "2026-12-02",
+     "notified_at": "",
+     "reply": ""
+    },
+    {
+     "job_id": "K2",
+     "customer": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Mark call requested",
+   "Call this customer"
+  ],
+  "notexpect": [
+   "Mark confirmed"
+  ],
+  "contains": [
+   [
+    "Mark call requested",
+    "\"status\":\"call-requested\""
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-02-reply-capture.json",
+  "title": "other text forwarded to owner",
+  "sample": {
+   "From": "+15551230001",
+   "Body": "Can you do Friday?"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "K1",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "rain-rescheduled",
+     "new_day": "2026-12-02",
+     "notified_at": "",
+     "reply": ""
+    },
+    {
+     "job_id": "K2",
+     "customer": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Forward reply"
+  ],
+  "notexpect": [
+   "Mark confirmed",
+   "Mark call requested"
+  ],
+  "contains": [
+   [
+    "Forward reply",
+    "Can you do Friday?"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-02-reply-capture.json",
+  "title": "number without a rain-rescheduled job",
+  "sample": {
+   "From": "+15559990000",
+   "Body": "OK"
+  },
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "K1",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "rain-rescheduled",
+     "new_day": "2026-12-02",
+     "notified_at": "",
+     "reply": ""
+    },
+    {
+     "job_id": "K2",
+     "customer": "Dana Smith",
+     "phone": "+15559990000",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Unmatched reply"
+  ],
+  "notexpect": [
+   "Mark confirmed"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-03-weather-check.json",
+  "title": "high rain chance emails the owner (autoSend no)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Get forecast": {
+    "list": [
+     {
+      "dt_txt": "2026-11-27 09:00:00",
+      "pop": 0.8
+     },
+     {
+      "dt_txt": "2026-11-27 12:00:00",
+      "pop": 0.4
+     },
+     {
+      "dt_txt": "2026-11-28 09:00:00",
+      "pop": 0.99
+     }
+    ]
+   }
+  },
+  "expect": [
+   "Rain today?",
+   "Email owner"
+  ],
+  "notexpect": [
+   "Trigger notices"
+  ],
+  "contains": [
+   [
+    "Email owner",
+    "Rain likely today (80%)"
+   ],
+   [
+    "Email owner",
+    "2026-11-27"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-03-weather-check.json",
+  "title": "low rain chance sends nothing (tomorrow's 99% ignored)",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Get forecast": {
+    "list": [
+     {
+      "dt_txt": "2026-11-27 09:00:00",
+      "pop": 0.3
+     },
+     {
+      "dt_txt": "2026-11-27 12:00:00",
+      "pop": 0.15
+     },
+     {
+      "dt_txt": "2026-11-28 09:00:00",
+      "pop": 0.99
+     }
+    ]
+   }
+  },
+  "expect": [],
+  "notexpect": [
+   "Email owner",
+   "Trigger notices"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-03-weather-check.json",
+  "title": "forecast with no entries for today sends nothing",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Get forecast": {
+    "list": []
+   }
+  },
+  "expect": [],
+  "notexpect": [
+   "Email owner"
+  ],
+  "contains": [],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-04-weekly-summary.json",
+  "title": "summary counts last 7 days only",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "S1",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "confirmed",
+     "new_day": "",
+     "notified_at": "2026-11-25",
+     "reply": ""
+    },
+    {
+     "job_id": "S2",
+     "customer": "Lee Park",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "rain-rescheduled",
+     "new_day": "2026-12-02",
+     "notified_at": "2026-11-25",
+     "reply": ""
+    },
+    {
+     "job_id": "S3",
+     "customer": "Ann Wu",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "call-requested",
+     "new_day": "",
+     "notified_at": "2026-11-25",
+     "reply": ""
+    },
+    {
+     "job_id": "S4",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "confirmed",
+     "new_day": "",
+     "notified_at": "2026-10-28",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [
+   "Email summary"
+  ],
+  "notexpect": [],
+  "contains": [
+   [
+    "Email summary",
+    "last 7 days: 3"
+   ],
+   [
+    "Email summary",
+    "Confirmed: 1"
+   ],
+   [
+    "Email summary",
+    "Lee Park (2026-12-02)"
+   ],
+   [
+    "Email summary",
+    "Ann Wu +15551230001"
+   ]
+  ],
+  "trigger": "x"
+ },
+ {
+  "file": "rain-check-04-weekly-summary.json",
+  "title": "dry week sends nothing",
+  "sample": {},
+  "query": {},
+  "mocks": {
+   "Read Schedule": [
+    {
+     "job_id": "S5",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "confirmed",
+     "new_day": "",
+     "notified_at": "2026-10-28",
+     "reply": ""
+    },
+    {
+     "job_id": "S6",
+     "customer": "Dana Smith",
+     "phone": "+15551230001",
+     "email": "dana@example.com",
+     "address": "12 Oak St",
+     "day": "2026-12-01",
+     "time": "09:00",
+     "service": "lawn mowing",
+     "status": "scheduled",
+     "new_day": "",
+     "notified_at": "",
+     "reply": ""
+    }
+   ]
+  },
+  "expect": [],
+  "notexpect": [
+   "Email summary"
+  ],
+  "contains": [],
+  "trigger": "x"
+ }
+]

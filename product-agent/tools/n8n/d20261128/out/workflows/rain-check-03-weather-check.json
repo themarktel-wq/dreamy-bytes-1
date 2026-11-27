@@ -1,0 +1,347 @@
+{
+ "name": "03 Rain Check 3 (optional): morning weather check",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "days",
+       "daysInterval": 1,
+       "triggerAtHour": 6,
+       "triggerAtMinute": 0
+      }
+     ]
+    }
+   },
+   "id": "14c254a0-fcc3-547d-a7dc-e8c29189cc4a",
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    240,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Lawn Care",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "sms",
+       "type": "string"
+      },
+      {
+       "id": "ecaaf021-5c8b-5554-83e9-59659a0ce2b1",
+       "name": "workDays",
+       "value": "mon,tue,wed,thu,fri",
+       "type": "string"
+      },
+      {
+       "id": "28658c77-b72f-551c-97a1-58071de09947",
+       "name": "rainThreshold",
+       "value": "70",
+       "type": "string"
+      },
+      {
+       "id": "71b75743-6331-5a51-8c4e-1cfb7b71593e",
+       "name": "autoSend",
+       "value": "no",
+       "type": "string"
+      },
+      {
+       "id": "88cb2620-08d7-50cc-91c0-c2b463064694",
+       "name": "weatherLat",
+       "value": "40.7128",
+       "type": "string"
+      },
+      {
+       "id": "63836f6b-53e4-5a56-83df-b2b38ee1df95",
+       "name": "weatherLon",
+       "value": "-74.0060",
+       "type": "string"
+      },
+      {
+       "id": "24a77157-5891-5a75-8a66-c024a768f491",
+       "name": "weatherApiKey",
+       "value": "PASTE_YOUR_OPENWEATHERMAP_KEY",
+       "type": "string"
+      },
+      {
+       "id": "6d5194cb-de34-5d67-9396-aa21ed2f99da",
+       "name": "rainWebhookUrl",
+       "value": "https://YOUR-N8N-HOST/webhook/rain-day",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "496ec7a4-bb9a-5ed0-8f37-b10d098f4954",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "method": "GET",
+    "url": "=https://api.openweathermap.org/data/2.5/forecast",
+    "sendQuery": true,
+    "specifyQuery": "json",
+    "jsonQuery": "={{ JSON.stringify({lat: $('Config').first().json.weatherLat, lon: $('Config').first().json.weatherLon, appid: $('Config').first().json.weatherApiKey, units: 'metric'}) }}",
+    "options": {}
+   },
+   "id": "77c781fa-4557-557a-8990-1b4b6cfc045a",
+   "name": "Get forecast",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    680,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json;\nconst today = new Date().toISOString().slice(0, 10);\nconst list = ($input.first().json.list || []).filter(x => String(x.dt_txt || '').slice(0, 10) === today);\nif (!list.length) return [];\nconst maxPop = Math.max(...list.map(x => Number(x.pop) || 0)) * 100; const th = Number(c.rainThreshold);\nif (!(maxPop >= th)) return [];\nreturn [{ json: { day: today, pop: Math.round(maxPop), subject: 'Rain likely today (' + Math.round(maxPop) + '%)', text: 'The forecast shows up to ' + Math.round(maxPop) + '% chance of rain today (' + today + '). To send reschedule notices to today\\'s customers, open the Rain Check workflow 1 trigger: POST {\"day\":\"' + today + '\"} to ' + c.rainWebhookUrl + '.' } }];"
+   },
+   "id": "d70c32d1-7bbb-5b3c-8472-520a71c88ab4",
+   "name": "Rain today?",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    900,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "5d9bc8de-7b3e-5e25-a152-9e4633d161fe",
+       "leftValue": "={{ !!($('Config').first().json.autoSend === 'yes') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "6788ba8a-4d50-5c56-b693-1cee60bbf362",
+   "name": "IF ConfigfirstjsonautoSend  yes",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $('Config').first().json.rainWebhookUrl }}",
+    "options": {},
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({day:$json.day}) }}"
+   },
+   "id": "5f92dd30-239f-507a-915e-9ef1b2ae5af1",
+   "name": "Trigger notices",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1340,
+    180
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.text }}",
+    "options": {}
+   },
+   "id": "abc49d0e-5dbc-54db-8094-0c8f0d3617c6",
+   "name": "Email owner",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1340,
+    420
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Rain Check 3 (optional): morning weather check\nOptional. Every morning it checks a weather forecast (OpenWeatherMap key placeholder). If the chance of rain today is at or above your threshold it emails you, or, only if you set autoSend to yes, triggers workflow 1 automatically.\n\n**Setup**\n1. This workflow is optional. Create a free OpenWeatherMap account and paste your key into Config (weatherApiKey) and your latitude/longitude.\n2. Forecast times are UTC; if you are far from UTC the \"today\" window can be off by a few hours.\n3. Create a Google Sheet with a tab named Schedule using the header row in sheet-templates/Schedule.csv; paste its ID into the Config node (sheetId).\n4. In Config set your business name, owner email, channel (sms or email), the weekdays you work (workDays) and, only if you use workflow 3, your weather location and key.\n5. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth) if you use SMS.\n6. Dates are YYYY-MM-DD (format the day / new_day columns as plain text). Run with test rows (your own phone or email) before activating.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "8134bac5-6f0e-5314-b8c9-db7716c7dfbd",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Get forecast",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get forecast": {
+   "main": [
+    [
+     {
+      "node": "Rain today?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Rain today?": {
+   "main": [
+    [
+     {
+      "node": "IF ConfigfirstjsonautoSend  yes",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF ConfigfirstjsonautoSend  yes": {
+   "main": [
+    [
+     {
+      "node": "Trigger notices",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Email owner",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}

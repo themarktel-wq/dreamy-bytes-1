@@ -1,0 +1,661 @@
+{
+ "name": "02 Rain Check 2: OK / CALL reply handling",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "rain-reply",
+    "options": {}
+   },
+   "id": "24991793-980c-5268-93e8-c73e2aed7f3c",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    240,
+    300
+   ],
+   "webhookId": "24662481-e50a-5a75-bb99-f6e115842dab"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Lawn Care",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "c7b81c65-132c-50f4-bfe0-1b13e11d12ec",
+       "name": "ownerEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "80e8b3cc-f110-5cec-8181-283d02caf7a3",
+       "name": "channel",
+       "value": "sms",
+       "type": "string"
+      },
+      {
+       "id": "ecaaf021-5c8b-5554-83e9-59659a0ce2b1",
+       "name": "workDays",
+       "value": "mon,tue,wed,thu,fri",
+       "type": "string"
+      },
+      {
+       "id": "28658c77-b72f-551c-97a1-58071de09947",
+       "name": "rainThreshold",
+       "value": "70",
+       "type": "string"
+      },
+      {
+       "id": "71b75743-6331-5a51-8c4e-1cfb7b71593e",
+       "name": "autoSend",
+       "value": "no",
+       "type": "string"
+      },
+      {
+       "id": "88cb2620-08d7-50cc-91c0-c2b463064694",
+       "name": "weatherLat",
+       "value": "40.7128",
+       "type": "string"
+      },
+      {
+       "id": "63836f6b-53e4-5a56-83df-b2b38ee1df95",
+       "name": "weatherLon",
+       "value": "-74.0060",
+       "type": "string"
+      },
+      {
+       "id": "24a77157-5891-5a75-8a66-c024a768f491",
+       "name": "weatherApiKey",
+       "value": "PASTE_YOUR_OPENWEATHERMAP_KEY",
+       "type": "string"
+      },
+      {
+       "id": "6d5194cb-de34-5d67-9396-aa21ed2f99da",
+       "name": "rainWebhookUrl",
+       "value": "https://YOUR-N8N-HOST/webhook/rain-day",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "456dacce-368e-5094-8ada-b94154db7dad",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const b = $input.first().json.body || {};\nconst raw=String(b.Body||b.body||'').trim().toUpperCase();const from=String(b.From||b.from||'').replace(/\\D/g,'').slice(-10);const intent=/^(OK|OKAY|YES|Y|CONFIRM|CONFIRMED)\\b/.test(raw)?'confirm':(/^(CALL|NO|N)\\b/.test(raw)?'call':'other');return [{json:{from,raw:String(b.Body||b.body||'').trim(),intent}}];"
+   },
+   "id": "66e15af9-3ff5-5f5b-9641-147b9e83694e",
+   "name": "Normalize",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    680,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Schedule",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "b775402c-6605-5283-a4e1-d31af814bd8b",
+   "name": "Read Schedule",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    900,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const n = $('Normalize').first().json;\nconst rows = $input.all().map(i => i.json).filter(r => r && r.job_id && String(r.status || '').trim().toLowerCase() === 'rain-rescheduled' && n.from && String(r.phone || '').replace(/\\D/g, '').slice(-10) === n.from)\n  .sort((a, b) => String(a.new_day).localeCompare(String(b.new_day)));\nif (!rows.length) return [{ json: { found: false, from: n.from, raw: n.raw, intent: n.intent } }];\nconst r = rows[0];\nreturn [{ json: { found: true, job_id: r.job_id, customer: r.customer, phone: r.phone, new_day: r.new_day, intent: n.intent, raw: n.raw } }];"
+   },
+   "id": "7084a34a-1252-5c40-875f-0c073fb69c5e",
+   "name": "Find job",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "0bec35bd-0260-57b6-9657-c6112dc21d01",
+       "leftValue": "={{ !!(!$json.found) }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "d377aa8f-ed9b-5e72-b937-c97fe4df69b1",
+   "name": "IF jsonfound",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1340,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Unmatched reply from ' + $json.from }}",
+    "emailFormat": "text",
+    "text": "={{ 'Message: ' + $json.raw + '. No rain-rescheduled job found for this number.' }}",
+    "options": {}
+   },
+   "id": "30cb6faf-ab27-5bd4-ad83-fb20da9f0bd0",
+   "name": "Unmatched reply",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1560,
+    180
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "4c987150-ae31-5353-9405-2689930e7ad3",
+       "leftValue": "={{ !!($json.intent === 'confirm') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "5b3f1daf-bfeb-551a-a0ff-9ff285035a83",
+   "name": "IF jsonintent  confirm",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1560,
+    420
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Schedule",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "job_id": "={{ $json.job_id }}",
+      "status": "={{ 'confirmed' }}",
+      "reply": "={{ $json.raw }}"
+     },
+     "matchingColumns": [
+      "job_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "346a7eaf-1262-568f-ab8c-cacc4c5f1671",
+   "name": "Mark confirmed",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    1780,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ 'https://api.twilio.com/2010-04-01/Accounts/' + $('Config').first().json.twilioSid + '/Messages.json' }}",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBasicAuth",
+    "sendBody": true,
+    "contentType": "form-urlencoded",
+    "specifyBody": "keypair",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "name": "To",
+       "value": "={{ $('Find job').first().json.phone }}"
+      },
+      {
+       "name": "From",
+       "value": "={{ $('Config').first().json.twilioFrom }}"
+      },
+      {
+       "name": "Body",
+       "value": "={{ 'Thanks ' + $('Find job').first().json.customer + ', you are confirmed for ' + $('Find job').first().json.new_day + '.' }}"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "2742235e-94c6-5748-b45a-de8c6b1e1586",
+   "name": "Thank you SMS",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2000,
+    300
+   ],
+   "credentials": {
+    "httpBasicAuth": {
+     "id": "",
+     "name": "Twilio (Basic Auth: Account SID / Auth Token)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "e62c6521-d4ba-5e34-ae5c-5039046da930",
+       "leftValue": "={{ !!($json.intent === 'call') }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "4653eaa3-0e48-5e05-b0d2-312b57943e78",
+   "name": "IF jsonintent  call",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1780,
+    540
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "update",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Schedule",
+     "mode": "name"
+    },
+    "columns": {
+     "mappingMode": "defineBelow",
+     "value": {
+      "job_id": "={{ $json.job_id }}",
+      "status": "={{ 'call-requested' }}",
+      "reply": "={{ $json.raw }}"
+     },
+     "matchingColumns": [
+      "job_id"
+     ],
+     "schema": []
+    },
+    "options": {}
+   },
+   "id": "97ace41c-0063-5968-ac10-cfa24ad8c0c3",
+   "name": "Mark call requested",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    2000,
+    420
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Call ' + $json.customer + ' about the reschedule' }}",
+    "emailFormat": "text",
+    "text": "={{ $json.customer + ' (' + $json.phone + ') asked for a call. Proposed new day: ' + $json.new_day + '.' }}",
+    "options": {}
+   },
+   "id": "aa955d07-866a-53b0-892c-7c37663eb8f5",
+   "name": "Call this customer",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2220,
+    420
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.ownerEmail }}",
+    "subject": "={{ 'Reply from ' + $json.customer }}",
+    "emailFormat": "text",
+    "text": "={{ $json.customer + ' (' + $json.phone + ') wrote: ' + $json.raw }}",
+    "options": {}
+   },
+   "id": "7672cf3d-cbff-585c-b14b-08a0a0ae7745",
+   "name": "Forward reply",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2000,
+    660
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Rain Check 2: OK / CALL reply handling\nPoint your Twilio number's incoming-message webhook here. OK confirms the new date, CALL flags the job so you phone the customer, anything else is forwarded to you.\n\n**Setup**\n1. In Twilio, set your number's \"A message comes in\" webhook (HTTP POST) to this workflow's Production URL.\n2. Create a Google Sheet with a tab named Schedule using the header row in sheet-templates/Schedule.csv; paste its ID into the Config node (sheetId).\n3. In Config set your business name, owner email, channel (sms or email), the weekdays you work (workDays) and, only if you use workflow 3, your weather location and key.\n4. Attach credentials on nodes with a warning icon: Google Sheets OAuth2, SMTP, and Twilio (HTTP Basic Auth) if you use SMS.\n5. Dates are YYYY-MM-DD (format the day / new_day columns as plain text). Run with test rows (your own phone or email) before activating.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "7ff43cf3-77b9-5594-9e90-9b6b0b967de2",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Webhook": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Normalize",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalize": {
+   "main": [
+    [
+     {
+      "node": "Read Schedule",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read Schedule": {
+   "main": [
+    [
+     {
+      "node": "Find job",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Find job": {
+   "main": [
+    [
+     {
+      "node": "IF jsonfound",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonfound": {
+   "main": [
+    [
+     {
+      "node": "Unmatched reply",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "IF jsonintent  confirm",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonintent  confirm": {
+   "main": [
+    [
+     {
+      "node": "Mark confirmed",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "IF jsonintent  call",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark confirmed": {
+   "main": [
+    [
+     {
+      "node": "Thank you SMS",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF jsonintent  call": {
+   "main": [
+    [
+     {
+      "node": "Mark call requested",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Forward reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Mark call requested": {
+   "main": [
+    [
+     {
+      "node": "Call this customer",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}
