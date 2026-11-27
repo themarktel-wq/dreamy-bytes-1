@@ -1,0 +1,62 @@
+[
+ {
+  "file": "01-instant-inquiry-reply.json",
+  "title": "Instant inquiry reply",
+  "sample": {
+   "name": "Jordan Lee",
+   "email": "jordan@example.com",
+   "phone": "+15550003333",
+   "message": "Is the open house on Sunday?",
+   "property": "42 Maple Court",
+   "source": "Website form"
+  },
+  "mocks": {
+   "Read leads": []
+  },
+  "expect": [
+   "Append lead",
+   "Alert agent (email)",
+   "Alert agent (SMS, optional)",
+   "Email reply to lead"
+  ],
+  "notexpect": [],
+  "trigger": "webhook"
+ },
+ {
+  "file": "02-next-day-reminder.json",
+  "title": "Next-day reminder for uncontacted leads",
+  "sample": {},
+  "mocks": {
+   "Read leads": [
+    {
+     "received_at": "2026-11-26T21:25:30Z",
+     "name": "Casey Park",
+     "email": "casey@example.com",
+     "phone": "+15550004444",
+     "property": "9 Birch Lane",
+     "status": "New - replied",
+     "contacted": ""
+    },
+    {
+     "received_at": "2026-11-27T20:25:30Z",
+     "name": "New Lead",
+     "email": "n@example.com",
+     "status": "New - replied",
+     "contacted": ""
+    },
+    {
+     "received_at": "2026-11-26T17:25:30Z",
+     "name": "Done Lead",
+     "email": "d@example.com",
+     "status": "New - replied",
+     "contacted": "yes"
+    }
+   ]
+  },
+  "expect": [
+   "Email reminder to agent"
+  ],
+  "notexpect": [],
+  "trigger": "cron"
+ }
+]

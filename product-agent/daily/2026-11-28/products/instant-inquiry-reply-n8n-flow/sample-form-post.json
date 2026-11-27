@@ -1,0 +1,9 @@
+{
+  "name": "Sample Lead",
+  "email": "sample.lead@example.com",
+  "phone": "+15550003333",
+  "message": "Is the open house on Sunday?",
+  "property": "42 Maple Court",
+  "source": "Website form",
+  "website": ""
+}

@@ -1,0 +1,348 @@
+{
+ "name": "Next-day reminder for uncontacted leads",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "days",
+       "daysInterval": 1,
+       "triggerAtHour": 9,
+       "triggerAtMinute": 0
+      }
+     ]
+    }
+   },
+   "id": "aaf76f35-853f-549f-908a-8d2b76a89e5e",
+   "name": "Schedule",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    240,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "a8b0567c-09f4-56ac-96ea-175740d3bd1f",
+       "name": "aiBaseUrl",
+       "value": "https://api.openai.com/v1/chat/completions",
+       "type": "string"
+      },
+      {
+       "id": "79abeb6f-0470-5207-9bb6-9ac272aff595",
+       "name": "aiModel",
+       "value": "gpt-4o-mini",
+       "type": "string"
+      },
+      {
+       "id": "19478bee-50df-5cab-b97a-3db65d6cfd26",
+       "name": "slackWebhook",
+       "value": "https://hooks.slack.com/services/XXX/YYY/ZZZ",
+       "type": "string"
+      },
+      {
+       "id": "2e0ad58c-6c11-5171-8dff-d13e2abb47d5",
+       "name": "emailFrom",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "cf75b612-806b-52a5-9604-9a42fe8cf0c3",
+       "name": "emailTo",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "444d3c25-f983-52f3-a9c2-dc5178cd5f95",
+       "name": "businessName",
+       "value": "Your Business",
+       "type": "string"
+      },
+      {
+       "id": "dc1e3829-9213-5c73-b579-5e6c75d02053",
+       "name": "sheetId",
+       "value": "PASTE_GOOGLE_SHEET_ID",
+       "type": "string"
+      },
+      {
+       "id": "fab79b33-c40c-5e91-8d1f-ff5a89495dcc",
+       "name": "twilioFrom",
+       "value": "+15550000000",
+       "type": "string"
+      },
+      {
+       "id": "1fb5e0a4-9253-56ed-8f56-099e1baf09a2",
+       "name": "agentName",
+       "value": "Your Name",
+       "type": "string"
+      },
+      {
+       "id": "f019d4fc-45bd-53ed-8bec-dd801deba7ed",
+       "name": "brokerage",
+       "value": "Your Brokerage",
+       "type": "string"
+      },
+      {
+       "id": "d63c6f88-453e-53ed-81db-c9f6590f8785",
+       "name": "agentPhone",
+       "value": "+15550000001",
+       "type": "string"
+      },
+      {
+       "id": "fb6d55bf-de84-5445-9f1b-1f13941fe971",
+       "name": "agentEmail",
+       "value": "you@yourdomain.com",
+       "type": "string"
+      },
+      {
+       "id": "b1df0415-5a5e-56fb-8460-7cabb0e9d8e1",
+       "name": "agentAlertPhone",
+       "value": "+15550000001",
+       "type": "string"
+      },
+      {
+       "id": "f39361da-4326-5cfb-82fe-fc5d046dd12a",
+       "name": "bookingLink",
+       "value": "https://calendly.com/your-link",
+       "type": "string"
+      },
+      {
+       "id": "96be0acb-46a1-5f06-8317-53eb13def575",
+       "name": "responseWindow",
+       "value": "within the hour",
+       "type": "string"
+      },
+      {
+       "id": "1e71f1e2-19ac-588c-a964-d354b7c78903",
+       "name": "postalAddress",
+       "value": "Your Brokerage, 123 Main St, City, ST 00000",
+       "type": "string"
+      },
+      {
+       "id": "6bdadda9-85c1-5b99-bec7-9f865a1255be",
+       "name": "dedupeHours",
+       "value": "24",
+       "type": "string"
+      },
+      {
+       "id": "7a12152c-46e1-548e-8b63-b41330222f54",
+       "name": "reminderHours",
+       "value": "20",
+       "type": "string"
+      },
+      {
+       "id": "4d0c7a14-6592-5a34-9fee-4746ba84ee2d",
+       "name": "twilioSid",
+       "value": "ACXXXXXXXXXXXXXXXX",
+       "type": "string"
+      },
+      {
+       "id": "9001e77e-ea4d-5f0d-aa34-4d097e704dc2",
+       "name": "testNow",
+       "value": "",
+       "type": "string"
+      }
+     ]
+    },
+    "includeOtherFields": true,
+    "options": {}
+   },
+   "id": "fdee327e-85a4-5c09-94ae-60582fa5fa47",
+   "name": "Config",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    460,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "sheet",
+    "operation": "read",
+    "documentId": {
+     "__rl": true,
+     "value": "={{ $('Config').first().json.sheetId }}",
+     "mode": "id"
+    },
+    "sheetName": {
+     "__rl": true,
+     "value": "Leads",
+     "mode": "name"
+    },
+    "options": {}
+   },
+   "id": "fabffbe0-f169-5a59-b0ba-83a94c348369",
+   "name": "Read leads",
+   "type": "n8n-nodes-base.googleSheets",
+   "typeVersion": 4.5,
+   "position": [
+    680,
+    300
+   ],
+   "credentials": {
+    "googleSheetsOAuth2Api": {
+     "id": "",
+     "name": "Google Sheets account"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "jsCode": "const c = $('Config').first().json;\nconst now = /^\\d{4}-\\d{2}-\\d{2}/.test(String(c.testNow || '')) ? new Date(c.testNow).getTime() : Date.now();\nconst minH = Number(c.reminderHours || 20), rows = $('Read leads').all().map(i => i.json);\nconst open = rows.filter(r => r.received_at && /^new/i.test(String(r.status || '')) && !/^(y|yes|done|contacted|x)/i.test(String(r.contacted || '').trim()) && !isNaN(new Date(r.received_at).getTime()))\n  .map(r => ({ r, h: (now - new Date(r.received_at).getTime()) / 36e5 })).filter(x => x.h >= minH).sort((a, b) => b.h - a.h);\nif (!open.length) return [{ json: { none: true } }];\nconst lines = open.slice(0, 25).map(x => '- ' + (x.r.name || 'No name') + ' | ' + (x.r.phone || x.r.email || 'no contact') + (x.r.property ? ' | ' + x.r.property : '') + ' | ' + Math.floor(x.h) + ' hours ago' + (x.h >= 48 ? ' (OVERDUE)' : ''));\nreturn [{ json: { none: false, count: open.length, subject: open.length + (open.length === 1 ? ' inquiry' : ' inquiries') + ' not contacted yet', body: 'These leads have no \"yes\" in the contacted column of your Leads sheet:\\n\\n' + lines.join('\\n') + (open.length > 25 ? '\\n...and ' + (open.length - 25) + ' more.' : '') + '\\n\\nType yes in the contacted column once you have reached them and they will drop off this list.' } }];"
+   },
+   "id": "d859d1c6-08f0-5eb8-bfc5-e3f135f78272",
+   "name": "Remind",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    900,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "db56c113-b9fc-56e1-a911-38eba8a188a8",
+       "leftValue": "={{ !!(!$json.none) }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "id": "3df7daff-65ee-5ba3-ae87-6df4488e5993",
+   "name": "Anything to remind",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1120,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "={{ $('Config').first().json.emailFrom }}",
+    "toEmail": "={{ $('Config').first().json.agentEmail }}",
+    "subject": "={{ $json.subject }}",
+    "emailFormat": "text",
+    "text": "={{ $json.body }}",
+    "options": {}
+   },
+   "id": "7fd08e21-75f1-5d7a-bc83-fec6a9937fdd",
+   "name": "Email reminder to agent",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1340,
+    180
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "",
+     "name": "SMTP account"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "## Next-day reminder for uncontacted leads\nEvery morning lists inquiries that have no \"yes\" in the contacted column after 20 hours (editable), oldest first, and emails the list to you.\n\n**Setup**\n1. Uses the same Leads sheet as workflow 1. Type yes in the contacted column when you have reached a lead.\n2. Open the Config node and fill in your values; connect the credentials shown on each node.\n3. Activate the workflow.",
+    "height": 300,
+    "width": 420
+   },
+   "id": "48b5cbc0-bfb3-557f-a943-fbaaa7cc46a4",
+   "name": "Read me",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    240,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Schedule": {
+   "main": [
+    [
+     {
+      "node": "Config",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config": {
+   "main": [
+    [
+     {
+      "node": "Read leads",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Read leads": {
+   "main": [
+    [
+     {
+      "node": "Remind",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Remind": {
+   "main": [
+    [
+     {
+      "node": "Anything to remind",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Anything to remind": {
+   "main": [
+    [
+     {
+      "node": "Email reminder to agent",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1"
+ },
+ "pinData": {},
+ "tags": [],
+ "meta": {
+  "templateCredsSetupCompleted": false
+ }
+}
