@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lead Clock - Inquiry Response Timer and Callback Queue</title>
+<style>:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2937;--mut:#6b7280;--line:#e5e7eb;--acc:#0f766e;--acc2:#ccfbf1;--ok:#15803d;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#b91c1c;--badbg:#fee2e2;--r:10px}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header.top{background:var(--acc);color:#fff;padding:14px 16px}header.top h1{margin:0;font-size:20px}header.top p{margin:2px 0 0;opacity:.9;font-size:13px}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;cursor:pointer}.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:10px 0}.card h2{margin:0 0 8px;font-size:16px}.card h3{margin:12px 0 6px;font-size:14px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+input,select,textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}input[type=checkbox]{width:auto}
+textarea{min-height:70px}
+button.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;cursor:pointer}button.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc)}button.btn.del{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{font-size:12px;color:var(--mut);font-weight:600}
+td input,td select{padding:5px}.num{text-align:right}
+.tw{overflow-x:auto}
+.big{font-size:28px;font-weight:700}.mut{color:var(--mut);font-size:13px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}.pill.g{background:var(--okbg);color:var(--ok)}.pill.a{background:var(--warnbg);color:var(--warn)}.pill.r{background:var(--badbg);color:var(--bad)}
+.note{font-size:12px;color:var(--mut);background:#f1f5f9;border-radius:8px;padding:8px;margin:8px 0}
+.hidden{display:none!important}
+.est{background:#fff;color:#111;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+@media (max-width:600px){main{padding:8px}.big{font-size:24px}}
+@media print{body{background:#fff}header.top,.tabs,.noprint,.card:not(.printable){display:none!important}main{padding:0;max-width:none}.est{border:0;padding:0}.printable{display:block!important;border:0}}
+
+:root{--acc:#7c2d12;--acc2:#ffedd5}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.kpi div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}.kpi b{display:block;font-size:22px}
+.script{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px;margin:4px 0;font-size:13px;white-space:pre-wrap}
+.lead{border-left:6px solid var(--line)}.lead.g{border-left-color:#16a34a}.lead.a{border-left-color:#f59e0b}.lead.r{border-left-color:#dc2626}
+</style></head><body>
+<header class="top"><h1>Lead Clock</h1><p>Log every inquiry, see how long each lead has been waiting, work a ranked callback queue and reply fast with ready scripts. Works offline; data stays in this browser.</p></header>
+<main>
+<div class="tabs" id="tabs"><button data-t="queue" class="on">Callback queue</button><button data-t="log">Inquiry log</button><button data-t="scripts">Reply scripts</button><button data-t="stats">Weekly stats</button><button data-t="settings">My settings</button><button data-t="help">How it works</button></div>
+
+<section id="t-queue">
+ <div class="card"><h2>Log a new inquiry</h2><div class="grid"><div><label>Source</label><select id="n_source"></select></div><div><label>Name</label><input id="n_name"></div><div><label>Phone</label><input id="n_phone" type="tel"></div><div><label>Received (date and time)</label><input id="n_time" type="datetime-local"></div><div><label>Note</label><input id="n_note"></div></div><div class="row"><button class="btn" id="addLead">Add inquiry (received now if time is blank)</button></div></div>
+ <div class="card"><h2>Waiting now</h2><div class="kpi" id="kpi"></div><p class="note" id="sampleNote"></p></div>
+ <div id="queue"></div>
+</section>
+
+<section id="t-log" class="hidden"><div class="card"><h2>All inquiries</h2><div class="row"><button class="btn sec" id="expcsv">Export CSV</button><button class="btn sec" id="expjson">Backup JSON</button><label class="btn sec" style="margin:0;cursor:pointer">Restore JSON<input id="impjson" type="file" accept=".json" class="hidden"></label><button class="btn del" id="clearSample">Remove sample leads</button></div><div class="tw"><table id="logTbl"></table></div></div></section>
+
+<section id="t-scripts" class="hidden"><div class="card"><h2>Reply scripts</h2><div class="grid"><div><label>Lead name (for preview)</label><input id="sc_name" placeholder="Sam"></div></div><div class="note">Change the wording under "Script wording" on the "My settings" tab. The lead's first name and your name are filled in automatically.</div><div id="scriptList"></div></div></section>
+
+<section id="t-stats" class="hidden"><div class="card"><h2>Last 7 days</h2><div class="kpi" id="statKpi"></div><div class="tw"><table id="bySrc"></table></div><div class="note">Response time = first contact minus time received, for inquiries received in the last 7 days. These are your own numbers: no industry benchmark or conversion rate is claimed.</div></div></section>
+
+<section id="t-settings" class="hidden"><div class="card"><h2>Colour bands (minutes waiting)</h2><div class="grid"><div><label>Green up to (min)</label><input id="s_green" type="number" min="1"></div><div><label>Amber up to (min), red after that</label><input id="s_amber" type="number" min="1"></div><div><label>Your name (used in scripts)</label><input id="s_agent"></div></div></div>
+ <div class="card"><h2>Lead sources and priority</h2><div class="tw"><table id="srcTbl"></table></div><div class="row"><button class="btn sec" id="addSrc">+ Add source</button></div><div class="note">Priority 1 = work first when two leads are in the same colour band. The ranking is a simple rule you control.</div></div>
+ <div class="card"><h2>Script wording</h2><div id="scEdit"></div></div></section>
+
+<section id="t-help" class="hidden"><div class="card"><h2>How Lead Clock works</h2>
+<p><b>1.</b> Log each inquiry as it arrives (phone, web form, portal, open house...). Time received defaults to now.</p>
+<p><b>2.</b> "Callback queue" lists every lead not yet contacted, with minutes waiting, coloured green / amber / red by the limits you set. Order: red first, then your source priority, then the longest wait. Press "I contacted them" to stop the clock.</p>
+<p><b>3.</b> "Reply scripts" gives short messages for missed calls and showings: copy, paste, send.</p>
+<p><b>4.</b> "Weekly stats" shows your median response time, how many leads were contacted within your green limit and how many are still uncontacted.</p>
+<p><b>Honest notes.</b> The clock counts every minute, including nights and weekends. Public studies of real estate inquiries found many were answered slowly or not at all, but this tool makes no claim about how much faster replies change your results. Sample leads are fictional. Data is stored in this browser only: use Backup JSON or Export CSV regularly.</p></div></section>
+</main>
+<script>
+//CORE
+var DEFAULTS={green:15,amber:60,agent:'',sources:[{n:'Phone call',p:1},{n:'Website form',p:1},{n:'Portal lead',p:1},{n:'Open house',p:2},{n:'Referral',p:2},{n:'Social media',p:3},{n:'Other',p:3}],
+ scripts:[{t:'Missed call (text)',s:'Hi {name}, this is {agent}. Sorry I missed your call: I am with a client right now. When is a good time for me to call you back in the next hour?'},
+ {t:'Web form inquiry',s:'Hi {name}, thanks for your inquiry. This is {agent}. I would love to help. Are you free for a quick call today? Reply with a time that suits you.'},
+ {t:'At a showing',s:'Hi {name}, {agent} here. I am at a showing and will call you as soon as I finish, around [time]. Is there anything you would like me to look up before then?'},
+ {t:'No answer, follow-up',s:'Hi {name}, {agent} here. I tried calling and left a voicemail. What is the best time to reach you today or tomorrow?'},
+ {t:'Voicemail',s:'Hi {name}, this is {agent}. I am returning your inquiry. Please call me back at [your number] or reply to this message with a good time and I will call you.'}]};
+function num(x,d){var v=parseFloat(x);return isFinite(v)?v:(d||0);}
+function parseDT(s){if(!s)return null;var t=Date.parse(s);return isFinite(t)?t:null;}
+function isOpen(l){return !l.firstContact&&l.status!=='lost';}
+function waitMin(l,now){var r=parseDT(l.received);if(r==null)return null;return Math.max(0,(now-r)/60000);}
+function band(S,min){return min<=num(S.green,15)?'g':(min<=num(S.amber,60)?'a':'r');}
+function prio(S,src){var s=(S.sources||[]).filter(function(x){return x.n===src;})[0];return s?num(s.p,2):2;}
+function queue(D,now){var rank={r:0,a:1,g:2};var q=[];(D.leads||[]).forEach(function(l){if(!isOpen(l))return;var w=waitMin(l,now);if(w==null)return;q.push({l:l,wait:w,band:band(D.S,w),prio:prio(D.S,l.source)});});
+ q.sort(function(a,b){return rank[a.band]-rank[b.band]||a.prio-b.prio||b.wait-a.wait;});return q;}
+function responseMin(l){var r=parseDT(l.received),f=parseDT(l.firstContact);if(r==null||f==null)return null;return Math.max(0,(f-r)/60000);}
+function median(a){if(!a.length)return null;var s=a.slice().sort(function(x,y){return x-y;}),m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function stats(D,now,days){var from=now-(days||7)*86400000,L=(D.leads||[]).filter(function(l){var r=parseDT(l.received);return r!=null&&r>=from&&r<=now;});
+ var rs=[],within=0,unc=0;L.forEach(function(l){var m=responseMin(l);if(m!=null){rs.push(m);if(m<=num(D.S.green,15))within++;}else if(isOpen(l))unc++;});
+ var bySrc={};L.forEach(function(l){var k=l.source||'Other';var b=bySrc[k]||(bySrc[k]={source:k,count:0,responses:[],uncontacted:0});b.count++;var m=responseMin(l);if(m!=null)b.responses.push(m);else if(isOpen(l))b.uncontacted++;});
+ return {total:L.length,contacted:rs.length,uncontacted:unc,median:median(rs),within:within,bySource:Object.keys(bySrc).map(function(k){var b=bySrc[k];return {source:k,count:b.count,median:median(b.responses),uncontacted:b.uncontacted};})};}
+function fmtMin(m){if(m==null)return '-';m=Math.round(m);if(m<60)return m+' min';var h=Math.floor(m/60),r=m%60;if(h<24)return h+' h '+(r?r+' min':'');var d=Math.floor(h/24);return d+' d '+(h%24)+' h';}
+function fill(t,l,S){return t.replace(/\{name\}/g,(l&&l.name||'there').split(/\s+/)[0]).replace(/\{agent\}/g,S.agent||'your agent');}
+function leadsCSV(D){var q=function(v){v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};var rows=[['source','name','phone','received','first_contact','response_minutes','status','note']];
+ (D.leads||[]).forEach(function(l){var m=responseMin(l);rows.push([l.source,l.name,l.phone,l.received,l.firstContact||'',m==null?'':Math.round(m*10)/10,l.status,l.note||'']);});return rows.map(function(r){return r.map(q).join(',');}).join('\n');}
+//ENDCORE
+var KEY='leadclock.v1';function $(id){return document.getElementById(id);}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function ld(){try{var v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}}
+function sv(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function pad(n){return (n<10?'0':'')+n;}
+function dtStr(ms){var d=new Date(ms);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());}
+function sample(){var n=Date.now(),a=function(m){return dtStr(n-m*60000);};
+ return {S:JSON.parse(JSON.stringify(DEFAULTS)),leads:[
+ {id:'s1',sample:1,source:'Phone call',name:'Dana Brooks (sample)',phone:'',received:a(95),firstContact:'',status:'new',note:'Missed during showing'},
+ {id:'s2',sample:1,source:'Portal lead',name:'Eli Park (sample)',phone:'',received:a(40),firstContact:'',status:'new',note:''},
+ {id:'s3',sample:1,source:'Website form',name:'Fay Gómez (sample)',phone:'',received:a(8),firstContact:'',status:'new',note:''},
+ {id:'s4',sample:1,source:'Open house',name:'Gus Lee (sample)',phone:'',received:a(300),firstContact:a(240),status:'contacted',note:''},
+ {id:'s5',sample:1,source:'Website form',name:'Hana Roy (sample)',phone:'',received:a(1500),firstContact:a(1490),status:'appointment',note:''},
+ {id:'s6',sample:1,source:'Phone call',name:'Ian Cho (sample)',phone:'',received:a(2900),firstContact:a(2700),status:'contacted',note:''}]};}
+var D=ld()||sample();var NOW=function(){return Date.now();};
+function render(){var now=NOW(),q=queue(D,now);
+ var cnt=function(b){return q.filter(function(x){return x.band===b;}).length;};
+ $('kpi').innerHTML='<div><span class="mut">Uncontacted</span><b>'+q.length+'</b></div><div><span class="mut">Red</span><b style="color:var(--bad)">'+cnt('r')+'</b></div><div><span class="mut">Amber</span><b style="color:var(--warn)">'+cnt('a')+'</b></div><div><span class="mut">Green</span><b style="color:var(--ok)">'+cnt('g')+'</b></div><div><span class="mut">Longest wait</span><b>'+(q.length?fmtMin(Math.max.apply(null,q.map(function(x){return x.wait;}))):'-')+'</b></div>';
+ $('sampleNote').textContent=D.leads.some(function(l){return l.sample;})?'Sample leads (fictional) are loaded so you can see how it works. Remove them in the Inquiry log tab.':'';
+ $('queue').innerHTML=q.length?q.map(function(x,i){var l=x.l;return '<div class="card lead '+x.band+'"><div class="row" style="justify-content:space-between"><b>'+esc(l.name||'Unnamed')+'</b><span class="pill '+x.band+'" data-wait="'+esc(l.id)+'">waiting '+fmtMin(x.wait)+'</span></div><div class="mut">'+esc(l.source)+(l.phone?' - '+esc(l.phone):'')+' - received '+esc(l.received.replace('T',' '))+(l.note?' - '+esc(l.note):'')+'</div><div class="row"><button class="btn" data-contact="'+esc(l.id)+'">I contacted them</button><button class="btn sec" data-copyscript="'+esc(l.id)+'">Copy missed-call text</button><button class="btn del" data-lost="'+esc(l.id)+'">No response / lost</button></div></div>';}).join(''):'<div class="card mut">Nobody is waiting. Nice work.</div>';
+ var cur=$('n_source').value;$('n_source').innerHTML=D.S.sources.map(function(s){return '<option>'+esc(s.n)+'</option>';}).join('');if(cur)$('n_source').value=cur;
+ $('logTbl').innerHTML='<tr><th>Source</th><th>Name</th><th>Received</th><th>First contact</th><th class="num">Response</th><th>Status</th><th></th></tr>'+(D.leads.length?D.leads.slice().sort(function(a,b){return a.received<b.received?1:-1;}).map(function(l){var m=responseMin(l);return '<tr><td>'+esc(l.source)+'</td><td>'+esc(l.name)+'</td><td>'+esc(l.received.replace('T',' '))+'</td><td>'+esc((l.firstContact||'').replace('T',' ')||'-')+'</td><td class="num">'+fmtMin(m)+'</td><td><select data-st="'+esc(l.id)+'">'+['new','contacted','appointment','lost'].map(function(s){return '<option'+(l.status===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select></td><td><button class="btn del" data-del="'+esc(l.id)+'">x</button></td></tr>';}).join(''):'<tr><td colspan="7" class="mut">No inquiries yet.</td></tr>');
+ renderScripts();renderStats();renderSettings();}
+function renderScripts(){var nm=$('sc_name').value||'Sam';var L={name:nm};window.__sc=D.S.scripts.map(function(s){return fill(s.s,L,D.S);});$('scriptList').innerHTML=D.S.scripts.map(function(s,i){return '<div class="card"><b>'+esc(s.t)+'</b><div class="script">'+esc(window.__sc[i])+'</div><button class="btn sec" data-copysc="'+i+'">Copy</button></div>';}).join('');}
+function renderStats(){var s=stats(D,NOW(),7);$('statKpi').innerHTML='<div><span class="mut">Inquiries (7 days)</span><b>'+s.total+'</b></div><div><span class="mut">Median response</span><b>'+fmtMin(s.median)+'</b></div><div><span class="mut">Within '+num(D.S.green,15)+' min</span><b>'+s.within+' of '+s.contacted+'</b></div><div><span class="mut">Still uncontacted</span><b>'+s.uncontacted+'</b></div>';
+ $('bySrc').innerHTML='<tr><th>Source</th><th class="num">Inquiries</th><th class="num">Median response</th><th class="num">Uncontacted</th></tr>'+(s.bySource.length?s.bySource.map(function(b){return '<tr><td>'+esc(b.source)+'</td><td class="num">'+b.count+'</td><td class="num">'+fmtMin(b.median)+'</td><td class="num">'+b.uncontacted+'</td></tr>';}).join(''):'<tr><td colspan="4" class="mut">No inquiries in the last 7 days.</td></tr>');}
+function renderSettings(){var S=D.S;['green','amber','agent'].forEach(function(k){if(document.activeElement!==$('s_'+k))$('s_'+k).value=S[k];});
+ $('srcTbl').innerHTML='<tr><th>Source</th><th>Priority (1-3)</th><th></th></tr>'+S.sources.map(function(x,i){return '<tr><td><input type="text" data-sn="'+i+'" value="'+esc(x.n)+'"></td><td><input type="number" min="1" max="3" data-sp="'+i+'" value="'+num(x.p,2)+'" style="width:70px"></td><td><button class="btn del" data-rs="'+i+'">x</button></td></tr>';}).join('');
+ if(!$('scEdit').dataset.built||document.activeElement.dataset.sct===undefined){$('scEdit').innerHTML=S.scripts.map(function(s,i){return '<div class="card"><label>Title</label><input data-sct="'+i+'" value="'+esc(s.t)+'"><label style="margin-top:6px">Text</label><textarea data-scs="'+i+'">'+esc(s.s)+'</textarea></div>';}).join('');$('scEdit').dataset.built=1;}}
+document.addEventListener('input',function(e){var t=e.target,d=t.dataset;
+ if(t.id==='sc_name'){renderScripts();return;}
+ if(d.sn!==undefined){D.S.sources[+d.sn].n=t.value;sv();return;}if(d.sp!==undefined){D.S.sources[+d.sp].p=num(t.value,2);sv();render();return;}
+ if(d.sct!==undefined){D.S.scripts[+d.sct].t=t.value;sv();renderScripts();return;}if(d.scs!==undefined){D.S.scripts[+d.scs].s=t.value;sv();renderScripts();return;}
+ if(t.id&&t.id.indexOf('s_')===0){var k=t.id.slice(2);D.S[k]=k==='agent'?t.value:num(t.value);sv();render();}});
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset.st){var l=D.leads.filter(function(x){return x.id===t.dataset.st;})[0];l.status=t.value;if(t.value==='contacted'&&!l.firstContact)l.firstContact=dtStr(NOW());sv();render();}});
+function lead(id){return D.leads.filter(function(l){return l.id===id;})[0];}
+document.addEventListener('click',function(e){var t=e.target,d=t.dataset;
+ if(d.t){['queue','log','scripts','stats','settings','help'].forEach(function(n){$('t-'+n).classList.toggle('hidden',n!==d.t);});Array.prototype.forEach.call(document.querySelectorAll('#tabs button'),function(b){b.classList.toggle('on',b===t);});render();return;}
+ if(d.contact){var l=lead(d.contact);l.firstContact=dtStr(NOW());l.status='contacted';sv();render();return;}
+ if(d.lost){lead(d.lost).status='lost';sv();render();return;}
+ if(d.del){D.leads=D.leads.filter(function(l){return l.id!==d.del;});sv();render();return;}
+ if(d.copyscript){var l2=lead(d.copyscript),tx=fill(D.S.scripts[0].s,l2,D.S);if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){t.textContent='Copied';},function(){prompt('Copy:',tx);});else prompt('Copy:',tx);return;}
+ if(d.copysc!==undefined){var tx2=window.__sc[+d.copysc];if(navigator.clipboard)navigator.clipboard.writeText(tx2).then(function(){t.textContent='Copied';},function(){prompt('Copy:',tx2);});else prompt('Copy:',tx2);return;}
+ if(d.rs!==undefined){D.S.sources.splice(+d.rs,1);sv();render();return;}
+ if(t.id==='addSrc'){D.S.sources.push({n:'New source',p:2});sv();render();return;}
+ if(t.id==='addLead'){var tm=$('n_time').value||dtStr(NOW());D.leads.push({id:uid(),source:$('n_source').value,name:$('n_name').value||'Unnamed',phone:$('n_phone').value,received:tm,firstContact:'',status:'new',note:$('n_note').value});['n_name','n_phone','n_note','n_time'].forEach(function(i){$(i).value='';});sv();render();return;}
+ if(t.id==='clearSample'){D.leads=D.leads.filter(function(l){return !l.sample;});sv();render();return;}
+ if(t.id==='expcsv'||t.id==='expjson'){var c=t.id==='expcsv',b=new Blob([c?leadsCSV(D):JSON.stringify(D,null,1)],{type:c?'text/csv':'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=c?'leadclock-inquiries.csv':'leadclock-backup.json';a.click();}});
+$('impjson').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var x=JSON.parse(r.result);if(x.S&&x.leads){D=x;$('scEdit').dataset.built='';sv();render();}else alert('This file is not a Lead Clock backup.');}catch(err){alert('Could not read that file.');}};r.readAsText(f);});
+setInterval(function(){if(!$('t-queue').classList.contains('hidden')){var q=queue(D,NOW());q.forEach(function(x){var el=document.querySelector('[data-wait="'+x.l.id+'"]');if(el){el.textContent='waiting '+fmtMin(x.wait);el.className='pill '+x.band;}});}},30000);
+render();
+</script></body></html>
