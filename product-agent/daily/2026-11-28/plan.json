@@ -1,0 +1,380 @@
+{
+ "date": "2026-11-28",
+ "timezone": "Asia/Karachi",
+ "niches": [
+  "lawn-landscaping",
+  "real-estate-agents",
+  "movers"
+ ],
+ "total": 10,
+ "software_count": 6,
+ "software_share": 0.6,
+ "products": [
+  {
+   "id": "d20261128-01",
+   "niche": "lawn-landscaping",
+   "name": "MowRoute Pricer: Per-Stop Cost and Route Density Calculator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 29,
+   "unique_concept": "Prices each lawn stop from its real cost including drive time to the stop, so a far-away property costs more than the one next door, and shows margin per visit and per route-hour.",
+   "persona": "Solo mower / 2-person crew",
+   "pain_points": "Flat neighbourhood pricing ignores drive time",
+   "pitch_points": "Price by true stop cost; keep routes dense; no subscription",
+   "features": [
+    "Cost settings (labor $/hr, equipment/fuel per hour, overhead per hour, target margin)",
+    "Stop entry: mow minutes, drive minutes in/out, extras",
+    "Price per visit = cost / (1 - margin) and margin at current price",
+    "Route builder: total hours, revenue per route-hour, flag low-yield stops",
+    "Printable price list, CSV/JSON export, localStorage"
+   ],
+   "build_spec": "Single-file HTML. stop_cost = (mow_min + drive_min)/60 x (labor + equipment + overhead) ; price = stop_cost/(1-margin); route_yield = sum(price)/sum(hours). Defaults are editable examples; Housecall Pro's ~$52-55 at 30% margin example is cited as a vendor example only. Unit tests + phone width.",
+   "evidence_refs": [
+    "W3",
+    "W2"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "Jobber",
+     "LawnPro",
+     "Yardbook"
+    ]
+   },
+   "score_out_of_40": 26,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261128-02",
+   "niche": "lawn-landscaping",
+   "name": "Rain Check: Weather Reschedule Notice n8n Flow",
+   "type": "n8n",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 45,
+   "unique_concept": "n8n flow that, on a rain day, messages every customer on that day's Sheet with a no-fee reschedule notice and logs the new date, instead of phone calls.",
+   "persona": "Small crew owner",
+   "pain_points": "Weather delays cause stacked frustration and cancellations",
+   "pitch_points": "Customers told early; fewer cancellations from silence; log kept",
+   "features": [
+    "Schedule sheet (customer, address, day, contact, status)",
+    "Manual 'rain day' trigger (or weather API node, key placeholder)",
+    "Templated notice with reschedule date from rule (next dry day, user-set)",
+    "Reply handling: confirm / call me",
+    "Status log and weekly summary",
+    "Credentials placeholders"
+   ],
+   "build_spec": "tools/n8n workflow JSON validated by sim.js; weather node optional with placeholder key; QA states not run live (Twilio/Gmail/Sheets). No cancellation-reduction claims.",
+   "evidence_refs": [
+    "W5"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "Jobber notifications",
+     "LawnPro",
+     "Arborgold"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence is qualitative vendor guidance (Low)"
+  },
+  {
+   "id": "d20261128-03",
+   "niche": "lawn-landscaping",
+   "name": "Seasonal Cash Flow and Winter Planner",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build2",
+   "price_usd": 24,
+   "unique_concept": "Twelve-month cash-flow sheet for seasonal lawn/landscape businesses with slow-month reserve, winter add-on revenue scenarios and a snow-contract capacity check.",
+   "persona": "Small crew owner",
+   "pain_points": "Cash gap in winter; unclear snow capacity",
+   "pitch_points": "See when cash runs thin; test winter services",
+   "features": [
+    "Monthly revenue by service and season curve (user-entered)",
+    "Fixed vs variable costs",
+    "Reserve required for slow months",
+    "Winter add-on scenarios (snow, leaf, holiday lights)",
+    "Snow capacity: contracts x hours per event vs equipment/crew"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests for cumulative cash and reserve.",
+   "evidence_refs": [
+    "W4"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "Jobber Year-Round Revenue Playbook (free ebook)",
+     "generic Etsy sheets",
+     "Service Autopilot"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261128-04",
+   "niche": "real-estate-agents",
+   "name": "Lead Clock: Inquiry Response Timer and Callback Queue",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 29,
+   "unique_concept": "Logs every inbound inquiry with timestamp and shows minutes waiting, a callback queue ranked by age and source, and short reply scripts for agents who miss calls during showings.",
+   "persona": "Solo real estate agent",
+   "pain_points": "Leads wait while agent is at showings",
+   "pitch_points": "Never lose track of an inquiry; fast first reply scripts",
+   "features": [
+    "Inquiry log (source, name, phone, time received, status)",
+    "Live 'waiting for' timer and age colour bands (user-set thresholds)",
+    "Callback queue and reply script library",
+    "Weekly stats: median response time, uncontacted leads",
+    "CSV export, localStorage"
+   ],
+   "build_spec": "Single-file HTML. wait = now - received; median response = median(first_contact - received). No conversion claims (README cites Pied Piper study as context). Unit tests + phone width.",
+   "evidence_refs": [
+    "A3"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "Follow Up Boss",
+     "Wise Agent",
+     "BoldTrail/kvCORE"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261128-05",
+   "niche": "real-estate-agents",
+   "name": "Past-Client Touch Planner",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build2",
+   "price_usd": 29,
+   "unique_concept": "Plans and tracks a yearly touch cadence for past clients and sphere (calls, notes, anniversaries), producing a weekly 'who to contact' list and message prompts.",
+   "persona": "Solo/part-time agent",
+   "pain_points": "No system for staying in touch with past clients",
+   "pitch_points": "Weekly touch list; anniversaries; no per-user CRM fee",
+   "features": [
+    "Contact list (closing date, birthday/anniversary fields, tier A/B/C)",
+    "Cadence rules per tier (touches per year, user-set)",
+    "Weekly due list and overdue flags",
+    "Touch log with note",
+    "Message prompts library (no ad claims)",
+    "CSV import/export, localStorage"
+   ],
+   "build_spec": "Single-file HTML. next_touch = last_touch + 365/touches_per_year; due list by date. Unit tests. Admin tool only; README: follow local marketing and consent rules.",
+   "evidence_refs": [
+    "A2",
+    "A4"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "Wise Agent",
+     "Follow Up Boss",
+     "LionDesk (status unclear)"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence for willingness to pay is Med-Low (NAR qualitative)"
+  },
+  {
+   "id": "d20261128-06",
+   "niche": "real-estate-agents",
+   "name": "Agent Net Income and Expense Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build1",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet that turns closings into net income after brokerage split, fees, marketing and taxes set-aside (user-entered), with NAR median figures shown as context only.",
+   "persona": "Solo/part-time agent",
+   "pain_points": "Gross commission hides true net",
+   "pitch_points": "See net per transaction and per month; plan expenses",
+   "features": [
+    "Transactions sheet (price, commission %, split, fees)",
+    "Expenses by category",
+    "Net per transaction and per month",
+    "Tax set-aside % (user-entered, no advice)",
+    "Context box with NAR medians flagged 'not a target'"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests; footer 'not tax advice'.",
+   "evidence_refs": [
+    "A1"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "generic agent expense sheets",
+     "QuickBooks templates",
+     "Etsy"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261128-07",
+   "niche": "real-estate-agents",
+   "name": "Instant Inquiry Reply n8n Flow",
+   "type": "n8n",
+   "is_software": true,
+   "assigned_stage": "build3",
+   "price_usd": 45,
+   "unique_concept": "n8n flow that replies to web-form and email inquiries within minutes with a templated message, logs the lead in a Sheet and alerts the agent.",
+   "persona": "Solo real estate agent",
+   "pain_points": "Slow or no response to inquiries",
+   "pitch_points": "Fast first touch; lead log; agent alert",
+   "features": [
+    "Webhook/email trigger from lead forms",
+    "Auto-reply with agent info and booking link placeholder",
+    "Lead appended to Sheet with timestamp and source",
+    "Agent alert (email/SMS)",
+    "Next-day reminder if not contacted",
+    "Credentials placeholders"
+   ],
+   "build_spec": "tools/n8n workflow JSON validated by sim.js; QA states not run live; README: comply with local consent/anti-spam rules (no legal advice).",
+   "evidence_refs": [
+    "A3"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "Follow Up Boss automations",
+     "Zapier recipes (generic)",
+     "BoldTrail"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "Evidence Med-Low"
+  },
+  {
+   "id": "d20261128-08",
+   "niche": "movers",
+   "name": "MoveQuote: Hourly and Inventory Estimator",
+   "type": "html tool",
+   "is_software": true,
+   "assigned_stage": "build1",
+   "price_usd": 35,
+   "unique_concept": "Estimator for local movers that builds hourly quotes from crew, rate, minimum, travel and access add-ons, and an inventory-to-estimate mode using the mover's own item table, with clear binding/non-binding wording slots.",
+   "persona": "Owner-operator local mover",
+   "pain_points": "Estimate disputes and jobs running over",
+   "pitch_points": "Consistent quotes; inventory sheet customers can see; fewer surprises",
+   "features": [
+    "Hourly estimate: crew x rate x hours, minimum hours, travel time, stairs/long-carry add-ons",
+    "Inventory mode with editable per-item volume/weight table (user-entered, no industry table claimed)",
+    "Low/likely/high range (user-set %)",
+    "Quote text with estimate-type wording (binding/non-binding) fields",
+    "Printable quote, localStorage"
+   ],
+   "build_spec": "Single-file HTML. hourly_total = max(min_hours, work_hours + travel) x crew x rate + add-ons; range = total x (1 +/- spread). README: estimate rules vary by jurisdiction; interstate regulations not covered. Unit tests + phone width.",
+   "evidence_refs": [
+    "M3",
+    "M2"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "MoverBase",
+     "Mr Mover Manager",
+     "MoveOps"
+    ]
+   },
+   "score_out_of_40": 25,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261128-09",
+   "niche": "movers",
+   "name": "Estimate vs Actual Variance Tracker",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build3",
+   "price_usd": 24,
+   "unique_concept": "Spreadsheet logging estimated vs actual hours and price per job, with variance by job type, crew and access factors, showing where estimates systematically run short.",
+   "persona": "Small mover",
+   "pain_points": "Estimates run over; no feedback loop",
+   "pitch_points": "See which job types are under-quoted; adjust rules",
+   "features": [
+    "Jobs sheet (type, crew, estimated hours, actual hours, stairs, distance)",
+    "Variance % per job and averages by type",
+    "Flags for jobs over tolerance (user-set)",
+    "Suggested adjustment factor by type",
+    "Monthly summary"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests: variance = (actual-estimate)/estimate.",
+   "evidence_refs": [
+    "M3"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "generic mover Etsy sheets",
+     "MoveOps reports",
+     "Mr Mover Manager"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  },
+  {
+   "id": "d20261128-10",
+   "niche": "movers",
+   "name": "Mover Job Profit Sheet",
+   "type": "xlsx",
+   "is_software": false,
+   "assigned_stage": "build3",
+   "price_usd": 24,
+   "unique_concept": "Per-job profit sheet for movers covering truck, fuel, crew pay, claims reserve (user-entered) and payment fees, with margin and break-even hours.",
+   "persona": "Owner-operator local mover",
+   "pain_points": "Unknown profit per job",
+   "pitch_points": "See margin per job; set minimums",
+   "features": [
+    "Settings (truck cost/hr, crew wage, fuel, claims reserve %)",
+    "Job entry with hours and price",
+    "Profit and margin per job",
+    "Break-even hours",
+    "Monthly summary"
+   ],
+   "build_spec": "tools/sheets openpyxl + recalc; expected-value tests.",
+   "evidence_refs": [
+    "M1",
+    "M2"
+   ],
+   "novelty_check": {
+    "vs_memory": "checked against memory/products.json (68 entries) and daily 2026-11-24..27 products; no duplicate",
+    "competitors": [
+     "generic sheets",
+     "MoverBase reports",
+     "Mr Mover Manager"
+    ]
+   },
+   "score_out_of_40": 24,
+   "score_note": "self-scored from evidence cards; confidence Med/Low where noted"
+  }
+ ],
+ "stage_counts": {
+  "build1": 4,
+  "build2": 3,
+  "build3": 3
+ },
+ "stage_software": {
+  "build1": 3,
+  "build2": 2,
+  "build3": 1
+ },
+ "stage_note": "Only 10 products pass the 24/40 gate (3 / 4 / 3 per niche); stages hold 4/3/3, below the 4-5 target, rather than padding with weak ideas.",
+ "blocked_or_missing": [
+  "Reddit/Facebook group threads not returned by WebSearch",
+  "Meta Ad Library not reachable",
+  "No direct WebFetch tool: research used search-result summaries only",
+  "IBISWorld/NAR/Pied Piper reports not read in full",
+  "No per-square-foot lawn pricing data, no mover damage-claim/FMCSA data, no real-estate sphere lead-source percentages",
+  "Landscaping business counts conflict across IBISWorld pages"
+ ]
+}
