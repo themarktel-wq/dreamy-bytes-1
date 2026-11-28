@@ -678,5 +678,105 @@
   "status": "built, delivered in pack.zip, untested in market",
   "market_results": null,
   "notes": "QA: pass (718 formulas, 0 errors, 148 values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261128-01",
+  "type": "html tool",
+  "niche": "lawn-landscaping: MowRoute Pricer: Per-Stop Cost and Route Density Calculator",
+  "price_usd": 29,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261128-02",
+  "type": "n8n",
+  "niche": "lawn-landscaping: Rain Check: Weather Reschedule Notice n8n Flow",
+  "price_usd": 45,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (simulator only; not run on live n8n/Twilio/email/Sheets/weather API)"
+ },
+ {
+  "id": "d20261128-03",
+  "type": "xlsx",
+  "niche": "lawn-landscaping: Seasonal Cash Flow and Winter Planner",
+  "price_usd": 24,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (182 formulas, 0 errors, values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261128-04",
+  "type": "html tool",
+  "niche": "real-estate-agents: Lead Clock: Inquiry Response Timer and Callback Queue",
+  "price_usd": 29,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261128-05",
+  "type": "html tool",
+  "niche": "real-estate-agents: Past-Client Touch Planner",
+  "price_usd": 29,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (26 checks, Chromium only)"
+ },
+ {
+  "id": "d20261128-06",
+  "type": "xlsx",
+  "niche": "real-estate-agents: Agent Net Income and Expense Sheet",
+  "price_usd": 24,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261128-07",
+  "type": "n8n",
+  "niche": "real-estate-agents: Instant Inquiry Reply n8n Flow",
+  "price_usd": 45,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (simulated + 46 logic tests; not run on live n8n/Sheets/email)"
+ },
+ {
+  "id": "d20261128-08",
+  "type": "html tool",
+  "niche": "movers: MoveQuote: Hourly and Inventory Estimator",
+  "price_usd": 35,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: PASS (see qa-report.md)"
+ },
+ {
+  "id": "d20261128-09",
+  "type": "xlsx",
+  "niche": "movers: Estimate vs Actual Variance Tracker",
+  "price_usd": 24,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (907 formulas, 0 errors, 376 values match independent maths; LibreOffice only)"
+ },
+ {
+  "id": "d20261128-10",
+  "type": "xlsx",
+  "niche": "movers: Mover Job Profit Sheet",
+  "price_usd": 24,
+  "built": "2026-11-28",
+  "status": "built, delivered in pack.zip, untested in market",
+  "market_results": null,
+  "notes": "QA: pass (889 formulas, 0 errors, 216 values match independent maths + 3 round trips; LibreOffice only)"
  }
 ]
